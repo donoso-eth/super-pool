@@ -1,0 +1,8 @@
+.env
+coverage
+coverage.json
+typechain-types
+
+#Hardhat files
+cache
+artifacts
