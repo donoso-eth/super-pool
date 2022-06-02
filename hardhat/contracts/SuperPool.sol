@@ -173,11 +173,15 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
       (address, address)
     );
 
-    // (, int96 inFlowRate, , ) = cfa.getFlow(
-    //   superToken,
-    //   marketplace,
-    //   address(this)
-    // );
+
+
+    (, int96 inFlowRate, , ) = cfa.getFlow(
+      superToken,
+      sender,
+      address(this)
+    );
+
+        _stream(sender,inFlowRate);
 
     // emit Events.LoanTradeCreated();
 
