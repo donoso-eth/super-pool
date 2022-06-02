@@ -19,7 +19,7 @@ library DataTypes {
     uint256 stakedTimestamp;
   }
 
-  struct Staker {
+  struct Supplier {
     address name;
     uint256 cumulated;
     Stream stream;
@@ -32,4 +32,14 @@ library DataTypes {
       uint256 totlaDeposit;
       int96 totalFlow;
   }
+
+
+  struct Period {
+    uint256 timestamp;
+    uint256 periodId;
+    int96 flow;
+    uint256 deposit;
+    uint256 startTwap;
+  }
+
 }

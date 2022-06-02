@@ -10,6 +10,7 @@ import {DataTypes} from "./DataTypes.sol";
  * @notice A standard library of data types used throughout.
  */
 library Events {
-    
+
+      event LoanOfferCreated(uint256 id);
 
 }

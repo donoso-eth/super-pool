@@ -27,11 +27,17 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
   IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
   ISuperToken superToken;
 
-  uint256[] activeStakers;
-  uint256 stakerId;
+  uint256[] activeSuppliers;
+ 
 
-  mapping(address => DataTypes.Staker) usersByAddress;
+  mapping(address => DataTypes.Supplier) usersByAddress;
+
   mapping(uint256 => address) userAdressById;
+
+  mapping (uint256 => DataTypes.Period) periodById;
+
+  Counters.Counter public periodId;
+  Counters.Counter public supplierId;
 
   constructor(ISuperfluid _host, ISuperToken _superToken) {
     host = _host;
@@ -94,45 +100,47 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
     require(msg.sender == address(superToken), "INVALID_TOKEN");
 
     console.log(from);
+    console.log(msg.sender);
     console.log(amount);
 
     _deposit(from, amount);
   }
 
-  function _calculateReward(DataTypes.Staker memory staker) internal {}
+  function _calculateReward(DataTypes.Supplier memory supplier) internal {}
 
-  function _addPeriod(DataTypes.Staker memory staker) internal {}
+  function _addPeriod(DataTypes.Supplier memory supplier) internal {}
 
   function _deposit(address from, uint256 amount) internal {
     require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
 
 
-    DataTypes.Staker storage staker = usersByAddress[from];
+    DataTypes.Supplier storage supplier = usersByAddress[from];
 
-    uint256 currentAmount = staker.deposit.stakedAmount;
-    int96 currentFlow = staker.stream.flow;
+    uint256 currentAmount = supplier.deposit.stakedAmount;
+    int96 currentFlow = supplier.stream.flow;
+
     //// calcualte previous rewards if already staked;
     if (currentAmount > 0 || currentFlow > 0) {
-      _calculateReward(staker);
+      _calculateReward(supplier);
     }
 
-    staker.deposit = DataTypes.Deposit(currentAmount + amount, block.timestamp);
+    supplier.deposit = DataTypes.Deposit(currentAmount + amount, block.timestamp);
 
     // emit Events.RewardDistributed( pcrId, amount);
   }
 
   function _stream(address from, int96 flow) internal {
-    DataTypes.Staker storage staker = usersByAddress[from];
+    DataTypes.Supplier storage supplier = usersByAddress[from];
 
-    uint256 currentAmount = staker.deposit.stakedAmount;
-    int96 currentFlow = staker.stream.flow;
+    uint256 currentAmount = supplier.deposit.stakedAmount;
+    int96 currentFlow = supplier.stream.flow;
     //// calcualte previous rewards if already staked;
     if (currentAmount > 0 || currentFlow > 0) {
-      _calculateReward(staker);
+      _calculateReward(supplier);
     }
 
-    staker.stream = DataTypes.Stream(currentFlow + flow, block.timestamp);
+    supplier.stream = DataTypes.Stream(currentFlow + flow, block.timestamp);
   }
 
   function withDraw(uint256 amount) public {}
@@ -141,15 +149,6 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
    * SuperApp callbacks
    *************************************************************************/
 
-  struct LocalStateCallBack {
-    bytes newCtx;
-    ISuperfluid.Context decodedContext;
-    uint256 loanOfferId;
-    uint256 loanDuration;
-    address loanTaker;
-    int96 inFlowRate;
-    ISuperToken superToken;
-  }
 
   function afterAgreementCreated(
     ISuperToken _superToken,
