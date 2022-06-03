@@ -82,14 +82,14 @@ describe('Super Pool Global', function () {
     10
   ]);
 
-  console.log(await (await superPool.usersByAddress(deployer.address)).deposit.stakedTimestamp.toString())
+  console.log(await (await superPool.suppliersByAddress(deployer.address)).deposit.stakedTimestamp.toString())
   console.log((parseInt(await getTimestamp())))
 
 
   });
 
 
-  it('Should when start streamt', async function () {
+  it('Should when start stream', async function () {
     let amountLoan = +utils.parseEther('10').toString();
 
     let collateralShare = (amountLoan / 10).toFixed(0);
