@@ -21,7 +21,8 @@ library DataTypes {
 
   struct Supplier {
     address supplier;
-    uint256 cumulated;
+    uint256 supplierId;
+    uint256 cumulatedReward;
     Stream stream;
     Deposit deposit;
     uint256 createdTimestamp;
@@ -40,7 +41,8 @@ library DataTypes {
     uint256 periodId;
     int96 flow;
     uint256 deposit;
-    uint256 startTwap;
+    uint256 startTWAP;
+    uint256 rewards;
   }
 
 }

@@ -20,235 +20,335 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 
 contract SuperPool is SuperAppBase, IERC777Recipient {
-  using SafeMath for uint256;
-  using Counters for Counters.Counter;
+    using SafeMath for uint256;
+    using Counters for Counters.Counter;
 
-  ISuperfluid public host; // host
-  IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
-  ISuperToken superToken;
+    ISuperfluid public host; // host
+    IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
+    ISuperToken superToken;
 
-  uint256[] activeSuppliers;
+    uint256[] activeSuppliers;
 
-  mapping(address => DataTypes.Supplier) public usersByAddress;
+    mapping(address => DataTypes.Supplier) public suppliersByAddress;
 
-  mapping(uint256 => address) userAdressById;
+    mapping(uint256 => address) supplierAdressById;
 
-  mapping(uint256 => DataTypes.Period) periodById;
+    mapping(uint256 => DataTypes.Period) periodById;
 
-  Counters.Counter public periodId;
-  Counters.Counter public supplierId;
+    Counters.Counter public periodId;
+    Counters.Counter public supplierId;
 
-  constructor(ISuperfluid _host, ISuperToken _superToken) {
-    host = _host;
-    superToken = _superToken;
-    cfa = IConstantFlowAgreementV1(
-      address(
-        host.getAgreementClass(
-          keccak256(
-            "org.superfluid-finance.agreements.ConstantFlowAgreement.v1"
-          )
-        )
-      )
-    );
+    DataTypes.Global public spider;
 
-    uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL |
-      SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
-      SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
-      SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
+    constructor(ISuperfluid _host, ISuperToken _superToken) {
+        host = _host;
+        superToken = _superToken;
+        cfa = IConstantFlowAgreementV1(
+            address(
+                host.getAgreementClass(
+                    keccak256(
+                        "org.superfluid-finance.agreements.ConstantFlowAgreement.v1"
+                    )
+                )
+            )
+        );
 
-    host.registerApp(configWord);
+        uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL |
+            SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
+            SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
+            SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
 
-    IERC1820Registry _erc1820 = IERC1820Registry(
-      0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
-    bytes32 TOKENS_RECIPIENT_INTERFACE_HASH = keccak256(
-      "ERC777TokensRecipient"
-    );
+        host.registerApp(configWord);
 
-    _erc1820.setInterfaceImplementer(
-      address(this),
-      TOKENS_RECIPIENT_INTERFACE_HASH,
-      address(this)
-    );
-  }
+        IERC1820Registry _erc1820 = IERC1820Registry(
+            0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
+        );
+        bytes32 TOKENS_RECIPIENT_INTERFACE_HASH = keccak256(
+            "ERC777TokensRecipient"
+        );
 
-  // ============= =============  Modifiers ============= ============= //
-  // #region Modidiers
-
-  modifier onlyHost() {
-    require(msg.sender == address(host), "RedirectAll: support only one host");
-    _;
-  }
-
-  modifier onlyExpected(address agreementClass) {
-    require(_isCFAv1(agreementClass), "RedirectAll: only CFAv1 supported");
-    _;
-  }
-
-  // endregion
-
-  // ============= =============  Internal Functions ============= ============= //
-  // #region InternalFunctions
-
-  function _getSupplier(address _supplier)
-    internal
-    returns (DataTypes.Supplier storage)
-  {
-    DataTypes.Supplier storage supplier = usersByAddress[_supplier];
-
-    if (supplier.createdTimestamp == 0) {
-      supplier.createdTimestamp == block.timestamp;
-      supplier.supplier = _supplier;
+        _erc1820.setInterfaceImplementer(
+            address(this),
+            TOKENS_RECIPIENT_INTERFACE_HASH,
+            address(this)
+        );
     }
 
-    return supplier;
-  }
+    // ============= =============  Modifiers ============= ============= //
+    // #region Modidiers
 
-  // #endregion
-
-  function tokensReceived(
-    address operator,
-    address from,
-    address to,
-    uint256 amount,
-    bytes calldata userData,
-    bytes calldata operatorData
-  ) external override {
-    // do stuff
-    require(msg.sender == address(superToken), "INVALID_TOKEN");
-
-    console.log(from);
-    console.log(msg.sender);
-    console.log(amount);
-
-    _deposit(from, amount);
-  }
-
-  function _calculateReward(DataTypes.Supplier memory supplier) internal {}
-
-  function _addPeriod(DataTypes.Supplier memory supplier) internal {}
-
-  function _deposit(address from, uint256 amount) internal {
-    require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
-
-    DataTypes.Supplier storage supplier = _getSupplier(from);
-
-    uint256 currentAmount = supplier.deposit.stakedAmount;
-    int96 currentFlow = supplier.stream.flow;
-
-    //// calcualte previous rewards if already staked;
-    if (currentAmount > 0 || currentFlow > 0) {
-      _calculateReward(supplier);
+    modifier onlyHost() {
+        require(
+            msg.sender == address(host),
+            "RedirectAll: support only one host"
+        );
+        _;
     }
 
-    periodId.increment();
-
-
-    supplier.periodId = periodId.current();
-
-    supplier.deposit = DataTypes.Deposit(
-      currentAmount + amount,
-      block.timestamp
-    );
-
-    emit Events.SupplyDepositStarted(from, currentAmount + amount);
-  }
-
-  function _stream(address from, int96 flow) internal {
-    DataTypes.Supplier storage supplier = _getSupplier(from);
-
-    uint256 currentAmount = supplier.deposit.stakedAmount;
-    int96 currentFlow = supplier.stream.flow;
-    //// calcualte previous rewards if already staked;
-    if (currentAmount > 0 || currentFlow > 0) {
-      _calculateReward(supplier);
+    modifier onlyExpected(address agreementClass) {
+        require(_isCFAv1(agreementClass), "RedirectAll: only CFAv1 supported");
+        _;
     }
 
-    supplier.stream = DataTypes.Stream(currentFlow + flow, block.timestamp);
-    emit Events.SupplyStreamStarted(from, flow);
-  }
+    // endregion
 
-  function withDraw(uint256 amount) public {}
+    // ============= =============  Internal Functions ============= ============= //
+    // #region InternalFunctions
 
-  /**************************************************************************
-   * SuperApp callbacks
-   *************************************************************************/
+    function _getSupplier(address _supplier)
+        internal
+        returns (DataTypes.Supplier storage)
+    {
+        //// initialize globals when first user created
+        if (periodId.current() == 0) {
+            spider = DataTypes.Global(0, 0, 0);
+            periodById[0] = DataTypes.Period(0, 0, 0, 0, 0, 0);
+        }
 
-  function afterAgreementCreated(
-    ISuperToken _superToken,
-    address _agreementClass,
-    bytes32, // _agreementId,
-    bytes calldata _agreementData,
-    bytes calldata, // _cbdata,
-    bytes calldata _ctx
-  )
-    external
-    override
-    onlyExpected(_agreementClass)
-    onlyHost
-    returns (bytes memory newCtx)
-  {
-    newCtx = _ctx;
+        DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
-    require(ISuperToken(superToken) == _superToken, "SUPERTOKEN_NOT_MATCH");
+        if (supplier.createdTimestamp == 0) {
+            supplier.createdTimestamp == block.timestamp;
+            supplier.supplier = _supplier;
 
-    (address sender, address receiver) = abi.decode(
-      _agreementData,
-      (address, address)
-    );
+            supplierId.increment();
+            supplier.supplierId = supplierId.current();
 
-    (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
+            supplierAdressById[supplier.supplierId] = _supplier;
 
-    console.log(sender);
-    console.log(address(superToken));
+            activeSuppliers.push(supplier.supplierId);
+        }
 
-    _stream(sender, inFlowRate);
+        periodId.increment();
+        supplier.periodId = periodId.current();
 
-    //registerGelato and set call back find stream
-
-    return newCtx;
-  }
-
-  function afterAgreementTerminated(
-    ISuperToken, /*superToken*/
-    address, /*agreementClass*/
-    bytes32, // _agreementId,
-    bytes calldata _agreementData,
-    bytes calldata, /*cbdata*/
-    bytes calldata _ctx
-  ) external virtual override returns (bytes memory newCtx) {
-    try this.parseLoanData(host.decodeCtx(_ctx).userData) returns (
-      uint256 loanOfferId,
-      address loanTaker
-    ) {
-      console.log("juppy juppy ok");
-    } catch (
-      bytes memory /*lowLevelData*/
-    ) {
-      // This is executed in case revert() was used.
-      console.log("juppy juppy error");
+        return supplier;
     }
 
-    (address sender, ) = abi.decode(_agreementData, (address, address));
+    // #endregion
 
-    return _ctx;
-  }
+    function tokensReceived(
+        address operator,
+        address from,
+        address to,
+        uint256 amount,
+        bytes calldata userData,
+        bytes calldata operatorData
+    ) external override {
+        // do stuff
+        require(msg.sender == address(superToken), "INVALID_TOKEN");
 
-  function parseLoanData(bytes memory data)
-    public
-    pure
-    returns (uint256 loanOfferId, address loanTaker)
-  {
-    (loanOfferId, loanTaker) = abi.decode(data, (uint256, address));
-  }
+        console.log(from);
+        console.log(msg.sender);
+        console.log(amount);
 
-  /**************************************************************************
-   * INTERNAL HELPERS
-   *************************************************************************/
+        _deposit(from, amount);
+    }
 
-  function _isCFAv1(address agreementClass) private view returns (bool) {
-    return
-      ISuperAgreement(agreementClass).agreementType() ==
-      keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
-  }
+    function _calculateReward(DataTypes.Supplier memory supplier) internal {}
+
+    function _calculateRewards() internal {}
+
+    /**
+     * @notice Add the rewards to the Period
+     * @dev  When rewards are added to the pool, if there is active stream this 
+     *       function will call _advancePeriod() fucntion
+     *       If there is not active stream, the proportion remains the same and the period remains unchanged
+     */
+    function _addRewards(uint256 rewardAmount) internal {
+        DataTypes.Period storage currentPeriod = periodById[periodId.current()];
+
+        currentPeriod.rewards = ++rewardAmount;
+        if (currentPeriod.flow != 0) {
+            ///// trigger re-schauffle
+            _advancePeriod();
+
+        }
+    }
+
+    /**
+     * @notice Calculates the TWAP, the yieldshare by active user and push a new  Period
+     * @dev This function will be called when liquidity is updated deposit/streamed/withdraw
+     *      When rewards are added to the pool, if there is active stream this lfunction will be calculated too.
+     *      If there is not active stream, the proportion remains the same and the period remains unchanged
+     */
+    function _advancePeriod() internal {
+        uint256 currentPeriodId = periodId.current();
+        uint256 lastPeriodId = currentPeriodId - 1;
+
+        DataTypes.Period storage currentPeriod = periodById[currentPeriodId];
+        DataTypes.Period memory lastPeriod = periodById[lastPeriodId];
+
+        uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
+
+        uint256 areaFlow = (uint96(lastPeriod.flow) * (periodSpan**2)) / 2;
+        uint256 areaDeposit = lastPeriod.deposit * periodSpan;
+
+        uint256 totalAreaPeriod = areaDeposit;
+
+        if (lastPeriod.flow >= 0) {
+            totalAreaPeriod = ++areaFlow;
+        } else {
+            totalAreaPeriod = --areaFlow;
+        }
+
+        currentPeriod.startTWAP = lastPeriod.startTWAP + totalAreaPeriod;
+
+        for (uint256 i = 0; i < activeSuppliers.length; i++) {
+            DataTypes.Supplier storage activeSupplier = suppliersByAddress[
+                supplierAdressById[activeSuppliers[i]]
+            ];
+            activeSupplier.cumulatedReward = 300;
+            activeSupplier.periodId = currentPeriodId;
+        }
+    }
+
+
+    function _deposit(address from, uint256 amount) internal {
+        require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
+
+        DataTypes.Supplier storage supplier = _getSupplier(from);
+
+        uint256 currentAmount = supplier.deposit.stakedAmount;
+        int96 currentFlow = supplier.stream.flow;
+
+        //// calcualte previous rewards if already staked;
+        if (currentAmount > 0 || currentFlow > 0) {
+            _calculateReward(supplier);
+        }
+
+        supplier.deposit = DataTypes.Deposit(
+            currentAmount + amount,
+            block.timestamp
+        );
+
+        uint256 _periodId = periodId.current();
+
+        periodById[_periodId] = periodById[_periodId - 1];
+        periodById[_periodId].deposit = ++amount;
+
+        emit Events.SupplyDepositStarted(from, currentAmount + amount);
+    }
+
+    function _stream(address from, int96 flow) internal {
+        DataTypes.Supplier storage supplier = _getSupplier(from);
+
+        uint256 currentAmount = supplier.deposit.stakedAmount;
+        int96 currentFlow = supplier.stream.flow;
+        //// calcualte previous rewards if already staked;
+        if (currentAmount > 0 || currentFlow > 0) {
+            _calculateReward(supplier);
+        }
+
+        supplier.stream = DataTypes.Stream(currentFlow + flow, block.timestamp);
+        emit Events.SupplyStreamStarted(from, flow);
+    }
+
+    function withdraw(uint256 withdrawAmount) public {
+      DataTypes.Supplier storage withdrawer =  suppliersByAddress[msg.sender];
+      uint256 realtimeBalance = withdrawer.deposit.stakedAmount;
+
+      uint256 flowSpan = block.timestamp - withdrawer.stream.initTimestamp;
+
+      if (withdrawer.stream.flow >0) {
+        realtimeBalance = ++ flowSpan*uint96(withdrawer.stream.flow);
+      } else  if (withdrawer.stream.flow < 0) {
+         realtimeBalance = --flowSpan *uint96(withdrawer.stream.flow);
+      }
+
+      require(realtimeBalance>=withdrawAmount,'NOT_ENOUGH_BALANCE');
+
+      ///// TO DO
+      /// REWARDS PAT TO BE ADDEDD
+      ISuperToken(superToken).send(msg.sender,withdrawAmount,"0x");
+
+    }
+
+    /**************************************************************************
+     * SuperApp callbacks
+     *************************************************************************/
+
+    function afterAgreementCreated(
+        ISuperToken _superToken,
+        address _agreementClass,
+        bytes32, // _agreementId,
+        bytes calldata _agreementData,
+        bytes calldata, // _cbdata,
+        bytes calldata _ctx
+    )
+        external
+        override
+        onlyExpected(_agreementClass)
+        onlyHost
+        returns (bytes memory newCtx)
+    {
+        newCtx = _ctx;
+
+        require(ISuperToken(superToken) == _superToken, "SUPERTOKEN_NOT_MATCH");
+
+        (address sender, address receiver) = abi.decode(
+            _agreementData,
+            (address, address)
+        );
+
+        (, int96 inFlowRate, , ) = cfa.getFlow(
+            superToken,
+            sender,
+            address(this)
+        );
+
+        console.log(sender);
+        console.log(address(superToken));
+
+        _stream(sender, inFlowRate);
+
+        //registerGelato and set call back find stream
+
+        return newCtx;
+    }
+
+    function afterAgreementTerminated(
+        ISuperToken, /*superToken*/
+        address, /*agreementClass*/
+        bytes32, // _agreementId,
+        bytes calldata _agreementData,
+        bytes calldata, /*cbdata*/
+        bytes calldata _ctx
+    ) external virtual override returns (bytes memory newCtx) {
+        try this.parseLoanData(host.decodeCtx(_ctx).userData) returns (
+            uint256 loanOfferId,
+            address loanTaker
+        ) {
+            console.log("juppy juppy ok");
+        } catch (
+            bytes memory /*lowLevelData*/
+        ) {
+            // This is executed in case revert() was used.
+            console.log("juppy juppy error");
+        }
+
+        (address sender, ) = abi.decode(_agreementData, (address, address));
+
+        return _ctx;
+    }
+
+    function parseLoanData(bytes memory data)
+        public
+        pure
+        returns (uint256 loanOfferId, address loanTaker)
+    {
+        (loanOfferId, loanTaker) = abi.decode(data, (uint256, address));
+    }
+
+    /**************************************************************************
+     * INTERNAL HELPERS
+     *************************************************************************/
+
+    function _isCFAv1(address agreementClass) private view returns (bool) {
+        return
+            ISuperAgreement(agreementClass).agreementType() ==
+            keccak256(
+                "org.superfluid-finance.agreements.ConstantFlowAgreement.v1"
+            );
+    }
 }
