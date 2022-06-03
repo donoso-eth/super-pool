@@ -28,13 +28,12 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
   ISuperToken superToken;
 
   uint256[] activeSuppliers;
- 
 
-  mapping(address => DataTypes.Supplier) usersByAddress;
+  mapping(address => DataTypes.Supplier) public usersByAddress;
 
   mapping(uint256 => address) userAdressById;
 
-  mapping (uint256 => DataTypes.Period) periodById;
+  mapping(uint256 => DataTypes.Period) periodById;
 
   Counters.Counter public periodId;
   Counters.Counter public supplierId;
@@ -88,6 +87,25 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
 
   // endregion
 
+  // ============= =============  Internal Functions ============= ============= //
+  // #region InternalFunctions
+
+  function _getSupplier(address _supplier)
+    internal
+    returns (DataTypes.Supplier storage)
+  {
+    DataTypes.Supplier storage supplier = usersByAddress[_supplier];
+
+    if (supplier.createdTimestamp == 0) {
+      supplier.createdTimestamp == block.timestamp;
+      supplier.supplier = _supplier;
+    }
+
+    return supplier;
+  }
+
+  // #endregion
+
   function tokensReceived(
     address operator,
     address from,
@@ -113,9 +131,7 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
   function _deposit(address from, uint256 amount) internal {
     require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
-
-
-    DataTypes.Supplier storage supplier = usersByAddress[from];
+    DataTypes.Supplier storage supplier = _getSupplier(from);
 
     uint256 currentAmount = supplier.deposit.stakedAmount;
     int96 currentFlow = supplier.stream.flow;
@@ -125,13 +141,21 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
       _calculateReward(supplier);
     }
 
-    supplier.deposit = DataTypes.Deposit(currentAmount + amount, block.timestamp);
+    periodId.increment();
 
-    // emit Events.RewardDistributed( pcrId, amount);
+
+    supplier.periodId = periodId.current();
+
+    supplier.deposit = DataTypes.Deposit(
+      currentAmount + amount,
+      block.timestamp
+    );
+
+    emit Events.SupplyDepositStarted(from, currentAmount + amount);
   }
 
   function _stream(address from, int96 flow) internal {
-    DataTypes.Supplier storage supplier = usersByAddress[from];
+    DataTypes.Supplier storage supplier = _getSupplier(from);
 
     uint256 currentAmount = supplier.deposit.stakedAmount;
     int96 currentFlow = supplier.stream.flow;
@@ -141,6 +165,7 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
     }
 
     supplier.stream = DataTypes.Stream(currentFlow + flow, block.timestamp);
+    emit Events.SupplyStreamStarted(from, flow);
   }
 
   function withDraw(uint256 amount) public {}
@@ -148,7 +173,6 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
   /**************************************************************************
    * SuperApp callbacks
    *************************************************************************/
-
 
   function afterAgreementCreated(
     ISuperToken _superToken,
@@ -173,17 +197,12 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
       (address, address)
     );
 
+    (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
 
+    console.log(sender);
+    console.log(address(superToken));
 
-    (, int96 inFlowRate, , ) = cfa.getFlow(
-      superToken,
-      sender,
-      address(this)
-    );
-
-        _stream(sender,inFlowRate);
-
-    // emit Events.LoanTradeCreated();
+    _stream(sender, inFlowRate);
 
     //registerGelato and set call back find stream
 

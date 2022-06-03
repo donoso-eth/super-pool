@@ -49,22 +49,22 @@ describe('Super Pool Global', function () {
 
     eventsLib = await new Events__factory(deployer).deploy();
 
-    /// Launch SF FRAMEOWRK
-    //// SUPERFLUID SDK INITIALIZATION
-    // sf = await Framework.create({
-    //   networkName: 'local',
-    //   provider: provider,
-    //   customSubgraphQueriesEndpoint:
-    //     'https://api.thegraph.com/subgraphs/name/superfluid-finance/protocol-v1-mumbai',
-    //   resolverAddress: '0x8C54C83FbDe3C59e59dd6E324531FB93d4F504d3',
-    // });
+    // Launch SF FRAMEOWRK
+    // SUPERFLUID SDK INITIALIZATION
+    sf = await Framework.create({
+      networkName: 'local',
+      provider: provider,
+      customSubgraphQueriesEndpoint:
+        'https://api.thegraph.com/subgraphs/name/superfluid-finance/protocol-v1-mumbai',
+      resolverAddress: '0x8C54C83FbDe3C59e59dd6E324531FB93d4F504d3',
+    });
   });
 
   it('Should Start with No Periods created', async function () {
     expect(await superPool.periodId()).to.equal(0);
   });
 
-  it('Should create an offer and emit event', async function () {
+  it.only('Should Deposit and emit event', async function () {
     let amountLoan = +utils.parseEther('10').toString();
 
     let collateralShare = (amountLoan / 10).toFixed(0);
@@ -74,24 +74,40 @@ describe('Super Pool Global', function () {
     
     let erc777 = await  ERC777__factory.connect(TOKEN1, deployer);
 
-    console.log(await (await erc777.balanceOf(deployer.address)).toString())
-
+ 
     let receipt = await waitForTx( erc777.send(superPool.address,10,"0x"));
 
+    matchEvent(receipt, 'SupplyDepositStarted', eventsLib, [
+      deployer.address,
+    10
+  ]);
 
-    // receipt = await waitForTx(
-    //   lendMarketPlaceContractUser1.offerLoan(offerConfig)
-    // );
-   // expect(await lendMarketPlaceContract._loansOfferedCounter()).to.equal(1);
+  console.log(await (await superPool.usersByAddress(deployer.address)).deposit.stakedTimestamp.toString())
+  console.log((parseInt(await getTimestamp())))
 
-    // matchEvent(receipt, 'LoanOfferCreated', eventsLib, [
-    //   [
-    //     1,
-    //     [parseEther('20'), parseEther('5'), 30, TOKEN1, 100, 30 * 24 * 60 * 60],
-    //     user1.address,
-    //     0,
-    //   ],
-    // ]);
+
+  });
+
+
+  it('Should when start streamt', async function () {
+    let amountLoan = +utils.parseEther('10').toString();
+
+    let collateralShare = (amountLoan / 10).toFixed(0);
+    let durationDays = 365;
+    let inflowRate = (amountLoan / (durationDays * 24 * 60 * 60)).toFixed(0);
+
+    const createFlowOperation = sf.cfaV1.createFlow({flowRate:inflowRate,receiver:superPool.address,superToken:TOKEN1})
+    
+    let receipt = await waitForTx( createFlowOperation.exec(deployer));
+
+    
+    let erc777 = await  ERC777__factory.connect(TOKEN1, deployer);
+
+
+    matchEvent(receipt, 'SupplyStreamStarted', eventsLib, [
+        deployer.address,
+        inflowRate
+    ]);
   });
 
 });

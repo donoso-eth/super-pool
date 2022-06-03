@@ -20,11 +20,12 @@ library DataTypes {
   }
 
   struct Supplier {
-    address name;
+    address supplier;
     uint256 cumulated;
     Stream stream;
     Deposit deposit;
     uint256 createdTimestamp;
+    uint256 periodId;
   }
 
   struct Global {

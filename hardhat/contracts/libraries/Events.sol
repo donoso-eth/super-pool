@@ -11,6 +11,8 @@ import {DataTypes} from "./DataTypes.sol";
  */
 library Events {
 
-      event LoanOfferCreated(uint256 id);
+      event SupplyDepositStarted(address supplier, uint256 amount);
+
+      event SupplyStreamStarted(address supplier, int96 flowRate);
 
 }
