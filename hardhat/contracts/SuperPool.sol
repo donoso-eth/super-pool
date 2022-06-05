@@ -33,7 +33,7 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
 
   mapping(uint256 => address) supplierAdressById;
 
-  mapping(uint256 => DataTypes.Period) periodById;
+  mapping(uint256 => DataTypes.Period) public periodById;
 
   Counters.Counter public periodId;
   Counters.Counter public supplierId;
@@ -98,10 +98,10 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
     returns (DataTypes.Supplier storage)
   {
     //// initialize globals when first user created
-    if (periodId.current() == 0) {
-      spider = DataTypes.Global(0, 0, 0);
-      periodById[0] = DataTypes.Period(0, 0, 0, 0, 0, 0);
-    }
+    // if (periodId.current() == 0) {
+    //   spider = DataTypes.Global(0, 0, 0);
+    //   periodById[0] = DataTypes.Period(0, 0, 0, 0, 0, 0);
+    // }
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
@@ -117,8 +117,8 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
       activeSuppliers.push(supplier.supplierId);
     }
 
-    periodId.increment();
-    supplier.periodId = periodId.current();
+    // periodId.increment();
+    // supplier.periodId = periodId.current();
 
     return supplier;
   }
@@ -171,32 +171,43 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
    */
   function _advancePeriod() internal {
     uint256 currentPeriodId = periodId.current();
-    uint256 lastPeriodId = currentPeriodId - 1;
-
     DataTypes.Period storage currentPeriod = periodById[currentPeriodId];
-    DataTypes.Period memory lastPeriod = periodById[lastPeriodId];
 
-    uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
-
-    uint256 areaFlow = (uint96(lastPeriod.flow) * (periodSpan**2)) / 2;
-    uint256 areaDeposit = lastPeriod.deposit * periodSpan;
-
-    uint256 totalAreaPeriod = areaDeposit;
-
-    if (lastPeriod.flow >= 0) {
-      totalAreaPeriod = ++areaFlow;
+    if (currentPeriodId == 0 && currentPeriod.timestamp == 0) {
+      currentPeriod.timestamp = block.timestamp;
     } else {
-      totalAreaPeriod = --areaFlow;
-    }
+      periodId.increment();
+      currentPeriodId = periodId.current();
 
-    currentPeriod.startTWAP = lastPeriod.startTWAP + totalAreaPeriod;
+      uint256 lastPeriodId = currentPeriodId - 1;
 
-    for (uint256 i = 0; i < activeSuppliers.length; i++) {
-      DataTypes.Supplier storage activeSupplier = suppliersByAddress[
-        supplierAdressById[activeSuppliers[i]]
-      ];
-      activeSupplier.cumulatedReward = 300;
-      activeSupplier.periodId = currentPeriodId;
+      DataTypes.Period memory lastPeriod = periodById[lastPeriodId];
+
+      uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
+
+      uint256 areaFlow = (uint96(lastPeriod.flow) * (periodSpan**2)) / 2;
+      uint256 areaDeposit = lastPeriod.deposit * periodSpan;
+
+      uint256 totalAreaPeriod = areaDeposit;
+
+      if (lastPeriod.flow >= 0) {
+        totalAreaPeriod = ++areaFlow;
+      } else {
+        totalAreaPeriod = --areaFlow;
+      }
+
+      currentPeriod.startTWAP = lastPeriod.startTWAP + totalAreaPeriod;
+
+      lastPeriod.timestamp = block.timestamp;
+      lastPeriod.periodId = lastPeriodId;
+
+      // for (uint256 i = 0; i < activeSuppliers.length; i++) {
+      //   DataTypes.Supplier storage activeSupplier = suppliersByAddress[
+      //     supplierAdressById[activeSuppliers[i]]
+      //   ];
+      //   activeSupplier.cumulatedReward = 300;
+      //   activeSupplier.periodId = currentPeriodId;
+      // }
     }
   }
 
@@ -206,6 +217,8 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
     DataTypes.Supplier storage supplier = _getSupplier(from);
 
     uint256 currentAmount = supplier.deposit.stakedAmount;
+
+    console.log(currentAmount);
     // int96 currentFlow = supplier.stream.flow;
 
     // //// calcualte previous rewards if already staked;
@@ -222,22 +235,28 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
 
     uint256 _periodId = periodId.current();
 
-    periodById[_periodId].deposit = ++amount;
+    periodById[_periodId].deposit = periodById[_periodId].deposit + amount;
 
-    emit Events.SupplyDepositStarted(from, currentAmount + amount);
+    console.log(228);
+    console.log(amount);
+    emit Events.SupplyDepositStarted(from, amount);
   }
 
   function _stream(address from, int96 flow) internal {
     DataTypes.Supplier storage supplier = _getSupplier(from);
 
+    console.log(uint96(flow));
+
     _advancePeriod();
 
     int96 currentFlow = supplier.stream.flow;
+    console.log(uint96(currentFlow));
 
     supplier.stream = DataTypes.Stream(currentFlow + flow, block.timestamp);
     uint256 _periodId = periodId.current();
 
-    periodById[_periodId].flow = ++currentFlow;
+    console.log(_periodId);
+    periodById[_periodId].flow = periodById[_periodId].flow + flow;
 
     emit Events.SupplyStreamStarted(from, flow);
   }
@@ -277,7 +296,7 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
   )
     external
     override
-    onlyExpected(_superToken,_agreementClass)
+    onlyExpected(_superToken, _agreementClass)
     onlyHost
     returns (bytes memory newCtx)
   {
@@ -346,8 +365,6 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
 
     (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
 
-
-
     DataTypes.Supplier storage supplier = suppliersByAddress[sender];
 
     uint256 supplierId = supplier.supplierId;
@@ -355,14 +372,11 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
     uint256 _periodId = periodId.current();
 
     //// current stream
-    int96 currentStream = supplier.stream.flow; 
+    int96 currentStream = supplier.stream.flow;
 
     periodById[_periodId].flow = --supplier.stream.flow;
 
     supplier.stream = DataTypes.Stream(0, block.timestamp);
-
-
-
   }
 
   /**************************************************************************
