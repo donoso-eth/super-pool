@@ -31,13 +31,14 @@ let deployer: SignerWithAddress;
 let user1: SignerWithAddress;
 let user2: SignerWithAddress;
 let user3: SignerWithAddress;
+let user4: SignerWithAddress;
 let provider: BaseProvider;
 let eventsLib: any;
 let sf: Framework;
 let MARKET_PLACE_FEE = 25;
 describe('Super Pool Global', function () {
   beforeEach(async () => {
-    [deployer, user1, user2, user3] = await initEnv(hre);
+    [deployer, user1, user2, user3,user4] = await initEnv(hre);
     provider = hre.ethers.provider;
 
     superPool = await new SuperPool__factory(deployer).deploy(HOST, TOKEN1);
@@ -49,6 +50,7 @@ describe('Super Pool Global', function () {
     await superotkenContract.transfer(user1.address, utils.parseEther('100'))
     await superotkenContract.transfer(user2.address, utils.parseEther('100'))
     await superotkenContract.transfer(user3.address, utils.parseEther('50'))
+    await superotkenContract.transfer(user4.address, utils.parseEther('100'))
  
 
 
@@ -161,7 +163,7 @@ describe('Super Pool Global', function () {
       superToken: TOKEN1,
     });
 
-    receipt = await waitForTx(createFlowOperation.exec(user2));
+    receipt = await waitForTx(createFlowOperation.exec(user4));
 
     printPeriod(3,superPool)
     let t4  = parseInt(await getTimestamp());
@@ -173,6 +175,10 @@ describe('Super Pool Global', function () {
    printPeriod(4,superPool)
    let t5  = parseInt(await getTimestamp());
    console.log('t5: ',t5-t0);
+
+
+    await waitForTx(superPool.calculateRewardsSupplier(user2.address))
+
 
   });
 });

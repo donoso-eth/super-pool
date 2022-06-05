@@ -105,6 +105,41 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
         _addRewards(_reward);
     }
 
+
+    function calculateRewardsSupplier(address _supplier) public {
+      DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+      require(supplier.createdTimestamp > 0,'SUPPLIER_NOT_AVAILABLE');
+      uint256 periodFrom = supplier.periodId;
+      uint256 periodTo = periodId.current();
+
+      console.log(uint96(supplier.stream.flow));
+
+      for (uint256 i = periodFrom; i < periodTo; i++) { 
+
+     
+        DataTypes.Period memory _period = periodById[i];
+       
+        if (_period.rewards > 0) {
+             console.log(i);
+             console.log(_period.rewards);
+            uint256 areaFlow = (uint96(supplier.stream.flow) * (_period.periodSpan**2)) / 2;
+            uint256 areaDeposit = ( (_period.timestamp- supplier.createdTimestamp)*uint96(supplier.stream.flow) + supplier.deposit.amount) * _period.periodSpan;
+            uint256 totalAreaPeriod = areaDeposit;
+
+            if (supplier.stream.flow >= 0) {
+                totalAreaPeriod = totalAreaPeriod + areaFlow;
+            } else {
+                totalAreaPeriod = totalAreaPeriod  - areaFlow;
+            }
+            
+            console.log(_period.periodTWAP);
+            console.log(totalAreaPeriod);
+
+        }
+        }
+
+    }
+
     // ============= =============  Internal Functions ============= ============= //
     // #region InternalFunctions
 
@@ -117,11 +152,11 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
         //   spider = DataTypes.Global(0, 0, 0);
         //   periodById[0] = DataTypes.Period(0, 0, 0, 0, 0, 0);
         // }
-
+     
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
         if (supplier.createdTimestamp == 0) {
-            supplier.createdTimestamp == block.timestamp;
+            supplier.createdTimestamp = block.timestamp;
             supplier.supplier = _supplier;
 
             supplierId.increment();
@@ -167,7 +202,7 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
     function _addRewards(uint256 rewardAmount) internal {
         DataTypes.Period storage currentPeriod = periodById[periodId.current()];
 
-        currentPeriod.rewards = ++rewardAmount;
+        currentPeriod.rewards = currentPeriod.rewards + rewardAmount;
         if (currentPeriod.flow != 0) {
             ///// trigger re-schauffle
             _advancePeriod();
@@ -214,14 +249,14 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
             }
 
             lastPeriod.periodTWAP =  totalAreaPeriod;
+            lastPeriod.periodSpan = periodSpan;
             currentPeriod.startTWAP = lastPeriod.startTWAP + lastPeriod.periodTWAP ;
             
 
             currentPeriod.flow = lastPeriod.flow;
             currentPeriod.deposit = (uint96(lastPeriod.flow) * (periodSpan))+ lastPeriod.deposit;
 
-            console.log(lastPeriod.periodTWAP);
-            console.log(lastPeriod.periodId);
+         
             // for (uint256 i = 0; i < activeSuppliers.length; i++) {
             //   DataTypes.Supplier storage activeSupplier = suppliersByAddress[
             //     supplierAdressById[activeSuppliers[i]]
@@ -237,7 +272,7 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
 
         DataTypes.Supplier storage supplier = _getSupplier(from);
 
-        uint256 currentAmount = supplier.deposit.stakedAmount;
+        uint256 currentAmount = supplier.deposit.amount;
 
         _advancePeriod();
 
@@ -256,7 +291,6 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
     function _stream(address from, int96 flow) internal {
         DataTypes.Supplier storage supplier = _getSupplier(from);
 
-   
 
         _advancePeriod();
 
@@ -276,7 +310,7 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
 
     function withdrawDeposit(uint256 withdrawAmount) public {
         DataTypes.Supplier storage withdrawer = suppliersByAddress[msg.sender];
-        uint256 realtimeBalance = withdrawer.deposit.stakedAmount;
+        uint256 realtimeBalance = withdrawer.deposit.amount;
 
         uint256 flowSpan = block.timestamp - withdrawer.stream.initTimestamp;
 

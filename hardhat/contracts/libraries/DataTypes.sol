@@ -15,8 +15,8 @@ library DataTypes {
   }
 
   struct Deposit {
-    uint256 stakedAmount;
-    uint256 stakedTimestamp;
+    uint256 amount;
+    uint256 timestamp;
   }
 
   struct Supplier {
@@ -44,6 +44,7 @@ library DataTypes {
     uint256 startTWAP;
     uint256 periodTWAP;
     uint256 rewards;
+    uint256 periodSpan;
   }
 
 }
