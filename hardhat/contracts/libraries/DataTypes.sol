@@ -42,6 +42,7 @@ library DataTypes {
     int96 flow;
     uint256 deposit;
     uint256 startTWAP;
+    uint256 periodTWAP;
     uint256 rewards;
   }
 

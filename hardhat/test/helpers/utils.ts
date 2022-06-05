@@ -3,11 +3,25 @@ import { BaseProvider, TransactionReceipt } from '@ethersproject/providers';
 import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
+import { PeriodStruct, SuperPool } from '../../typechain-types/SuperPool';
 
 
 
 ////// CONTRACTS
 
+export const printPeriod = async (i:number,superPool:SuperPool)  => {
+
+ let  period: PeriodStruct = await superPool.getPeriod(i)
+
+  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  console.log(`PeriodId: ${period.periodId.toString()}`)
+  console.log(`TimeStamp ${period.timestamp.toString()} `)
+  console.log(`Flow ${period.flow.toString()}  units/s`)
+  console.log(`Deposit ${period.deposit.toString()}  units`)
+  console.log(`StartTWAP ${period.startTWAP.toString()}  units`)
+  console.log(`PeriodTWAP ${period.periodTWAP.toString()}  units`)
+  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+}
 
 
 
