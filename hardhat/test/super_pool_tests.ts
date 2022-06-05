@@ -119,7 +119,7 @@ describe('Super Pool Global', function () {
     ]);
 
     let t0 = parseInt(await getTimestamp());
-    printPeriod(0,superPool)
+   
     console.log('t0: ',0);
 
 
@@ -128,9 +128,9 @@ describe('Super Pool Global', function () {
     erc777 = await ERC777__factory.connect(TOKEN1, user2);
     receipt = await waitForTx(erc777.send(superPool.address, 20, '0x'));
     let t1  = parseInt(await getTimestamp());
-  
+    printPeriod(0,superPool)
 
-    printPeriod(1,superPool);
+  
 
     console.log('t1: ',t1-t0);
 
@@ -141,14 +141,15 @@ describe('Super Pool Global', function () {
 
     receipt = await waitForTx(user3SuperPool.mockReward(5));
     let t2  = parseInt(await getTimestamp());
-    printPeriod(2,superPool)
-
+  
+    printPeriod(1,superPool);
     console.log('t2: ',t2-t0);
 
     ////// recreate period 3 + 25 sec user3 mock rewards 8////
     await setNextBlockTimestamp(hre, t2 + 25);
     receipt = await waitForTx(user3SuperPool.mockReward(8));
-    printPeriod(3,superPool)
+
+    printPeriod(2,superPool)
     let t3  = parseInt(await getTimestamp());
     console.log('t3: ',t3-t0);
 
@@ -161,17 +162,17 @@ describe('Super Pool Global', function () {
     });
 
     receipt = await waitForTx(createFlowOperation.exec(user2));
-    printPeriod(4,superPool)
+
+    printPeriod(3,superPool)
     let t4  = parseInt(await getTimestamp());
     console.log('t4: ',t4-t0);
  
        ////// recreate period 5 + 10 sec user3 mock rewards 15////
    await setNextBlockTimestamp(hre, t4 + 10);
    receipt = await waitForTx(user3SuperPool.mockReward(15));
-   printPeriod(5,superPool)
+   printPeriod(4,superPool)
    let t5  = parseInt(await getTimestamp());
    console.log('t5: ',t5-t0);
-
 
   });
 });

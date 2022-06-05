@@ -220,7 +220,8 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
             currentPeriod.flow = lastPeriod.flow;
             currentPeriod.deposit = (uint96(lastPeriod.flow) * (periodSpan))+ lastPeriod.deposit;
 
-
+            console.log(lastPeriod.periodTWAP);
+            console.log(lastPeriod.periodId);
             // for (uint256 i = 0; i < activeSuppliers.length; i++) {
             //   DataTypes.Supplier storage activeSupplier = suppliersByAddress[
             //     supplierAdressById[activeSuppliers[i]]
