@@ -14,8 +14,8 @@ export const printPeriod = async (i:number,superPool:SuperPool)  => {
  let  period: PeriodStruct = await superPool.getPeriod(i)
 
   console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-  console.log(`PeriodId: ${period.periodId.toString()}`)
-  console.log(`TimeStamp ${period.timestamp.toString()} `)
+  console.log('\x1b[36m%s\x1b[0m',`PeriodId: ${period.periodId.toString()}`)
+  console.log('\x1b[36m%s\x1b[0m',`TimeStamp ${period.timestamp.toString()} `)
   console.log(`Flow ${period.flow.toString()}  units/s`)
   console.log(`Deposit ${period.deposit.toString()}  units`)
   console.log(`StartTWAP ${period.startTWAP.toString()}  units`)

@@ -119,6 +119,7 @@ describe('Super Pool Global', function () {
     ]);
 
     let t0 = parseInt(await getTimestamp());
+    printPeriod(0,superPool)
     console.log('t0: ',0);
 
 
@@ -128,7 +129,7 @@ describe('Super Pool Global', function () {
     receipt = await waitForTx(erc777.send(superPool.address, 20, '0x'));
     let t1  = parseInt(await getTimestamp());
   
-    printPeriod(0,superPool)
+
     printPeriod(1,superPool);
 
     console.log('t1: ',t1-t0);

@@ -208,13 +208,14 @@ contract SuperPool is SuperAppBase, IERC777Recipient {
             uint256 totalAreaPeriod = areaDeposit;
 
             if (lastPeriod.flow >= 0) {
-                totalAreaPeriod = ++areaFlow;
+                totalAreaPeriod = totalAreaPeriod + areaFlow;
             } else {
-                totalAreaPeriod = --areaFlow;
+                totalAreaPeriod = totalAreaPeriod  - areaFlow;
             }
 
+            lastPeriod.periodTWAP =  totalAreaPeriod;
             currentPeriod.startTWAP = lastPeriod.startTWAP + lastPeriod.periodTWAP ;
-            currentPeriod.periodTWAP =  totalAreaPeriod;
+            
 
             currentPeriod.flow = lastPeriod.flow;
             currentPeriod.deposit = (uint96(lastPeriod.flow) * (periodSpan))+ lastPeriod.deposit;
