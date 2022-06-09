@@ -1,6 +1,12 @@
 import { Contract, providers, Signer, utils } from "ethers";
 import { readFileSync } from "fs-extra";
+import { initEnv, waitForTx } from "../helpers/utils";
+import { SuperPoolHost__factory } from "../typechain-types";
 import { join } from "path";
+import * as hre from "hardhat";
+import { SuperPoolInputStruct } from "../typechain-types/SuperPoolHost";
+
+let TOKEN1 = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
 
 const contract_path_relative = '../src/assets/contracts/';
 const processDir = process.cwd()
@@ -10,29 +16,33 @@ const contract_config = JSON.parse(readFileSync( join(processDir,'contract.confi
 
 const tinker = async () => {
 
+  const [deployer] = await initEnv(hre)
+
+  console.log(deployer.address)
+
     // ADDRESS TO MINT TO:
-    
-    const toDeployContract = contract_config["SuperPool"]
-   
-    if (toDeployContract == undefined){
-      console.error("Your contract is not yet configured")
-      console.error('Please add the configuration to /hardhat/contract.config.json')
-      return
-      
-    }
-    
-    const provider = new providers.JsonRpcProvider();
-    const signer:Signer = await provider.getSigner()
-
-    const metadata = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`,'utf-8'))
+ let deployContract="superPoolHost"
+  let toDeployContract = contract_config[deployContract];
+ let superPoolHostMetadata = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`,'utf-8'))
   
-  
-   const yourContract:Contract = await  new Contract(metadata.address,metadata.abi,signer)
-   const contractAdress = await yourContract.address
-   const deployAdress = await signer.getAddress()
+  deployContract="poolFactory"
+  toDeployContract = contract_config[deployContract];
+  let poolFactotyMetadata = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`,'utf-8'))
 
-    console.log(`Contract address: ${contractAdress}`)
 
+
+  console.log(poolFactotyMetadata.address)
+  const superPoolHost = SuperPoolHost__factory.connect(superPoolHostMetadata.address, deployer)
+
+
+  let PoolInput: SuperPoolInputStruct = {
+    poolFactory: poolFactotyMetadata.address,
+    superToken:TOKEN1
+  }
+
+  //const poolInput = input
+
+  let  receipt = await waitForTx( superPoolHost.createSuperPool(PoolInput));
   
   
   };

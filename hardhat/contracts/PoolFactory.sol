@@ -18,6 +18,10 @@ import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinition
 import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 
+import {OpsReady} from "./gelato/OpsReady.sol";
+import {IOps} from "./gelato/IOps.sol";
+
+
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 
@@ -77,6 +81,8 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       TOKENS_RECIPIENT_INTERFACE_HASH,
       address(this)
     );
+
+    console.log('okey_factory');
   }
 
   // ============= =============  Modifiers ============= ============= //

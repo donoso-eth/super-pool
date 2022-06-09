@@ -29,16 +29,13 @@ contract SuperPoolHost  {
   
   function createSuperPool(
     DataTypes.SuperPoolInput memory superPoolInput
-
   ) external {
 
 
 
     address poolContract = Clones.clone(superPoolInput.poolFactory);
 
-    //// CLONE Pool Factory
 
-    address poolTokenContract= Clones.clone(superPoolInput.poolTokenFactory);
 
     uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL |
       SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
@@ -46,7 +43,7 @@ contract SuperPoolHost  {
       SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
 
 
-    host.registerAppByFactory(ISuperApp(poolTokenContract),configWord);
+    host.registerAppByFactory(ISuperApp(poolContract),configWord);
 
     //// INITIALIZE TOJEN cONTRACT WITH
     DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;
@@ -55,7 +52,11 @@ contract SuperPoolHost  {
       superToken:ISuperToken(superPoolInput.superToken)
     });
 
+
+    console.log('okey');
+
     IPoolFactory(poolContract).initialize(poolFactoryInitializer);
+
 
   }
 

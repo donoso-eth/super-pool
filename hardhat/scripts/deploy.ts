@@ -11,7 +11,7 @@ import config from "../hardhat.config";
 import { join } from "path";
 import { createHardhatAndFundPrivKeysFiles } from "../helpers/localAccounts";
 import * as hre from 'hardhat';
-import { ERC20__factory, Events__factory, SuperPool__factory } from "../typechain-types";
+import { ERC20__factory, Events__factory, PoolFactory__factory, SuperPoolHost__factory } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { utils } from "ethers";
@@ -71,30 +71,63 @@ if (network == "localhost") {
   const contract_config = JSON.parse(readFileSync( join(processDir,'contract.config.json'),'utf-8')) as {[key:string]: ICONTRACT_DEPLOY}
   
 
- 
-  const superFactory = await new SuperPool__factory(deployer).deploy(HOST,TOKEN1)
+  //// DEPLOY POOLFACTORY
 
-  let toDeployContract = contract_config['superPool'];
+  const poolFactoryImpl = await new PoolFactory__factory(deployer).deploy()
+
+  let toDeployContract = contract_config['poolFactory'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
-      abi: SuperPool__factory.abi.concat(eventAbi),
+      abi:  PoolFactory__factory.abi.concat(eventAbi),
       name: toDeployContract.name,
-      address: superFactory.address,
+      address: poolFactoryImpl.address,
       network: network,
     })
   );
 
   writeFileSync(
     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-    JSON.stringify(SuperPool__factory.abi.concat(eventAbi))
+    JSON.stringify(PoolFactory__factory.abi.concat(eventAbi))
   );
 
-  console.log(toDeployContract.name + ' Contract Deployed to:', superFactory.address);
+  console.log(toDeployContract.name + ' Contract Deployed to:', poolFactoryImpl.address);
 
 
   ///// copy Interfaces and create Metadata address/abi to assets folder
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+
+
+  //// DEPLOY SuperPoolHost
+
+  const superPoolHost = await new SuperPoolHost__factory(deployer).deploy(HOST)
+
+   toDeployContract = contract_config['superPoolHost'];
+  writeFileSync(
+    `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
+    JSON.stringify({
+      abi:  SuperPoolHost__factory.abi.concat(eventAbi),
+      name: toDeployContract.name,
+      address: superPoolHost.address,
+      network: network,
+    })
+  );
+
+  writeFileSync(
+    `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
+    JSON.stringify(PoolFactory__factory.abi.concat(eventAbi))
+  );
+
+  console.log(toDeployContract.name + ' Contract Deployed to:', superPoolHost.address);
+
+
+  ///// copy Interfaces and create Metadata address/abi to assets folder
+  copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+
+
+
+
+
 
 
 ////// DEPLOY SUPERTOKEN

@@ -14,11 +14,11 @@ library DataTypes {
 
   struct SuperPoolInput {
     address poolFactory;
-    address poolTokenFactory;
+    // address poolTokenFactory;
     address superToken;
-    address customTokenFactory;
-    string name;
-    string symbol;
+    // address customTokenFactory;
+    // string name;
+    // string symbol;
   }
 
   struct PoolFactoryInitializer {

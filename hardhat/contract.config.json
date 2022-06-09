@@ -1,1 +1,14 @@
-{"superPool":{"artifactsPath":"SuperPool.sol/SuperPool.json","name":"SuperPool","ctor":[],"jsonName":"super_pool"}}
+{
+  "poolFactory": {
+    "artifactsPath": "PoolFactory.sol/PoolFactory.json",
+    "name": "PoolFactory",
+    "ctor": [],
+    "jsonName": "pool_factory"
+  },
+  "superPoolHost": {
+    "artifactsPath": "SuperPoolHost.sol/SuperPoolHost.json",
+    "name": "SuperPoolHost",
+    "ctor": [],
+    "jsonName": "super_pool_host"
+  }
+}
