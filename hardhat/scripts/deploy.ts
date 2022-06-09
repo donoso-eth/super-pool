@@ -92,9 +92,35 @@ if (network == "localhost") {
 
   console.log(toDeployContract.name + ' Contract Deployed to:', superFactory.address);
 
+
   ///// copy Interfaces and create Metadata address/abi to assets folder
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
+
+////// DEPLOY SUPERTOKEN
+  // const superToken = await new SuperPool__factory(deployer).deploy(HOST,TOKEN1)
+
+  //  toDeployContract = contract_config['superPool'];
+  // writeFileSync(
+  //   `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
+  //   JSON.stringify({
+  //     abi: SuperPool__factory.abi.concat(eventAbi),
+  //     name: toDeployContract.name,
+  //     address: superFactory.address,
+  //     network: network,
+  //   })
+  // );
+
+  // writeFileSync(
+  //   `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
+  //   JSON.stringify(SuperPool__factory.abi.concat(eventAbi))
+  // );
+
+  // console.log(toDeployContract.name + ' Contract Deployed to:', superFactory.address);
+
+
+  ///// copy Interfaces and create Metadata address/abi to assets folder
+  copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
 
 

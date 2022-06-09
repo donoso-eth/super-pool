@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
+import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+
+
 /**
  * @title DataTypes
  * @author donoso_eth
@@ -8,6 +11,22 @@ pragma solidity ^0.8.0;
  * @notice A standard library of data types used throughout.
  */
 library DataTypes {
+
+  struct SuperPoolInput {
+    address poolFactory;
+    address poolTokenFactory;
+    address superToken;
+    address customTokenFactory;
+    string name;
+    string symbol;
+  }
+
+  struct PoolFactoryInitializer {
+    ISuperfluid host;
+    ISuperToken superToken;
+  }
+
+
   struct Stream { 
     int96 flow;
     uint256 initTimestamp;
