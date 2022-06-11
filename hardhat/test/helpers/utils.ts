@@ -11,6 +11,8 @@ import { PeriodStruct, SuperPool } from '../../typechain-types/SuperPool';
 
 export const printPeriod = async (i:number,superPool:SuperPool)  => {
 
+  console.log(i)
+
  let  period: PeriodStruct = await superPool.getPeriod(i)
 
   console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')

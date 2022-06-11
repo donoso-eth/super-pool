@@ -27,6 +27,7 @@ export interface SuperPoolHostInterface extends utils.Interface {
   functions: {
     "_pcrTokensIssued()": FunctionFragment;
     "createSuperPool((address,address))": FunctionFragment;
+    "poolAdressBySuperToken(address)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -37,6 +38,10 @@ export interface SuperPoolHostInterface extends utils.Interface {
     functionFragment: "createSuperPool",
     values: [SuperPoolInputStruct]
   ): string;
+  encodeFunctionData(
+    functionFragment: "poolAdressBySuperToken",
+    values: [string]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "_pcrTokensIssued",
@@ -44,6 +49,10 @@ export interface SuperPoolHostInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "createSuperPool",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "poolAdressBySuperToken",
     data: BytesLike
   ): Result;
 
@@ -85,6 +94,11 @@ export interface SuperPoolHost extends BaseContract {
       superPoolInput: SuperPoolInputStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    poolAdressBySuperToken(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
   };
 
   _pcrTokensIssued(overrides?: CallOverrides): Promise<BigNumber>;
@@ -94,6 +108,11 @@ export interface SuperPoolHost extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  poolAdressBySuperToken(
+    arg0: string,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
   callStatic: {
     _pcrTokensIssued(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -101,6 +120,11 @@ export interface SuperPoolHost extends BaseContract {
       superPoolInput: SuperPoolInputStruct,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    poolAdressBySuperToken(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<string>;
   };
 
   filters: {};
@@ -112,6 +136,11 @@ export interface SuperPoolHost extends BaseContract {
       superPoolInput: SuperPoolInputStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    poolAdressBySuperToken(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -120,6 +149,11 @@ export interface SuperPoolHost extends BaseContract {
     createSuperPool(
       superPoolInput: SuperPoolInputStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    poolAdressBySuperToken(
+      arg0: string,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }

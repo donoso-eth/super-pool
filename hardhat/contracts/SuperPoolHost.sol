@@ -21,7 +21,9 @@ contract SuperPoolHost  {
 
   ISuperfluid host;
 
-  mapping(address => uint256) private _pcrTokensByUser;
+  mapping(address => address) public poolAdressBySuperToken;
+
+
 
   constructor(ISuperfluid _host) {
     host = _host;
@@ -31,6 +33,7 @@ contract SuperPoolHost  {
     DataTypes.SuperPoolInput memory superPoolInput
   ) external {
 
+    require(poolAdressBySuperToken[superPoolInput.superToken] == address(0), 'POOL_EXISTS');
 
 
     address poolContract = Clones.clone(superPoolInput.poolFactory);
@@ -49,13 +52,18 @@ contract SuperPoolHost  {
     DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;
     poolFactoryInitializer = DataTypes.PoolFactoryInitializer ({
       host:host,
-      superToken:ISuperToken(superPoolInput.superToken)
+      superToken:ISuperToken(superPoolInput.superToken),
+      ops:superPoolInput.ops
     });
 
 
-    console.log('okey');
+   
 
     IPoolFactory(poolContract).initialize(poolFactoryInitializer);
+
+    poolAdressBySuperToken[superPoolInput.superToken] = poolContract;
+
+    console.log(poolContract);
 
 
   }

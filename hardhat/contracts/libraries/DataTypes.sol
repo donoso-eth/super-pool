@@ -19,17 +19,20 @@ library DataTypes {
     // address customTokenFactory;
     // string name;
     // string symbol;
+     address ops;
   }
 
   struct PoolFactoryInitializer {
     ISuperfluid host;
     ISuperToken superToken;
+    address ops;
   }
 
 
   struct Stream { 
     int96 flow;
     uint256 initTimestamp;
+    bytes32 cancelTaskId;
  
   }
 
@@ -41,18 +44,14 @@ library DataTypes {
   struct Supplier {
     address supplier;
     uint256 supplierId;
-    uint256 cumulatedReward;
-    Stream stream;
+    uint256 cumulatedYield;
+    Stream inStream;
+    Stream outStream;
     Deposit deposit;
     uint256 createdTimestamp;
     uint256 periodId;
   }
 
-  struct Global {
-      uint256 currnetPeriod;
-      uint256 totlaDeposit;
-      int96 totalFlow;
-  }
 
 
   struct Period {
@@ -62,7 +61,7 @@ library DataTypes {
     uint256 deposit;
     uint256 startTWAP;
     uint256 periodTWAP;
-    uint256 rewards;
+    uint256 yield;
     uint256 periodSpan;
   }
 
