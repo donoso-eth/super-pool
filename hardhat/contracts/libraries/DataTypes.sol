@@ -31,24 +31,24 @@ library DataTypes {
 
   struct Stream { 
     int96 flow;
-    uint256 initTimestamp;
     bytes32 cancelTaskId;
  
   }
 
   struct Deposit {
     uint256 amount;
-    uint256 timestamp;
   }
 
   struct Supplier {
     address supplier;
     uint256 supplierId;
     uint256 cumulatedYield;
+    uint256 TWAP;
     Stream inStream;
     Stream outStream;
-    Deposit deposit;
+    uint256 depositAmount;
     uint256 createdTimestamp;
+    uint256 lastTimestamp;
     uint256 periodId;
   }
 
