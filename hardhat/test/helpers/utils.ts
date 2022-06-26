@@ -3,28 +3,36 @@ import { BaseProvider, TransactionReceipt } from '@ethersproject/providers';
 import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
-import { PeriodStruct, SuperPool } from '../../typechain-types/SuperPool';
+import { PeriodStruct, PeriodStructOutput, SuperPool } from '../../typechain-types/SuperPool';
+import { PoolFactory } from '../../typechain-types';
 
 
 
 ////// CONTRACTS
 
-export const printPeriod = async (i:number,superPool:SuperPool)  => {
+export const printPeriod = async (superTokenPool: PoolFactory):Promise<any>  => {
 
-  console.log(i)
-
- let  period: PeriodStruct = await superPool.getPeriod(i)
+  let periodTimestamp = +((await superTokenPool.lastPeriodTimestamp()).toString());
+  let period = await superTokenPool.periodByTimestamp(periodTimestamp);
 
   console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-  console.log('\x1b[36m%s\x1b[0m',`PeriodId: ${period.periodId.toString()}`)
   console.log('\x1b[36m%s\x1b[0m',`TimeStamp ${period.timestamp.toString()} `)
-  console.log(`Flow ${period.flow.toString()}  units/s`)
+  console.log(`Flow ${period.flowRate.toString()}  units/s`)
   console.log(`Deposit ${period.deposit.toString()}  units`)
-  console.log(`StartTWAP ${period.startTWAP.toString()}  units`)
-  console.log(`PeriodTWAP ${period.periodTWAP.toString()}  units`)
-  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  console.log(`IndexYieldToken: ${period.yieldTokenIndex.toString()}  units`)
+  console.log(`IndexYieldFlowrate: ${period.yieldFlowRateIndex.toString()}  units`)
+  console.log(`Yield Per Second: ${period.yieldSec.toString()}  units`)
+  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+
+  return period;
 }
 
+export const printUser = async(superTokenPool:PoolFactory, userAddress:string):Promise<any> => {
+
+  let user = await superTokenPool.suppliersByAddress(userAddress);
+  console.log(user)
+  return user;
+}
 
 
 export function matchEvent(receipt: TransactionReceipt, name: string, eventContract: Contract,expectedArgs?: any[], ): void {

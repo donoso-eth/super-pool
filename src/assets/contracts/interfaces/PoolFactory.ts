@@ -19,13 +19,12 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
 export type PeriodStruct = {
   timestamp: BigNumberish;
-  periodId: BigNumberish;
-  flow: BigNumberish;
   deposit: BigNumberish;
-  startTWAP: BigNumberish;
-  periodTWAP: BigNumberish;
-  rewards: BigNumberish;
-  periodSpan: BigNumberish;
+  flowRate: BigNumberish;
+  depositFromFlowRate: BigNumberish;
+  yieldTokenIndex: BigNumberish;
+  yieldFlowRateIndex: BigNumberish;
+  yieldSec: BigNumberish;
 };
 
 export type PeriodStructOutput = [
@@ -35,64 +34,70 @@ export type PeriodStructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
-  BigNumber,
   BigNumber
 ] & {
   timestamp: BigNumber;
-  periodId: BigNumber;
-  flow: BigNumber;
   deposit: BigNumber;
-  startTWAP: BigNumber;
-  periodTWAP: BigNumber;
-  rewards: BigNumber;
-  periodSpan: BigNumber;
+  flowRate: BigNumber;
+  depositFromFlowRate: BigNumber;
+  yieldTokenIndex: BigNumber;
+  yieldFlowRateIndex: BigNumber;
+  yieldSec: BigNumber;
 };
 
-export type PoolFactoryInitializerStruct = { host: string; superToken: string };
-
-export type PoolFactoryInitializerStructOutput = [string, string] & {
+export type PoolFactoryInitializerStruct = {
   host: string;
   superToken: string;
+  ops: string;
 };
 
-export type StreamStruct = { flow: BigNumberish; initTimestamp: BigNumberish };
+export type PoolFactoryInitializerStructOutput = [string, string, string] & {
+  host: string;
+  superToken: string;
+  ops: string;
+};
 
-export type StreamStructOutput = [BigNumber, BigNumber] & {
+export type StreamStruct = { flow: BigNumberish; cancelTaskId: BytesLike };
+
+export type StreamStructOutput = [BigNumber, string] & {
   flow: BigNumber;
-  initTimestamp: BigNumber;
-};
-
-export type DepositStruct = { amount: BigNumberish; timestamp: BigNumberish };
-
-export type DepositStructOutput = [BigNumber, BigNumber] & {
-  amount: BigNumber;
-  timestamp: BigNumber;
+  cancelTaskId: string;
 };
 
 export interface PoolFactoryInterface extends utils.Interface {
   functions: {
+    "ETH()": FunctionFragment;
     "afterAgreementCreated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementTerminated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementUpdated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "beforeAgreementCreated(address,address,bytes32,bytes,bytes)": FunctionFragment;
     "beforeAgreementTerminated(address,address,bytes32,bytes,bytes)": FunctionFragment;
     "beforeAgreementUpdated(address,address,bytes32,bytes,bytes)": FunctionFragment;
-    "calculateRewardsSupplier(address)": FunctionFragment;
+    "calculateYieldSupplier(address)": FunctionFragment;
+    "cancelTask(bytes32)": FunctionFragment;
     "cfa()": FunctionFragment;
+    "checker(address)": FunctionFragment;
+    "gelato()": FunctionFragment;
     "getPeriod(uint256)": FunctionFragment;
     "host()": FunctionFragment;
-    "initialize((address,address))": FunctionFragment;
-    "mockReward(uint256)": FunctionFragment;
-    "periodById(uint256)": FunctionFragment;
+    "inStreamStop()": FunctionFragment;
+    "initialize((address,address,address))": FunctionFragment;
+    "mockYield(uint256)": FunctionFragment;
+    "ops()": FunctionFragment;
+    "periodByTimestamp(uint256)": FunctionFragment;
     "periodId()": FunctionFragment;
-    "spider()": FunctionFragment;
+    "stopstream(address)": FunctionFragment;
     "supplierId()": FunctionFragment;
     "suppliersByAddress(address)": FunctionFragment;
     "tokensReceived(address,address,address,uint256,bytes,bytes)": FunctionFragment;
+    "totalBalanceSupplier(address)": FunctionFragment;
+    "withdraw()": FunctionFragment;
     "withdrawDeposit(uint256)": FunctionFragment;
-    "withdrawStream()": FunctionFragment;
+    "withdrawStreamStart(uint256)": FunctionFragment;
+    "withdrawStreamStop(uint256)": FunctionFragment;
   };
 
+  encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "afterAgreementCreated",
     values: [string, string, BytesLike, BytesLike, BytesLike, BytesLike]
@@ -118,29 +123,40 @@ export interface PoolFactoryInterface extends utils.Interface {
     values: [string, string, BytesLike, BytesLike, BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "calculateRewardsSupplier",
+    functionFragment: "calculateYieldSupplier",
     values: [string]
   ): string;
+  encodeFunctionData(
+    functionFragment: "cancelTask",
+    values: [BytesLike]
+  ): string;
   encodeFunctionData(functionFragment: "cfa", values?: undefined): string;
+  encodeFunctionData(functionFragment: "checker", values: [string]): string;
+  encodeFunctionData(functionFragment: "gelato", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getPeriod",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "host", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "inStreamStop",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "initialize",
     values: [PoolFactoryInitializerStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "mockReward",
+    functionFragment: "mockYield",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "ops", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "periodById",
+    functionFragment: "periodByTimestamp",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "periodId", values?: undefined): string;
-  encodeFunctionData(functionFragment: "spider", values?: undefined): string;
+  encodeFunctionData(functionFragment: "stopstream", values: [string]): string;
   encodeFunctionData(
     functionFragment: "supplierId",
     values?: undefined
@@ -154,14 +170,24 @@ export interface PoolFactoryInterface extends utils.Interface {
     values: [string, string, string, BigNumberish, BytesLike, BytesLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "totalBalanceSupplier",
+    values: [string]
+  ): string;
+  encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
+  encodeFunctionData(
     functionFragment: "withdrawDeposit",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "withdrawStream",
-    values?: undefined
+    functionFragment: "withdrawStreamStart",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawStreamStop",
+    values: [BigNumberish]
   ): string;
 
+  decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "afterAgreementCreated",
     data: BytesLike
@@ -187,17 +213,28 @@ export interface PoolFactoryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "calculateRewardsSupplier",
+    functionFragment: "calculateYieldSupplier",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "cancelTask", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "cfa", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "checker", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "gelato", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getPeriod", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "host", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "inStreamStop",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "mockReward", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "periodById", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "mockYield", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "ops", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "periodByTimestamp",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "periodId", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "spider", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "stopstream", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "supplierId", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "suppliersByAddress",
@@ -208,11 +245,20 @@ export interface PoolFactoryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "totalBalanceSupplier",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(
     functionFragment: "withdrawDeposit",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "withdrawStream",
+    functionFragment: "withdrawStreamStart",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawStreamStop",
     data: BytesLike
   ): Result;
 
@@ -254,6 +300,8 @@ export interface PoolFactory extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    ETH(overrides?: CallOverrides): Promise<[string]>;
+
     afterAgreementCreated(
       _superToken: string,
       _agreementClass: string,
@@ -311,12 +359,24 @@ export interface PoolFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    calculateRewardsSupplier(
+    calculateYieldSupplier(
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    cancelTask(
+      _taskId: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     cfa(overrides?: CallOverrides): Promise<[string]>;
+
+    checker(
+      receiver: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    gelato(overrides?: CallOverrides): Promise<[string]>;
 
     getPeriod(
       _periodId: BigNumberish,
@@ -325,17 +385,23 @@ export interface PoolFactory extends BaseContract {
 
     host(overrides?: CallOverrides): Promise<[string]>;
 
+    inStreamStop(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     initialize(
       poolFactoryInitializer: PoolFactoryInitializerStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    mockReward(
-      _reward: BigNumberish,
+    mockYield(
+      _yield: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    periodById(
+    ops(overrides?: CallOverrides): Promise<[string]>;
+
+    periodByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
@@ -346,17 +412,15 @@ export interface PoolFactory extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
         BigNumber
       ] & {
         timestamp: BigNumber;
-        periodId: BigNumber;
-        flow: BigNumber;
         deposit: BigNumber;
-        startTWAP: BigNumber;
-        periodTWAP: BigNumber;
-        rewards: BigNumber;
-        periodSpan: BigNumber;
+        flowRate: BigNumber;
+        depositFromFlowRate: BigNumber;
+        yieldTokenIndex: BigNumber;
+        yieldFlowRateIndex: BigNumber;
+        yieldSec: BigNumber;
       }
     >;
 
@@ -364,15 +428,10 @@ export interface PoolFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { _value: BigNumber }>;
 
-    spider(
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber] & {
-        currnetPeriod: BigNumber;
-        totlaDeposit: BigNumber;
-        totalFlow: BigNumber;
-      }
-    >;
+    stopstream(
+      receiver: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     supplierId(
       overrides?: CallOverrides
@@ -386,17 +445,27 @@ export interface PoolFactory extends BaseContract {
         string,
         BigNumber,
         BigNumber,
+        BigNumber,
         StreamStructOutput,
-        DepositStructOutput,
+        StreamStructOutput,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
         BigNumber,
         BigNumber
       ] & {
         supplier: string;
         supplierId: BigNumber;
-        cumulatedReward: BigNumber;
-        stream: StreamStructOutput;
-        deposit: DepositStructOutput;
+        cumulatedYield: BigNumber;
+        TWAP: BigNumber;
+        inStream: StreamStructOutput;
+        outStream: StreamStructOutput;
+        streamTimestamp: BigNumber;
+        depositAmount: BigNumber;
+        depositTimestamp: BigNumber;
         createdTimestamp: BigNumber;
+        lastTimestamp: BigNumber;
         periodId: BigNumber;
       }
     >;
@@ -411,15 +480,32 @@ export interface PoolFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    totalBalanceSupplier(
+      supplier: string,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { realtimeBalance: BigNumber }>;
+
+    withdraw(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     withdrawDeposit(
       withdrawAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    withdrawStream(
+    withdrawStreamStart(
+      stopDateInMs: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    withdrawStreamStop(
+      stopDateInMs: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
+
+  ETH(overrides?: CallOverrides): Promise<string>;
 
   afterAgreementCreated(
     _superToken: string,
@@ -478,12 +564,24 @@ export interface PoolFactory extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
-  calculateRewardsSupplier(
+  calculateYieldSupplier(
     _supplier: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  cancelTask(
+    _taskId: BytesLike,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   cfa(overrides?: CallOverrides): Promise<string>;
+
+  checker(
+    receiver: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  gelato(overrides?: CallOverrides): Promise<string>;
 
   getPeriod(
     _periodId: BigNumberish,
@@ -492,17 +590,23 @@ export interface PoolFactory extends BaseContract {
 
   host(overrides?: CallOverrides): Promise<string>;
 
+  inStreamStop(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   initialize(
     poolFactoryInitializer: PoolFactoryInitializerStruct,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  mockReward(
-    _reward: BigNumberish,
+  mockYield(
+    _yield: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  periodById(
+  ops(overrides?: CallOverrides): Promise<string>;
+
+  periodByTimestamp(
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<
@@ -513,31 +617,24 @@ export interface PoolFactory extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
-      BigNumber,
       BigNumber
     ] & {
       timestamp: BigNumber;
-      periodId: BigNumber;
-      flow: BigNumber;
       deposit: BigNumber;
-      startTWAP: BigNumber;
-      periodTWAP: BigNumber;
-      rewards: BigNumber;
-      periodSpan: BigNumber;
+      flowRate: BigNumber;
+      depositFromFlowRate: BigNumber;
+      yieldTokenIndex: BigNumber;
+      yieldFlowRateIndex: BigNumber;
+      yieldSec: BigNumber;
     }
   >;
 
   periodId(overrides?: CallOverrides): Promise<BigNumber>;
 
-  spider(
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber, BigNumber] & {
-      currnetPeriod: BigNumber;
-      totlaDeposit: BigNumber;
-      totalFlow: BigNumber;
-    }
-  >;
+  stopstream(
+    receiver: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -549,17 +646,27 @@ export interface PoolFactory extends BaseContract {
       string,
       BigNumber,
       BigNumber,
+      BigNumber,
       StreamStructOutput,
-      DepositStructOutput,
+      StreamStructOutput,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
       BigNumber,
       BigNumber
     ] & {
       supplier: string;
       supplierId: BigNumber;
-      cumulatedReward: BigNumber;
-      stream: StreamStructOutput;
-      deposit: DepositStructOutput;
+      cumulatedYield: BigNumber;
+      TWAP: BigNumber;
+      inStream: StreamStructOutput;
+      outStream: StreamStructOutput;
+      streamTimestamp: BigNumber;
+      depositAmount: BigNumber;
+      depositTimestamp: BigNumber;
       createdTimestamp: BigNumber;
+      lastTimestamp: BigNumber;
       periodId: BigNumber;
     }
   >;
@@ -574,16 +681,33 @@ export interface PoolFactory extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  totalBalanceSupplier(
+    supplier: string,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  withdraw(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   withdrawDeposit(
     withdrawAmount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  withdrawStream(
+  withdrawStreamStart(
+    stopDateInMs: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  withdrawStreamStop(
+    stopDateInMs: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    ETH(overrides?: CallOverrides): Promise<string>;
+
     afterAgreementCreated(
       _superToken: string,
       _agreementClass: string,
@@ -641,12 +765,21 @@ export interface PoolFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    calculateRewardsSupplier(
+    calculateYieldSupplier(
       _supplier: string,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<BigNumber>;
+
+    cancelTask(_taskId: BytesLike, overrides?: CallOverrides): Promise<void>;
 
     cfa(overrides?: CallOverrides): Promise<string>;
+
+    checker(
+      receiver: string,
+      overrides?: CallOverrides
+    ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
+
+    gelato(overrides?: CallOverrides): Promise<string>;
 
     getPeriod(
       _periodId: BigNumberish,
@@ -655,14 +788,18 @@ export interface PoolFactory extends BaseContract {
 
     host(overrides?: CallOverrides): Promise<string>;
 
+    inStreamStop(overrides?: CallOverrides): Promise<void>;
+
     initialize(
       poolFactoryInitializer: PoolFactoryInitializerStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    mockReward(_reward: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    mockYield(_yield: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    periodById(
+    ops(overrides?: CallOverrides): Promise<string>;
+
+    periodByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
@@ -673,31 +810,21 @@ export interface PoolFactory extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
         BigNumber
       ] & {
         timestamp: BigNumber;
-        periodId: BigNumber;
-        flow: BigNumber;
         deposit: BigNumber;
-        startTWAP: BigNumber;
-        periodTWAP: BigNumber;
-        rewards: BigNumber;
-        periodSpan: BigNumber;
+        flowRate: BigNumber;
+        depositFromFlowRate: BigNumber;
+        yieldTokenIndex: BigNumber;
+        yieldFlowRateIndex: BigNumber;
+        yieldSec: BigNumber;
       }
     >;
 
     periodId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    spider(
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber] & {
-        currnetPeriod: BigNumber;
-        totlaDeposit: BigNumber;
-        totalFlow: BigNumber;
-      }
-    >;
+    stopstream(receiver: string, overrides?: CallOverrides): Promise<void>;
 
     supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -709,17 +836,27 @@ export interface PoolFactory extends BaseContract {
         string,
         BigNumber,
         BigNumber,
+        BigNumber,
         StreamStructOutput,
-        DepositStructOutput,
+        StreamStructOutput,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
         BigNumber,
         BigNumber
       ] & {
         supplier: string;
         supplierId: BigNumber;
-        cumulatedReward: BigNumber;
-        stream: StreamStructOutput;
-        deposit: DepositStructOutput;
+        cumulatedYield: BigNumber;
+        TWAP: BigNumber;
+        inStream: StreamStructOutput;
+        outStream: StreamStructOutput;
+        streamTimestamp: BigNumber;
+        depositAmount: BigNumber;
+        depositTimestamp: BigNumber;
         createdTimestamp: BigNumber;
+        lastTimestamp: BigNumber;
         periodId: BigNumber;
       }
     >;
@@ -734,12 +871,27 @@ export interface PoolFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    totalBalanceSupplier(
+      supplier: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    withdraw(overrides?: CallOverrides): Promise<boolean>;
+
     withdrawDeposit(
       withdrawAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    withdrawStream(overrides?: CallOverrides): Promise<void>;
+    withdrawStreamStart(
+      stopDateInMs: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    withdrawStreamStop(
+      stopDateInMs: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -748,6 +900,8 @@ export interface PoolFactory extends BaseContract {
   };
 
   estimateGas: {
+    ETH(overrides?: CallOverrides): Promise<BigNumber>;
+
     afterAgreementCreated(
       _superToken: string,
       _agreementClass: string,
@@ -805,12 +959,24 @@ export interface PoolFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    calculateRewardsSupplier(
+    calculateYieldSupplier(
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    cancelTask(
+      _taskId: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     cfa(overrides?: CallOverrides): Promise<BigNumber>;
+
+    checker(
+      receiver: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    gelato(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPeriod(
       _periodId: BigNumberish,
@@ -819,24 +985,33 @@ export interface PoolFactory extends BaseContract {
 
     host(overrides?: CallOverrides): Promise<BigNumber>;
 
+    inStreamStop(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     initialize(
       poolFactoryInitializer: PoolFactoryInitializerStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    mockReward(
-      _reward: BigNumberish,
+    mockYield(
+      _yield: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    periodById(
+    ops(overrides?: CallOverrides): Promise<BigNumber>;
+
+    periodByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     periodId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    spider(overrides?: CallOverrides): Promise<BigNumber>;
+    stopstream(
+      receiver: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -855,17 +1030,34 @@ export interface PoolFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    totalBalanceSupplier(
+      supplier: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    withdraw(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     withdrawDeposit(
       withdrawAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    withdrawStream(
+    withdrawStreamStart(
+      stopDateInMs: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    withdrawStreamStop(
+      stopDateInMs: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    ETH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     afterAgreementCreated(
       _superToken: string,
       _agreementClass: string,
@@ -923,12 +1115,24 @@ export interface PoolFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    calculateRewardsSupplier(
+    calculateYieldSupplier(
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    cancelTask(
+      _taskId: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     cfa(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    checker(
+      receiver: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    gelato(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getPeriod(
       _periodId: BigNumberish,
@@ -937,24 +1141,33 @@ export interface PoolFactory extends BaseContract {
 
     host(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    inStreamStop(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     initialize(
       poolFactoryInitializer: PoolFactoryInitializerStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    mockReward(
-      _reward: BigNumberish,
+    mockYield(
+      _yield: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    periodById(
+    ops(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    periodByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     periodId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    spider(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    stopstream(
+      receiver: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     supplierId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -973,12 +1186,27 @@ export interface PoolFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    totalBalanceSupplier(
+      supplier: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    withdraw(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     withdrawDeposit(
       withdrawAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    withdrawStream(
+    withdrawStreamStart(
+      stopDateInMs: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    withdrawStreamStop(
+      stopDateInMs: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

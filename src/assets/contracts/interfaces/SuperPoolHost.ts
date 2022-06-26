@@ -16,17 +16,22 @@ import { FunctionFragment, Result } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export type SuperPoolInputStruct = { poolFactory: string; superToken: string };
-
-export type SuperPoolInputStructOutput = [string, string] & {
+export type SuperPoolInputStruct = {
   poolFactory: string;
   superToken: string;
+  ops: string;
+};
+
+export type SuperPoolInputStructOutput = [string, string, string] & {
+  poolFactory: string;
+  superToken: string;
+  ops: string;
 };
 
 export interface SuperPoolHostInterface extends utils.Interface {
   functions: {
     "_pcrTokensIssued()": FunctionFragment;
-    "createSuperPool((address,address))": FunctionFragment;
+    "createSuperPool((address,address,address))": FunctionFragment;
     "poolAdressBySuperToken(address)": FunctionFragment;
   };
 

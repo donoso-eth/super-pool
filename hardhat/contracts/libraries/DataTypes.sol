@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
-
 /**
  * @title DataTypes
  * @author donoso_eth
@@ -11,7 +10,6 @@ import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinition
  * @notice A standard library of data types used throughout.
  */
 library DataTypes {
-
   struct SuperPoolInput {
     address poolFactory;
     // address poolTokenFactory;
@@ -19,7 +17,7 @@ library DataTypes {
     // address customTokenFactory;
     // string name;
     // string symbol;
-     address ops;
+    address ops;
   }
 
   struct PoolFactoryInitializer {
@@ -28,41 +26,35 @@ library DataTypes {
     address ops;
   }
 
-
-  struct Stream { 
+  struct Stream {
     int96 flow;
     bytes32 cancelTaskId;
- 
+    uint256 timestamp;
   }
 
   struct Deposit {
     uint256 amount;
+    uint256 timestamp;
   }
 
   struct Supplier {
     address supplier;
     uint256 supplierId;
     uint256 cumulatedYield;
-    uint256 TWAP;
     Stream inStream;
     Stream outStream;
-    uint256 depositAmount;
+    Deposit deposit;
     uint256 createdTimestamp;
-    uint256 lastTimestamp;
-    uint256 periodId;
+
   }
-
-
 
   struct Period {
     uint256 timestamp;
-    uint256 periodId;
-    int96 flow;
     uint256 deposit;
-    uint256 startTWAP;
-    uint256 periodTWAP;
-    uint256 yield;
-    uint256 periodSpan;
+    int96 flowRate;
+    uint256 depositFromFlowRate;
+    uint256 yieldTokenIndex;
+    uint256 yieldFlowRateIndex;
+    uint256 yieldSec;
   }
-
 }
