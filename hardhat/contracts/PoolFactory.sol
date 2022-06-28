@@ -19,6 +19,8 @@ import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinition
 import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/apps/SuperAppBase.sol";
 
+import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
+
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
@@ -33,6 +35,9 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
   ISuperToken superToken;
 
+  using CFAv1Library for CFAv1Library.InitData;
+  CFAv1Library.InitData internal _cfaLib;
+
   uint256[] activeSuppliers;
 
   mapping(address => DataTypes.Supplier) public suppliersByAddress;
@@ -40,6 +45,8 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   mapping(uint256 => address) supplierAdressById;
 
   mapping(uint256 => DataTypes.Period) public periodByTimestamp;
+
+  mapping(uint256 => uint256) public periodTimestampById;
   uint256 public lastPeriodTimestamp;
 
   Counters.Counter public periodId;
@@ -54,51 +61,29 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   /**
    * @notice initializer of the contract/oracle
    */
-  function initialize(
-    DataTypes.PoolFactoryInitializer calldata poolFactoryInitializer
-  ) external initializer {
+  function initialize(DataTypes.PoolFactoryInitializer calldata poolFactoryInitializer) external initializer {
     ///initialState
     lastPeriodTimestamp = block.timestamp;
-    periodByTimestamp[block.timestamp] = DataTypes.Period(
-      block.timestamp,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    );
-    console.log(block.timestamp);
-    //// super app
+    periodByTimestamp[block.timestamp] = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    periodTimestampById[0] = block.timestamp;
+
+    //// super app && superfluid
     host = poolFactoryInitializer.host;
     superToken = poolFactoryInitializer.superToken;
-    cfa = IConstantFlowAgreementV1(
-      address(
-        host.getAgreementClass(
-          keccak256(
-            "org.superfluid-finance.agreements.ConstantFlowAgreement.v1"
-          )
-        )
-      )
-    );
+    cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
+
+    _cfaLib = CFAv1Library.InitData(host, cfa);
 
     //// gelato
     ops = poolFactoryInitializer.ops;
     gelato = IOps(poolFactoryInitializer.ops).gelato();
 
     //// tokens receie implementation
-    IERC1820Registry _erc1820 = IERC1820Registry(
-      0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
-    bytes32 TOKENS_RECIPIENT_INTERFACE_HASH = keccak256(
-      "ERC777TokensRecipient"
-    );
+    IERC1820Registry _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
+    bytes32 TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
 
-    _erc1820.setInterfaceImplementer(
-      address(this),
-      TOKENS_RECIPIENT_INTERFACE_HASH,
-      address(this)
-    );
+    _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     ///// initializators
   }
@@ -119,11 +104,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
   // endregion
 
-  function getPeriod(uint256 _periodId)
-    public
-    view
-    returns (DataTypes.Period memory)
-  {
+  function getPeriod(uint256 _periodId) public view returns (DataTypes.Period memory) {
     return periodByTimestamp[_periodId];
   }
 
@@ -135,24 +116,175 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   ) internal {
     DataTypes.Period storage period = periodByTimestamp[lastPeriodTimestamp];
     period.deposit = period.deposit + inDeposit - outDeposit;
-    period.flowRate = period.flowRate + inFlow - outFlow;
+    period.inFlowRate = period.inFlowRate + inFlow - outFlow;
   }
 
   function mockYield(uint256 _yield) public {
     _updateYield(_yield);
   }
 
-  function calculateYieldSupplier(address _supplier)
-    public
-    returns (uint256 yield)
-  {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    require(supplier.createdTimestamp > 0, "SUPPLIER_NOT_AVAILABLE");
+  // ============= =============  User Interaction PoolEvents ============= ============= //
+  // #region User Interaction PoolEvents
 
-    uint256 startDepositTimestamp = supplier.deposit.timestamp;
+  //// deposit (erc777 tokensReceive callback or afterCreatedstream  and afterTerminatedCallback  superapp callback)
 
-    return yield;
+  function tokensReceived(
+    address operator,
+    address from,
+    address to,
+    uint256 amount,
+    bytes calldata userData,
+    bytes calldata operatorData
+  ) external override {
+    // do stuff
+    require(msg.sender == address(superToken), "INVALID_TOKEN");
+    require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
+
+    console.log("tokens_reveived");
+    _getSupplier(from);
+
+    _poolUpdate();
+
+    //// update global period
+
+    ///// suppler config updated && period
+
+    _updateSupplierDeposit(from, amount, 0);
+
+    emit Events.SupplyDepositStarted(from, amount);
   }
+
+  //// withdraw
+
+  function withdrawDeposit(uint256 withdrawAmount) public {
+    uint256 realTimeBalance = totalBalanceSupplier(msg.sender);
+
+    require(realTimeBalance >= withdrawAmount, "NOT_ENOUGH_BALANCE");
+
+    _poolUpdate();
+
+    _updateSupplierDeposit(msg.sender, 0, withdrawAmount);
+
+    ISuperToken(superToken).send(msg.sender, withdrawAmount, "0x");
+  }
+
+  function inStreamCallback(
+    address from,
+    int96 inFlow,
+    int96 outFlow
+  ) internal {
+    DataTypes.Supplier storage supplier = _getSupplier(from);
+
+    _poolUpdate();
+
+    int96 currentFlow = supplier.inStream.flow;
+
+    _updateSupplierFlow(from, inFlow, 0);
+
+    emit Events.SupplyStreamStarted(from, inFlow);
+  }
+
+  function afterUpdatedCallback() internal {}
+
+  function inStreamStop() public {
+    DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
+    require(supplier.inStream.flow > 0, "NO_STREAM");
+
+    _poolUpdate();
+
+    _updateSupplierFlow(msg.sender, -supplier.inStream.flow, 0);
+
+    _updatePeriod(0, 0, -supplier.inStream.flow, 0);
+
+    host.callAgreement(
+      cfa,
+      abi.encodeWithSelector(
+        cfa.deleteFlow.selector,
+        superToken,
+        msg.sender,
+        address(this),
+        new bytes(0) // placeholder
+      ),
+      "0x"
+    );
+  }
+
+  function withdrawStreamStart(uint256 stopDateInMs) public {
+    //// update state supplier
+    DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
+
+    require(supplier.outStream.flow == 0, "OUT_STREAM_EXISTS");
+
+    uint256 realTimeBalance = totalBalanceSupplier(msg.sender);
+
+    require(realTimeBalance > 0, "NO_BALANCE");
+
+    _poolUpdate();
+
+    int96 outFlowRate = int96(int256(realTimeBalance) / int256(stopDateInMs - block.timestamp));
+
+    _updateSupplierFlow(msg.sender, 0, outFlowRate);
+
+
+    ////// start stream
+
+    _cfaLib.createFlow(msg.sender, superToken, outFlowRate);
+
+    ////// createGelato Task
+  }
+
+  /// request by the user trough the contract /// TODO Handle terminated when
+  function withdrawStreamStop(uint256 stopDateInMs) public {
+    DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
+
+    require(supplier.outStream.flow > 0, "OUT_STREAM_NOT_EXISTS");
+
+    if (supplier.outStream.flow != 0) {} else {
+      uint256 totalDeposit = supplier.deposit.amount + uint96(supplier.inStream.flow) * (block.timestamp - supplier.timestamp);
+
+      require(totalDeposit > 0, "NO_BALANCE");
+
+      //// TO DO calculate yeild
+      uint256 totalYield = 3;
+
+      int96 outFlowRate = int96(int256(totalDeposit + totalYield) / int256(stopDateInMs - block.timestamp));
+
+      //// Advance period
+
+      //// start stream
+
+      host.callAgreement(
+        cfa,
+        abi.encodeWithSelector(
+          cfa.createFlow.selector,
+          superToken,
+          msg.sender,
+          outFlowRate,
+          new bytes(0) // placeholder
+        ),
+        "0x"
+      );
+
+      ////// set closing stream task
+      bytes32 taskId = IOps(ops).createTimedTask(
+        uint128(stopDateInMs),
+        180,
+        address(this),
+        this.stopstream.selector,
+        address(this),
+        abi.encodeWithSelector(this.checker.selector, msg.sender),
+        ETH,
+        false
+      );
+
+      //// update state supplier
+      supplier.outStream.cancelTaskId = taskId;
+      supplier.timestamp = block.timestamp;
+      supplier.outStream.flow = outFlowRate;
+    }
+  }
+
+  // #endregion User Interaction PoolEvents
 
   // ============= =============  Gelato functions ============= ============= //
   // #region Gelato functions
@@ -162,10 +294,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     _;
   }
 
-  function createTimedTask(address supplier, uint256 stopDateInMs)
-    internal
-    returns (bytes32 taskId)
-  {
+  function createTimedTask(address supplier, uint256 stopDateInMs) internal returns (bytes32 taskId) {
     taskId = IOps(ops).createTimedTask(
       uint128(stopDateInMs),
       180,
@@ -219,22 +348,14 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   }
 
   // called by Gelato Execs
-  function checker(address receiver)
-    external
-    returns (bool canExec, bytes memory execPayload)
-  {
+  function checker(address receiver) external returns (bool canExec, bytes memory execPayload) {
     canExec = true;
 
-    execPayload = abi.encodeWithSelector(
-      this.stopstream.selector,
-      address(receiver)
-    );
+    execPayload = abi.encodeWithSelector(this.stopstream.selector, address(receiver));
   }
 
   function withdraw() external returns (bool) {
-    (bool result, ) = payable(msg.sender).call{value: address(this).balance}(
-      ""
-    );
+    (bool result, ) = payable(msg.sender).call{value: address(this).balance}("");
     return result;
   }
 
@@ -254,16 +375,13 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   // ============= =============  Internal Supplier Functions ============= ============= //
   // #region InternalFunctions
 
-  function _getSupplier(address _supplier)
-    internal
-    returns (DataTypes.Supplier storage)
-  {
+  function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
     if (supplier.createdTimestamp == 0) {
       supplier.createdTimestamp = block.timestamp;
       supplier.supplier = _supplier;
-
+      supplier.timestamp = block.timestamp;
       supplierId.increment();
       supplier.supplierId = supplierId.current();
 
@@ -278,258 +396,217 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     return supplier;
   }
 
-  function _updateSupplier(
+  function _updateSupplierDeposit(
     address _supplier,
     uint256 inDeposit,
-    uint256 outDeposit,
+    uint256 outDeposit
+  ) internal {
+    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+
+    /// Supplier next values
+    uint256 yieldOfPeriod = _calculateYieldSupplier(_supplier);
+    supplier.cumulatedYield = supplier.cumulatedYield + yieldOfPeriod;
+
+    supplier.deposit.amount += inDeposit - outDeposit;
+    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+
+    supplier.timestamp = block.timestamp;
+
+    //////// if newnetFlow < 0 means  there is already a stream out
+    if (netFlow < 0) {
+      //// cancel prevoius task
+      cancelTask(supplier.outStream.cancelTaskId);
+
+      uint256 stopDateInMs = block.timestamp + supplier.deposit.amount / uint96(netFlow);
+      bytes32 taskId = createTimedTask(_supplier, stopDateInMs);
+    } else {
+      ///// update period
+      periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + inDeposit - outDeposit;
+    }
+  }
+
+  function _updateSupplierFlow(
+    address _supplier,
     int96 inFlow,
     int96 outFlow
   ) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
     /// Supplier next values
-    _calculateYieldSupplier(_supplier);
+    uint256 yieldOfPeriod = _calculateYieldSupplier(_supplier);
+    supplier.cumulatedYield = supplier.cumulatedYield + yieldOfPeriod;
 
-    supplier.deposit.amount += inDeposit - outDeposit;
-    int96 newNetFlow = supplier.inStream.flow +
-      inFlow -
-      supplier.outStream.flow -
-      outFlow;
+    int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
 
-    if (supplier.outStream.cancelTaskId != bytes32(0)) {
+    supplier.inStream.flow = supplier.inStream.flow + inFlow;
+    supplier.outStream.flow = supplier.outStream.flow - outFlow;
+
+    int96 newNetFlow = supplier.inStream.flow - supplier.outStream.flow;
+
+    supplier.timestamp = block.timestamp;
+
+    if (currentNetFlow < 0) {
+      /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
       cancelTask(supplier.outStream.cancelTaskId);
+      supplier.outStream.cancelTaskId = bytes32(0);
+      if (newNetFlow >= 0) {
+        /// update values
+        /// balance assoication from deposit from to stream
+        supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(currentNetFlow);
+        periodByTimestamp[block.timestamp].outFlowRate -= currentNetFlow;
+        periodByTimestamp[block.timestamp].inFlowRate += newNetFlow;
+        periodByTimestamp[block.timestamp].deposit = supplier.deposit.amount;
+        periodByTimestamp[block.timestamp].depositFromOutFlowRate = 0;
+      } else {
+        supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(currentNetFlow);
+        periodByTimestamp[block.timestamp].outFlowRate -= currentNetFlow + newNetFlow;
+        //// creatre timed task
+      }
+    } else {
+      /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW THE SAME
+      if (newNetFlow >= 0) {
+        /// update values
+
+        supplier.inStream.flow = supplier.inStream.flow + inFlow;
+        periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + inFlow;
+      } else {
+        /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW NEGATIVE
+
+        //// transfer total balance to depositFromOutFlow
+        uint256 total = supplier.cumulatedYield + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
+        supplier.cumulatedYield = 0;
+        supplier.deposit.amount = total;
+        //// creatre timed task
+      }
     }
 
+    //////// if newnetFlow < 0 CRETate TIMED TASK
     if (newNetFlow < 0) {
-      uint256 stopDateInMs = block.timestamp +
-        supplier.deposit.amount /
-        uint96(newNetFlow);
+      uint256 stopDateInMs = block.timestamp + supplier.deposit.amount.div(uint96(newNetFlow));
       bytes32 taskId = createTimedTask(_supplier, stopDateInMs);
+      supplier.outStream.cancelTaskId = taskId;
     }
   }
 
-  function totalBalanceSupplier(address supplier)
-    public
-    view
-    returns (uint256 realtimeBalance)
-  {
-    DataTypes.Supplier storage withdrawer = suppliersByAddress[msg.sender];
+  function totalBalanceSupplier(address _supplier) public view returns (uint256 realtimeBalance) {
+    uint256 yieldTillLastPeriod = _calculateYieldSupplier(_supplier);
+   
+    (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex, uint256 yieldOutFlowRateIndex) = _calculateIndexes();
 
+    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
-    uint256 totalDeposit = (block.timestamp - withdrawer.inStream.timestamp) *
-      uint96(withdrawer.inStream.flow) - (block.timestamp - withdrawer.outStream.timestamp) *uint96(withdrawer.outStream.flow);
-
-    realtimeBalance = withdrawer.deposit.amount + totalDeposit;
+    realtimeBalance =   supplier.cumulatedYield + 
+      yieldTokenIndex *
+      supplier.deposit.amount +
+      uint96(supplier.inStream.flow) *
+      yieldInFlowRateIndex +
+      (yieldOutFlowRateIndex).div(uint96(supplier.outStream.flow));
   }
 
-  function _calculateYieldSupplier(address _supplier) internal {
+  function _calculateYieldSupplier(address _supplier) internal view returns (uint256 yieldSupplier) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
- 
-    uint256 periodTo = periodId.current();
 
-    // for (uint256 i = periodFrom; i < periodTo; i++) {
-    //   DataTypes.Period memory _period = periodByTimestamp[i];
+    uint256 lastTimestamp = supplier.timestamp;
 
-    //   if (_period.yield > 0) {
-    //     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+    ///// Yield from deposit
 
-    //     int256 areaFlow = ((netFlow) * int256(_period.periodSpan**2)) / 2;
+    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
-    //     int256 areaDeposit = ((
-    //       int256(_period.timestamp - supplier.createdTimestamp)
-    //     ) *
-    //       netFlow +
-    //       int256(supplier.depositAmount)) * int256(_period.periodSpan);
+    if (netFlow >= 0) {
+      uint256 yieldFromDeposit = supplier.deposit.amount * (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex);
 
-    //     int256 totalAreaPeriod = areaDeposit + areaFlow;
+      ///// Yield from flow
+      uint256 yieldFromFlow = uint96(netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - periodByTimestamp[lastTimestamp].yieldInFlowRateIndex);
 
-    //     console.log(_period.periodTWAP);
-    //     console.log(uint256(totalAreaPeriod));
-    //     supplier.TWAP += uint256(totalAreaPeriod);
-    //   } else {
-    //     supplier.TWAP += 0;
-    //   }
-    // }
-    // supplier.cumulatedYield = 5;
+      yieldSupplier = yieldFromDeposit + yieldFromFlow;
+    } else {
+      ///// Yield from outFlow
+      uint256 yieldFromOutFlow = uint96(netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
+      yieldSupplier = yieldFromOutFlow;
+    }
   }
 
   // #endregion
 
-  // ============= =============  User Interaction PoolEvents ============= ============= //
-  // #region User Interaction PoolEvents
+  /**
+   * @notice Calculates the TWAP, the yieldshare by active user and push a new  Period
+   * @dev This function will be called when liquidity is updated deposit/streamed/withdraw
+   *      When yield are added to the pool, if there is active stream this lfunction will be calculated too.
+   *      If there is not active stream, the proportion remains the same and the period remains unchanged
+   */
+  function _poolUpdate() internal {
+    periodId.increment();
 
-  //// deposit (erc777 tokensReceive callback or afterCreatedstream  and afterTerminatedCallback  superapp callback)
+    DataTypes.Period memory currentPeriod = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-  function tokensReceived(
-    address operator,
-    address from,
-    address to,
-    uint256 amount,
-    bytes calldata userData,
-    bytes calldata operatorData
-  ) external override {
-    // do stuff
-    require(msg.sender == address(superToken), "INVALID_TOKEN");
-    require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
+    DataTypes.Period memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
-    console.log("tokens_reveived");
+    uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
 
-    _poolUpdate();
+    (currentPeriod.yieldTokenIndex, currentPeriod.yieldInFlowRateIndex, currentPeriod.yieldOutFlowRateIndex) = _calculateIndexes();
 
-    //// update global period
+    currentPeriod.yieldTokenIndex = currentPeriod.yieldTokenIndex + lastPeriod.yieldTokenIndex;
+    currentPeriod.yieldInFlowRateIndex = currentPeriod.yieldInFlowRateIndex + lastPeriod.yieldInFlowRateIndex;
 
-    periodByTimestamp[block.timestamp].deposit =
-      periodByTimestamp[block.timestamp].deposit +
-      amount;
+    currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * periodSpan + lastPeriod.depositFromInFlowRate;
+    currentPeriod.deposit = lastPeriod.deposit;
+    currentPeriod.inFlowRate = lastPeriod.inFlowRate;
 
-    ///// suppler config updated
-    _updateSupplier(from, amount, 0, 0, 0);
+    currentPeriod.yieldAccruedSec = lastPeriod.yieldAccruedSec;
 
-    emit Events.SupplyDepositStarted(from, amount);
+    currentPeriod.timestamp = block.timestamp;
+
+    periodByTimestamp[block.timestamp] = currentPeriod;
+
+    lastPeriodTimestamp = block.timestamp;
+
+    periodTimestampById[periodId.current()] = block.timestamp;
+
+    console.log("pool_update");
   }
 
-  function inStreamCallback(
-    address from,
-    int96 inFlow,
-    int96 outFlow
-  ) internal {
-    DataTypes.Supplier storage supplier = _getSupplier(from);
+  function _calculateIndexes()
+    internal
+    view
+    returns (
+      uint256 periodYieldTokenIndex,
+      uint256 periodYieldInFlowRateIndex,
+      uint256 periodYieldOutFlowRateIndex
+    )
+  {
+    DataTypes.Period storage lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
-    _poolUpdate();
+    uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
 
-    int96 currentFlow = supplier.inStream.flow;
+    uint256 dollarSecondsInFlow = (uint96(lastPeriod.inFlowRate) * (periodSpan**2)) / 2 + lastPeriod.depositFromInFlowRate * periodSpan;
 
-    supplier.inStream = DataTypes.Stream(currentFlow + inFlow, bytes32(0),block.timestamp);
+    uint256 dollarSecondsOutFlow = lastPeriod.depositFromOutFlowRate * periodSpan - (uint96(lastPeriod.outFlowRate) * (periodSpan**2)) / 2;
 
-    periodByTimestamp[block.timestamp].flowRate =
-      periodByTimestamp[block.timestamp].flowRate +
-      inFlow;
+    uint256 areaDeposit = lastPeriod.deposit * periodSpan;
 
-    emit Events.SupplyStreamStarted(from, inFlow);
-    if (inFlow != 0) {}
-  }
+    uint256 totalAreaPeriod = areaDeposit + dollarSecondsInFlow + dollarSecondsOutFlow;
 
-  function afterUpdatedCallback() internal {}
+    uint256 yieldPeriod = _calculatePoolYieldPeriod();
 
-  function inStreamStop() public {
-    DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
-    require(supplier.inStream.flow > 0, "NO_STREAM");
+    /// we ultiply by 10000 for 5 decimals precision
 
-    _poolUpdate();
+    if (totalAreaPeriod == 0 || yieldPeriod == 0) {
+      periodYieldTokenIndex = 0;
+      periodYieldInFlowRateIndex = 0;
+    } else {
+      uint256 inFlowContribution = (dollarSecondsInFlow * 10000).div(totalAreaPeriod);
+      uint256 outFlowContribution = (dollarSecondsOutFlow * 10000).div(totalAreaPeriod);
+      uint256 depositContribution = 10000 - inFlowContribution - outFlowContribution;
 
-    _updateSupplier(msg.sender, 0, 0, -supplier.inStream.flow, 0);
-
-    _updatePeriod(0, 0, -supplier.inStream.flow, 0);
-
-    host.callAgreement(
-      cfa,
-      abi.encodeWithSelector(
-        cfa.deleteFlow.selector,
-        superToken,
-        msg.sender,
-        address(this),
-        new bytes(0) // placeholder
-      ),
-      "0x"
-    );
-  }
-
-  //// withdraw
-
-  function withdrawDeposit(uint256 withdrawAmount) public {
-    uint256 realTimeBalance = totalBalanceSupplier(msg.sender);
-
-    require(realTimeBalance >= withdrawAmount, "NOT_ENOUGH_BALANCE");
-
-    _poolUpdate();
-
-    _updateSupplier(msg.sender, 0, withdrawAmount, 0, 0);
-
-    _updatePeriod(0, withdrawAmount, 0, 0);
-
-    ISuperToken(superToken).send(msg.sender, withdrawAmount, "0x");
-  }
-
-  function withdrawStreamStart(uint256 stopDateInMs) public {
-    //// update state supplier
-    DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
-
-    require(supplier.outStream.flow == 0, "OUT_STREAM_EXISTS");
-
-    uint256 totalDeposit = supplier.deposit.amount +
-      uint96(supplier.inStream.flow) *
-      (block.timestamp - supplier.inStream.timestamp);
-
-    require(totalDeposit > 0, "NO_BALANCE");
-
-    _poolUpdate();
-
-    int96 outFlowRate = int96(
-      int256(totalDeposit) / int256(stopDateInMs - block.timestamp)
-    );
-
-    _updateSupplier(msg.sender, 0, 0, 0, outFlowRate);
-
-    _updatePeriod(0, 0, 0, outFlowRate);
-  }
-
-  /// request by the user trough the contract /// TODO Handle terminated when
-  function withdrawStreamStop(uint256 stopDateInMs) public {
-    DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
-
-    require(supplier.outStream.flow > 0, "OUT_STREAM_NOT_EXISTS");
-
-    if (supplier.outStream.flow != 0) {} else {
-      uint256 totalDeposit = supplier.deposit.amount +
-        uint96(supplier.inStream.flow) *
-        (block.timestamp - supplier.inStream.timestamp);
-
-      require(totalDeposit > 0, "NO_BALANCE");
-
-      //// TO DO calculate yeild
-      uint256 totalYield = 3;
-
-      int96 outFlowRate = int96(
-        int256(totalDeposit + totalYield) /
-          int256(stopDateInMs - block.timestamp)
-      );
-
-      //// Advance period
-
-      //// start stream
-
-      host.callAgreement(
-        cfa,
-        abi.encodeWithSelector(
-          cfa.createFlow.selector,
-          superToken,
-          msg.sender,
-          outFlowRate,
-          new bytes(0) // placeholder
-        ),
-        "0x"
-      );
-
-      ////// set closing stream task
-      bytes32 taskId = IOps(ops).createTimedTask(
-        uint128(stopDateInMs),
-        180,
-        address(this),
-        this.stopstream.selector,
-        address(this),
-        abi.encodeWithSelector(this.checker.selector, msg.sender),
-        ETH,
-        false
-      );
-
-      //// update state supplier
-      supplier.outStream.cancelTaskId = taskId;
-      supplier.outStream.timestamp = block.timestamp;
-      supplier.outStream.flow = outFlowRate;
+      periodYieldTokenIndex = (depositContribution * yieldPeriod).div(10000);
+      periodYieldInFlowRateIndex = (inFlowContribution * yieldPeriod).div(10000);
+      periodYieldOutFlowRateIndex = (outFlowContribution * yieldPeriod).div(10000);
     }
   }
 
-  // #endregion User Interaction PoolEvents
+  function _calculatePoolYieldPeriod() internal view returns (uint256 yield) {
+    yield = (block.timestamp - lastPeriodTimestamp) * periodByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
+  }
 
   /**
    * @notice Add the yield to the Period
@@ -540,108 +617,9 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   function _updateYield(uint256 yieldAmountPerSec) internal {
     _poolUpdate();
 
-    periodByTimestamp[block.timestamp].yieldSec = yieldAmountPerSec;
+    periodByTimestamp[block.timestamp].yieldAccruedSec = yieldAmountPerSec;
 
     //   currentPeriod.yield = currentPeriod.yield + yieldAmount;
-  }
-
-  /**
-   * @notice Calculates the TWAP, the yieldshare by active user and push a new  Period
-   * @dev This function will be called when liquidity is updated deposit/streamed/withdraw
-   *      When yield are added to the pool, if there is active stream this lfunction will be calculated too.
-   *      If there is not active stream, the proportion remains the same and the period remains unchanged
-   */
-  function _poolUpdate() internal {
-    DataTypes.Period memory currentPeriod = DataTypes.Period(
-      block.timestamp,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    );
-
-    DataTypes.Period memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
-
-    uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
-
-    (
-      currentPeriod.yieldTokenIndex,
-      currentPeriod.yieldFlowRateIndex
-    ) = _calculateIndexes();
-
-    currentPeriod.depositFromFlowRate =
-      uint96(lastPeriod.flowRate) *
-      periodSpan +
-      lastPeriod.depositFromFlowRate;
-    currentPeriod.deposit = lastPeriod.deposit;
-    currentPeriod.flowRate = lastPeriod.flowRate;
-
-    currentPeriod.timestamp = block.timestamp;
-
-    periodByTimestamp[block.timestamp] = currentPeriod;
-
-    lastPeriodTimestamp = block.timestamp;
-
-    console.log("pool_update");
-  }
-
-  function _calculateIndexes()
-    internal
-    view
-    returns (uint256 yieldTokenIndex, uint256 yieldFlowRateIndex)
-  {
-    DataTypes.Period storage lastPeriod = periodByTimestamp[
-      lastPeriodTimestamp
-    ];
-
-
-
-    uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
- 
-
-    uint256 dollarSecondsFlow = (uint96(lastPeriod.flowRate) *
-      (periodSpan**2)) /
-      2 +
-      lastPeriod.depositFromFlowRate *
-      periodSpan;
-    uint256 areaDeposit = lastPeriod.deposit * periodSpan;
-
-
-    uint256 totalAreaPeriod = areaDeposit;
-
-    if (lastPeriod.flowRate >= 0) {
-      totalAreaPeriod = totalAreaPeriod + dollarSecondsFlow;
-    } else {
-      totalAreaPeriod = totalAreaPeriod - dollarSecondsFlow;
-    }
-
-    uint256 yieldPeriod = _calculatePoolYieldPeriod();
-
-    /// we ultiply by 10000 for 5 decimals precision
-
-    if (totalAreaPeriod == 0) {
-      yieldTokenIndex = 0;
-      yieldFlowRateIndex = 0;
-      return (0, 0);
-    }
-
-    uint256 flowContribution = (dollarSecondsFlow * 10000).div(totalAreaPeriod);
-    uint256 depositContribution = 10000 - flowContribution;
-
-    yieldTokenIndex =
-      lastPeriod.yieldTokenIndex +
-      ((depositContribution) * yieldPeriod.div(1000));
-    yieldFlowRateIndex =
-      lastPeriod.yieldFlowRateIndex +
-      ((flowContribution) * yieldPeriod.div(1000));
-  }
-
-  function _calculatePoolYieldPeriod() internal view returns (uint256 yield) {
-    yield =
-      (block.timestamp - lastPeriodTimestamp) *
-      periodByTimestamp[lastPeriodTimestamp].yieldSec;
   }
 
   // ============= ============= Super App Calbacks ============= ============= //
@@ -653,19 +631,10 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     bytes calldata _agreementData,
     bytes calldata, // _cbdata,
     bytes calldata _ctx
-  )
-    external
-    override
-    onlyExpected(_superToken, _agreementClass)
-    onlyHost
-    returns (bytes memory newCtx)
-  {
+  ) external override onlyExpected(_superToken, _agreementClass) onlyHost returns (bytes memory newCtx) {
     newCtx = _ctx;
 
-    (address sender, address receiver) = abi.decode(
-      _agreementData,
-      (address, address)
-    );
+    (address sender, address receiver) = abi.decode(_agreementData, (address, address));
 
     (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
 
@@ -685,20 +654,13 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     bytes calldata, /*cbdata*/
     bytes calldata _ctx
   ) external virtual override returns (bytes memory newCtx) {
-    (address sender, address receiver) = abi.decode(
-      _agreementData,
-      (address, address)
-    );
+    (address sender, address receiver) = abi.decode(_agreementData, (address, address));
 
     DataTypes.Supplier storage supplier = suppliersByAddress[sender];
 
-    if (sender == address(this)) {} else if (
-      receiver == address(this) && supplier.inStream.flow > 0
-    ) {
+    if (sender == address(this)) {} else if (receiver == address(this) && supplier.inStream.flow > 0) {
       //// CHECK If is an Instrean and flow is still positive it means is a hard Stop, no previous yield will be calculated
-      supplier.deposit.amount +=
-        uint96(supplier.inStream.flow) *
-        (block.timestamp - supplier.inStream.timestamp);
+      supplier.deposit.amount += uint96(supplier.inStream.flow) * (block.timestamp - supplier.timestamp);
       supplier.inStream.flow = 0;
     }
 
@@ -712,17 +674,8 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     bytes calldata _agreementData,
     bytes calldata, //_cbdata,
     bytes calldata _ctx
-  )
-    external
-    override
-    onlyExpected(_superToken, _agreementClass)
-    onlyHost
-    returns (bytes memory newCtx)
-  {
-    (address sender, address receiver) = abi.decode(
-      _agreementData,
-      (address, address)
-    );
+  ) external override onlyExpected(_superToken, _agreementClass) onlyHost returns (bytes memory newCtx) {
+    (address sender, address receiver) = abi.decode(_agreementData, (address, address));
 
     // if (sender == address(this)) {} else {
     //   (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
@@ -749,9 +702,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
    *************************************************************************/
 
   function _isCFAv1(address agreementClass) private view returns (bool) {
-    return
-      ISuperAgreement(agreementClass).agreementType() ==
-      keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
+    return ISuperAgreement(agreementClass).agreementType() == keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1");
   }
 
   function _isSameToken(ISuperToken _superToken) private view returns (bool) {

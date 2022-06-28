@@ -10,14 +10,16 @@ import { PoolFactory } from '../../typechain-types';
 
 ////// CONTRACTS
 
-export const printPeriod = async (superTokenPool: PoolFactory):Promise<any>  => {
+export const printPeriod = async (superTokenPool: PoolFactory, t0:number):Promise<any>  => {
 
   let periodTimestamp = +((await superTokenPool.lastPeriodTimestamp()).toString());
   let period = await superTokenPool.periodByTimestamp(periodTimestamp);
+  console.log(period.timestamp.toString());
 
   console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-  console.log('\x1b[36m%s\x1b[0m',`TimeStamp ${period.timestamp.toString()} `)
+  console.log('\x1b[36m%s\x1b[0m',`TimeStamp ${+period.timestamp.toString()-t0} `)
   console.log(`Flow ${period.flowRate.toString()}  units/s`)
+  console.log(`Deposit From Flow ${period.depositFromFlowRate.toString()}  units`)
   console.log(`Deposit ${period.deposit.toString()}  units`)
   console.log(`IndexYieldToken: ${period.yieldTokenIndex.toString()}  units`)
   console.log(`IndexYieldFlowrate: ${period.yieldFlowRateIndex.toString()}  units`)
@@ -30,7 +32,15 @@ export const printPeriod = async (superTokenPool: PoolFactory):Promise<any>  => 
 export const printUser = async(superTokenPool:PoolFactory, userAddress:string):Promise<any> => {
 
   let user = await superTokenPool.suppliersByAddress(userAddress);
-  console.log(user)
+
+  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  console.log('\x1b[36m%s\x1b[0m',`User ${user.supplier.toString()} `)
+  console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, init at: ${user.inStream.timestamp.toString()}`)
+  console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s, init at: ${user.outStream.timestamp.toString()}`)
+  console.log(`Deposit ${user.deposit.amount.toString()}  units, init at: ${user.deposit.timestamp.toString()}`)
+  console.log(`Cumulative Yield: ${user.cumulatedYield.toString()}  units`)
+  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+
   return user;
 }
 

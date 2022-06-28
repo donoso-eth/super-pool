@@ -29,12 +29,12 @@ library DataTypes {
   struct Stream {
     int96 flow;
     bytes32 cancelTaskId;
-    uint256 timestamp;
+
   }
 
   struct Deposit {
     uint256 amount;
-    uint256 timestamp;
+  
   }
 
   struct Supplier {
@@ -44,6 +44,7 @@ library DataTypes {
     Stream inStream;
     Stream outStream;
     Deposit deposit;
+    uint256 timestamp;
     uint256 createdTimestamp;
 
   }
@@ -51,10 +52,13 @@ library DataTypes {
   struct Period {
     uint256 timestamp;
     uint256 deposit;
-    int96 flowRate;
-    uint256 depositFromFlowRate;
+    int96 inFlowRate;
+    int96 outFlowRate;
+    uint256 depositFromInFlowRate;
+    uint256 depositFromOutFlowRate;
     uint256 yieldTokenIndex;
-    uint256 yieldFlowRateIndex;
-    uint256 yieldSec;
+    uint256 yieldInFlowRateIndex;
+    uint256 yieldOutFlowRateIndex;
+    uint256 yieldAccruedSec;
   }
 }
