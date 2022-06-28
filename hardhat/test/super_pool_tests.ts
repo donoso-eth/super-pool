@@ -36,8 +36,11 @@ let sf: Framework;
 let t0: number;
 
 let erc777: ERC777;
-
+let superPoolTokenAddress:string;
 let MARKET_PLACE_FEE = 25;
+
+let hour = 3600;
+
 describe('Super Pool Global', function () {
   beforeEach(async () => {
     [deployer, user1, user2, user3, user4] = await initEnv(hre);
@@ -49,10 +52,32 @@ describe('Super Pool Global', function () {
 
     eventsLib = await new Events__factory(deployer).deploy();
 
-    // await superotkenContract.transfer(user1.address, utils.parseEther('100'))
-    // await superotkenContract.transfer(user2.address, utils.parseEther('100'))
-    // await superotkenContract.transfer(user3.address, utils.parseEther('50'))
-    // await superotkenContract.transfer(user4.address, utils.parseEther('100'))
+    let supertokenContract = await ERC20__factory.connect(TOKEN1, deployer);
+
+    let deployerBalance = await supertokenContract.balanceOf(deployer.address)
+
+    console.log(utils.formatEther(deployerBalance));
+
+
+    
+
+    let user4Balance = await supertokenContract.balanceOf(user2.address)
+    console.log(user4Balance.toString())
+
+    
+ 
+
+    if (user4Balance.toString()=="0") {
+   
+
+    await supertokenContract.transfer(user1.address, utils.parseEther('750'))
+    await supertokenContract.transfer(user2.address, utils.parseEther('750'))
+    // await supertokenContract.transfer(user3.address, utils.parseEther('50'))
+    // await supertokenContract.transfer(user4.address, utils.parseEther('100'))
+
+    }
+
+
 
     let superInputStruct: SuperPoolInputStruct = {
       poolFactory: poolFactory.address,
@@ -61,7 +86,7 @@ describe('Super Pool Global', function () {
     };
     await superPoolHost.createSuperPool(superInputStruct);
 
-    let superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(TOKEN1);
+    superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(TOKEN1);
 
     superTokenPool = PoolFactory__factory.connect(superPoolTokenAddress, deployer);
 
@@ -76,46 +101,97 @@ describe('Super Pool Global', function () {
 
     ////// initialize pool
     erc777 = await ERC777__factory.connect(TOKEN1, user1);
-    await waitForTx(erc777.send(superPoolTokenAddress, 20, '0x'));
+    await waitForTx(erc777.send(superPoolTokenAddress, utils.parseEther("20"), '0x'));
 
     t0 = parseInt(await getTimestamp());
 
-    await setNextBlockTimestamp(hre, t0 + 10);
+    await setNextBlockTimestamp(hre, t0 + 10 * hour);
+
+    let inflow = (+utils.parseEther("5").toString() / hour).toFixed(0);
+    console.log(inflow)
 
     const operation = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
-      flowRate: '5',
+      flowRate: inflow,
       superToken: TOKEN1,
     });
 
     await operation.exec(user2);
-    await setNextBlockTimestamp(hre, t0 + 20);
+    await setNextBlockTimestamp(hre, t0 + 20 *hour);
 
-    await waitForTx(superTokenPool.mockYield(10));
-    let period = await printPeriod(superTokenPool, t0);
+    await waitForTx(superTokenPool.mockYield(utils.parseEther("10")));
+   
   });
 
   it('Should Start with No Fake values created', async function () {
     //  let period = await printPeriod(superTokenPool,t0);
     //   expect(+(period.flowRate.toString())).to.equal(5);
 
-    await setNextBlockTimestamp(hre, t0 + 30);
+    await setNextBlockTimestamp(hre, t0 + 30 * hour);
 
-    await waitForTx(superTokenPool.mockYield(20));
+ 
 
-    await setNextBlockTimestamp(hre, t0 + 40);
+    await waitForTx(superTokenPool.mockYield(utils.parseEther("20")));
+
+
+    await setNextBlockTimestamp(hre, t0 + 40 * hour);
+
+    let inflow2 = (+utils.parseEther("6").toString() / hour).toFixed(0);;
+    console.log(inflow2)
 
     const operation = sf.cfaV1.createFlow({
       receiver: superTokenPool.address,
-      flowRate: '6',
+      flowRate: inflow2,
       superToken: TOKEN1,
     });
 
     await operation.exec(user1);
-
-    await setNextBlockTimestamp(hre, t0 + 50);
-    await waitForTx(erc777.send(superTokenPool.address, 50, '0x'));
     await printPeriod(superTokenPool, t0);
+    await printUser(superTokenPool, user1.address)
+    await printUser(superTokenPool, user2.address)
+
+    let realTimeBalanceUser2 = await superTokenPool.totalBalanceSupplier(user2.address)
+    console.log('user2:   ', realTimeBalanceUser2 .toString())
+    await setNextBlockTimestamp(hre, t0 + 50 * hour);
+    await waitForTx(erc777.send(superTokenPool.address, utils.parseEther("50"), '0x'));
+    await printPeriod(superTokenPool, t0);
+    let realTimeBalanceUser1 = await superTokenPool.totalBalanceSupplier(user1.address)
+    console.log('user1:   ', realTimeBalanceUser1 .toString())
+
+     realTimeBalanceUser2 = await superTokenPool.totalBalanceSupplier(user2.address)
+    console.log('user2:   ',  realTimeBalanceUser2 .toString())
+    await setNextBlockTimestamp(hre, t0 + 60 * hour);
+
+    await waitForTx(superTokenPool.mockYield(utils.parseEther("10")));
+
+    await printPeriod(superTokenPool, t0);
+    realTimeBalanceUser1 = await superTokenPool.totalBalanceSupplier(user1.address)
+    console.log('user1:   ', realTimeBalanceUser1 .toString())
+
+     realTimeBalanceUser2 = await superTokenPool.totalBalanceSupplier(user2.address)
+    console.log('user2:   ',  realTimeBalanceUser2 .toString())
+
+    await setNextBlockTimestamp(hre, t0 + 70 * hour);
+
+    let superTokenPoolUser2 =  PoolFactory__factory.connect(superPoolTokenAddress,user2 )
+ 
+    let inflow3 = (+utils.parseEther("9").toString() / hour).toFixed(0);
+    console.log(inflow3)
+   await  superTokenPoolUser2.withdrawStreamStart(inflow3);
+
+   const loanStream = await sf.cfaV1.getFlow({
+    superToken: TOKEN1,
+    sender: superPoolTokenAddress,
+    receiver: user2.address,
+    providerOrSigner: user2,
+  });
+
+  console.log(loanStream)
+
+  await printPeriod(superTokenPool, t0);
+  await printUser(superTokenPool, user2.address)
+
+
   });
 
   //   it('Should Deposit and emit event', async function () {

@@ -16,15 +16,18 @@ export const printPeriod = async (superTokenPool: PoolFactory, t0:number):Promis
   let period = await superTokenPool.periodByTimestamp(periodTimestamp);
   console.log(period.timestamp.toString());
 
-  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-  console.log('\x1b[36m%s\x1b[0m',`TimeStamp ${+period.timestamp.toString()-t0} `)
-  console.log(`Flow ${period.flowRate.toString()}  units/s`)
-  console.log(`Deposit From Flow ${period.depositFromFlowRate.toString()}  units`)
+  console.log('\x1b[36m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXX   PERIOD    XXXXXXXXXXXXXXXXXXXXX')
+  console.log(`TimeStamp ${+period.timestamp.toString()-t0} `)
+  console.log(`In-Flow ${period.inFlowRate.toString()}  units/s`)
+  console.log(`Out-Flow ${period.outFlowRate.toString()}  units/s`)
+  console.log(`Deposit From InFlow ${period.depositFromInFlowRate.toString()}  units`)
+  console.log(`Deposit From OutFlow ${period.depositFromOutFlowRate.toString()}  units`)
   console.log(`Deposit ${period.deposit.toString()}  units`)
   console.log(`IndexYieldToken: ${period.yieldTokenIndex.toString()}  units`)
-  console.log(`IndexYieldFlowrate: ${period.yieldFlowRateIndex.toString()}  units`)
-  console.log(`Yield Per Second: ${period.yieldSec.toString()}  units`)
-  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+  console.log(`IndexYieldInFlowrate: ${period.yieldInFlowRateIndex.toString()}  units`)
+  console.log(`IndexYieldOutFlowrate: ${period.yieldOutFlowRateIndex.toString()}  units`)
+  console.log(`Yield Per Second: ${period.yieldAccruedSec.toString()}  units`)
+  console.log('\x1b[36m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
   return period;
 }
@@ -33,13 +36,14 @@ export const printUser = async(superTokenPool:PoolFactory, userAddress:string):P
 
   let user = await superTokenPool.suppliersByAddress(userAddress);
 
-  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-  console.log('\x1b[36m%s\x1b[0m',`User ${user.supplier.toString()} `)
-  console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, init at: ${user.inStream.timestamp.toString()}`)
-  console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s, init at: ${user.outStream.timestamp.toString()}`)
-  console.log(`Deposit ${user.deposit.amount.toString()}  units, init at: ${user.deposit.timestamp.toString()}`)
+  console.log('\x1b[32m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+  console.log(`User ${user.supplier.toString()} `)
+  console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, `)
+  console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s`)
+  console.log(`Deposit ${user.deposit.amount.toString()}  units`)
+  console.log(`TimeStamp ${user.timestamp.toString()}  units`)
   console.log(`Cumulative Yield: ${user.cumulatedYield.toString()}  units`)
-  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+  console.log('\x1b[32m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
   return user;
 }
