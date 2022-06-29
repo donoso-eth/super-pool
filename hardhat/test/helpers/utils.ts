@@ -37,7 +37,7 @@ export const printUser = async(superTokenPool:PoolFactory, userAddress:string):P
   let user = await superTokenPool.suppliersByAddress(userAddress);
 
   console.log('\x1b[32m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-  console.log(`User ${user.supplier.toString()} `)
+  console.log(`User ${userAddress.toString()} `)
   console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, `)
   console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s`)
   console.log(`Deposit ${user.deposit.amount.toString()}  units`)
