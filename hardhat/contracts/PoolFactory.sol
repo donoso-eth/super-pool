@@ -47,6 +47,9 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   mapping(uint256 => DataTypes.Period) public periodByTimestamp;
 
   mapping(uint256 => uint256) public periodTimestampById;
+
+  address mockYieldSupplier;
+
   uint256 public lastPeriodTimestamp;
 
   uint256 public constant PRECISSION = 1_000_000;
@@ -122,7 +125,17 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   }
 
   function mockYield(uint256 _yield) public {
+     mockYieldSupplier = msg.sender;
     _updateYield(_yield);
+  }
+
+  function getMockYield() internal {
+    uint256 periodSpan = block.timestamp-  lastPeriodTimestamp;
+    uint256 amountToBeTransfered = periodSpan *  periodByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
+    if(mockYieldSupplier != address(0)){
+    IERC20(superToken).transferFrom(mockYieldSupplier, address(this), amountToBeTransfered);
+    }
+
   }
 
   // ============= =============  User Interaction PoolEvents ============= ============= //
@@ -214,6 +227,8 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     require(supplier.outStream.flow == 0, "OUT_STREAM_EXISTS");
 
     uint256 realTimeBalance = totalBalanceSupplier(msg.sender);
+
+    console.log(realTimeBalance);
 
     require(realTimeBalance > 0, "NO_BALANCE");
 
@@ -502,13 +517,27 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   }
 
   function totalBalanceSupplier(address _supplier) public view returns (uint256 realtimeBalance) {
+    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+
+    uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
+
+    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+
+    if (netFlow >= 0) {
+      realtimeBalance = yieldSupplier + supplier.deposit.amount + uint96(netFlow) * (block.timestamp - supplier.timestamp);
+    } else {
+      realtimeBalance = yieldSupplier + supplier.deposit.amount - uint96(-netFlow) * (block.timestamp - supplier.timestamp);
+    }
+  }
+
+  function totalYieldEarnedSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
     uint256 yieldTillLastPeriod = _calculateYieldSupplier(_supplier);
 
     (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex, uint256 yieldOutFlowRateIndex) = _calculateIndexes();
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
-    realtimeBalance =
+    yieldSupplier =
       supplier.cumulatedYield +
       yieldTillLastPeriod +
       yieldTokenIndex *
@@ -518,8 +547,6 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       (yieldOutFlowRateIndex) *
       (uint96(supplier.outStream.flow));
   }
-
-  function totalYieldEarnedSupplier(address _supplier) public view returns (uint256 yieldSupplier) {}
 
   function _calculateYieldSupplier(address _supplier) internal view returns (uint256 yieldSupplier) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
@@ -554,6 +581,8 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
    */
   function _poolUpdate() internal {
     periodId.increment();
+
+    getMockYield();
 
     DataTypes.Period memory currentPeriod = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 

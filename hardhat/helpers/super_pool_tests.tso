@@ -1,6 +1,5 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { ethers } from 'hardhat';
 import { initEnv, mineBlocks, setNextBlockTimestamp, waitForTx } from '../helpers/utils';
 import * as hre from 'hardhat';
 import { BaseProvider, TransactionReceipt } from '@ethersproject/providers';

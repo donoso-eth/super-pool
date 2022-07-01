@@ -3,53 +3,185 @@ import { BaseProvider, TransactionReceipt } from '@ethersproject/providers';
 import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
+import { expect } from 'chai';
 import { PeriodStruct, PeriodStructOutput, SuperPool } from '../../typechain-types/SuperPool';
 import { PoolFactory } from '../../typechain-types';
 
+export interface IPERIOD {
+  timestamp: BigNumber;
+  deposit: BigNumber;
+  inFlowRate: BigNumber;
+  outFlowRate: BigNumber;
+  depositFromInFlowRate: BigNumber;
+  depositFromOutFlowRate: BigNumber;
+  yieldTokenIndex: BigNumber;
+  yieldInFlowRateIndex: BigNumber;
+  yieldOutFlowRateIndex: BigNumber;
+  yieldAccruedSec: BigNumber;
+}
 
+export const fromBnToNumber = (x: BigNumber) => {
+  console.log(x);
+  console.log(+x.toString());
+  return +x.toString();
+};
+
+export interface IPERIOD_RESULT {
+  timeElapsed?: BigNumber;
+  poolTotalBalance?: BigNumber;
+  deposit?:BigNumber;
+  inFlowRate?: BigNumber;
+  outFlowRate?: BigNumber;
+  depositFromInFlowRate?: BigNumber;
+  depositFromOutFlowRate?: BigNumber;
+  yieldTokenIndex?: BigNumber;
+  yieldInFlowRateIndex?: BigNumber;
+  yieldOutFlowRateIndex?: BigNumber;
+  yieldAccruedSec?: BigNumber;
+}
+
+export interface IUSER_CHECK {
+  name: string;
+  result: IUSER_RESULT;
+  expected: IUSER_RESULT;
+}
+
+export interface IUSER_RESULT {
+  realTimeBalance?: BigNumber;
+}
+
+export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_RESULT, users?: Array<IUSER_CHECK>) => {
+  if (result.poolTotalBalance != undefined) {
+    try {
+      expect(result.poolTotalBalance).to.equal(expected.poolTotalBalance);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Balance: ${result.poolTotalBalance.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${result.poolTotalBalance.toString()}, expected:${expected.poolTotalBalance!.toString()}`);
+    }
+  }
+
+  if (result.deposit != undefined) {
+    try {
+      expect(result.deposit).to.equal(expected.deposit);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit: ${result.deposit.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Deposit:', `\x1b[30m ${result.deposit.toString()}, expected:${expected.deposit!.toString()}`);
+    }
+  }
+
+
+  if (result.depositFromInFlowRate != undefined) {
+    try {
+      expect(result.depositFromInFlowRate).to.equal(expected.depositFromInFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Inflow Rate: ${result.depositFromInFlowRate .toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Deposit from Inflow Rate:', `\x1b[30m ${result.depositFromInFlowRate.toString()}, expected:${expected.depositFromInFlowRate!.toString()}`);
+    }
+  }
+
+
+  if (result.inFlowRate != undefined) {
+    expect(result.inFlowRate).to.equal(expected.inFlowRate);
+    console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#In-Flow Rate: ${result.inFlowRate.toString()}`);
+  }
+
+  if (result.outFlowRate != undefined) {
+    expect(result.outFlowRate).to.equal(expected.outFlowRate);
+    console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow Rate: ${result.outFlowRate.toString()}`);
+  }
+
+  if (result.yieldAccruedSec != undefined) {
+    expect(result.yieldAccruedSec).to.equal(expected.yieldAccruedSec);
+    console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield accrued per sec: ${result.yieldAccruedSec.toString()}`);
+  }
+
+  if (result.yieldTokenIndex != undefined) {
+    try {
+      expect(result.yieldTokenIndex).to.equal(expected.yieldTokenIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield Token: ${result.yieldTokenIndex.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Token: ${result.yieldTokenIndex.toString()}, expected:${expected.yieldTokenIndex!.toString()}`);
+    }
+  }
+
+  if (result.yieldInFlowRateIndex != undefined) {
+    try {
+      expect(result.yieldInFlowRateIndex).to.equal(expected.yieldInFlowRateIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield In-FLOW : ${result.yieldInFlowRateIndex.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield In-FLOW: ${result.yieldInFlowRateIndex.toString()}, expected:${expected.yieldInFlowRateIndex!.toString()}`);
+    }
+  }
+
+  if (users !== undefined) {
+    for (const userToCheck of users) {
+      if (userToCheck.result.realTimeBalance != undefined) {
+        expect(userToCheck.result.realTimeBalance).to.equal(userToCheck.expected.realTimeBalance);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${userToCheck.name} Balance: ${userToCheck.expected.realTimeBalance?.toString()}`);
+      }
+    }
+  }
+};
+
+export const getPeriod = async (superTokenPool: PoolFactory): Promise<any> => {
+  let periodTimestamp = +(await superTokenPool.lastPeriodTimestamp()).toString();
+  let periodRaw = await superTokenPool.periodByTimestamp(periodTimestamp);
+
+  let period: IPERIOD = {
+    timestamp: periodRaw.timestamp,
+    deposit: periodRaw.deposit,
+    inFlowRate: periodRaw.inFlowRate,
+    outFlowRate: periodRaw.outFlowRate,
+    depositFromInFlowRate: periodRaw.depositFromInFlowRate,
+    depositFromOutFlowRate: periodRaw.depositFromOutFlowRate,
+    yieldTokenIndex: periodRaw.yieldTokenIndex,
+    yieldInFlowRateIndex: periodRaw.yieldInFlowRateIndex,
+    yieldOutFlowRateIndex: periodRaw.yieldOutFlowRateIndex,
+    yieldAccruedSec: periodRaw.yieldAccruedSec,
+  };
+
+  return period;
+};
 
 ////// CONTRACTS
 
-export const printPeriod = async (superTokenPool: PoolFactory, t0:number):Promise<any>  => {
-
-  let periodTimestamp = +((await superTokenPool.lastPeriodTimestamp()).toString());
+export const printPeriod = async (superTokenPool: PoolFactory, t0: number): Promise<any> => {
+  let periodTimestamp = +(await superTokenPool.lastPeriodTimestamp()).toString();
   let period = await superTokenPool.periodByTimestamp(periodTimestamp);
   console.log(period.timestamp.toString());
 
-  console.log('\x1b[36m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXX   PERIOD    XXXXXXXXXXXXXXXXXXXXX')
-  console.log(`TimeStamp ${+period.timestamp.toString()-t0} `)
-  console.log(`In-Flow ${period.inFlowRate.toString()}  units/s`)
-  console.log(`Out-Flow ${period.outFlowRate.toString()}  units/s`)
-  console.log(`Deposit From InFlow ${period.depositFromInFlowRate.toString()}  units`)
-  console.log(`Deposit From OutFlow ${period.depositFromOutFlowRate.toString()}  units`)
-  console.log(`Deposit ${period.deposit.toString()}  units`)
-  console.log(`IndexYieldToken: ${period.yieldTokenIndex.toString()}  units`)
-  console.log(`IndexYieldInFlowrate: ${period.yieldInFlowRateIndex.toString()}  units`)
-  console.log(`IndexYieldOutFlowrate: ${period.yieldOutFlowRateIndex.toString()}  units`)
-  console.log(`Yield Per Second: ${period.yieldAccruedSec.toString()}  units`)
-  console.log('\x1b[36m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+  console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXX   PERIOD    XXXXXXXXXXXXXXXXXXXXX');
+  console.log(`TimeStamp ${+period.timestamp.toString() - t0} `);
+  console.log(`In-Flow ${period.inFlowRate.toString()}  units/s`);
+  console.log(`Out-Flow ${period.outFlowRate.toString()}  units/s`);
+  console.log(`Deposit From InFlow ${period.depositFromInFlowRate.toString()}  units`);
+  console.log(`Deposit From OutFlow ${period.depositFromOutFlowRate.toString()}  units`);
+  console.log(`Deposit ${period.deposit.toString()}  units`);
+  console.log(`IndexYieldToken: ${period.yieldTokenIndex.toString()}  units`);
+  console.log(`IndexYieldInFlowrate: ${period.yieldInFlowRateIndex.toString()}  units`);
+  console.log(`IndexYieldOutFlowrate: ${period.yieldOutFlowRateIndex.toString()}  units`);
+  console.log(`Yield Per Second: ${period.yieldAccruedSec.toString()}  units`);
+  console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
   return period;
-}
+};
 
-export const printUser = async(superTokenPool:PoolFactory, userAddress:string):Promise<any> => {
-
+export const printUser = async (superTokenPool: PoolFactory, userAddress: string): Promise<any> => {
   let user = await superTokenPool.suppliersByAddress(userAddress);
 
-  console.log('\x1b[32m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-  console.log(`User ${userAddress.toString()} `)
-  console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, `)
-  console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s`)
-  console.log(`Deposit ${user.deposit.amount.toString()}  units`)
-  console.log(`TimeStamp ${user.timestamp.toString()}  units`)
-  console.log(`Cumulative Yield: ${user.cumulatedYield.toString()}  units`)
-  console.log('\x1b[32m%s\x1b[0m','XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+  console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+  console.log(`User ${userAddress.toString()} `);
+  console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, `);
+  console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s`);
+  console.log(`Deposit ${user.deposit.amount.toString()}  units`);
+  console.log(`TimeStamp ${user.timestamp.toString()}  units`);
+  console.log(`Cumulative Yield: ${user.cumulatedYield.toString()}  units`);
+  console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
   return user;
-}
+};
 
-
-export function matchEvent(receipt: TransactionReceipt, name: string, eventContract: Contract,expectedArgs?: any[], ): void {
+export function matchEvent(receipt: TransactionReceipt, name: string, eventContract: Contract, expectedArgs?: any[]): void {
   const events = receipt.logs;
 
   if (events != undefined) {
@@ -84,7 +216,7 @@ export function matchEvent(receipt: TransactionReceipt, name: string, eventContr
             if (expectedArgs[i].constructor == Array && expectedArgs[i].length == 0) {
               expectedArgs[i] = '0x';
             }
-      
+
             // Break out of the expected args loop if there is a mismatch, this will continue the emitted event loop
             if (BigNumber.isBigNumber(event.args[i])) {
               if (!event.args[i].eq(BigNumber.from(expectedArgs[i]))) {
@@ -94,7 +226,7 @@ export function matchEvent(receipt: TransactionReceipt, name: string, eventContr
             } else if (event.args[i].constructor == Array) {
               let params = event.args[i];
               let expected = expectedArgs[i];
-              if (matchRecursiveArray(expected,params) == true){
+              if (matchRecursiveArray(expected, params) == true) {
                 invalidParamsButExists = true;
                 break;
               }
@@ -124,38 +256,29 @@ export function matchEvent(receipt: TransactionReceipt, name: string, eventContr
   }
 }
 
-function matchRecursiveArray(expected:Array<any>,params:Array<any>){
-  let invalidParamsButExists = false
+function matchRecursiveArray(expected: Array<any>, params: Array<any>) {
+  let invalidParamsButExists = false;
   for (let j = 0; j < params.length; j++) {
-
     if (BigNumber.isBigNumber(params[j])) {
       if (!params[j].eq(BigNumber.from(expected[j]))) {
-       return invalidParamsButExists = true;
+        return (invalidParamsButExists = true);
       }
-    }  else if (params[j].constructor == Array) {
+    } else if (params[j].constructor == Array) {
       let paramsRec = params[j];
       let expectedRec = expected[j];
-      if (matchRecursiveArray(expectedRec,paramsRec) == true){
+      if (matchRecursiveArray(expectedRec, paramsRec) == true) {
         invalidParamsButExists = true;
-       return invalidParamsButExists
+        return invalidParamsButExists;
       }
-    
-    }
-    
-
-    else if (params[j] != expected[j]) {
+    } else if (params[j] != expected[j]) {
       invalidParamsButExists = true;
-     return true
+      return true;
     }
-    
   }
-  return invalidParamsButExists
+  return invalidParamsButExists;
 }
 
-
-
 ////// BLOCKCHAIN
-
 
 export async function increaseBlockTime(network: Network, increment: number) {
   await network.provider.send('evm_increaseTime', [increment]);
@@ -174,7 +297,7 @@ export async function resetFork(): Promise<void> {
       {
         forking: {
           jsonRpcUrl: process.env.MUMBAI_URL || '',
-          blockNumber:  26376362,
+          blockNumber: 26376362,
         },
       },
     ],

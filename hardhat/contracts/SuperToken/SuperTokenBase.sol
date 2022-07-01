@@ -29,6 +29,9 @@ abstract contract SuperTokenBase is SuperTokenStorage, UUPSProxy {
 		return ISuperToken(address(this)).totalSupply();
 	}
 
+
+	
+
 	/// @dev Internal mint, calling functions should perform important checks!
 	/// @param account Address receiving minted tokens
 	/// @param amount Amount of tokens minted
