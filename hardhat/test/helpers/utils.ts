@@ -29,7 +29,7 @@ export const fromBnToNumber = (x: BigNumber) => {
 export interface IPERIOD_RESULT {
   timeElapsed?: BigNumber;
   poolTotalBalance?: BigNumber;
-  deposit?:BigNumber;
+  deposit?: BigNumber;
   inFlowRate?: BigNumber;
   outFlowRate?: BigNumber;
   depositFromInFlowRate?: BigNumber;
@@ -69,25 +69,48 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
     }
   }
 
+  if (result.depositFromOutFlowRate != undefined) {
+    try {
+      expect(result.depositFromOutFlowRate).to.equal(expected.depositFromOutFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Outflow Rate: ${result.depositFromOutFlowRate.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x #Deposit from Outflow Rate:',
+        `\x1b[30m ${result.depositFromOutFlowRate.toString()}, expected:${expected.depositFromOutFlowRate!.toString()}`
+      );
+    }
+  }
 
   if (result.depositFromInFlowRate != undefined) {
     try {
       expect(result.depositFromInFlowRate).to.equal(expected.depositFromInFlowRate);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Inflow Rate: ${result.depositFromInFlowRate .toString()}`);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Inflow Rate: ${result.depositFromInFlowRate.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x #Deposit from Inflow Rate:', `\x1b[30m ${result.depositFromInFlowRate.toString()}, expected:${expected.depositFromInFlowRate!.toString()}`);
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x #Deposit from Inflow Rate:',
+        `\x1b[30m ${result.depositFromInFlowRate.toString()}, expected:${expected.depositFromInFlowRate!.toString()}`
+      );
     }
   }
 
-
   if (result.inFlowRate != undefined) {
-    expect(result.inFlowRate).to.equal(expected.inFlowRate);
-    console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#In-Flow Rate: ${result.inFlowRate.toString()}`);
+    try {
+      expect(result.inFlowRate).to.equal(expected.inFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#In-Flow Rate: ${result.inFlowRate.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #In-Flow Rate:', `\x1b[30m ${result.inFlowRate.toString()}, expected:${expected.inFlowRate!.toString()}`);
+    }
   }
 
   if (result.outFlowRate != undefined) {
-    expect(result.outFlowRate).to.equal(expected.outFlowRate);
-    console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow Rate: ${result.outFlowRate.toString()}`);
+    try {
+      expect(result.outFlowRate).to.equal(expected.outFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow Rate: ${result.outFlowRate.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Out-Flow Rate:', `\x1b[30m ${result.outFlowRate.toString()}, expected:${expected.outFlowRate!.toString()}`);
+    }
   }
 
   if (result.yieldAccruedSec != undefined) {
@@ -110,6 +133,19 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield In-FLOW : ${result.yieldInFlowRateIndex.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield In-FLOW: ${result.yieldInFlowRateIndex.toString()}, expected:${expected.yieldInFlowRateIndex!.toString()}`);
+    }
+  }
+
+  if (result.yieldOutFlowRateIndex != undefined) {
+    try {
+      expect(result.yieldOutFlowRateIndex).to.equal(expected.yieldOutFlowRateIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield Out-FLOW : ${result.yieldOutFlowRateIndex.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#Index Yield Out-FLOW: ${result.yieldOutFlowRateIndex.toString()}, expected:${expected.yieldOutFlowRateIndex!.toString()}`
+      );
     }
   }
 

@@ -519,7 +519,10 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   function totalBalanceSupplier(address _supplier) public view returns (uint256 realtimeBalance) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
+    console.log(_supplier);
+
     uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
+
 
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
