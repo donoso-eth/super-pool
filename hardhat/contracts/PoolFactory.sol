@@ -402,6 +402,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       activeSuppliers.push(supplier.supplierId);
     }
 
+    supplier.eventId +=1;
     // periodId.increment();
     // supplier.periodId = periodId.current();
 

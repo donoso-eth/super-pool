@@ -46,6 +46,7 @@ library DataTypes {
     Deposit deposit;
     uint256 timestamp;
     uint256 createdTimestamp;
+    uint256 eventId;
 
   }
 
