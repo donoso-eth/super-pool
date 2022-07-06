@@ -1,27 +1,28 @@
-# Spool
+# Superpool Project
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.3.3.
+This project is still in a very early stage. Please understand the code as a proof of concept.
 
-## Development server
+A description of the first thoughts can be found at [Description](https://chalk-hour-451.notion.site/Stream-pool-57d7f2619a984c849da71af25310d1e2)
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+For the time being the two relevants files are:
 
-## Code scaffolding
+[PoolFactoryContract](https://github.com/donoso-eth/super-pool/blob/master/hardhat/contracts/PoolFactory.sol) 
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+and the test-use case used to follow trough the different pool events
 
-## Build
+[Use case Tests](https://github.com/donoso-eth/super-pool/blob/master/hardhat/test/use_case_tests.ts)
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Tests
 
-## Running unit tests
+In order to reproduce the tests please run following commands
+```
+/// spin forked blockchain
+npm run fork
+````
+and
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+```
+/// runt tests
+npm run contracts:test
+````
 
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.

@@ -1,17 +1,17 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
-import { initEnv, mineBlocks, setNextBlockTimestamp, waitForTx } from '../helpers/utils';
+import { initEnv, mineBlocks, setNextBlockTimestamp, waitForTx } from '../../helpers/utils';
 import * as hre from 'hardhat';
 import { BaseProvider, TransactionReceipt } from '@ethersproject/providers';
-import { ERC20, ERC20__factory, ERC777, ERC777__factory, Events__factory, PoolFactory, PoolFactory__factory, SuperPoolHost, SuperPoolHost__factory } from '../typechain-types';
+import { ERC20, ERC20__factory, ERC777, ERC777__factory, Events__factory, PoolFactory, PoolFactory__factory, SuperPoolHost, SuperPoolHost__factory } from '../../typechain-types';
 
 import { utils } from 'ethers';
-import { getTimestamp, increaseBlockTime, matchEvent, printPeriod, printUser } from './helpers/utils';
+import { getTimestamp, increaseBlockTime, matchEvent, printPeriod, printUser } from '../../test/helpers/utils';
 import { Framework } from '@superfluid-finance/sdk-core';
 
 
 import { of } from 'rxjs';
-import { SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
+import { SuperPoolInputStruct } from '../../typechain-types/SuperPoolHost';
 
 let superPoolHost: SuperPoolHost;
 let poolFactory: PoolFactory;
@@ -84,16 +84,9 @@ describe('Super Pool Global', function () {
       resolverAddress: '0x8C54C83FbDe3C59e59dd6E324531FB93d4F504d3',
     });
 
-    let user4Balance = await supertokenContract.balanceOf(user2.address)
-    console.log(user4Balance.toString())
-
-    
- 
-
-    if (user4Balance.toString()=="0") {
-   
-
-    await supertokenContract.transfer(user1.address, utils.parseEther('500'))
+    let user2Balance = await supertokenContract.balanceOf(user2.address)
+    if (user2Balance.toString()=="0") {
+       await supertokenContract.transfer(user1.address, utils.parseEther('500'))
     await supertokenContract.transfer(user2.address, utils.parseEther('500'))
     await supertokenContract.transfer(superPoolTokenAddress, utils.parseEther('500'))
     // await supertokenContract.transfer(user3.address, utils.parseEther('50'))
@@ -127,8 +120,7 @@ describe('Super Pool Global', function () {
   });
 
   it('Should Start with No Fake values created', async function () {
-    //  let period = await printPeriod(superTokenPool,t0);
-    //   expect(+(period.flowRate.toString())).to.equal(5);
+
 
     await setNextBlockTimestamp(hre, t0 + 30 );
 

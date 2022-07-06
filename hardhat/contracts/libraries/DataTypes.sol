@@ -34,6 +34,7 @@ library DataTypes {
 
   struct Deposit {
     uint256 amount;
+    uint256 totalSupplied;
   
   }
 

@@ -61,7 +61,7 @@ let superPoolBalance: number
 
 let loanStream:IWeb3FlowInfo;
 
-describe.only('Use case test', function () {
+describe('Use case Stream test', function () {
   beforeEach(async () => {
     [deployer, user1, user2] = await initEnv(hre);
     provider = hre.ethers.provider;
@@ -81,6 +81,8 @@ describe.only('Use case test', function () {
       ops: GELATO_OPS,
     };
     await superPoolHost.createSuperPool(superInputStruct);
+
+    console.log(85,parseInt(await getTimestamp()));
 
     superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(TOKEN1);
 
@@ -108,37 +110,49 @@ describe.only('Use case test', function () {
     superPoolBalance = +(await tokenContract.balanceOf(superPoolTokenAddress)).toString();
 
     t0 = parseInt(await getTimestamp());
+    console.log(t0);
   });
 
   it('should be successfull', async function () {
     /******************************************************************
      *              FIRST PERIOD (T0)
-     *              USER1 deposit 20 units
+     *              USER1  start stream 10 m/S
      *              ---------------------
      *              PoolBalance = 20
      *              User1Balance = 20
      *
      *****************************************************************/
-    console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 20 units at t0 ');
-
+    console.log('\x1b[36m%s\x1b[0m', '#1---  start stream 10 m/S t0 ');
+    console.log(parseInt(await getTimestamp()));
     erc777 = await ERC777__factory.connect(TOKEN1, user1);
 
-    await waitForTx(erc777.send(superPoolTokenAddress, 20, '0x'));
+    let createFlowOperation = sf.cfaV1.createFlow({
+      receiver: superPoolTokenAddress,
+      flowRate: '20',
+      superToken: TOKEN1,
+    });
+    await createFlowOperation.exec(user1);
+    console.log(133);
+    console.log(parseInt(await getTimestamp()));
 
     let superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(20));
+    let expedtedPoolBalance = utils.parseEther('50');
 
     let period1:IPERIOD_RESULT = await getPeriod(superTokenPool);
 
     let periodResult1: IPERIOD_RESULT = {
       poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period1.deposit
+      deposit: period1.deposit,
+      inFlowRate:period1.inFlowRate,
+      depositFromInFlowRate: period1.depositFromInFlowRate
     };
 
     let periodExpected1: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit:BigNumber.from(20)
+      deposit:BigNumber.from(0),
+      inFlowRate:BigNumber.from(10),
+      depositFromInFlowRate: BigNumber.from(0)
     };
 
     let user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
@@ -147,10 +161,10 @@ describe.only('Use case test', function () {
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(0) },
       },
     ];
-
+    console.log(parseInt(await getTimestamp()));
     await printPeriodTest(periodResult1, periodExpected1, users);
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tested #######');
@@ -158,39 +172,45 @@ describe.only('Use case test', function () {
 
     await setNextBlockTimestamp(hre, t0 + 10);
 
+    console.log(parseInt(await getTimestamp()));
+
     /******************************************************************
      *              SECOND PERIOD (T0 + 10)
      *              User2 start stream 5 uints/sec
      *              ---------------------
-     *              PoolBalance = 20
+     *              PoolBalance = 100
      *              Pool InFlow = 5 unitd/sec
-     *              User1Balance = 20
+     *              User1Balance = 100
      *              User2Balance = 0
      *
      *****************************************************************/
-    console.log('\x1b[36m%s\x1b[0m', '#2--- User2 provides starts a stream at t0 + 10 ');
-
-    const createFlowOperation = sf.cfaV1.createFlow({
+    console.log('\x1b[36m%s\x1b[0m', '#2--- User2 provides starts a stream 5 units/sec at t0 + 10 ');
+    console.log(186,parseInt(await getTimestamp()));
+     createFlowOperation = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '5',
       superToken: TOKEN1,
     });
     await createFlowOperation.exec(user2);
 
-
+    console.log(194,parseInt(await getTimestamp()));
 
     let period2: IPERIOD = await getPeriod(superTokenPool);
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(20));
+    expedtedPoolBalance = utils.parseEther('50');
 
     let periodResult2: IPERIOD_RESULT = {
       poolTotalBalance: superPoolBalance.availableBalance,
       inFlowRate: period2.inFlowRate,
+      depositFromInFlowRate: period2.depositFromInFlowRate,
+      deposit:period2.deposit
     };
 
     let periodExpected2: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      inFlowRate: BigNumber.from(5),
+      inFlowRate: BigNumber.from(15),
+      depositFromInFlowRate: BigNumber.from(100),
+      deposit:BigNumber.from(0)
     };
 
     user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
@@ -209,12 +229,15 @@ describe.only('Use case test', function () {
       },
     ];
 
-    await printPeriodTest(periodResult2, periodExpected2, users);
+    await printPeriodTest(periodResult2, periodExpected2);
+
+    await printPeriod(superTokenPool,t0)
 
     console.log('\x1b[36m%s\x1b[0m', '#2--- Period Tests passed ');
     console.log('');
 
-    await setNextBlockTimestamp(hre, t0 + 20);
+    throw new Error("");
+    
 
     /******************************************************************
      *              THIRD PERIOD (T0 + 20)
@@ -229,6 +252,8 @@ describe.only('Use case test', function () {
      *****************************************************************/
 
     // #region ================= THIRD PERIOD ============================= //
+
+    await setNextBlockTimestamp(hre, t0 + 20);
 
     console.log('\x1b[36m%s\x1b[0m', '#3--- Pool accred 10 units/sec at t0 + 20');
     await waitForTx(superTokenPool.mockYield(10));
@@ -692,7 +717,7 @@ describe.only('Use case test', function () {
      *              NINETH PERIOD (T0 + 80)
      *              User Update stream to 13 units/sec previous 5 units/sex
      *              ---------------------
-     *              PoolBalance = 1470
+     *              PoolBalance = 1510 - outstream balance
      *              PoolDeposit = 70
      *              Pool InFlow = 19 unitd/se8
      *              Pool OutFlow = 9 unitd/sec
