@@ -61,6 +61,8 @@ let superPoolBalance: number
 
 let loanStream:IWeb3FlowInfo;
 
+let PRECISSION = 10**6;
+
 describe.only('Use case test', function () {
   beforeEach(async () => {
     [deployer, user1, user2] = await initEnv(hre);
@@ -147,7 +149,7 @@ describe.only('Use case test', function () {
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(20).mul(PRECISSION) },
       },
     ];
 
@@ -200,7 +202,7 @@ describe.only('Use case test', function () {
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(20).mul(PRECISSION)},
       },
       {
         name: 'User2',
@@ -259,12 +261,12 @@ describe.only('Use case test', function () {
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(20).mul(PRECISSION)},
       },
       {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(5).mul(10) },
+        expected: { realTimeBalance: BigNumber.from(5).mul(10).mul(PRECISSION) },
       },
     ];
 
@@ -284,8 +286,8 @@ describe.only('Use case test', function () {
      *              PoolBalance = 220
      *              Pool InFlow = 5 unitd/sec
      *              Yield Accrued units/sec = 20
-     *              User1Balance = 20
-     *              User2Balance = 50
+     *              User1Balance = 41052620
+     *              User2Balance = 178947365
      *
      *****************************************************************/
 
@@ -321,24 +323,24 @@ describe.only('Use case test', function () {
     user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
     user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-  
+    console.log(326,user1RealtimeBalance.toString())  
 
     users = [
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(41052620) },
       },
       {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(5).mul(20) },
+        expected: { realTimeBalance: BigNumber.from(178947365) },
       },
     ];
 
   
 
-    await printPeriodTest(periodResult4, periodExpected4);
+    await printPeriodTest(periodResult4, periodExpected4,users);
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
     console.log('');
@@ -354,8 +356,8 @@ describe.only('Use case test', function () {
      *              PoolBalance = 470
      *              Pool InFlow = 11 unitd/sec
      *              Yield Accrued units/sec = 20
-     *              User1Balance = 20
-     *              User2Balance = 50
+     *              User1Balance = 68638820
+     *              User2Balance = 401361155
      *
      *****************************************************************/
 
@@ -410,17 +412,17 @@ describe.only('Use case test', function () {
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(68638820) },
       },
       {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(5).mul(20) },
+        expected: { realTimeBalance: BigNumber.from(401361155) },
       },
     ];
 
 
-    await printPeriodTest(periodResult5, periodExpected5);
+    await printPeriodTest(periodResult5, periodExpected5,users);
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
     console.log('');
@@ -435,14 +437,14 @@ describe.only('Use case test', function () {
      *              User1 deposit 50 units
      *              ---------------------
      *              PoolBalance = 830
-     *              PoolDeposit = 70
+     *              PoolDeposit = 130
      *              Pool InFlow = 11 unitd/sec
      *              Yield Accrued units/sec = 20
      *              Index Yield Token = 3320829
      *              Index Yield In-FLOW = 66837887
      *              ---------------------
-     *              User1Balance = 20
-     *              User2Balance = 50
+     *              User1Balance = 295810516
+     *              User2Balance = 534189435
      *              
      *
      *****************************************************************/
@@ -468,7 +470,8 @@ describe.only('Use case test', function () {
       yieldAccruedSec: period6.yieldAccruedSec,
       yieldTokenIndex:period6.yieldTokenIndex,
       yieldInFlowRateIndex:period6.yieldInFlowRateIndex,
-      depositFromInFlowRate:period6.depositFromInFlowRate
+      depositFromInFlowRate:period6.depositFromInFlowRate,
+      deposit:period6.deposit
     };
 
     let periodExpected6: IPERIOD_RESULT = {
@@ -477,7 +480,8 @@ describe.only('Use case test', function () {
       yieldAccruedSec: BigNumber.from(20),
       yieldInFlowRateIndex: BigNumber.from(66837887),
       yieldTokenIndex: BigNumber.from(3320829),
-      depositFromInFlowRate: BigNumber.from(260)
+      depositFromInFlowRate: BigNumber.from(200),
+      deposit: BigNumber.from(130)
     };
 
     ///////////// User1 balance
@@ -485,27 +489,30 @@ describe.only('Use case test', function () {
     user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
     user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1yield =   await superTokenPool.totalYieldEarnedSupplier(user2.address);
+    user1yield =   await superTokenPool.totalYieldEarnedSupplier(user1.address);
     console.log(474,user1yield.toString())
 
     users = [
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(295810516) },
       },
       {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(5).mul(20) },
+        expected: { realTimeBalance: BigNumber.from(534189435) },
       },
     ];
 
 
-    await printPeriodTest(periodResult6, periodExpected6);
+    await printPeriodTest(periodResult6, periodExpected6,users);
 
     console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
     console.log('');
+
+  
+    
 
     // #endregion SIXTH  PERIOD
 
@@ -518,10 +525,10 @@ describe.only('Use case test', function () {
      *              Pool InFlow = 11 unitd/sec
      *              Yield Accrued units/sec = 10
      *              Index Yield Token = 3840309
-     *              Index Yield In-FLOW = 81713920
+     *              Index Yield In-FLOW = 78880389
      *              ---------------------
-     *              User1Balance = 20
-     *              User2Balance = 50
+     *              User1Balance = 495597928
+     *              User2Balance = 644401945
      *              
      *
      *****************************************************************/
@@ -553,9 +560,9 @@ describe.only('Use case test', function () {
       poolTotalBalance: expedtedPoolBalance,
       inFlowRate: BigNumber.from(11),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(81713920),
+      yieldInFlowRateIndex: BigNumber.from(78880389),
       yieldTokenIndex: BigNumber.from(3840309),
-      depositFromInFlowRate: BigNumber.from(370)
+      depositFromInFlowRate: BigNumber.from(310)
     };
 
     ///////////// User1 balance
@@ -563,27 +570,29 @@ describe.only('Use case test', function () {
     user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
     user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1yield =   await superTokenPool.totalYieldEarnedSupplier(user2.address);
+    user1yield =   await superTokenPool.totalYieldEarnedSupplier(user1.address);
     console.log(474,user1yield.toString())
 
     users = [
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(495597928) },
       },
       {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(5).mul(20) },
+        expected: { realTimeBalance: BigNumber.from(644401945) },
       },
     ];
 
 
-    await printPeriodTest(periodResult7, periodExpected7);
+    await printPeriodTest(periodResult7, periodExpected7,users);
 
     console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
     console.log('');
+
+
 
     // #endregion SEVENTH PERIOD
 
@@ -592,15 +601,15 @@ describe.only('Use case test', function () {
      *              User1 Withdraw start stream 9
      *              ---------------------
      *              PoolBalance = 1350 - Flow deposit
-     *              PoolDeposit = 70
+     *              PoolDeposit = 130
      *              Pool InFlow = 11 unitd/sec
      *              Pool OutFlow = 9 unitd/sec
      *              Yield Accrued units/sec = 10
      *              Index Yield Token = 4042329
-     *              Index Yield In-FLOW = 89519245
+     *              Index Yield In-FLOW = 85583786
      *              ---------------------
-     *              User1Balance = 20
-     *              User2Balance = 50
+     *              User1Balance = 622080910
+     *              User2Balance = 727000000
      *              
      *
      *****************************************************************/
@@ -650,10 +659,10 @@ describe.only('Use case test', function () {
       inFlowRate: BigNumber.from(6),
       outFlowRate: BigNumber.from(4),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(89519245),
+      yieldInFlowRateIndex: BigNumber.from(85583786),
       yieldTokenIndex: BigNumber.from(4042329),
-      depositFromInFlowRate: BigNumber.from(180),
-      depositFromOutFlowRate:BigNumber.from(747)
+      depositFromInFlowRate: BigNumber.from(120),
+      depositFromOutFlowRate:BigNumber.from(727)
     };
 
     ///////////// User1 balance
@@ -668,17 +677,17 @@ describe.only('Use case test', function () {
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(622080910) },
       },
       {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(5).mul(20) },
+        expected: { realTimeBalance: BigNumber.from(727000000) },
       },
     ];
 
 
-    await printPeriodTest(periodResult8, periodExpected8);
+    await printPeriodTest(periodResult8, periodExpected8,users);
 
 
 
@@ -697,12 +706,12 @@ describe.only('Use case test', function () {
      *              Pool InFlow = 19 unitd/se8
      *              Pool OutFlow = 9 unitd/sec
      *              Yield Accrued units/sec = 10
-     *              Index Yield Token = 4141633
-     *              Index Yield In-FLOW = 92994915
-     *              Index Yield Out-FLOW = 18048659
+     *              Index Yield Token = 4143646
+     *              Index Yield In-FLOW = 88116714
+     *              Index Yield Out-FLOW = 17907801
      *              ---------------------
-     *              User1Balance = 20
-     *              User2Balance = 50
+     *              User1Balance = 710449688
+     *              User2Balance = 758631204
      *              
      *
      *****************************************************************/
@@ -756,14 +765,14 @@ describe.only('Use case test', function () {
 
     let periodExpected9: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit:BigNumber.from(777),
+      deposit:BigNumber.from(817),
       inFlowRate: BigNumber.from(10),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(92994915),
-      yieldTokenIndex: BigNumber.from(4141633),
-      yieldOutFlowRateIndex:BigNumber.from(18048659),
-      depositFromInFlowRate: BigNumber.from(240),
+      yieldInFlowRateIndex: BigNumber.from(88116714),
+      yieldTokenIndex: BigNumber.from(4143646),
+      yieldOutFlowRateIndex:BigNumber.from(17907801),
+      depositFromInFlowRate: BigNumber.from(180),
       depositFromOutFlowRate:BigNumber.from(0)
     };
 
@@ -773,23 +782,23 @@ describe.only('Use case test', function () {
     user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
     user1yield =   await superTokenPool.totalYieldEarnedSupplier(user2.address);
-    console.log(474,user1yield.toString())
+  
 
     users = [
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(20) },
+        expected: { realTimeBalance: BigNumber.from(710449688) },
       },
       {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(5).mul(20) },
+        expected: { realTimeBalance: BigNumber.from(758631204) },
       },
     ];
 
 
-    await printPeriodTest(periodResult9, periodExpected9);
+    await printPeriodTest(periodResult9, periodExpected9,users);
 
 
 

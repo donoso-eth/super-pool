@@ -153,7 +153,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   /**
    * @notice ERC277 call back allowing deposit tokens via .send()
    * @param from Supplier (user sending tokens / depositing)
-   * @param amount 
+   * @param amount amount received
    */
   function tokensReceived(
     address operator,
@@ -344,7 +344,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     supplier.deposit.amount += inDeposit - outDeposit;
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
-    supplier.timestamp = block.timestamp;
+    
 
     //////// if newnetFlow < 0 means  there is already a stream out
     if (netFlow < 0) {
@@ -354,9 +354,12 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       uint256 stopDateInMs = block.timestamp + supplier.deposit.amount / uint96(netFlow);
       bytes32 taskId = createTimedTask(_supplier, stopDateInMs);
     } else {
+      supplier.deposit.amount += uint96(netFlow)*(block.timestamp- supplier.timestamp);
       ///// update period
-      periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + inDeposit - outDeposit;
+      periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + inDeposit - outDeposit + uint96(netFlow)*(block.timestamp- supplier.timestamp);
+      periodByTimestamp[block.timestamp].depositFromInFlowRate -=uint96(netFlow)*(block.timestamp- supplier.timestamp);
     }
+    supplier.timestamp = block.timestamp;
   }
 
   function _updateSupplierFlow(
@@ -410,7 +413,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
         //// transfer total balance to depositFromOutFlow
         uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
-
+  
         periodByTimestamp[block.timestamp].outFlowRate += -newNetFlow;
         periodByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
 
@@ -433,7 +436,12 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
     supplier.timestamp = block.timestamp;
   }
-
+  
+  /**
+   * @notice Calculate the total balance of a user/supplier
+   * @dev it calculate the yield earned and add the total deposit (send+stream)
+   * @return realtimeBalance the realtime balance multiplied by precission (10**6)
+   */
   function totalBalanceSupplier(address _supplier) public view returns (uint256 realtimeBalance) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
@@ -442,18 +450,24 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (netFlow >= 0) {
-      realtimeBalance = yieldSupplier + supplier.deposit.amount + uint96(netFlow) * (block.timestamp - supplier.timestamp);
+      
+      realtimeBalance = yieldSupplier + (supplier.deposit.amount + uint96(netFlow) * (block.timestamp - supplier.timestamp))*PRECISSION;
     } else {
-      realtimeBalance = yieldSupplier + supplier.deposit.amount - uint96(-netFlow) * (block.timestamp - supplier.timestamp);
+      
+      realtimeBalance = yieldSupplier + (supplier.deposit.amount - uint96(-netFlow) * (block.timestamp - supplier.timestamp))*PRECISSION;
     }
+
   }
 
   function totalYieldEarnedSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
     uint256 yieldTillLastPeriod = _calculateYieldSupplier(_supplier);
 
+ 
+
     (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex, uint256 yieldOutFlowRateIndex) = _calculateIndexes();
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+
 
     yieldSupplier =
       supplier.cumulatedYield +
@@ -464,6 +478,9 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       yieldInFlowRateIndex +
       (yieldOutFlowRateIndex) *
       (uint96(supplier.outStream.flow));
+
+
+
   }
 
   function _calculateYieldSupplier(address _supplier) internal view returns (uint256 yieldSupplier) {
@@ -478,8 +495,10 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     if (netFlow >= 0) {
       uint256 yieldFromDeposit = supplier.deposit.amount * (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex);
 
+
       ///// Yield from flow
       uint256 yieldFromFlow = uint96(netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - periodByTimestamp[lastTimestamp].yieldInFlowRateIndex);
+    
 
       yieldSupplier = yieldFromDeposit + yieldFromFlow;
     } else {

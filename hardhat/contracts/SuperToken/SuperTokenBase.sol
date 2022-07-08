@@ -23,6 +23,9 @@ abstract contract SuperTokenBase is SuperTokenStorage, UUPSProxy {
 		ISuperToken(address(this)).initialize(IERC20(address(0)), 18, name, symbol);
 	}
 
+
+
+
 	/// @dev Gets totalSupply
 	/// @return t total supply
 	function _totalSupply() internal view returns (uint256 t) {

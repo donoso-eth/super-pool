@@ -152,8 +152,17 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
   if (users !== undefined) {
     for (const userToCheck of users) {
       if (userToCheck.result.realTimeBalance != undefined) {
-        expect(userToCheck.result.realTimeBalance).to.equal(userToCheck.expected.realTimeBalance);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${userToCheck.name} Balance: ${userToCheck.expected.realTimeBalance?.toString()}`);
+        try {
+          expect(userToCheck.result.realTimeBalance).to.equal(userToCheck.expected.realTimeBalance);
+          console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${userToCheck.name} Balance: ${userToCheck.expected.realTimeBalance?.toString()}`);
+        } catch (error) {
+          console.log(
+            '\x1b[31m%s\x1b[0m',
+            '    x',
+            `\x1b[30m#${userToCheck.name} Balance: ${userToCheck.result.realTimeBalance.toString()}, expected:${userToCheck.expected.realTimeBalance!.toString()}`
+          );
+          console.log(+userToCheck.result.realTimeBalance.toString()-+userToCheck.expected.realTimeBalance!.toString())
+        }
       }
     }
   }
