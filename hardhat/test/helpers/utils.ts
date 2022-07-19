@@ -18,6 +18,7 @@ export interface IPERIOD {
   yieldInFlowRateIndex: BigNumber;
   yieldOutFlowRateIndex: BigNumber;
   yieldAccruedSec: BigNumber;
+  totalShares: BigNumber;
 }
 
 export const fromBnToNumber = (x: BigNumber) => {
@@ -38,6 +39,7 @@ export interface IPERIOD_RESULT {
   yieldInFlowRateIndex?: BigNumber;
   yieldOutFlowRateIndex?: BigNumber;
   yieldAccruedSec?: BigNumber;
+  totalShares?:BigNumber;
 }
 
 export interface IUSER_CHECK {
@@ -48,17 +50,30 @@ export interface IUSER_CHECK {
 
 export interface IUSER_RESULT {
   realTimeBalance?: BigNumber;
+  shares?:BigNumber;
 }
 
 export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_RESULT, users?: Array<IUSER_CHECK>) => {
   if (result.poolTotalBalance != undefined) {
     try {
       expect(result.poolTotalBalance).to.equal(expected.poolTotalBalance);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Balance: ${result.poolTotalBalance.toString()}`);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Assets Balance: ${result.poolTotalBalance.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${result.poolTotalBalance.toString()}, expected:${expected.poolTotalBalance!.toString()}`);
     }
   }
+
+
+  if (result.totalShares != undefined) {
+    try {
+      expect(result.totalShares).to.equal(expected.totalShares);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Shares Balance: ${result.totalShares.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Shares:', `\x1b[30m ${result.totalShares.toString()}, expected:${expected.totalShares!.toString()}`);
+    }
+  }
+
+
 
   if (result.deposit != undefined) {
     try {
@@ -149,21 +164,38 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
     }
   }
 
+  // USERS CHECK
+
   if (users !== undefined) {
     for (const userToCheck of users) {
       if (userToCheck.result.realTimeBalance != undefined) {
         try {
           expect(userToCheck.result.realTimeBalance).to.equal(userToCheck.expected.realTimeBalance);
-          console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${userToCheck.name} Balance: ${userToCheck.expected.realTimeBalance?.toString()}`);
+          console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${userToCheck.name} Balance Assets: ${userToCheck.expected.realTimeBalance?.toString()}`);
         } catch (error) {
           console.log(
             '\x1b[31m%s\x1b[0m',
             '    x',
-            `\x1b[30m#${userToCheck.name} Balance: ${userToCheck.result.realTimeBalance.toString()}, expected:${userToCheck.expected.realTimeBalance!.toString()}`
+            `\x1b[30m#${userToCheck.name} Balance Assets: ${userToCheck.result.realTimeBalance.toString()}, expected:${userToCheck.expected.realTimeBalance!.toString()}`
           );
           console.log(+userToCheck.result.realTimeBalance.toString()-+userToCheck.expected.realTimeBalance!.toString())
         }
       }
+
+      if (userToCheck.result.shares != undefined) {
+        try {
+          expect(userToCheck.result.shares).to.equal(userToCheck.expected.shares);
+          console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${userToCheck.name} Shares: ${userToCheck.expected.shares?.toString()}`);
+        } catch (error) {
+          console.log(
+            '\x1b[31m%s\x1b[0m',
+            '    x',
+            `\x1b[30m#${userToCheck.name} Shares : ${userToCheck.result.shares.toString()}, expected:${userToCheck.expected.shares!.toString()}`
+          );
+          console.log(+userToCheck.result.shares.toString()-+userToCheck.expected.shares!.toString())
+        }
+      }
+
     }
   }
 };
@@ -183,6 +215,7 @@ export const getPeriod = async (superTokenPool: PoolFactory): Promise<any> => {
     yieldInFlowRateIndex: periodRaw.yieldInFlowRateIndex,
     yieldOutFlowRateIndex: periodRaw.yieldOutFlowRateIndex,
     yieldAccruedSec: periodRaw.yieldAccruedSec,
+    totalShares:periodRaw.totalShares
   };
 
   return period;

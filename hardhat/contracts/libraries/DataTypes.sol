@@ -44,7 +44,9 @@ library DataTypes {
     uint256 cumulatedYield;
     Stream inStream;
     Stream outStream;
+    Stream outAssets;
     Deposit deposit;
+    uint256 shares;
     uint256 timestamp;
     uint256 createdTimestamp;
     uint256 eventId;
@@ -62,5 +64,7 @@ library DataTypes {
     uint256 yieldInFlowRateIndex;
     uint256 yieldOutFlowRateIndex;
     uint256 yieldAccruedSec;
+    uint256 totalShares;
+    int96 outFlowAssetsRate;
   }
 }

@@ -87,7 +87,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   function initialize(DataTypes.PoolFactoryInitializer calldata poolFactoryInitializer) external initializer {
     ///initialState
     lastPeriodTimestamp = block.timestamp;
-    periodByTimestamp[block.timestamp] = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    periodByTimestamp[block.timestamp] = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0);
 
     periodTimestampById[0] = block.timestamp;
 
@@ -127,6 +127,44 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       IERC20(superToken).transferFrom(mockYieldSupplier, address(this), amountToBeTransfered);
     }
   }
+
+  // #region  ============= =============  ERC4626 & ERC20 Interface  ============= ============= //
+  /****************************************************************************************************
+  * @notice ERC4626 & ERC20 interface skeleton
+  *
+  * ---- deposit()
+  *    
+  *
+  * 
+  ****************************************************************************************************/
+  function balanceOf(address _supplier) public view returns(uint256 _shares){
+    DataTypes.Supplier memory supplier = suppliersByAddress[_supplier] ;
+    _shares = supplier.shares;
+  
+    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+    console.log(145,_shares);
+    if (netFlow >= 0) {
+       console.log(147,'+',uint96(netFlow));
+     _shares= _shares + uint96(netFlow) * (block.timestamp - supplier.timestamp);
+    } else {
+       console.log(150,'-',uint96(netFlow));
+      _shares = _shares  - uint96(-netFlow) * (block.timestamp - supplier.timestamp);
+    }
+
+
+
+  }
+  
+  function deposit(address _to, uint256 _value) public returns (uint256 _shares){
+    _shares = 10;
+  
+  }
+
+
+
+
+  // #endregion ERC4626 Interface
+
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
   /****************************************************************************************************
@@ -229,7 +267,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     // );
   }
 
-  function withdrawStreamStart(int96 outFlowRate) public {
+  function redeemFlow(int96 outFlowRate) public {
     //// update state supplier
     DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
 
@@ -246,8 +284,11 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     _updateSupplierFlow(msg.sender, 0, outFlowRate);
 
     ////// start stream
+   //+ int96 outAssets = 
 
-    _cfaLib.createFlow(msg.sender, superToken, outFlowRate);
+    console.log(289,uint96(supplier.outAssets.flow));
+
+   _cfaLib.createFlow(msg.sender, superToken, supplier.outAssets.flow);
 
     ////// createGelato Task
   }
@@ -306,7 +347,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   // #endregion User Interaction PoolEvents
 
   // ============= =============  Internal Supplier Functions ============= ============= //
-  // #region InternalFunctions
+  // #region InternalFunctionsInternal Supplier Functions
 
   function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
@@ -316,6 +357,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       supplier.supplier = _supplier;
       supplier.timestamp = block.timestamp;
       supplierId.increment();
+      
       supplier.supplierId = supplierId.current();
 
       supplierAdressById[supplier.supplierId] = _supplier;
@@ -324,8 +366,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     }
 
     supplier.eventId += 1;
-    // periodId.increment();
-    // supplier.periodId = periodId.current();
+ 
 
     return supplier;
   }
@@ -340,11 +381,12 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     /// Supplier next values
     uint256 yieldOfPeriod = _calculateYieldSupplier(_supplier);
     supplier.cumulatedYield = supplier.cumulatedYield + yieldOfPeriod;
-
-    supplier.deposit.amount += inDeposit - outDeposit;
+    supplier.deposit.amount = supplier.deposit.amount + inDeposit - outDeposit;
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
-    
+    supplier.shares = supplier.shares + inDeposit - outDeposit;
+    periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares  + inDeposit - outDeposit;
+
 
     //////// if newnetFlow < 0 means  there is already a stream out
     if (netFlow < 0) {
@@ -356,8 +398,14 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     } else {
       supplier.deposit.amount += uint96(netFlow)*(block.timestamp- supplier.timestamp);
       ///// update period
+      supplier.shares = supplier.shares + uint96(netFlow)*(block.timestamp- supplier.timestamp);
+      
+    
       periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + inDeposit - outDeposit + uint96(netFlow)*(block.timestamp- supplier.timestamp);
       periodByTimestamp[block.timestamp].depositFromInFlowRate -=uint96(netFlow)*(block.timestamp- supplier.timestamp);
+
+     
+
     }
     supplier.timestamp = block.timestamp;
   }
@@ -372,6 +420,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     /// Supplier next values
     uint256 yieldOfPeriod = _calculateYieldSupplier(_supplier);
     supplier.cumulatedYield = supplier.cumulatedYield + yieldOfPeriod;
+    supplier.shares = balanceOf(_supplier);
     int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
     if (inFlow == 0) {
       supplier.outStream.flow = outFlow;
@@ -387,19 +436,19 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
       cancelTask(supplier.outStream.cancelTaskId);
       supplier.outStream.cancelTaskId = bytes32(0);
+      supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
+    
+      periodByTimestamp[block.timestamp].totalShares =  periodByTimestamp[block.timestamp].totalShares - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
+      
       if (newNetFlow >= 0) {
-        /// update values
-        /// balance assoication from deposit from to stream
-
-        supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
 
         periodByTimestamp[block.timestamp].outFlowRate += currentNetFlow;
         periodByTimestamp[block.timestamp].inFlowRate += newNetFlow;
         periodByTimestamp[block.timestamp].deposit += supplier.deposit.amount;
         periodByTimestamp[block.timestamp].depositFromOutFlowRate -= supplier.deposit.amount;
       } else {
-        supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
         periodByTimestamp[block.timestamp].outFlowRate -= currentNetFlow + newNetFlow;
+       
         //// creatre timed task
       }
     } else {
@@ -413,7 +462,16 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
         //// transfer total balance to depositFromOutFlow
         uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
-  
+        console.log(465,total);
+        uint256 factor = total.div(supplier.shares);
+        console.log(467,factor);
+        console.log(468,uint96(-newNetFlow));
+        int96 outAssets = int96(int256((factor).mul(uint(uint96(-newNetFlow)))));
+        console.log(469,uint96(outAssets));
+
+        supplier.outAssets = DataTypes.Stream(outAssets,bytes32(0));
+        periodByTimestamp[block.timestamp].outFlowAssetsRate +=supplier.outAssets.flow;
+
         periodByTimestamp[block.timestamp].outFlowRate += -newNetFlow;
         periodByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
 
@@ -498,13 +556,27 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
       ///// Yield from flow
       uint256 yieldFromFlow = uint96(netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - periodByTimestamp[lastTimestamp].yieldInFlowRateIndex);
-    
+  
+
 
       yieldSupplier = yieldFromDeposit + yieldFromFlow;
     } else {
       ///// Yield from outFlow
       uint256 yieldFromOutFlow = uint96(-netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
       yieldSupplier = yieldFromOutFlow;
+    }
+  }
+
+  function getSupplierShares(address _supplier) public view returns (uint256 sharesSupplier){
+    DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
+    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+   
+        if (netFlow >= 0) {
+      
+      sharesSupplier = supplier.shares  +  uint96(netFlow) * (block.timestamp - supplier.timestamp);
+    } else {
+      
+       sharesSupplier = supplier.shares  - uint96(-netFlow) * (block.timestamp - supplier.timestamp);
     }
   }
 
@@ -524,7 +596,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
     getMockYield();
 
-    DataTypes.Period memory currentPeriod = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    DataTypes.Period memory currentPeriod = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0);
 
     DataTypes.Period memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
@@ -537,8 +609,14 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * periodSpan + lastPeriod.depositFromInFlowRate;
     currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowRate) * periodSpan;
     currentPeriod.deposit = lastPeriod.deposit;
+
+    currentPeriod.totalShares = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan  - uint96(lastPeriod.outFlowRate) * periodSpan;
+
+    currentPeriod.outFlowAssetsRate = lastPeriod.outFlowAssetsRate;
+
     currentPeriod.inFlowRate = lastPeriod.inFlowRate;
     currentPeriod.outFlowRate = lastPeriod.outFlowRate;
+
     currentPeriod.yieldAccruedSec = lastPeriod.yieldAccruedSec;
 
     currentPeriod.timestamp = block.timestamp;
