@@ -690,7 +690,7 @@ describe.only('TOKEN Use case test', function () {
 
     // #region ================= EIGTH PERIOD ============================= //
 
-    console.log('\x1b[36m%s\x1b[0m', '#8--- Yield accrued changed to 10 units/sec t0 + 70');
+    console.log('\x1b[36m%s\x1b[0m', '#8--- ReddemFlow 9 untis/Sec t0 + 70');
  
     await setNextBlockTimestamp(hre, t0 + 70);
 
@@ -726,8 +726,11 @@ describe.only('TOKEN Use case test', function () {
       yieldInFlowRateIndex:period8.yieldInFlowRateIndex,
       depositFromInFlowRate:period8.depositFromInFlowRate,
       depositFromOutFlowRate:period8.depositFromOutFlowRate,
-      totalShares: period8.totalShares
+      totalShares: period8.totalShares,
+      outFlowAssetsRate: period8.outFlowAssetsRate
     };
+
+  
 
     let periodExpected8: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
@@ -738,7 +741,8 @@ describe.only('TOKEN Use case test', function () {
       yieldTokenIndex: BigNumber.from(4042329),
       depositFromInFlowRate: BigNumber.from(120),
       depositFromOutFlowRate:BigNumber.from(727),
-      totalShares: BigNumber.from(550)
+      totalShares: BigNumber.from(550),
+      outFlowAssetsRate: BigNumber.from(8)
     };
 
     ///////////// User1 balance
@@ -748,7 +752,8 @@ describe.only('TOKEN Use case test', function () {
     user1Shares = await superTokenPool.balanceOf(user1.address);
     user2Shares = await superTokenPool.balanceOf(user2.address)
    
-  
+
+
 
     users = [
       {
@@ -766,29 +771,47 @@ describe.only('TOKEN Use case test', function () {
 
     await printPeriodTest(periodResult8, periodExpected8,users);
 
+    let user2OutAssets = (await superTokenPool.suppliersByAddress(user2.address)).outAssets.flow.toString();
+    let expectedUser2Out = BigNumber.from(8).toString();
+    try {
+      expect(user2OutAssets).to.equal(BigNumber.from(8));
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#User2 Out-Assets: ${expectedUser2Out }`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#$User2 Shares : ${user2OutAssets}, expected:${expectedUser2Out }`
+      );
+      console.log(+user2OutAssets.toString()-+expectedUser2Out )
+    }
+
 
 
     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
     console.log('');
 
     // #endregion EIGTH  PERIOD
-    throw new Error("");
+
 
     /******************************************************************
      *              NINETH PERIOD (T0 + 80)
      *              User Update stream to 13 units/sec previous 5 units/sex
      *              ---------------------
-     *              PoolBalance = 1470
-     *              PoolDeposit = 70
-     *              Pool InFlow = 19 unitd/se8
-     *              Pool OutFlow = 9 unitd/sec
+     *              PoolBalance = 1430
+     *              PoolShares = 570
+     * 
+     *              PoolDeposit = 777
+     *              Pool InFlow = 10 unitd/se8
+     *              Pool OutFlow = 0 unitd/sec
      *              Yield Accrued units/sec = 10
-     *              Index Yield Token = 4143646
-     *              Index Yield In-FLOW = 88116714
-     *              Index Yield Out-FLOW = 17907801
+     *              Index Yield Token = 4145741
+     *              Index Yield In-FLOW = 88169101
+     *              Index Yield Out-Assets = 8880558
      *              ---------------------
-     *              User1Balance = 710449688
-     *              User2Balance = 758631204
+     *              User1 Total Balance = 711036360
+     *              User1 Total Shares = 310
+     *              User2 Total Balance = 718044464
+     *              User2 Total Shares = 260   
      *              
      *
      *****************************************************************/
@@ -809,20 +832,15 @@ describe.only('TOKEN Use case test', function () {
   
     await operationUpdate.exec(user2);
 
+
+
     superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    loanStream = await sf.cfaV1.getFlow({
-          superToken: TOKEN1,
-          sender:superPoolTokenAddress ,
-          receiver: user2.address,
-          providerOrSigner: user2,
-        });
-  
 
 
     let period9: IPERIOD = await getPeriod(superTokenPool);
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1470)).sub(BigNumber.from(+loanStream.deposit));
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1430))
 
 
 
@@ -836,26 +854,33 @@ describe.only('TOKEN Use case test', function () {
       yieldInFlowRateIndex:period9.yieldInFlowRateIndex,
       yieldOutFlowRateIndex:period9.yieldOutFlowRateIndex,
       depositFromInFlowRate:period9.depositFromInFlowRate,
-      depositFromOutFlowRate:period9.depositFromOutFlowRate
+      depositFromOutFlowRate:period9.depositFromOutFlowRate,
+      totalShares:period9.totalShares,
+      outFlowAssetsRate: period9.outFlowAssetsRate
     };
 
     let periodExpected9: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit:BigNumber.from(817),
+      deposit:BigNumber.from(777),
       inFlowRate: BigNumber.from(10),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(88116714),
-      yieldTokenIndex: BigNumber.from(4143646),
-      yieldOutFlowRateIndex:BigNumber.from(17907801),
+      yieldInFlowRateIndex: BigNumber.from(88169101),
+      yieldTokenIndex: BigNumber.from(4145741),
+      yieldOutFlowRateIndex:BigNumber.from(8880558),
       depositFromInFlowRate: BigNumber.from(180),
-      depositFromOutFlowRate:BigNumber.from(0)
+      depositFromOutFlowRate:BigNumber.from(0),
+      totalShares:BigNumber.from(570),
+      outFlowAssetsRate:BigNumber.from(0)
     };
 
     ///////////// User1 balance
 
     user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
     user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
+    user1Shares = await superTokenPool.balanceOf(user1.address);
+    user2Shares = await superTokenPool.balanceOf(user2.address)
+   
 
    
   
@@ -863,19 +888,32 @@ describe.only('TOKEN Use case test', function () {
     users = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(710449688) },
+        result: { realTimeBalance: user1RealtimeBalance, shares:user1Shares  },
+        expected: { realTimeBalance: BigNumber.from(711036360), shares:BigNumber.from(310) },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(758631204) },
+        result: { realTimeBalance: user2RealtimeBalance, shares:user2Shares },
+        expected: { realTimeBalance: BigNumber.from(718044464), shares:BigNumber.from(260) },
       },
     ];
 
 
     await printPeriodTest(periodResult9, periodExpected9,users);
 
+     user2OutAssets = (await superTokenPool.suppliersByAddress(user2.address)).outAssets.flow.toString();
+    expectedUser2Out = BigNumber.from(0).toString();
+    try {
+      expect(user2OutAssets).to.equal(BigNumber.from(8));
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#User2 Out-Assets: ${expectedUser2Out }`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#$User2 Shares : ${user2OutAssets}, expected:${expectedUser2Out }`
+      );
+      console.log(+user2OutAssets.toString()-+expectedUser2Out )
+    }
 
 
     console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
@@ -883,22 +921,26 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion NINETH  PERIOD
 
-
+   
         /******************************************************************
      *              TENTH PERIOD (T0 + 90)
      *              User2 withdraw 100 units
      *              ---------------------
-     *              PoolBalance = 1570
+     *              PoolBalance = 1530
+     *              PoolShares = 570
+     * 
      *              PoolDeposit = 717
-     *              Pool InFlow = 19 unitd/se8
-     *              Pool OutFlow = 9 unitd/sec
+     *              Pool InFlow = 10 unitd/se8
+     *              Pool OutFlow = 0 unitd/sec
      *              Yield Accrued units/sec = 10
-     *              Index Yield Token = 4239156
-     *              Index Yield In-FLOW = 90313466
+     *              Index Yield Token = 4245045
+     *              Index Yield In-FLOW = 90453112
      *              Index Yield Out-FLOW = 0
-     *              ---------------------
-     *              User1Balance = 796046500 
-     *              User2Balance = 733033582
+    *              ---------------------
+     *              User1 Total Balance = 797649946
+     *              User1 Total Shares = 370
+     *              User2 Total Balance = 735402356
+     *              User2 Total Shares = 200   
      *              
      *
      *****************************************************************/
@@ -916,10 +958,9 @@ describe.only('TOKEN Use case test', function () {
 
 
 
-
     let period10: IPERIOD = await getPeriod(superTokenPool);
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1570)).sub(BigNumber.from(+loanStream.deposit));
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1530))
 
 
 
@@ -933,40 +974,45 @@ describe.only('TOKEN Use case test', function () {
       yieldInFlowRateIndex:period10.yieldInFlowRateIndex,
       yieldOutFlowRateIndex:period10.yieldOutFlowRateIndex,
       depositFromInFlowRate:period10.depositFromInFlowRate,
-      depositFromOutFlowRate:period10.depositFromOutFlowRate
+      depositFromOutFlowRate:period10.depositFromOutFlowRate,
+      totalShares: period10.totalShares,
+      outFlowAssetsRate:period10.outFlowAssetsRate
     };
 
     let periodExpected10: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit:BigNumber.from(757),
+      deposit:BigNumber.from(717),
       inFlowRate: BigNumber.from(10),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(90313466),
-      yieldTokenIndex: BigNumber.from(4239156),
+      yieldInFlowRateIndex: BigNumber.from(90453112),
+      yieldTokenIndex: BigNumber.from(4245045),
       yieldOutFlowRateIndex:BigNumber.from(0),
       depositFromInFlowRate: BigNumber.from(240),
-      depositFromOutFlowRate:BigNumber.from(0)
+      depositFromOutFlowRate:BigNumber.from(0),
+      totalShares:BigNumber.from(570),
+      outFlowAssetsRate: BigNumber.from(0)
     };
 
     ///////////// User1 balance
 
     user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
     user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-
+    user1Shares = await superTokenPool.balanceOf(user1.address);
+    user2Shares = await superTokenPool.balanceOf(user2.address)
    
   
 
     users = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(796046500) },
+        result: { realTimeBalance: user1RealtimeBalance, shares:user1Shares },
+        expected: { realTimeBalance: BigNumber.from(797649946), shares:BigNumber.from(370)  },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance },
-        expected: { realTimeBalance: BigNumber.from(773033582) },
+        result: { realTimeBalance: user2RealtimeBalance, shares:user2Shares },
+        expected: { realTimeBalance: BigNumber.from(735402356) , shares:BigNumber.from(200) },
       },
     ];
 

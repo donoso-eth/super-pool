@@ -19,6 +19,7 @@ export interface IPERIOD {
   yieldOutFlowRateIndex: BigNumber;
   yieldAccruedSec: BigNumber;
   totalShares: BigNumber;
+  outFlowAssetsRate?:BigNumber;
 }
 
 export const fromBnToNumber = (x: BigNumber) => {
@@ -40,6 +41,7 @@ export interface IPERIOD_RESULT {
   yieldOutFlowRateIndex?: BigNumber;
   yieldAccruedSec?: BigNumber;
   totalShares?:BigNumber;
+  outFlowAssetsRate?:BigNumber;
 }
 
 export interface IUSER_CHECK {
@@ -128,6 +130,18 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
     }
   }
 
+ 
+
+  if (result.outFlowAssetsRate != undefined) {
+    try {
+      expect(result.outFlowAssetsRate).to.equal(expected.outFlowAssetsRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow-ASSETS Rate: ${result.outFlowAssetsRate.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Out-Flow-ASSETS Rate:', `\x1b[30m ${result.outFlowAssetsRate.toString()}, expected:${expected.outFlowAssetsRate!.toString()}`);
+    }
+  }
+
+
   if (result.yieldAccruedSec != undefined) {
     expect(result.yieldAccruedSec).to.equal(expected.yieldAccruedSec);
     console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield accrued per sec: ${result.yieldAccruedSec.toString()}`);
@@ -215,7 +229,8 @@ export const getPeriod = async (superTokenPool: PoolFactory): Promise<any> => {
     yieldInFlowRateIndex: periodRaw.yieldInFlowRateIndex,
     yieldOutFlowRateIndex: periodRaw.yieldOutFlowRateIndex,
     yieldAccruedSec: periodRaw.yieldAccruedSec,
-    totalShares:periodRaw.totalShares
+    totalShares:periodRaw.totalShares,
+    outFlowAssetsRate:periodRaw.outFlowAssetsRate
   };
 
   return period;

@@ -147,7 +147,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
        console.log(147,'+',uint96(netFlow));
      _shares= _shares + uint96(netFlow) * (block.timestamp - supplier.timestamp);
     } else {
-       console.log(150,'-',uint96(netFlow));
+       console.log(150,'-',uint96(-netFlow));
       _shares = _shares  - uint96(-netFlow) * (block.timestamp - supplier.timestamp);
     }
 
@@ -231,18 +231,23 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     ///// suppler config updated && period
     _updateSupplierDeposit(msg.sender, 0, withdrawAmount);
 
+
     ///// transfer the withdraw amount to the requester
+
     ISuperToken(superToken).send(msg.sender, withdrawAmount, "0x");
+
   }
 
   function inStreamCallback(
     address from,
     int96 inFlow,
-    int96 outFlow
-  ) internal {
+    int96 outFlow,
+    bytes memory _ctx
+  ) internal  returns (bytes memory newCtx) {
+   newCtx = '0x';
     _poolUpdate();
-
-    _updateSupplierFlow(from, inFlow, 0);
+  
+   newCtx = _updateSupplierFlow(from, inFlow, 0,_ctx);
 
     emit Events.SupplyStreamStarted(from, inFlow);
   }
@@ -281,14 +286,16 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
     uint256 stopDateInMs = (realTimeBalance).div(uint96(outFlowRate)) + block.timestamp;
 
-    _updateSupplierFlow(msg.sender, 0, outFlowRate);
+    bytes  memory  placeHolder = '0x';
+
+    _updateSupplierFlow(msg.sender, 0, outFlowRate, placeHolder);
 
     ////// start stream
    //+ int96 outAssets = 
 
     console.log(289,uint96(supplier.outAssets.flow));
 
-   _cfaLib.createFlow(msg.sender, superToken, supplier.outAssets.flow);
+   _cfaLib.createFlow(msg.sender, superToken, supplier.outAssets.flow + supplier.inStream.flow);
 
     ////// createGelato Task
   }
@@ -413,14 +420,20 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
   function _updateSupplierFlow(
     address _supplier,
     int96 inFlow,
-    int96 outFlow
-  ) internal {
+    int96 outFlow,
+    bytes memory _ctx
+
+  ) internal returns (bytes memory newCtx) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+
+    newCtx = '0x';
+    
 
     /// Supplier next values
     uint256 yieldOfPeriod = _calculateYieldSupplier(_supplier);
     supplier.cumulatedYield = supplier.cumulatedYield + yieldOfPeriod;
     supplier.shares = balanceOf(_supplier);
+
     int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
     if (inFlow == 0) {
       supplier.outStream.flow = outFlow;
@@ -433,19 +446,27 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     int96 newNetFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (currentNetFlow < 0) {
+      console.log('happy');
       /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
-      cancelTask(supplier.outStream.cancelTaskId);
+      //cancelTask(supplier.outStream.cancelTaskId);
       supplier.outStream.cancelTaskId = bytes32(0);
-      supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
+      supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(supplier.outAssets.flow);
     
-      periodByTimestamp[block.timestamp].totalShares =  periodByTimestamp[block.timestamp].totalShares - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
+    //  periodByTimestamp[block.timestamp].totalShares =  periodByTimestamp[block.timestamp].totalShares - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
       
       if (newNetFlow >= 0) {
+  
+        periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow;
 
-        periodByTimestamp[block.timestamp].outFlowRate += currentNetFlow;
-        periodByTimestamp[block.timestamp].inFlowRate += newNetFlow;
-        periodByTimestamp[block.timestamp].deposit += supplier.deposit.amount;
-        periodByTimestamp[block.timestamp].depositFromOutFlowRate -= supplier.deposit.amount;
+        periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + newNetFlow;
+
+        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + supplier.deposit.amount;
+        periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate - supplier.deposit.amount;
+   
+        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
+
+       newCtx =  _cfaLib.deleteFlowWithCtx( _ctx,address(this),_supplier,superToken);
+
       } else {
         periodByTimestamp[block.timestamp].outFlowRate -= currentNetFlow + newNetFlow;
        
@@ -462,15 +483,16 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
         //// transfer total balance to depositFromOutFlow
         uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
-        console.log(465,total);
+   
         uint256 factor = total.div(supplier.shares);
-        console.log(467,factor);
-        console.log(468,uint96(-newNetFlow));
+     
         int96 outAssets = int96(int256((factor).mul(uint(uint96(-newNetFlow)))));
-        console.log(469,uint96(outAssets));
+    
 
         supplier.outAssets = DataTypes.Stream(outAssets,bytes32(0));
-        periodByTimestamp[block.timestamp].outFlowAssetsRate +=supplier.outAssets.flow;
+        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate + supplier.outAssets.flow;
+
+    
 
         periodByTimestamp[block.timestamp].outFlowRate += -newNetFlow;
         periodByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
@@ -493,6 +515,8 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     }
 
     supplier.timestamp = block.timestamp;
+
+    console.log('updateSupplierFlow');
   }
   
   /**
@@ -562,7 +586,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       yieldSupplier = yieldFromDeposit + yieldFromFlow;
     } else {
       ///// Yield from outFlow
-      uint256 yieldFromOutFlow = uint96(-netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
+      uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) * (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
       yieldSupplier = yieldFromOutFlow;
     }
   }
@@ -607,7 +631,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     currentPeriod.yieldTokenIndex = currentPeriod.yieldTokenIndex + lastPeriod.yieldTokenIndex;
     currentPeriod.yieldInFlowRateIndex = currentPeriod.yieldInFlowRateIndex + lastPeriod.yieldInFlowRateIndex;
     currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * periodSpan + lastPeriod.depositFromInFlowRate;
-    currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowRate) * periodSpan;
+    currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowAssetsRate) * periodSpan;
     currentPeriod.deposit = lastPeriod.deposit;
 
     currentPeriod.totalShares = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan  - uint96(lastPeriod.outFlowRate) * periodSpan;
@@ -645,7 +669,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
     uint256 dollarSecondsInFlow = (uint96(lastPeriod.inFlowRate) * (periodSpan**2)) / 2 + lastPeriod.depositFromInFlowRate * periodSpan;
 
-    uint256 dollarSecondsOutFlow = lastPeriod.depositFromOutFlowRate * periodSpan - (uint96(lastPeriod.outFlowRate) * (periodSpan**2)) / 2;
+    uint256 dollarSecondsOutFlow = lastPeriod.depositFromOutFlowRate * periodSpan - (uint96(lastPeriod.outFlowAssetsRate) * (periodSpan**2)) / 2;
 
     uint256 dollarSecondsDeposit = lastPeriod.deposit * periodSpan;
 
@@ -668,8 +692,8 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
       if (lastPeriod.inFlowRate != 0) {
         periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPeriod.inFlowRate) * totalAreaPeriod));
       }
-      if (lastPeriod.outFlowRate != 0) {
-        periodYieldOutFlowRateIndex = ((outFlowContribution * yieldPeriod).div(uint96(lastPeriod.outFlowRate) * totalAreaPeriod));
+      if (lastPeriod.outFlowAssetsRate != 0) {
+        periodYieldOutFlowRateIndex = ((outFlowContribution * yieldPeriod).div(uint96(lastPeriod.outFlowAssetsRate) * totalAreaPeriod));
       }
     }
   }
@@ -814,7 +838,7 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
     //// If In-Stream we will request a pool update
     if (receiver == address(this)) {
-      inStreamCallback(sender, inFlowRate, 0);
+      inStreamCallback(sender, inFlowRate, 0,'0x');
     }
 
     return newCtx;
@@ -830,8 +854,10 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     bytes calldata _ctx
   ) external virtual override returns (bytes memory newCtx) {
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
-
-    DataTypes.Supplier storage supplier = suppliersByAddress[sender];
+    newCtx = _ctx;
+    console.log(646,sender);
+    console.log(857,receiver);
+    //DataTypes.Supplier storage supplier = suppliersByAddress[sender];
 
     // if (sender == address(this)) {} else if (receiver == address(this) && supplier.inStream.flow > 0) {
     //   //// CHECK If is an Instrean and flow is still positive it means is a hard Stop, no previous yield will be calculated
@@ -839,7 +865,13 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
     //   supplier.inStream.flow = 0;
     // }
 
-    return _ctx;
+      if (receiver == address(this)) {
+        console.log('sTOP USER');
+    } else {
+      console.log('STOP SUPERAPP');
+    }
+
+
   }
 
   function afterAgreementUpdated(
@@ -860,9 +892,11 @@ contract PoolFactory is SuperAppBase, IERC777Recipient, Initializable {
 
     //// If In-Stream we will request a pool update
     if (receiver == address(this)) {
-      inStreamCallback(sender, inFlowRate, 0);
+      newCtx = inStreamCallback(sender, inFlowRate, 0,newCtx);
+    } else {
+      console.log('napp???');
     }
-
+  console.log("FLOW_UPDATED_FINISH");
     return newCtx;
   }
 
