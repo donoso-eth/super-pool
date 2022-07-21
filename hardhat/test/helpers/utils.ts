@@ -53,6 +53,7 @@ export interface IUSER_CHECK {
 export interface IUSER_RESULT {
   realTimeBalance?: BigNumber;
   shares?:BigNumber;
+  tokenBalance?:BigNumber;
 }
 
 export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_RESULT, users?: Array<IUSER_CHECK>) => {
@@ -182,6 +183,8 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
 
   if (users !== undefined) {
     for (const userToCheck of users) {
+      console.log('\x1b[35m%s\x1b[0m', '     ==================================', );
+
       if (userToCheck.result.realTimeBalance != undefined) {
         try {
           expect(userToCheck.result.realTimeBalance).to.equal(userToCheck.expected.realTimeBalance);
@@ -207,6 +210,20 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
             `\x1b[30m#${userToCheck.name} Shares : ${userToCheck.result.shares.toString()}, expected:${userToCheck.expected.shares!.toString()}`
           );
           console.log(+userToCheck.result.shares.toString()-+userToCheck.expected.shares!.toString())
+        }
+      }
+
+      if (userToCheck.result.tokenBalance != undefined) {
+        try {
+          expect(userToCheck.result.tokenBalance).to.equal(userToCheck.expected.tokenBalance);
+          console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${userToCheck.name} Token Balance : ${userToCheck.expected.tokenBalance?.toString()}`);
+        } catch (error) {
+          console.log(
+            '\x1b[31m%s\x1b[0m',
+            '    x',
+            `\x1b[30m#${userToCheck.name} Token Balance : ${userToCheck.result.tokenBalance.toString()}, expected:${userToCheck.expected.tokenBalance!.toString()}`
+          );
+          console.log(+userToCheck.result.tokenBalance.toString()-+userToCheck.expected.tokenBalance!.toString())
         }
       }
 
