@@ -503,7 +503,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       supplier.inStream.flow = inFlow;
       supplier.outStream.flow = 0;
     } else {
-      revert();
+      console.log('should not be here till ned');
+      supplier.outStream.flow = 0;
+      supplier.inStream.flow = 0;
     }
     console.log(500,uint96(supplier.inStream.flow));
     console.log(501,uint96(supplier.outStream.flow));
@@ -531,7 +533,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
         periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate - supplier.deposit.amount;
 
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
-
+        supplier.outAssets.flow = 0;
         newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
       } else {
         periodByTimestamp[block.timestamp].outFlowRate -= currentNetFlow + newNetFlow;
@@ -539,14 +541,29 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
         //// creatre timed task
       }
     } else {
-      /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW THE SAME
-      if (newNetFlow >= 0) {
-        /// update values
 
-        periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + inFlow;
+  
+      /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW THE SAME
+      //  if (newNetFlow == 0) {
+      //   periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate - currentNetFlow;
+      //   periodByTimestamp[block.timestamp].depositFromInFlowRate -= (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
+      //   periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit +  (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
+
+      //   }
+      //  else 
+       if (newNetFlow >= 0) {
+        /// update values
+            supplier.deposit.amount = supplier.deposit.amount + (block.timestamp - supplier.timestamp) * uint96(currentNetFlow);
+      console.log(546,block.timestamp - supplier.timestamp);
+      console.log(547,uint96(supplier.outAssets.flow));
+        console.log('I should be here');
+        periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate - currentNetFlow + inFlow;
+        periodByTimestamp[block.timestamp].depositFromInFlowRate -= (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
+        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit +  (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
+
       } else {
         /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW NEGATIVE
-        console.log('I should be here');
+       
         //// transfer total balance to depositFromOutFlow
         uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
 
@@ -913,19 +930,15 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
     newCtx = _ctx;
 
-    //DataTypes.Supplier storage supplier = suppliersByAddress[sender];
+      console.log(881,"FLOW_STOPPED");
 
-    // if (sender == address(this)) {} else if (receiver == address(this) && supplier.inStream.flow > 0) {
-    //   //// CHECK If is an Instrean and flow is still positive it means is a hard Stop, no previous yield will be calculated
-    //   supplier.deposit.amount += uint96(supplier.inStream.flow) * (block.timestamp - supplier.timestamp);
-    //   supplier.inStream.flow = 0;
-    // }
-
+    //// If In-Stream we will request a pool update
     if (receiver == address(this)) {
-      console.log("sTOP USER");
-    } else {
-      console.log("STOP SUPERAPP");
+    
+      newCtx = inStreamCallback(sender, 0, 0, newCtx);
     }
+
+    return newCtx;
   }
 
   function afterAgreementUpdated(
