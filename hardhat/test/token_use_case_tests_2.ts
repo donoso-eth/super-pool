@@ -1064,12 +1064,12 @@ describe.only('TOKEN Use case test', function () {
     await printPeriodTest(periodResult9, periodExpected9, users);
 
     user2OutAssets = (await superTokenPool.suppliersByAddress(user2.address)).outAssets.flow.toString();
-    expectedUser2Out = BigNumber.from(0).toString();
+    expectedUser2Out = '0';
     try {
-      expect(user2OutAssets).to.equal(BigNumber.from(8));
+      expect(user2OutAssets).to.equal(0);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#User2 Out-Assets: ${expectedUser2Out}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#$User2 Shares : ${user2OutAssets}, expected:${expectedUser2Out}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#$User2 Out-Assets : ${user2OutAssets}, expected:${expectedUser2Out}`);
       console.log(+user2OutAssets.toString() - +expectedUser2Out);
     }
 
@@ -1227,7 +1227,7 @@ describe.only('TOKEN Use case test', function () {
      * 
      *****************************************************************/
 
-    // #region ================= ELEVENTH PERIOD ============================= //
+    // #region ================= TWELVETH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#11--- User2 stop stream at t0 + 100');
 
@@ -1318,6 +1318,129 @@ describe.only('TOKEN Use case test', function () {
     console.log('');
 
     // #endregion ELEVENTH PERIOD
+ 
+       /******************************************************************
+     *              TWELVETH PERIOD (T0 + 90)
+     *              User1 redeem flow 5 units
+     *              ---------------------
+     *              PoolBalance = 1790 -flow deposit
+     *              PoolShares = 730
+     *
+     *              PoolDeposit = 527
+     *              Pool InFlow = 0 unitd/se8
+     *              Pool OutFlow = 5 unitd/sec
+     *              Yield Accrued units/sec = 10
+     *              Index Yield Token = 4456615
+     *              Index Yield In-FLOW =  99222906
+     *              Index Yield Out-FLOW = 0
+     *              ---------------------
+     *              User1 Total Balance = 997000000
+     *              User1 Total Shares = 490
+     *              User2 Total Balance = 791306878
+     *              User2 Total Shares = 240
+     *              ---------------------
+     *                
+     *              SuperToken Contract
+     *              Pool Assest Balance = 50 eth + 1790 - flow deposit           
+     *              User1 Asset Balance = 10 eth - 20   - 60 - 50 -60 -60 -60 - 60 -60 -60
+     *              User2 asset Balance = 10 eth  - 300 + 80  -40 + 100 * factor - 40 
+     * 
+     *****************************************************************/
+
+    // #region ================= ELEVENTH PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#12--- User1 redeem flow 5 units at t0 + 110');
+
+    await setNextBlockTimestamp(hre, t0 + 110);
+    
+    let superTokenPoolUser1 = PoolFactory__factory.connect(superPoolTokenAddress, user1);
+    await waitForTx(superTokenPoolUser1.redeemFlow(5));
+
+    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
+
+    loanStream = await sf.cfaV1.getFlow({
+      superToken: TOKEN1,
+      sender: superPoolTokenAddress,
+      receiver: user1.address,
+      providerOrSigner: user2,
+    });
+
+    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
+
+    let period12: IPERIOD = await getPeriod(superTokenPool);
+
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1790).sub(+loanStream.deposit));
+
+    let periodResult12: IPERIOD_RESULT = {
+      poolTotalBalance: superPoolBalance.availableBalance,
+      deposit: period12.deposit,
+      inFlowRate: period12.inFlowRate,
+      outFlowRate: period12.outFlowRate,
+      yieldAccruedSec: period12.yieldAccruedSec,
+      yieldTokenIndex: period12.yieldTokenIndex,
+      yieldInFlowRateIndex: period12.yieldInFlowRateIndex,
+      yieldOutFlowRateIndex: period12.yieldOutFlowRateIndex,
+      depositFromInFlowRate: period12.depositFromInFlowRate,
+      depositFromOutFlowRate: period12.depositFromOutFlowRate,
+      totalShares: period12.totalShares,
+      outFlowAssetsRate: period12.outFlowAssetsRate,
+    };
+
+    let periodExpected12: IPERIOD_RESULT = {
+      poolTotalBalance: expedtedPoolBalance,
+      deposit: BigNumber.from(527),
+      inFlowRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(5),
+      yieldAccruedSec: BigNumber.from(10),
+      yieldInFlowRateIndex: BigNumber.from(99222906),
+      yieldTokenIndex: BigNumber.from(4456615),
+      yieldOutFlowRateIndex: BigNumber.from(0),
+      depositFromInFlowRate: BigNumber.from(0),
+      depositFromOutFlowRate: BigNumber.from(997),
+      totalShares: BigNumber.from(730),
+      outFlowAssetsRate: BigNumber.from(10),
+    };
+
+    ///////////// User1 balance
+
+    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
+    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
+
+    user1Shares = await superTokenPool.balanceOf(user1.address);
+    user2Shares = await superTokenPool.balanceOf(user2.address);
+
+    user1Balance = await tokenContract.balanceOf(user1.address);
+    user2Balance = await tokenContract.balanceOf(user2.address);
+
+
+   
+
+    users = [
+      {
+        name: 'User1',
+        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance:user1Balance },
+        expected: { realTimeBalance: BigNumber.from(997000000), shares: BigNumber.from(490)
+         ,  tokenBalance:utils.parseEther('10').sub(BigNumber.from(490)) }
+
+      },
+      {
+        name: 'User2',
+        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares ,tokenBalance:user2Balance  },
+        expected: { realTimeBalance: BigNumber.from(791306878), shares: BigNumber.from(240),
+        tokenBalance:utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)) },
+      },
+    ];
+
+
+
+
+    await printPeriodTest(periodResult12, periodExpected12, users);
+
+    console.log('\x1b[36m%s\x1b[0m', '#12--- Period Tests passed ');
+    console.log('');
+
+    // #endregion TWELVETH PERIOD
+
   });
 
 });
