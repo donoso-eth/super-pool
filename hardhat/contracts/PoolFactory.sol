@@ -267,16 +267,16 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
    * ---- tokensReceived()
    *      implementation callback tokensReceived(). Deposit funds via erc777.send() function.
    *
-   * ---- withdrawDeposit()
+   * ---- ReddemDeposit()
    *
    * ---- inStreamCallback()
    *      implementation of start stream through supwer app call back
    *
    * ---- inStreamStop()
    *
-   * ---- withdrawStreamStart()--outStream
+   * ---- redeemFlow()
    *
-   * ---- withdrawStreamStop()
+   * ---- redeemFlowStop()
    *
    ****************************************************************************************************/
 
@@ -366,26 +366,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     emit Events.SupplyStreamStarted(from, inFlow);
   }
 
-  ///// NOT IMPLEMENTED
-  function inStreamStop() public {
-    // DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
-    // require(supplier.inStream.flow > 0, "NO_STREAM");
-    // _poolUpdate();
-    // _updateSupplierFlow(msg.sender, -supplier.inStream.flow, 0);
-    // _updatePeriod(0, 0, -supplier.inStream.flow, 0);
-    // host.callAgreement(
-    //   cfa,
-    //   abi.encodeWithSelector(
-    //     cfa.deleteFlow.selector,
-    //     superToken,
-    //     msg.sender,
-    //     address(this),
-    //     new bytes(0) // placeholder
-    //   ),
-    //   "0x"
-    // );
-  }
-
   function redeemFlow(int96 outFlowRate) public {
     //// update state supplier
     DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
@@ -413,54 +393,20 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   }
 
   /// NOT YED FINALLY IMPLMENTED /// TODO Handle terminated when
-  function withdrawStreamStop(uint256 stopDateInMs) public {
+  function redeemFlowStop() public {
     DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
 
     require(supplier.outStream.flow > 0, "OUT_STREAM_NOT_EXISTS");
 
-    if (supplier.outStream.flow != 0) {} else {
-      uint256 totalDeposit = supplier.deposit.amount + uint96(supplier.inStream.flow) * (block.timestamp - supplier.timestamp);
+   
+    inStreamCallback(msg.sender, 0, 0, "0x");
 
-      require(totalDeposit > 0, "NO_BALANCE");
-
-      //// TO DO calculate yeild
-      uint256 totalYield = 3;
-
-      int96 outFlowRate = int96(int256(totalDeposit + totalYield) / int256(stopDateInMs - block.timestamp));
 
       //// Advance period
 
-      //// start stream
-
-      host.callAgreement(
-        cfa,
-        abi.encodeWithSelector(
-          cfa.createFlow.selector,
-          superToken,
-          msg.sender,
-          outFlowRate,
-          new bytes(0) // placeholder
-        ),
-        "0x"
-      );
-
-      ////// set closing stream task
-      bytes32 taskId = IOps(ops).createTimedTask(
-        uint128(stopDateInMs),
-        180,
-        address(this),
-        this.stopstream.selector,
-        address(this),
-        abi.encodeWithSelector(this.checker.selector, msg.sender),
-        ETH,
-        false
-      );
-
-      //// update state supplier
-      supplier.outStream.cancelTaskId = taskId;
-      supplier.timestamp = block.timestamp;
-      supplier.outStream.flow = outFlowRate;
-    }
+   
+ 
+    
   }
 
   // #endregion User Interaction PoolEvents
@@ -578,7 +524,12 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
         supplier.outAssets.flow = 0;
-        newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
+        if (newNetFlow == 0) {
+             _cfaLib.deleteFlow(address(this), _supplier, superToken);
+        } else {
+           newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
+        }
+       
       } else {
         periodByTimestamp[block.timestamp].outFlowRate -= currentNetFlow + newNetFlow;
 
@@ -696,8 +647,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       yieldSupplier = yieldFromDeposit + yieldFromFlow;
     } else {
       ///// Yield from outFlow
-      uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) *
-        (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
+      uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) *(periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
       yieldSupplier = yieldFromOutFlow;
     }
   }
@@ -740,6 +690,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     currentPeriod.yieldTokenIndex = currentPeriod.yieldTokenIndex + lastPeriod.yieldTokenIndex;
     currentPeriod.yieldInFlowRateIndex = currentPeriod.yieldInFlowRateIndex + lastPeriod.yieldInFlowRateIndex;
+    currentPeriod.yieldOutFlowRateIndex = currentPeriod.yieldOutFlowRateIndex + lastPeriod.yieldOutFlowRateIndex;
+
     currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * periodSpan + lastPeriod.depositFromInFlowRate;
     currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowAssetsRate) * periodSpan;
     currentPeriod.deposit = lastPeriod.deposit;
