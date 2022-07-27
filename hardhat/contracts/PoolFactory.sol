@@ -179,19 +179,30 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     _poolUpdate();
 
-    // uint256 myShares = balanceOf(from);
+    uint256 myShares = balanceOf(from);
 
-    // uint256 total = totalBalanceSupplier(from);
-    // uint256 factor = total.div(myShares * PRECISSION);
-    // uint256 outAssets = factor.mul(amount);
+    uint256 total = totalBalanceSupplier(from);
+    uint256 factor = total.div(myShares * PRECISSION);
+    uint256 outAssets = factor.mul(amount);
+     console.log(187, outAssets);
+    console.log(188, factor);
 
-    // _updateSupplierDeposit(from, 0, amount, outAssets);
+    _updateSupplierDeposit(from, 0, amount, outAssets);
+
+
+     periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + amount;
+    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit +  outAssets;
+
+
+    DataTypes.Supplier storage supplierTo =  _getSupplier(to);
+    supplierTo.shares = amount;
+    supplierTo.deposit.amount = outAssets; 
 
     // _updateSupplierDeposit(to, amount, 0, 0);
 
     // DataTypes.Supplier storage supplier = suppliersByAddress[to];
     // supplier.cumulatedYield = outAssets - amount;
-    console.log('TRANSFER');
+
 
 
     emit Transfer(from, to, amount);
@@ -330,6 +341,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     uint256 total = totalBalanceSupplier(supplier);
     uint256 factor = total.div(myShares * PRECISSION);
     outAssets = factor.mul(redeemAmount);
+   
 
     ///// transfer the withdraw amount to the requester
 

@@ -1451,7 +1451,8 @@ describe.only('TOKEN Use case test', function () {
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: { realTimeBalance: BigNumber.from(997000000), shares: BigNumber.from(490), tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)) },
+        expected: { realTimeBalance: BigNumber.from(997000000), shares: BigNumber.from(490), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)) },
       },
       {
         name: 'User2',
@@ -1478,7 +1479,7 @@ describe.only('TOKEN Use case test', function () {
      *              PoolBalance = 1790 -flow deposit
      *              PoolShares = 680
      *
-     *              PoolDeposit = 397
+     *              PoolDeposit = 427
      *              Pool InFlow = 0 unitd/se8
      *              Pool OutFlow = 5 unitd/sec
      *              Yield Accrued units/sec = 10
@@ -1488,9 +1489,9 @@ describe.only('TOKEN Use case test', function () {
      *              ---------------------
      *              User1 Total Balance = 961246940
      *              User1 Total Shares = 440
-     *              User2 Total Balance = 827059612
-     *              User2 Total Shares = 240
-     *              User3 Tola Balalnce = 100
+     *              User2 Total Balance = 677059612
+     *              User2 Total Shares = 190
+     *              User3 Tola Balalnce = 150000000
      *              USer3 Total Shares = 50
      *              ---------------------
      *
@@ -1570,15 +1571,15 @@ describe.only('TOKEN Use case test', function () {
       {
         name: 'User1',
         result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: { realTimeBalance: BigNumber.from(861246940), shares: BigNumber.from(390), 
+        expected: { realTimeBalance: BigNumber.from(961246940), shares: BigNumber.from(440), 
           tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)).add(BigNumber.from(100)) },
       },
       {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
         expected: {
-          realTimeBalance: BigNumber.from(827059612),
-          shares: BigNumber.from(240),
+          realTimeBalance: BigNumber.from(677059612),
+          shares: BigNumber.from(190),
           tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
         },
       },
@@ -1586,7 +1587,7 @@ describe.only('TOKEN Use case test', function () {
         name: 'User3',
         result: { realTimeBalance: user3RealtimeBalance, shares: user3Shares, tokenBalance: user3Balance },
         expected: {
-          realTimeBalance: BigNumber.from(100),
+          realTimeBalance: BigNumber.from(150000000),
           shares: BigNumber.from(50),
           tokenBalance: utils.parseEther('10'),
         },
