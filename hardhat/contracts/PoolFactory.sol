@@ -121,10 +121,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     return periodByTimestamp[_periodId];
   }
 
-    function mockPoolUpdate() public {
-      _poolUpdate();
+  function mockPoolUpdate() public {
+    _poolUpdate();
   }
-
 
   function mockYield(uint256 _yield) public {
     mockYieldSupplier = msg.sender;
@@ -169,13 +168,10 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     require(from != address(0), "ERC20: transfer from the zero address");
     require(to != address(0), "ERC20: transfer to the zero address");
 
-
-
     _beforeTokenTransfer(from, to, amount);
 
     uint256 fromBalance = balanceOf(from);
     require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
-
 
     _poolUpdate();
 
@@ -184,26 +180,20 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     uint256 total = totalBalanceSupplier(from);
     uint256 factor = total.div(myShares * PRECISSION);
     uint256 outAssets = factor.mul(amount);
-     console.log(187, outAssets);
-    console.log(188, factor);
 
     _updateSupplierDeposit(from, 0, amount, outAssets);
 
+    periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + amount;
+    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + outAssets;
 
-     periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + amount;
-    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit +  outAssets;
-
-
-    DataTypes.Supplier storage supplierTo =  _getSupplier(to);
+    DataTypes.Supplier storage supplierTo = _getSupplier(to);
     supplierTo.shares = amount;
-    supplierTo.deposit.amount = outAssets; 
+    supplierTo.deposit.amount = outAssets;
 
     // _updateSupplierDeposit(to, amount, 0, 0);
 
     // DataTypes.Supplier storage supplier = suppliersByAddress[to];
     // supplier.cumulatedYield = outAssets - amount;
-
-
 
     emit Transfer(from, to, amount);
 
@@ -217,6 +207,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     return _totalSupply;
   }
+
   // endregion overriding ERC20
 
   // #region  ============= ============= ERC4626 Interface  ============= ============= //
@@ -256,8 +247,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   }
 
   // #endregion ERC4626 Interface
-
-
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
   /****************************************************************************************************
@@ -341,7 +330,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     uint256 total = totalBalanceSupplier(supplier);
     uint256 factor = total.div(myShares * PRECISSION);
     outAssets = factor.mul(redeemAmount);
-   
 
     ///// transfer the withdraw amount to the requester
 
@@ -398,15 +386,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     require(supplier.outStream.flow > 0, "OUT_STREAM_NOT_EXISTS");
 
-   
     inStreamCallback(msg.sender, 0, 0, "0x");
 
-
-      //// Advance period
-
-   
- 
-    
+    //// Advance period
   }
 
   // #endregion User Interaction PoolEvents
@@ -504,7 +486,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     int96 newNetFlow = supplier.inStream.flow - supplier.outStream.flow;
 
-
     if (currentNetFlow < 0) {
       /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
       //cancelTask(supplier.outStream.cancelTaskId);
@@ -514,7 +495,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       //  periodByTimestamp[block.timestamp].totalShares =  periodByTimestamp[block.timestamp].totalShares - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
 
       if (newNetFlow >= 0) {
-        console.log("I should be doch here");
+    
         periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow;
 
         periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + newNetFlow;
@@ -525,11 +506,10 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
         supplier.outAssets.flow = 0;
         if (newNetFlow == 0) {
-             _cfaLib.deleteFlow(address(this), _supplier, superToken);
+          _cfaLib.deleteFlow(address(this), _supplier, superToken);
         } else {
-           newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
+          newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
         }
-       
       } else {
         periodByTimestamp[block.timestamp].outFlowRate -= currentNetFlow + newNetFlow;
 
@@ -647,7 +627,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       yieldSupplier = yieldFromDeposit + yieldFromFlow;
     } else {
       ///// Yield from outFlow
-      uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) *(periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
+      uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) *
+        (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
       yieldSupplier = yieldFromOutFlow;
     }
   }
@@ -664,8 +645,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   // }
 
   // #endregion
-
-
 
   // ============= ============= POOL UPDATE ============= ============= //
   // #region Pool Update
@@ -894,8 +873,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   ) external override onlyExpected(_superToken, _agreementClass) onlyHost returns (bytes memory newCtx) {
     newCtx = _ctx;
 
- 
-
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
 
     (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
@@ -920,7 +897,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
     newCtx = _ctx;
 
-    console.log(881, "FLOW_STOPPED");
+
 
     //// If In-Stream we will request a pool update
     if (receiver == address(this)) {
@@ -942,7 +919,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
 
-    console.log(934, "FLOW_UPDATED");
+
 
     (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
 
@@ -950,7 +927,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     if (receiver == address(this)) {
       newCtx = inStreamCallback(sender, inFlowRate, 0, newCtx);
     } else {
-      console.log("napp???");
+   
     }
     console.log("FLOW_UPDATED_FINISH");
     return newCtx;

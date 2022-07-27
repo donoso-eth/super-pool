@@ -165,7 +165,8 @@ describe.only('TOKEN Use case test', function () {
   });
 
   it('should be successfull', async function () {
-    // #region 1 period
+
+    // #region ================= FIRST PERIOD ============================= //
     /******************************************************************
      *              FIRST PERIOD (T0)
      *              USER1 deposit 20 units
@@ -229,11 +230,11 @@ describe.only('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tested #######');
     console.log('');
 
-    // #endregion 1 period
+     // #endregion FIST PERIOD
 
     await setNextBlockTimestamp(hre, t0 + 10);
-
-    // #region 2 period
+   
+    // #region ================= SECOND PERIOD ============================= //
 
     /******************************************************************
      *              SECOND PERIOD (T0 + 10)
@@ -314,7 +315,11 @@ describe.only('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#2--- Period Tests passed ');
     console.log('');
 
+    // #endregion SECOND PERIOD
+
     await setNextBlockTimestamp(hre, t0 + 20);
+
+    // #region ================= THIRD PERIOD ============================= //
 
     /******************************************************************
      *              THIRD PERIOD (T0 + 20)
@@ -338,8 +343,6 @@ describe.only('TOKEN Use case test', function () {
      *              User2 asset Balance = 10 eth -flowDeposit - 50
      *
      *****************************************************************/
-
-    // #region ================= THIRD PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#3--- Pool accred 10 units/sec at t0 + 20');
     await waitForTx(superTokenPool.mockYield(10));
@@ -400,9 +403,11 @@ describe.only('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     console.log('');
 
+    // #endregion THIRD PERIOD
+
     await setNextBlockTimestamp(hre, t0 + 30);
 
-    // #endregion THIRD PERIOD
+    // #region ================= FOURTH PERIOD ============================= //
 
     /******************************************************************
      *              FOURTH PERIOD (T0 + 30)
@@ -426,8 +431,6 @@ describe.only('TOKEN Use case test', function () {
      *              User2 asset Balance = 10 eth -flowDeposit - 100
      *
      *****************************************************************/
-
-    // #region ================= FOURTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- Pool accred 40 units/sec at t0 + 30');
     await waitForTx(superTokenPool.mockYield(20));
@@ -496,6 +499,8 @@ describe.only('TOKEN Use case test', function () {
 
     await setNextBlockTimestamp(hre, t0 + 40);
 
+    // #region ================= FIFTH PERIOD ============================= //
+
     /******************************************************************
      *              FIFTH PERIOD (T0 + 40)
      *              User1 start stream 6 units/second
@@ -518,8 +523,6 @@ describe.only('TOKEN Use case test', function () {
      *              User2 asset Balance = 10 eth -flowDeposit - 150
      *
      *****************************************************************/
-
-    // #region ================= FIFTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- USser 1 start stream 6 units/sec at t0 + 40');
 
@@ -617,6 +620,10 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion FIFTH  PERIOD
 
+    await setNextBlockTimestamp(hre, t0 + 50);
+
+    // #region ================= SIXTH PERIOD ============================= //
+
     /******************************************************************
      *              SIXTH PERIOD (T0 + 50)
      *              User1 deposit 50 units
@@ -643,11 +650,10 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    // #region ================= SIXTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#6--- User1 deposit 50 units at to + 50');
 
-    await setNextBlockTimestamp(hre, t0 + 50);
+   
 
     await waitForTx(erc777.send(superPoolTokenAddress, 50, '0x'));
 
@@ -723,6 +729,10 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion SIXTH  PERIOD
 
+    await setNextBlockTimestamp(hre, t0 + 60);
+
+    // #region ================= SEVENTH PERIOD ============================= //
+
     /******************************************************************
      *              SEVENTH PERIOD (T0 + 60)
      *              Yield accrued to 10 units/sec
@@ -749,11 +759,9 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    // #region ================= SEVENTH PERIOD ============================= //
-
     console.log('\x1b[36m%s\x1b[0m', '#7--- Yield accrued changed to 10 units/sec t0 + 60');
 
-    await setNextBlockTimestamp(hre, t0 + 60);
+  
 
     await waitForTx(superTokenPool.mockYield(10));
 
@@ -828,6 +836,10 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion SEVENTH PERIOD
 
+    await setNextBlockTimestamp(hre, t0 + 70);
+
+    // #region ================= EIGTH PERIOD ============================= //
+
     /******************************************************************
      *              EIGTH PERIOD (T0 + 70)
      *              User2 reddemflow 4
@@ -855,11 +867,9 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    // #region ================= EIGTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#8--- User2 RedeemFlow 4 untis/Sec t0 + 70');
 
-    await setNextBlockTimestamp(hre, t0 + 70);
 
     let superTokenPoolUser2 = PoolFactory__factory.connect(superPoolTokenAddress, user2);
     await waitForTx(superTokenPoolUser2.redeemFlow(4));
@@ -963,6 +973,10 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion EIGTH  PERIOD
 
+    await setNextBlockTimestamp(hre, t0 + 80);
+
+    // #region ================= NINETH PERIOD ============================= //
+
     /******************************************************************
      *              NINETH PERIOD (T0 + 80)
      *              User Update stream to 4 units/sec previous 5 units/sex
@@ -991,11 +1005,9 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    // #region ================= NINETH PERIOD ============================= //
-
     console.log('\x1b[36m%s\x1b[0m', '#9--- User Update stream to 4 t0 + 80');
 
-    await setNextBlockTimestamp(hre, t0 + 80);
+
 
     const operationUpdate = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
@@ -1104,6 +1116,11 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion NINETH  PERIOD
 
+    
+    await setNextBlockTimestamp(hre, t0 + 90);
+
+    // #region ================= TENTH PERIOD ============================= //
+
     /******************************************************************
      *              TENTH PERIOD (T0 + 90)
      *              User2 withdraw 100 units
@@ -1132,11 +1149,10 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    // #region ================= TENTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#10--- User2 withdraw 100 units at t0 + 90');
 
-    await setNextBlockTimestamp(hre, t0 + 90);
+   
 
     await waitForTx(superTokenPoolUser2.redeemDeposit(100));
 
@@ -1230,6 +1246,10 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion TENTH  PERIOD
 
+    await setNextBlockTimestamp(hre, t0 + 100);
+
+    // #region ================= ELEVENTH PERIOD ============================= //
+
     /******************************************************************
      *              ELEVENTH PERIOD (T0 + 100)
      *              User2 stpo streams to pool
@@ -1258,11 +1278,10 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    // #region ================= ELEVENTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#11--- User2 stop stream at t0 + 100');
 
-    await setNextBlockTimestamp(hre, t0 + 100);
+  
 
     const operationDelete = sf.cfaV1.deleteFlow({
       receiver: superPoolTokenAddress,
@@ -1350,6 +1369,10 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion ELEVENTH PERIOD
 
+    await setNextBlockTimestamp(hre, t0 + 110);
+
+    // #region ================= TWELVETH PERIOD ============================= //
+
     /******************************************************************
      *              TWELVETH PERIOD (T0 + 110)
      *              User1 redeem flow 5 units
@@ -1378,11 +1401,9 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    // #region ================= TWELVETH PERIOD ============================= //
-
     console.log('\x1b[36m%s\x1b[0m', '#12--- User1 redeem flow 5 units at t0 + 110');
 
-    await setNextBlockTimestamp(hre, t0 + 110);
+ 
 
     let superTokenPoolUser1 = PoolFactory__factory.connect(superPoolTokenAddress, user1);
     await waitForTx(superTokenPoolUser1.redeemFlow(5));
@@ -1467,6 +1488,8 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion TWELVETH PERIOD
 
+    await setNextBlockTimestamp(hre, t0 + 120);
+
     // #region ================= THHIRTEENTH  PERIOD ============================= //
 
     /******************************************************************
@@ -1501,8 +1524,6 @@ describe.only('TOKEN Use case test', function () {
      *****************************************************************/
 
     console.log('\x1b[36m%s\x1b[0m', '#13--- User2 transfer to user3 50 units');
-
-    await setNextBlockTimestamp(hre, t0 + 120);
 
     erc20 = await ERC20__factory.connect(superPoolTokenAddress, user2);
     await waitForTx(erc20.transfer(user3.address, 50));
@@ -1598,6 +1619,8 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion THHIRTEENTH PERIOD
 
+    await setNextBlockTimestamp(hre, t0 + 130);
+
     // #region ================= FOURTEENTH PERIOD ============================= //
 
     /******************************************************************
@@ -1633,11 +1656,10 @@ describe.only('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#14--- User1 stop redeemflow');
 
-    await setNextBlockTimestamp(hre, t0 + 130);
 
     erc20 = await ERC20__factory.connect(superPoolTokenAddress, user2);
- 
-    await waitForTx(superTokenPoolUser1.redeemFlowStop())
+
+    await waitForTx(superTokenPoolUser1.redeemFlowStop());
 
     superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
@@ -1722,8 +1744,6 @@ describe.only('TOKEN Use case test', function () {
     ];
 
     await printPeriodTest(periodResult14, periodExpected14, users);
-
-    await printUser(superTokenPool, user1.address)
 
     console.log('\x1b[36m%s\x1b[0m', '#14--- Period Tests passed ');
     console.log('');
