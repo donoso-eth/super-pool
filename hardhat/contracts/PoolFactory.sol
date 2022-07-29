@@ -210,6 +210,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
   // endregion overriding ERC20
 
+
   // #region  ============= ============= ERC4626 Interface  ============= ============= //
   /****************************************************************************************************
    * @notice ERC20 & ERC4626 & interface skstructure (tbd if is needed)
@@ -247,6 +248,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   }
 
   // #endregion ERC4626 Interface
+
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
   /****************************************************************************************************
@@ -519,9 +521,17 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
           newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
         }
       } else {
-  
-        periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
+        uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(-currentNetFlow));
+        uint256 factor = total.div(supplier.shares);
 
+    
+        int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow)))));
+
+      
+        periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
+        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + outAssets;
+     
+        supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
         //// creatre timed task
       }
     } else {
@@ -654,6 +664,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
   // #endregion
 
+
   // ============= ============= POOL UPDATE ============= ============= //
   // #region Pool Update
 
@@ -769,6 +780,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
   // #endregion POOL UPDATE
 
+
   // ============= =============  Modifiers ============= ============= //
   // #region Modidiers
 
@@ -784,6 +796,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   }
 
   // endregion
+
 
   // ============= =============  Gelato functions ============= ============= //
   // #region Gelato functions
@@ -870,6 +883,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   }
 
   // #endregion Gelato functions
+
 
   // ============= ============= Super App Calbacks ============= ============= //
   // #region Super App Calbacks
