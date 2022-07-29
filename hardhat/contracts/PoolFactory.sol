@@ -358,7 +358,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     //// update state supplier
     DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
 
-    require(supplier.outStream.flow == 0, "OUT_STREAM_EXISTS");
+    //require(supplier.outStream.flow == 0, "OUT_STREAM_EXISTS");
+
+    bool currentOutFlow = supplier.outStream.flow > 0 ? true : false;
 
     uint256 realTimeBalance = totalBalanceSupplier(msg.sender);
 
@@ -374,8 +376,12 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     ////// start stream
     //+ int96 outAssets =
-
-    _cfaLib.createFlow(msg.sender, superToken, supplier.outAssets.flow);
+    if (currentOutFlow) {
+         _cfaLib.updateFlow(msg.sender, superToken, supplier.outAssets.flow);
+    } else {
+        _cfaLib.createFlow(msg.sender, superToken, supplier.outAssets.flow);
+    }
+  
 
     ////// createGelato Task
   }
@@ -490,6 +496,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
       //cancelTask(supplier.outStream.cancelTaskId);
       supplier.outStream.cancelTaskId = bytes32(0);
+      
       supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(supplier.outAssets.flow);
 
       //  periodByTimestamp[block.timestamp].totalShares =  periodByTimestamp[block.timestamp].totalShares - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
@@ -501,6 +508,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
         periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + newNetFlow;
 
         periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + supplier.deposit.amount;
+        
         periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate - supplier.deposit.amount;
 
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
@@ -511,7 +519,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
           newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
         }
       } else {
-        periodByTimestamp[block.timestamp].outFlowRate -= currentNetFlow + newNetFlow;
+  
+        periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
 
         //// creatre timed task
       }
@@ -536,7 +545,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
         //// transfer total balance to depositFromOutFlow
         uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
-
         uint256 factor = total.div(supplier.shares);
 
         int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow)))));
@@ -563,8 +571,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     //////// if newnetFlow < 0 CRETate TIMED TASK
     if (newNetFlow < 0) {
       uint256 stopDateInMs = block.timestamp + supplier.deposit.amount.div(uint96(newNetFlow));
-      bytes32 taskId = createTimedTask(_supplier, stopDateInMs);
-      supplier.outStream.cancelTaskId = taskId;
+      //bytes32 taskId = createTimedTask(_supplier, stopDateInMs);
+      //supplier.outStream.cancelTaskId = taskId;
     }
 
     supplier.timestamp = block.timestamp;
@@ -707,12 +715,14 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     DataTypes.Period storage lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
-
     uint256 dollarSecondsInFlow = (uint96(lastPeriod.inFlowRate) * (periodSpan**2)) / 2 + lastPeriod.depositFromInFlowRate * periodSpan;
+
 
     uint256 dollarSecondsOutFlow = lastPeriod.depositFromOutFlowRate * periodSpan - (uint96(lastPeriod.outFlowAssetsRate) * (periodSpan**2)) / 2;
 
     uint256 dollarSecondsDeposit = lastPeriod.deposit * periodSpan;
+
+     console.log(719,dollarSecondsDeposit);
 
     uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow + dollarSecondsOutFlow;
 
@@ -880,6 +890,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     //// If In-Stream we will request a pool update
     if (receiver == address(this)) {
       newCtx = inStreamCallback(sender, inFlowRate, 0, newCtx);
+    } else {
+      console.log('REDEEM FLOW');
     }
 
     return newCtx;
