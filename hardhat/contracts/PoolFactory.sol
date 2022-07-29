@@ -521,9 +521,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
           newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
         }
       } else {
+       
         uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(-currentNetFlow));
         uint256 factor = total.div(supplier.shares);
-
     
         int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow)))));
 
