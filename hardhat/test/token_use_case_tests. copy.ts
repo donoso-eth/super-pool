@@ -70,7 +70,7 @@ let fromUser1Stream: IWeb3FlowInfo;
 let fromUser2Stream: IWeb3FlowInfo;
 let PRECISSION = 10 ** 6;
 
-describe.only('TOKEN Use case test', function () {
+describe('TOKEN Use case test', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -497,8 +497,6 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion FOURTH PERIOD
 
-  
-    
     await setNextBlockTimestamp(hre, t0 + 40);
 
     // #region ================= FIFTH PERIOD ============================= //
@@ -844,7 +842,7 @@ describe.only('TOKEN Use case test', function () {
      *              PoolBalance = 1350 - Flow deposit
      *              PoolShares = 550
      *
-     *              PoolDeposit = 857
+     *              PoolDeposit = 130
      *              Pool InFlow = 11 unitd/sec
      *              Pool OutFlow = 9 unitd/sec
      *              Yield Accrued units/sec = 10
@@ -892,7 +890,6 @@ describe.only('TOKEN Use case test', function () {
       yieldAccruedSec: period8.yieldAccruedSec,
       yieldTokenIndex: period8.yieldTokenIndex,
       yieldInFlowRateIndex: period8.yieldInFlowRateIndex,
-      deposit: period8.deposit,
       depositFromInFlowRate: period8.depositFromInFlowRate,
       depositFromOutFlowRate: period8.depositFromOutFlowRate,
       totalShares: period8.totalShares,
@@ -906,9 +903,8 @@ describe.only('TOKEN Use case test', function () {
       yieldAccruedSec: BigNumber.from(10),
       yieldInFlowRateIndex: BigNumber.from(85583786),
       yieldTokenIndex: BigNumber.from(4042329),
-      deposit: BigNumber.from(857),
       depositFromInFlowRate: BigNumber.from(120),
-      depositFromOutFlowRate: BigNumber.from(0),
+      depositFromOutFlowRate: BigNumber.from(727),
       totalShares: BigNumber.from(550),
       outFlowAssetsRate: BigNumber.from(8),
     };
@@ -970,7 +966,6 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion EIGTH  PERIOD
 
-    
     await setNextBlockTimestamp(hre, t0 + 80);
 
     // #region ================= NINETH PERIOD ============================= //
@@ -988,11 +983,11 @@ describe.only('TOKEN Use case test', function () {
      *              Yield Accrued units/sec = 10
      *              Index Yield Token = 4145741
      *              Index Yield In-FLOW = 88169101
-     *              Index Yield Out-Assets = 517063
+     *              Index Yield Out-Assets = 8880558
      *              ---------------------
      *              User1 Total Balance = 711036360
      *              User1 Total Shares = 310
-     *              User2 Total Balance = 718044068
+     *              User2 Total Balance = 718044464
      *              User2 Total Shares = 260
      *              ---------------------
      *
@@ -1042,7 +1037,7 @@ describe.only('TOKEN Use case test', function () {
       yieldAccruedSec: BigNumber.from(10),
       yieldInFlowRateIndex: BigNumber.from(88169101),
       yieldTokenIndex: BigNumber.from(4145741),
-      yieldOutFlowRateIndex: BigNumber.from(517063),
+      yieldOutFlowRateIndex: BigNumber.from(8880558),
       depositFromInFlowRate: BigNumber.from(180),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(570),
@@ -1084,7 +1079,7 @@ describe.only('TOKEN Use case test', function () {
         name: 'User2',
         result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
         expected: {
-          realTimeBalance: BigNumber.from(718044068),
+          realTimeBalance: BigNumber.from(718044464),
           shares: BigNumber.from(260),
           tokenBalance: utils
             .parseEther('10')
@@ -1238,7 +1233,6 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion TENTH  PERIOD
 
-    throw new Error("");
     await setNextBlockTimestamp(hre, t0 + 100);
 
     // #region ================= ELEVENTH PERIOD ============================= //

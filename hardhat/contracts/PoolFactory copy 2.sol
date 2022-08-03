@@ -44,7 +44,7 @@ import {IERC4626} from "./interfaces/IERC4626.sol";
  *      4) New created period Updated
  *
  ****************************************************************************************************/
-contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC4626 {
+contract CopyPoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC4626 {
   // #region pool state
 
   using SafeMath for uint256;
@@ -509,9 +509,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
         periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + newNetFlow;
 
-      //  periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + supplier.deposit.amount;
+        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + supplier.deposit.amount;
         
-       // periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate - supplier.deposit.amount;
+        periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate - supplier.deposit.amount;
 
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
         supplier.outAssets.flow = 0;
@@ -565,14 +565,13 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
         periodByTimestamp[block.timestamp].outFlowRate += -newNetFlow;
         periodByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
 
-        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount + total;
-        //periodByTimestamp[block.timestamp].depositFromOutFlowRate = total;
+        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
+        periodByTimestamp[block.timestamp].depositFromOutFlowRate = total;
         periodByTimestamp[block.timestamp].depositFromInFlowRate -= (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
 
         supplier.cumulatedYield = 0;
         supplier.deposit.amount = total;
 
-        /// TO DO FIST DEPOSIT THEN sTREAM
         _cfaLib.deleteFlow(_supplier, address(this), superToken);
 
         //// creatre timed task
@@ -645,12 +644,10 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
       yieldSupplier = yieldFromDeposit + yieldFromFlow;
     } else {
-       uint256 yieldFromDeposit = (supplier.deposit.amount - uint96(supplier.outAssets.flow) *(lastPeriodTimestamp-lastTimestamp)) * (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex);
-
       ///// Yield from outFlow
       uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) *
         (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
-      yieldSupplier = yieldFromOutFlow + yieldFromDeposit;
+      yieldSupplier = yieldFromOutFlow;
     }
   }
 
@@ -687,16 +684,15 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
 
-    currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * periodSpan + lastPeriod.depositFromInFlowRate;
-    //currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowAssetsRate) * periodSpan;
-    currentPeriod.deposit = lastPeriod.deposit  - uint96(lastPeriod.outFlowAssetsRate) * periodSpan;
-
     (currentPeriod.yieldTokenIndex, currentPeriod.yieldInFlowRateIndex, currentPeriod.yieldOutFlowRateIndex) = _calculateIndexes();
 
     currentPeriod.yieldTokenIndex = currentPeriod.yieldTokenIndex + lastPeriod.yieldTokenIndex;
     currentPeriod.yieldInFlowRateIndex = currentPeriod.yieldInFlowRateIndex + lastPeriod.yieldInFlowRateIndex;
     currentPeriod.yieldOutFlowRateIndex = currentPeriod.yieldOutFlowRateIndex + lastPeriod.yieldOutFlowRateIndex;
 
+    currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * periodSpan + lastPeriod.depositFromInFlowRate;
+    currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowAssetsRate) * periodSpan;
+    currentPeriod.deposit = lastPeriod.deposit;
 
     currentPeriod.totalShares = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan - uint96(lastPeriod.outFlowRate) * periodSpan;
 
@@ -730,17 +726,15 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     DataTypes.Period storage lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
-    
     uint256 dollarSecondsInFlow = (uint96(lastPeriod.inFlowRate) * (periodSpan**2)) / 2 + lastPeriod.depositFromInFlowRate * periodSpan;
 
-    uint256 dollarSecondsOutFlow = (uint96(lastPeriod.outFlowAssetsRate) * (periodSpan**2)) / 2;
 
-    uint256 dollarSecondsDeposit = (lastPeriod.deposit -  uint96(lastPeriod.outFlowAssetsRate) * (periodSpan)) * periodSpan;
+    uint256 dollarSecondsOutFlow = lastPeriod.depositFromOutFlowRate * periodSpan - (uint96(lastPeriod.outFlowAssetsRate) * (periodSpan**2)) / 2;
 
-     console.log(740,dollarSecondsDeposit);
-     console.log(741,dollarSecondsInFlow);
-     console.log(742,dollarSecondsOutFlow);
-    
+    uint256 dollarSecondsDeposit = lastPeriod.deposit * periodSpan;
+
+     console.log(719,dollarSecondsDeposit);
+
     uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow + dollarSecondsOutFlow;
 
     uint256 yieldPeriod = _calculatePoolYieldPeriod();
@@ -750,14 +744,12 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     if (totalAreaPeriod == 0 || yieldPeriod == 0) {
       periodYieldTokenIndex = 0;
       periodYieldInFlowRateIndex = 0;
-      periodYieldOutFlowRateIndex = 0;
     } else {
       uint256 inFlowContribution = (dollarSecondsInFlow * PRECISSION);
       uint256 outFlowContribution = (dollarSecondsOutFlow * PRECISSION);
       uint256 depositContribution = (dollarSecondsDeposit * PRECISSION);
       if (lastPeriod.deposit != 0) {
-
-        periodYieldTokenIndex = ((depositContribution * yieldPeriod).div((lastPeriod.deposit-uint96(lastPeriod.outFlowAssetsRate)*periodSpan) * totalAreaPeriod));
+        periodYieldTokenIndex = ((depositContribution * yieldPeriod).div(lastPeriod.deposit * totalAreaPeriod));
       }
       if (lastPeriod.inFlowRate != 0) {
         periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPeriod.inFlowRate) * totalAreaPeriod));
