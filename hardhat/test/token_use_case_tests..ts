@@ -232,6 +232,8 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion FIST PERIOD
 
+
+
     await setNextBlockTimestamp(hre, t0 + 10);
 
     // #region ================= SECOND PERIOD ============================= //
@@ -509,11 +511,12 @@ describe.only('TOKEN Use case test', function () {
      *              ---------------------
      *              PoolBalance = 470
      *              Pool Total Shares = 170
+     *              Pool Deposit = 68000000
      *
      *              Pool InFlow = 11 unitd/sec
      *              Yield Accrued units/sec = 20
      *              ---------------------
-     *              User1 Total Balance = 68638820
+     *              User1 Total Balance = 68000000
      *              User1 Total Shares = 20
      *              User2 Total Balance = 401361155
      *              User2 Total Shares = 150
@@ -550,6 +553,7 @@ describe.only('TOKEN Use case test', function () {
       yieldInFlowRateIndex: period5.yieldInFlowRateIndex,
       depositFromInFlowRate: period5.depositFromInFlowRate,
       totalShares: period5.totalShares,
+      deposit: period5.deposit
     };
 
     let periodExpected5: IPERIOD_RESULT = {
@@ -560,6 +564,7 @@ describe.only('TOKEN Use case test', function () {
       yieldTokenIndex: BigNumber.from(2431941),
       depositFromInFlowRate: BigNumber.from(150),
       totalShares: BigNumber.from(170),
+      deposit: BigNumber.from(68000000)
     };
 
     ///////////// User1 balance
@@ -589,7 +594,7 @@ describe.only('TOKEN Use case test', function () {
           tokenBalance: user1Balance,
         },
         expected: {
-          realTimeBalance: BigNumber.from(68638820),
+          realTimeBalance: BigNumber.from(68000000),
           shares: BigNumber.from(20),
           tokenBalance: utils
             .parseEther('10')
@@ -623,6 +628,9 @@ describe.only('TOKEN Use case test', function () {
     // #endregion FIFTH  PERIOD
 
     await setNextBlockTimestamp(hre, t0 + 50);
+
+    
+    throw new Error("");
 
     // #region ================= SIXTH PERIOD ============================= //
 
@@ -727,6 +735,7 @@ describe.only('TOKEN Use case test', function () {
     console.log('');
 
     // #endregion SIXTH  PERIOD
+
 
     await setNextBlockTimestamp(hre, t0 + 60);
 
@@ -833,6 +842,8 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion SEVENTH PERIOD
 
+
+   
     await setNextBlockTimestamp(hre, t0 + 70);
 
     // #region ================= EIGTH PERIOD ============================= //
@@ -1238,7 +1249,7 @@ describe.only('TOKEN Use case test', function () {
 
     // #endregion TENTH  PERIOD
 
-    throw new Error("");
+
     await setNextBlockTimestamp(hre, t0 + 100);
 
     // #region ================= ELEVENTH PERIOD ============================= //
