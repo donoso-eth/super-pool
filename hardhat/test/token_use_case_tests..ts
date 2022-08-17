@@ -31,6 +31,7 @@ import {
   printPeriod,
   printPeriodTest,
   printUser,
+  testPeriod,
 } from './helpers/utils';
 import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core';
 
@@ -42,6 +43,7 @@ let poolFactory: PoolFactory;
 let superTokenPool: PoolFactory;
 let supertokenContract: ISuperfluidToken;
 let tokenContract: ERC777;
+let contractsTest: any;
 
 let HOST = '0xEB796bdb90fFA0f28255275e16936D25d3418603';
 let TOKEN1 = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
@@ -109,6 +111,14 @@ describe.only('TOKEN Use case test', function () {
 
     tokenContract.approve(superPoolTokenAddress, hre.ethers.constants.MaxUint256);
 
+    contractsTest = { 
+      poolAddress: superPoolTokenAddress,
+       superTokenContract: supertokenContract, 
+       superTokenPool:superTokenPool,
+       tokenContract
+      }
+
+
     sf = await Framework.create({
       networkName: 'local',
       provider: provider,
@@ -162,7 +172,7 @@ describe.only('TOKEN Use case test', function () {
     superPoolBalance = +(await tokenContract.balanceOf(superPoolTokenAddress)).toString();
     expect(superPoolBalance).to.equal(50 * 10 ** 18);
 
-    t0 = parseInt(await getTimestamp());
+ 
   });
 
   it('should be successfull', async function () {
@@ -184,34 +194,31 @@ describe.only('TOKEN Use case test', function () {
     erc777 = await ERC777__factory.connect(TOKEN1, user1);
 
     await waitForTx(erc777.send(superPoolTokenAddress, 20, '0x'));
+    t0 = +await superTokenPool.lastPeriodTimestamp();
 
     let superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
     let expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(20));
 
-    let period1: IPERIOD_RESULT = await getPeriod(superTokenPool);
-
-    let periodResult1: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      totalShares: period1.totalShares,
-      deposit: period1.deposit,
-    };
+ 
 
     let periodExpected1: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
       totalShares: BigNumber.from(20),
-      deposit: BigNumber.from(20),
+      deposit: BigNumber.from(20000000),
     };
+
+  
 
     let user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
     let user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-
+    let user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
     let user1Shares = await superTokenPool.balanceOf(user1.address);
     let user2Shares = await superTokenPool.balanceOf(user2.address);
-
+    let user3Shares = await superTokenPool.balanceOf(user2.address);
     user1Balance = await tokenContract.balanceOf(user1.address);
     user2Balance = await tokenContract.balanceOf(user2.address);
-
+    user3Balance = await tokenContract.balanceOf(user2.address);
     let users: Array<IUSER_CHECK> = [
       {
         name: 'User1',
@@ -225,14 +232,34 @@ describe.only('TOKEN Use case test', function () {
       },
     ];
 
-    await printPeriodTest(periodResult1, periodExpected1, users);
+    let usersTest: Array<{address:string, name: string,expected: IUSER_RESULT}> = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(20), 
+          shares: BigNumber.from(20), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(20)),
+          deposit: BigNumber.from(20).mul(BigNumber.from(PRECISSION)),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(0)
+        },
+      }
+    ];
+
+
+    await testPeriod(BigNumber.from(t0),0,periodExpected1,contractsTest,usersTest)
+   
+
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tested #######');
     console.log('');
 
     // #endregion FIST PERIOD
 
-
+  
 
     await setNextBlockTimestamp(hre, t0 + 10);
 
@@ -267,30 +294,21 @@ describe.only('TOKEN Use case test', function () {
     });
     await createFlowOperation.exec(user2);
 
-    let period2: IPERIOD = await getPeriod(superTokenPool);
-
+ 
     expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(20));
-
-    let periodResult2: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      inFlowRate: period2.inFlowRate,
-      totalShares: period2.totalShares,
-    };
 
     let periodExpected2: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
       inFlowRate: BigNumber.from(5),
       totalShares: BigNumber.from(20),
+      deposit:BigNumber.from(20).mul(PRECISSION),
+      outFlowAssetsRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(0),
+      depositFromInFlowRate:BigNumber.from(0)
+        
     };
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
 
     fromUser2Stream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -299,25 +317,50 @@ describe.only('TOKEN Use case test', function () {
       providerOrSigner: user2,
     });
 
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: { realTimeBalance: BigNumber.from(20).mul(PRECISSION), shares: BigNumber.from(20), tokenBalance: utils.parseEther('10').sub(BigNumber.from(20)) },
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(20), 
+          shares: BigNumber.from(20), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(20)),
+          deposit: BigNumber.from(20).mul(BigNumber.from(PRECISSION)),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(0)
+        },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: { realTimeBalance: BigNumber.from(0), shares: BigNumber.from(0), tokenBalance: utils.parseEther('10').sub(BigNumber.from(+fromUser2Stream.deposit)) },
-      },
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(0), 
+          shares: BigNumber.from(0), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(+fromUser2Stream.deposit)) ,
+          deposit: BigNumber.from(0),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(5),
+          timestamp: BigNumber.from(10)
+        },
+      }
     ];
 
-    await printPeriodTest(periodResult2, periodExpected2, users);
+
+    await testPeriod(BigNumber.from(t0),10,periodExpected2,contractsTest,usersTest)
+
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#2--- Period Tests passed ');
     console.log('');
 
     // #endregion SECOND PERIOD
+
+
+    
 
     await setNextBlockTimestamp(hre, t0 + 20);
 
@@ -355,59 +398,72 @@ describe.only('TOKEN Use case test', function () {
 
     expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(70));
 
-    let periodResult3: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      inFlowRate: period3.inFlowRate,
-      yieldAccruedSec: period3.yieldAccruedSec,
-      totalShares: period3.totalShares,
-    };
+
 
     let periodExpected3: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
       inFlowRate: BigNumber.from(5),
       yieldAccruedSec: BigNumber.from(10),
       totalShares: BigNumber.from(70),
+      deposit:BigNumber.from(20).mul(PRECISSION),
+      outFlowAssetsRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(0),
+      depositFromInFlowRate:BigNumber.from(50).mul(PRECISSION)
     };
 
     ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: { realTimeBalance: BigNumber.from(20).mul(PRECISSION), shares: BigNumber.from(20), tokenBalance: utils.parseEther('10').sub(BigNumber.from(20)) },
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(20), 
+          shares: BigNumber.from(20), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(20)),
+          deposit: BigNumber.from(20).mul(BigNumber.from(PRECISSION)),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(0)
+        },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(5).mul(10).mul(PRECISSION),
-          shares: BigNumber.from(50),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(50), 
+          shares: BigNumber.from(50), 
           tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(50))
-            .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          .parseEther('10')
+          .sub(BigNumber.from(50))
+          .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          deposit: BigNumber.from(0),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(5),
+          timestamp: BigNumber.from(10)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult3, periodExpected3, users);
+
+    await testPeriod(BigNumber.from(t0),20,periodExpected3,contractsTest,usersTest)
+
 
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     console.log('');
 
     // #endregion THIRD PERIOD
 
+
+
+  
+
     await setNextBlockTimestamp(hre, t0 + 30);
+
+    
 
     // #region ================= FOURTH PERIOD ============================= //
 
@@ -434,23 +490,12 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    console.log('\x1b[36m%s\x1b[0m', '#4--- Pool accred 40 units/sec at t0 + 30');
+    console.log('\x1b[36m%s\x1b[0m', '#4--- Pool accred 20 units/sec at t0 + 30');
     await waitForTx(superTokenPool.mockYield(20));
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
-
-    let period4: IPERIOD = await getPeriod(superTokenPool);
-
+ 
     expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(220));
 
-    let periodResult4: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      inFlowRate: period4.inFlowRate,
-      totalShares: period4.totalShares,
-      yieldAccruedSec: period4.yieldAccruedSec,
-      yieldTokenIndex: period4.yieldTokenIndex,
-      yieldInFlowRateIndex: period4.yieldInFlowRateIndex,
-    };
 
     let periodExpected4: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
@@ -459,48 +504,59 @@ describe.only('TOKEN Use case test', function () {
       yieldAccruedSec: BigNumber.from(20),
       yieldInFlowRateIndex: BigNumber.from(15789473),
       yieldTokenIndex: BigNumber.from(1052631),
+      deposit:BigNumber.from(20).mul(PRECISSION),
+      outFlowAssetsRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(0),
+      depositFromInFlowRate:BigNumber.from(100).mul(PRECISSION)
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: { realTimeBalance: BigNumber.from(41052620), shares: BigNumber.from(20), tokenBalance: utils.parseEther('10').sub(BigNumber.from(20)) },
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(41), 
+          shares: BigNumber.from(20), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(20)),
+          deposit: BigNumber.from(20).mul(BigNumber.from(PRECISSION)),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(0)
+        },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(178947365),
-          shares: BigNumber.from(100),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(178), 
+          shares: BigNumber.from(100), 
           tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(100))
-            .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          .parseEther('10')
+          .sub(BigNumber.from(100))
+          .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          deposit: BigNumber.from(0),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(5),
+          timestamp: BigNumber.from(10)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult4, periodExpected4, users);
+
+    await testPeriod(BigNumber.from(t0),30,periodExpected4,contractsTest,usersTest)
+
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
     console.log('');
 
     // #endregion FOURTH PERIOD
 
-  
-    
+
+
     await setNextBlockTimestamp(hre, t0 + 40);
 
     // #region ================= FIFTH PERIOD ============================= //
@@ -541,20 +597,10 @@ describe.only('TOKEN Use case test', function () {
 
     superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period5: IPERIOD = await getPeriod(superTokenPool);
 
     expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(470));
 
-    let periodResult5: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      inFlowRate: period5.inFlowRate,
-      yieldAccruedSec: period5.yieldAccruedSec,
-      yieldTokenIndex: period5.yieldTokenIndex,
-      yieldInFlowRateIndex: period5.yieldInFlowRateIndex,
-      depositFromInFlowRate: period5.depositFromInFlowRate,
-      totalShares: period5.totalShares,
-      deposit: period5.deposit
-    };
+ 
 
     let periodExpected5: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
@@ -562,21 +608,16 @@ describe.only('TOKEN Use case test', function () {
       yieldAccruedSec: BigNumber.from(20),
       yieldInFlowRateIndex: BigNumber.from(50272231),
       yieldTokenIndex: BigNumber.from(2431941),
-      depositFromInFlowRate: BigNumber.from(150),
+      depositFromInFlowRate: BigNumber.from(150).mul(PRECISSION),
       totalShares: BigNumber.from(170),
-      deposit: BigNumber.from(68000000)
+      deposit: BigNumber.from(68638820),
+      outFlowAssetsRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(0),
     };
 
     ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
 
     fromUser1Stream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -585,52 +626,58 @@ describe.only('TOKEN Use case test', function () {
       providerOrSigner: user2,
     });
 
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: {
-          realTimeBalance: user1RealtimeBalance,
-          shares: user1Shares,
-          tokenBalance: user1Balance,
-        },
-        expected: {
-          realTimeBalance: BigNumber.from(68000000),
-          shares: BigNumber.from(20),
-          tokenBalance: utils
-            .parseEther('10')
-            .sub(+fromUser1Stream.deposit)
-            .sub(BigNumber.from(20)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(68), 
+          shares: BigNumber.from(20), 
+          tokenBalance: utils.parseEther('10')
+          .sub(+fromUser1Stream.deposit)
+          .sub(BigNumber.from(20)),
+          deposit: BigNumber.from(68638820),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(6),
+          timestamp: BigNumber.from(40)
         },
       },
       {
         name: 'User2',
-        result: {
-          realTimeBalance: user2RealtimeBalance,
-          shares: user2Shares,
-          tokenBalance: user2Balance,
-        },
-        expected: {
-          realTimeBalance: BigNumber.from(401361155),
-          shares: BigNumber.from(150),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(401), 
+          shares: BigNumber.from(150), 
           tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(150))
-            .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          .parseEther('10')
+          .sub(BigNumber.from(150))
+          .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          deposit: BigNumber.from(0),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(5),
+          timestamp: BigNumber.from(10)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult5, periodExpected5, users);
+
+    await testPeriod(BigNumber.from(t0),40,periodExpected5,contractsTest,usersTest)
+
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
     console.log('');
 
     // #endregion FIFTH  PERIOD
 
+    
+ 
+
     await setNextBlockTimestamp(hre, t0 + 50);
 
     
-    throw new Error("");
+  
 
     // #region ================= SIXTH PERIOD ============================= //
 
@@ -666,70 +713,63 @@ describe.only('TOKEN Use case test', function () {
 
     superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period6: IPERIOD = await getPeriod(superTokenPool);
-
     expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(830));
 
-    let periodResult6: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      inFlowRate: period6.inFlowRate,
-      yieldAccruedSec: period6.yieldAccruedSec,
-      yieldTokenIndex: period6.yieldTokenIndex,
-      yieldInFlowRateIndex: period6.yieldInFlowRateIndex,
-      depositFromInFlowRate: period6.depositFromInFlowRate,
-      deposit: period6.deposit,
-      totalShares: period6.totalShares,
-    };
 
     let periodExpected6: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
       inFlowRate: BigNumber.from(11),
       yieldAccruedSec: BigNumber.from(20),
-      yieldInFlowRateIndex: BigNumber.from(66837887),
-      yieldTokenIndex: BigNumber.from(3320829),
-      depositFromInFlowRate: BigNumber.from(200),
-      deposit: BigNumber.from(130),
+      yieldInFlowRateIndex: BigNumber.from(63893371),
+      yieldTokenIndex: BigNumber.from(3162831),
+      depositFromInFlowRate: BigNumber.from(200).mul(PRECISSION),
+      deposit: BigNumber.from(310533087),
       totalShares: BigNumber.from(330),
+      outFlowAssetsRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(0),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
 
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(295810516),
-          shares: BigNumber.from(130),
-          tokenBalance: utils
-            .parseEther('10')
-            .sub(+fromUser1Stream.deposit)
-            .sub(BigNumber.from(130)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(310), 
+          shares: BigNumber.from(130), 
+          tokenBalance: utils.parseEther('10')
+          .sub(+fromUser1Stream.deposit)
+          .sub(BigNumber.from(130)),
+          deposit: BigNumber.from(310533087),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(6),
+          timestamp: BigNumber.from(50)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(534189435),
-          shares: BigNumber.from(200),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(519), 
+          shares: BigNumber.from(200), 
           tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(200))
-            .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          .parseEther('10')
+          .sub(BigNumber.from(200))
+          .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          deposit: BigNumber.from(0),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(5),
+          timestamp: BigNumber.from(10)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult6, periodExpected6, users);
+
+    await testPeriod(BigNumber.from(t0),50,periodExpected6,contractsTest,usersTest)
+
 
     console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
     console.log('');
@@ -738,6 +778,9 @@ describe.only('TOKEN Use case test', function () {
 
 
     await setNextBlockTimestamp(hre, t0 + 60);
+
+
+ 
 
     // #region ================= SEVENTH PERIOD ============================= //
 
@@ -771,78 +814,71 @@ describe.only('TOKEN Use case test', function () {
 
     await waitForTx(superTokenPool.mockYield(10));
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
-
-    let period7: IPERIOD = await getPeriod(superTokenPool);
 
     expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1140));
 
-    let periodResult7: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      inFlowRate: period7.inFlowRate,
-      yieldAccruedSec: period7.yieldAccruedSec,
-      yieldTokenIndex: period7.yieldTokenIndex,
-      yieldInFlowRateIndex: period7.yieldInFlowRateIndex,
-      depositFromInFlowRate: period7.depositFromInFlowRate,
-      totalShares: period7.totalShares,
-    };
+
 
     let periodExpected7: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
       inFlowRate: BigNumber.from(11),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(78880389),
-      yieldTokenIndex: BigNumber.from(3840309),
-      depositFromInFlowRate: BigNumber.from(310),
+      yieldInFlowRateIndex: BigNumber.from(72091589),
+      yieldTokenIndex: BigNumber.from(3516479),
+      depositFromInFlowRate: BigNumber.from(310000000),
       totalShares: BigNumber.from(440),
+      outFlowAssetsRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(0),
+      deposit: BigNumber.from(310533087)
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(495597928),
-          shares: BigNumber.from(190),
-          tokenBalance: utils
-            .parseEther('10')
-            .sub(+fromUser1Stream.deposit)
-            .sub(BigNumber.from(190)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(529), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils.parseEther('10')
+          .sub(+fromUser1Stream.deposit)
+          .sub(BigNumber.from(190)),
+          deposit: BigNumber.from(310533087),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(6),
+          timestamp: BigNumber.from(50)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(644401945),
-          shares: BigNumber.from(250),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(610), 
+          shares: BigNumber.from(250), 
           tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(250))
-            .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          .parseEther('10')
+          .sub(BigNumber.from(250))
+          .sub(BigNumber.from(+fromUser2Stream.deposit)),
+          deposit: BigNumber.from(0),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(5),
+          timestamp: BigNumber.from(10)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult7, periodExpected7, users);
+
+    await testPeriod(BigNumber.from(t0),60,periodExpected7,contractsTest,usersTest)
 
     console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
     console.log('');
 
     // #endregion SEVENTH PERIOD
 
-
+  
    
     await setNextBlockTimestamp(hre, t0 + 70);
 
@@ -896,44 +932,25 @@ describe.only('TOKEN Use case test', function () {
       .add(BigNumber.from(1350))
       .sub(BigNumber.from(+loanStream.deposit));
 
-    let periodResult8: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      inFlowRate: period8.inFlowRate,
-      outFlowRate: period8.outFlowRate,
-      yieldAccruedSec: period8.yieldAccruedSec,
-      yieldTokenIndex: period8.yieldTokenIndex,
-      yieldInFlowRateIndex: period8.yieldInFlowRateIndex,
-      deposit: period8.deposit,
-      depositFromInFlowRate: period8.depositFromInFlowRate,
-      depositFromOutFlowRate: period8.depositFromOutFlowRate,
-      totalShares: period8.totalShares,
-      outFlowAssetsRate: period8.outFlowAssetsRate,
-    };
+
 
     let periodExpected8: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
       inFlowRate: BigNumber.from(6),
       outFlowRate: BigNumber.from(4),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(85583786),
-      yieldTokenIndex: BigNumber.from(4042329),
-      deposit: BigNumber.from(857),
-      depositFromInFlowRate: BigNumber.from(120),
+      yieldInFlowRateIndex: BigNumber.from(77003534),
+      yieldTokenIndex: BigNumber.from(3664510),
+      deposit: BigNumber.from(995550757),
+      depositFromInFlowRate: BigNumber.from(120).mul(PRECISSION),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(550),
-      outFlowAssetsRate: BigNumber.from(8),
+      outFlowAssetsRate: BigNumber.from(9),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
 
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
 
     fromUser2Stream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -944,43 +961,52 @@ describe.only('TOKEN Use case test', function () {
 
     expect(+fromUser2Stream.deposit).to.equal(0);
 
-    users = [
+   
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(622080910),
-          shares: BigNumber.from(250),
-          tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(250))
-            .sub(BigNumber.from(+fromUser1Stream.deposit)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(664), 
+          shares: BigNumber.from(250), 
+          tokenBalance: utils.parseEther('10')
+          .sub(+fromUser1Stream.deposit)
+          .sub(BigNumber.from(250)),
+          deposit: BigNumber.from(310533087),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(6),
+          timestamp: BigNumber.from(50)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: { realTimeBalance: BigNumber.from(727000000), shares: BigNumber.from(300), tokenBalance: utils.parseEther('10').sub(BigNumber.from(300)) },
-      },
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(685), 
+          shares: BigNumber.from(300), 
+          tokenBalance: utils
+          .parseEther('10')
+          .sub(BigNumber.from(300)),
+          deposit: BigNumber.from(685017670),
+          outAssets: BigNumber.from(9),
+          outFlow:BigNumber.from(4),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(70)
+        },
+      }
     ];
 
-    await printPeriodTest(periodResult8, periodExpected8, users);
 
-    let user2OutAssets = (await superTokenPool.suppliersByAddress(user2.address)).outAssets.flow.toString();
-    let expectedUser2Out = BigNumber.from(8).toString();
-    try {
-      expect(user2OutAssets).to.equal(BigNumber.from(8));
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#User2 Out-Assets: ${expectedUser2Out}`);
-    } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#$User2 Out-Assets : ${user2OutAssets}, expected:${expectedUser2Out}`);
-      console.log(+user2OutAssets.toString() - +expectedUser2Out);
-    }
+    await testPeriod(BigNumber.from(t0),70,periodExpected8,contractsTest,usersTest)
+
 
     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
     console.log('');
 
     // #endregion EIGTH  PERIOD
 
+ 
     
     await setNextBlockTimestamp(hre, t0 + 80);
 
@@ -988,7 +1014,7 @@ describe.only('TOKEN Use case test', function () {
 
     /******************************************************************
      *              NINETH PERIOD (T0 + 80)
-     *              User Update stream to 4 units/sec previous 5 units/sex
+     *              User2 Update stream to 4 units/sec previous 5 units/sex
      *              ---------------------
      *              PoolBalance = 1430
      *              PoolShares = 570
@@ -1014,7 +1040,7 @@ describe.only('TOKEN Use case test', function () {
      *
      *****************************************************************/
 
-    console.log('\x1b[36m%s\x1b[0m', '#9--- User Update stream to 4 t0 + 80');
+    console.log('\x1b[36m%s\x1b[0m', '#9--- User2 Update stream to 4 t0 + 80');
 
     const operationUpdate = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
@@ -1024,52 +1050,26 @@ describe.only('TOKEN Use case test', function () {
 
     await operationUpdate.exec(user2);
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period9: IPERIOD = await getPeriod(superTokenPool);
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1420));
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1430));
-
-    let periodResult9: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period9.deposit,
-      inFlowRate: period9.inFlowRate,
-      outFlowRate: period9.outFlowRate,
-      yieldAccruedSec: period9.yieldAccruedSec,
-      yieldTokenIndex: period9.yieldTokenIndex,
-      yieldInFlowRateIndex: period9.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period9.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period9.depositFromInFlowRate,
-      depositFromOutFlowRate: period9.depositFromOutFlowRate,
-      totalShares: period9.totalShares,
-      outFlowAssetsRate: period9.outFlowAssetsRate,
-    };
 
     let periodExpected9: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(777),
+      deposit: BigNumber.from( 963704700),
       inFlowRate: BigNumber.from(10),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(88169101),
-      yieldTokenIndex: BigNumber.from(4145741),
-      yieldOutFlowRateIndex: BigNumber.from(517063),
-      depositFromInFlowRate: BigNumber.from(180),
+      yieldInFlowRateIndex: BigNumber.from(79275123),
+      yieldTokenIndex: BigNumber.from(3755373),
+      yieldOutFlowRateIndex: BigNumber.from(454317),
+      depositFromInFlowRate: BigNumber.from(180).mul(PRECISSION),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(570),
       outFlowAssetsRate: BigNumber.from(0),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
 
     fromUser2Stream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -1078,52 +1078,60 @@ describe.only('TOKEN Use case test', function () {
       providerOrSigner: user2,
     });
 
-    users = [
+  
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(711036360),
-          shares: BigNumber.from(310),
-          tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(310))
-            .sub(BigNumber.from(+fromUser1Stream.deposit)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(766), 
+          shares: BigNumber.from(310), 
+          tokenBalance: utils.parseEther('10')
+          .sub(+fromUser1Stream.deposit)
+          .sub(BigNumber.from(310)),
+          deposit: BigNumber.from(310533087),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(6),
+          timestamp: BigNumber.from(50)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(718044068),
-          shares: BigNumber.from(260),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(653), 
+          shares: BigNumber.from(260), 
           tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(300))
-            .sub(BigNumber.from(+fromUser2Stream.deposit))
-            .add(BigNumber.from(80)),
+          .parseEther('10')
+          .sub(BigNumber.from(300))
+          .sub(BigNumber.from(+fromUser2Stream.deposit))
+          .add(BigNumber.from(90)),
+          deposit: BigNumber.from(653171613),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(4),
+          timestamp: BigNumber.from(80)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult9, periodExpected9, users);
 
-    user2OutAssets = (await superTokenPool.suppliersByAddress(user2.address)).outAssets.flow.toString();
-    expectedUser2Out = '0';
-    try {
-      expect(user2OutAssets).to.equal(expectedUser2Out);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#User2 Out-Assets: ${expectedUser2Out}`);
-    } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#$User2 Out-Assets : ${user2OutAssets}, expected:${expectedUser2Out}`);
-      console.log(+user2OutAssets.toString() - +expectedUser2Out);
-    }
+    await testPeriod(BigNumber.from(t0),80,periodExpected9,contractsTest,usersTest)
+
+
+  
 
     console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
     console.log('');
 
     // #endregion NINETH  PERIOD
 
+
+ 
     await setNextBlockTimestamp(hre, t0 + 90);
+
+   
 
     // #region ================= TENTH PERIOD ============================= //
 
@@ -1159,91 +1167,70 @@ describe.only('TOKEN Use case test', function () {
 
     await waitForTx(superTokenPoolUser2.redeemDeposit(100));
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period10: IPERIOD = await getPeriod(superTokenPool);
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1420));
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1430));
-
-    let periodResult10: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period10.deposit,
-      inFlowRate: period10.inFlowRate,
-      outFlowRate: period10.outFlowRate,
-      yieldAccruedSec: period10.yieldAccruedSec,
-      yieldTokenIndex: period10.yieldTokenIndex,
-      yieldInFlowRateIndex: period10.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period10.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period10.depositFromInFlowRate,
-      depositFromOutFlowRate: period10.depositFromOutFlowRate,
-      totalShares: period10.totalShares,
-      outFlowAssetsRate: period10.outFlowAssetsRate,
-    };
 
     let periodExpected10: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(617),
+      deposit: BigNumber.from(866129288),
       inFlowRate: BigNumber.from(10),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(90453112),
-      yieldTokenIndex: BigNumber.from(4245045),
-      yieldOutFlowRateIndex: BigNumber.from(8880558),
-      depositFromInFlowRate: BigNumber.from(240),
+      yieldInFlowRateIndex: BigNumber.from(81201897),
+      yieldTokenIndex: BigNumber.from(3839145),
+      yieldOutFlowRateIndex: BigNumber.from(454317),
+      depositFromInFlowRate: BigNumber.from(240000000),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(570),
       outFlowAssetsRate: BigNumber.from(0),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-
-    fromUser2Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
-      sender: user2.address,
-      receiver: superPoolTokenAddress,
-      providerOrSigner: user2,
-    });
-
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(797649946),
-          shares: BigNumber.from(370),
-          tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(370))
-            .sub(BigNumber.from(+fromUser1Stream.deposit)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(864), 
+          shares: BigNumber.from(370), 
+          tokenBalance: utils.parseEther('10')
+          .sub(+fromUser1Stream.deposit)
+          .sub(BigNumber.from(370)),
+          deposit: BigNumber.from(310533087),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(6),
+          timestamp: BigNumber.from(50)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(631430196),
-          shares: BigNumber.from(200),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(555), 
+          shares: BigNumber.from(200), 
           tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(340))
-            .sub(BigNumber.from(+fromUser2Stream.deposit))
-            .add(BigNumber.from(80))
-            .add(BigNumber.from(200)),
+          .parseEther('10')
+          .sub(BigNumber.from(340))
+          .sub(BigNumber.from(+fromUser2Stream.deposit))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(555596201),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(4),
+          timestamp: BigNumber.from(90)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult10, periodExpected10, users);
 
+    await testPeriod(BigNumber.from(t0),90,periodExpected10,contractsTest,usersTest)
+
+
+  
     console.log('\x1b[36m%s\x1b[0m', '#10--- Period Tests passed ');
     console.log('');
 
@@ -1292,78 +1279,70 @@ describe.only('TOKEN Use case test', function () {
 
     await operationDelete.exec(user2);
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period11: IPERIOD = await getPeriod(superTokenPool);
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1620));
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1630));
-
-    let periodResult11: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period11.deposit,
-      inFlowRate: period11.inFlowRate,
-      outFlowRate: period11.outFlowRate,
-      yieldAccruedSec: period11.yieldAccruedSec,
-      yieldTokenIndex: period11.yieldTokenIndex,
-      yieldInFlowRateIndex: period11.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period11.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period11.depositFromInFlowRate,
-      depositFromOutFlowRate: period11.depositFromOutFlowRate,
-      totalShares: period11.totalShares,
-      outFlowAssetsRate: period11.outFlowAssetsRate,
-    };
 
     let periodExpected11: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(657),
+      deposit: BigNumber.from(964219057),
       inFlowRate: BigNumber.from(6),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(93650465),
-      yieldTokenIndex: BigNumber.from(4355298),
-      yieldOutFlowRateIndex: BigNumber.from(8880558),
-      depositFromInFlowRate: BigNumber.from(300),
+      yieldInFlowRateIndex: BigNumber.from(83710266),
+      yieldTokenIndex: BigNumber.from(3925640),
+      yieldOutFlowRateIndex: BigNumber.from(454317),
+      depositFromInFlowRate: BigNumber.from(300000000),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(670),
       outFlowAssetsRate: BigNumber.from(0),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
 
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-
-    users = [
+   
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(891166954),
-          shares: BigNumber.from(430),
-          tokenBalance: utils
-            .parseEther('10')
-            .sub(BigNumber.from(430))
-            .sub(BigNumber.from(+fromUser1Stream.deposit)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(966), 
+          shares: BigNumber.from(430), 
+          tokenBalance: utils.parseEther('10')
+          .sub(+fromUser1Stream.deposit)
+          .sub(BigNumber.from(430)),
+          deposit: BigNumber.from(310533087),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(6),
+          timestamp: BigNumber.from(50)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(737912819),
-          shares: BigNumber.from(240),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(653), 
+          shares: BigNumber.from(240), 
+          tokenBalance: utils
+          .parseEther('10')
+          .sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(653685970),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(100)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult11, periodExpected11, users);
+
+    await testPeriod(BigNumber.from(t0),100,periodExpected11,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#11--- Period Tests passed ');
     console.log('');
@@ -1371,6 +1350,9 @@ describe.only('TOKEN Use case test', function () {
     // #endregion ELEVENTH PERIOD
 
     await setNextBlockTimestamp(hre, t0 + 110);
+
+    
+   
 
     // #region ================= TWELVETH PERIOD ============================= //
 
@@ -1414,71 +1396,71 @@ describe.only('TOKEN Use case test', function () {
       providerOrSigner: user2,
     });
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period12: IPERIOD = await getPeriod(superTokenPool);
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1790).sub(+loanStream.deposit));
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1780).sub(+loanStream.deposit));
 
-    let periodResult12: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period12.deposit,
-      inFlowRate: period12.inFlowRate,
-      outFlowRate: period12.outFlowRate,
-      yieldAccruedSec: period12.yieldAccruedSec,
-      yieldTokenIndex: period12.yieldTokenIndex,
-      yieldInFlowRateIndex: period12.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period12.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period12.depositFromInFlowRate,
-      depositFromOutFlowRate: period12.depositFromOutFlowRate,
-      totalShares: period12.totalShares,
-      outFlowAssetsRate: period12.outFlowAssetsRate,
-    };
 
     let periodExpected12: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(527),
+      deposit: BigNumber.from(1729489506),
       inFlowRate: BigNumber.from(0),
       outFlowRate: BigNumber.from(5),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(99222906),
-      yieldTokenIndex: BigNumber.from(4456615),
-      yieldOutFlowRateIndex: BigNumber.from(8880558),
+      yieldInFlowRateIndex: BigNumber.from(87959932),
+      yieldTokenIndex: BigNumber.from(4002906),
+      yieldOutFlowRateIndex: BigNumber.from(454317),
       depositFromInFlowRate: BigNumber.from(0),
-      depositFromOutFlowRate: BigNumber.from(997),
+      depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(730),
       outFlowAssetsRate: BigNumber.from(10),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
 
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
 
-    users = [
+     
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: { realTimeBalance: BigNumber.from(997000000), shares: BigNumber.from(490), tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)) },
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1075), 
+          shares: BigNumber.from(490), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490)),
+          deposit: BigNumber.from(1075803536),
+          outAssets: BigNumber.from(10),
+          outFlow:BigNumber.from(5),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(110)
+        },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(791306878),
-          shares: BigNumber.from(240),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(704), 
+          shares: BigNumber.from(240), 
+          tokenBalance: utils
+          .parseEther('10')
+          .sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(653685970),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(100)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult12, periodExpected12, users);
+
+    await testPeriod(BigNumber.from(t0),110,periodExpected12,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#12--- Period Tests passed ');
     console.log('');
@@ -1486,6 +1468,8 @@ describe.only('TOKEN Use case test', function () {
     // #endregion TWELVETH PERIOD
 
     await setNextBlockTimestamp(hre, t0 + 120);
+
+  
 
     // #region ================= THHIRTEENTH  PERIOD ============================= //
 
@@ -1525,87 +1509,83 @@ describe.only('TOKEN Use case test', function () {
     erc20 = await ERC20__factory.connect(superPoolTokenAddress, user2);
     await waitForTx(erc20.transfer(user3.address, 50));
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period13: IPERIOD = await getPeriod(superTokenPool);
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1790).sub(+loanStream.deposit));
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1780).sub(+loanStream.deposit));
 
-    let periodResult13: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period13.deposit,
-      inFlowRate: period13.inFlowRate,
-      outFlowRate: period13.outFlowRate,
-      yieldAccruedSec: period13.yieldAccruedSec,
-      yieldTokenIndex: period13.yieldTokenIndex,
-      yieldInFlowRateIndex: period13.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period13.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period13.depositFromInFlowRate,
-      depositFromOutFlowRate: period13.depositFromOutFlowRate,
-      totalShares: period13.totalShares,
-      outFlowAssetsRate: period13.outFlowAssetsRate,
-    };
-
+   
     let periodExpected13: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(527),
+      deposit: BigNumber.from(1718918322),
       inFlowRate: BigNumber.from(0),
       outFlowRate: BigNumber.from(5),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(99222906),
-      yieldTokenIndex: BigNumber.from(4524457),
-      yieldOutFlowRateIndex: BigNumber.from(15305252),
+      yieldInFlowRateIndex: BigNumber.from(87959932),
+      yieldTokenIndex: BigNumber.from(4062447),
+      yieldOutFlowRateIndex: BigNumber.from(752026),
       depositFromInFlowRate: BigNumber.from(0),
-      depositFromOutFlowRate: BigNumber.from(897),
+      depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(680),
       outFlowAssetsRate: BigNumber.from(10),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    let user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
-
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    let user3Shares = await superTokenPool.balanceOf(user3.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
-
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(961246940),
-          shares: BigNumber.from(440),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)).add(BigNumber.from(100)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1036), 
+          shares: BigNumber.from(440), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490))
+          .add(BigNumber.from(100)),
+          deposit: BigNumber.from(975803536),
+          outAssets: BigNumber.from(10),
+          outFlow:BigNumber.from(5),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(110)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(677059612),
-          shares: BigNumber.from(190),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(593), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils
+          .parseEther('10')
+          .sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
       },
       {
         name: 'User3',
-        result: { realTimeBalance: user3RealtimeBalance, shares: user3Shares, tokenBalance: user3Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(150000000),
-          shares: BigNumber.from(50),
-          tokenBalance: utils.parseEther('10'),
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(150), 
+          shares: BigNumber.from(50), 
+          tokenBalance: utils
+          .parseEther('10'),
+          deposit: BigNumber.from(150000000),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult13, periodExpected13, users);
+
+    await testPeriod(BigNumber.from(t0),120,periodExpected13,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#13--- Period Tests passed ');
     console.log('');
@@ -1613,6 +1593,9 @@ describe.only('TOKEN Use case test', function () {
     // #endregion THHIRTEENTH PERIOD
 
     await setNextBlockTimestamp(hre, t0 + 130);
+
+
+   
 
     // #region ================= FOURTEENTH PERIOD ============================= //
 
@@ -1653,92 +1636,91 @@ describe.only('TOKEN Use case test', function () {
 
     await waitForTx(superTokenPoolUser1.redeemFlowStop());
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
+  
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1780));
 
-    let period14: IPERIOD = await getPeriod(superTokenPool);
-
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1790));
-
-    let periodResult14: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period14.deposit,
-      inFlowRate: period14.inFlowRate,
-      outFlowRate: period14.outFlowRate,
-      yieldAccruedSec: period14.yieldAccruedSec,
-      yieldTokenIndex: period14.yieldTokenIndex,
-      yieldInFlowRateIndex: period14.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period14.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period14.depositFromInFlowRate,
-      depositFromOutFlowRate: period14.depositFromOutFlowRate,
-      totalShares: period14.totalShares,
-      outFlowAssetsRate: period14.outFlowAssetsRate,
-    };
 
     let periodExpected14: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(1324),
+      deposit: BigNumber.from(1729514852),
       inFlowRate: BigNumber.from(0),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(99222906),
-      yieldTokenIndex: BigNumber.from(4597237),
-      yieldOutFlowRateIndex: BigNumber.from(21469735),
+      yieldInFlowRateIndex: BigNumber.from(87959932),
+      yieldTokenIndex: BigNumber.from(4122366),
+      yieldOutFlowRateIndex: BigNumber.from(1051621),
       depositFromInFlowRate: BigNumber.from(0),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(630),
       outFlowAssetsRate: BigNumber.from(0),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    user3Shares = await superTokenPool.balanceOf(user3.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
-
-    users = [
+  
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(922891770),
-          shares: BigNumber.from(390),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)).add(BigNumber.from(200)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(986), 
+          shares: BigNumber.from(390), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(986400066),            
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(130)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(704497672),
-          shares: BigNumber.from(190),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(628), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils
+          .parseEther('10')
+          .sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
       },
       {
         name: 'User3',
-        result: { realTimeBalance: user3RealtimeBalance, shares: user3Shares, tokenBalance: user3Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(160917000),
-          shares: BigNumber.from(50),
-          tokenBalance: utils.parseEther('10'),
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(158), 
+          shares: BigNumber.from(50), 
+          tokenBalance: utils
+          .parseEther('10'),
+          deposit: BigNumber.from(150000000),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult14, periodExpected14, users);
+
+    await testPeriod(BigNumber.from(t0),140,periodExpected14,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#14--- Period Tests passed ');
     console.log('');
 
     // #endregion FOURTEENTH  PERIOD
+
+   
 
     await setNextBlockTimestamp(hre, t0 + 140);
 
@@ -1781,36 +1763,20 @@ describe.only('TOKEN Use case test', function () {
 
     await waitForTx(superTokenPoolUser3.redeemDeposit(15));
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period15: IPERIOD = await getPeriod(superTokenPool);
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1890)).sub(BigNumber.from(45));
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1880)).sub(BigNumber.from(45));
 
-    let periodResult15: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period15.deposit,
-      inFlowRate: period15.inFlowRate,
-      outFlowRate: period15.outFlowRate,
-      yieldAccruedSec: period15.yieldAccruedSec,
-      yieldTokenIndex: period15.yieldTokenIndex,
-      yieldInFlowRateIndex: period15.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period15.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period15.depositFromInFlowRate,
-      depositFromOutFlowRate: period15.depositFromOutFlowRate,
-      totalShares: period15.totalShares,
-      outFlowAssetsRate: period15.outFlowAssetsRate,
-    };
-
+ 
     let periodExpected15: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(1279),
+      deposit: BigNumber.from(1702175552),
       inFlowRate: BigNumber.from(0),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(99222906),
-      yieldTokenIndex: BigNumber.from(4672765),
-      yieldOutFlowRateIndex: BigNumber.from(21469735),
+      yieldInFlowRateIndex: BigNumber.from(87959932),
+      yieldTokenIndex: BigNumber.from(4180185),
+      yieldOutFlowRateIndex: BigNumber.from(1051621),
       depositFromInFlowRate: BigNumber.from(0),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(615),
@@ -1819,17 +1785,6 @@ describe.only('TOKEN Use case test', function () {
 
     ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
-
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    user3Shares = await superTokenPool.balanceOf(user3.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
 
     users = [
       {
@@ -1861,12 +1816,70 @@ describe.only('TOKEN Use case test', function () {
       },
     ];
 
-    await printPeriodTest(periodResult15, periodExpected15, users);
+    usersTest  = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1043), 
+          shares: BigNumber.from(390), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(986400066),            
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(130)
+        },
+      },
+      {
+        name: 'User2',
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(662), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils
+          .parseEther('10')
+          .sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
+        },
+      },
+      {
+        name: 'User3',
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(122), 
+          shares: BigNumber.from(35), 
+          tokenBalance: utils
+          .parseEther('10')
+          .add(BigNumber.from(45)),
+          deposit: BigNumber.from(122660700),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(140)
+        },
+      }
+    ];
+
+
+    await testPeriod(BigNumber.from(t0),140,periodExpected15,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#15--- Period Tests passed ');
     console.log('');
 
     // #endregion FIFTEENTH PERIOD
+
+   
 
     await setNextBlockTimestamp(hre, t0 + 150);
 
@@ -1920,90 +1933,86 @@ describe.only('TOKEN Use case test', function () {
       providerOrSigner: user3,
     });
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period16: IPERIOD = await getPeriod(superTokenPool);
 
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1990)).sub(BigNumber.from(45));
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(1980)).sub(BigNumber.from(45));
 
-    let periodResult16: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period16.deposit,
-      inFlowRate: period16.inFlowRate,
-      outFlowRate: period16.outFlowRate,
-      yieldAccruedSec: period16.yieldAccruedSec,
-      yieldTokenIndex: period16.yieldTokenIndex,
-      yieldInFlowRateIndex: period16.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period16.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period16.depositFromInFlowRate,
-      depositFromOutFlowRate: period16.depositFromOutFlowRate,
-      totalShares: period16.totalShares,
-      outFlowAssetsRate: period16.outFlowAssetsRate,
-    };
+
 
     let periodExpected16: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(1279),
+      deposit: BigNumber.from(1709381622),
       inFlowRate: BigNumber.from(5),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(99222906),
-      yieldTokenIndex: BigNumber.from(4750951),
-      yieldOutFlowRateIndex: BigNumber.from(21469735),
+      yieldInFlowRateIndex: BigNumber.from(87959932),
+      yieldTokenIndex: BigNumber.from(4238933),
+      yieldOutFlowRateIndex: BigNumber.from(1051621),
       depositFromInFlowRate: BigNumber.from(0),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(615),
       outFlowAssetsRate: BigNumber.from(0),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    user3Shares = await superTokenPool.balanceOf(user3.address);
 
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
-
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(1045401828),
-          shares: BigNumber.from(390),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)).add(BigNumber.from(200)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1101), 
+          shares: BigNumber.from(390), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490)).
+          add(BigNumber.from(200)),
+          deposit: BigNumber.from(986400066),            
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(130)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(762447850),
-          shares: BigNumber.from(190),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(697), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
       },
       {
         name: 'User3',
-        result: { realTimeBalance: user3RealtimeBalance, shares: user3Shares, tokenBalance: user3Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(135455730),
-          shares: BigNumber.from(35),
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(129), 
+          shares: BigNumber.from(35), 
           tokenBalance: utils
-            .parseEther('10')
-            .add(BigNumber.from(45))
-            .sub(BigNumber.from(+fromUser3Stream.deposit)),
+          .parseEther('10')
+          .add(BigNumber.from(45))
+          .sub(BigNumber.from(+fromUser3Stream.deposit)),
+          deposit: BigNumber.from(129866770),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(5),
+          timestamp: BigNumber.from(150)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult16, periodExpected16, users);
+
+    await testPeriod(BigNumber.from(t0),150,periodExpected16,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#16--- Period Tests passed ');
     console.log('');
@@ -2011,6 +2020,8 @@ describe.only('TOKEN Use case test', function () {
     // #endregion SIXTEENTH PERIOD
 
     await setNextBlockTimestamp(hre, t0 + 160);
+
+
 
     // #region ================= SEVENTEENTH PERIOD ============================= //
 
@@ -2062,91 +2073,83 @@ describe.only('TOKEN Use case test', function () {
       providerOrSigner: user3,
     });
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period17: IPERIOD = await getPeriod(superTokenPool);
-
-    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(2095));
-
-    let periodResult17: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period17.deposit,
-      inFlowRate: period17.inFlowRate,
-      outFlowRate: period17.outFlowRate,
-      yieldAccruedSec: period17.yieldAccruedSec,
-      yieldTokenIndex: period17.yieldTokenIndex,
-      yieldInFlowRateIndex: period17.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period17.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period17.depositFromInFlowRate,
-      depositFromOutFlowRate: period17.depositFromOutFlowRate,
-      totalShares: period17.totalShares,
-      outFlowAssetsRate: period17.outFlowAssetsRate,
-    };
+    expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(2085));
 
     let periodExpected17: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(1329),
+      deposit: BigNumber.from(1768310785),
       inFlowRate: BigNumber.from(3),
       outFlowRate: BigNumber.from(0),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(99606341),
-      yieldTokenIndex: BigNumber.from(4827638),
-      yieldOutFlowRateIndex: BigNumber.from(21469735),
+      yieldInFlowRateIndex: BigNumber.from(88248219),
+      yieldTokenIndex: BigNumber.from(4296590),
+      yieldOutFlowRateIndex: BigNumber.from(1051621),
       depositFromInFlowRate: BigNumber.from(0),
       depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(665),
       outFlowAssetsRate: BigNumber.from(0),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
-
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    user3Shares = await superTokenPool.balanceOf(user3.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
-
-    users = [
+   
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(1106521367),
-          shares: BigNumber.from(390),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)).add(BigNumber.from(200)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1158), 
+          shares: BigNumber.from(390), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490)).
+          add(BigNumber.from(200)),
+          deposit: BigNumber.from(986400066),            
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(130)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(791358849),
-          shares: BigNumber.from(190),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(731), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
       },
       {
         name: 'User3',
-        result: { realTimeBalance: user3RealtimeBalance, shares: user3Shares, tokenBalance: user3Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(195425040),
-          shares: BigNumber.from(85),
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(188), 
+          shares: BigNumber.from(85), 
           tokenBalance: utils
-            .parseEther('10')
-            .add(BigNumber.from(45))
-            .sub(BigNumber.from(50))
-            .sub(BigNumber.from(+fromUser3Stream.deposit)),
+          .parseEther('10')
+          .add(BigNumber.from(45))
+          .sub(BigNumber.from(50))
+          .sub(BigNumber.from(+fromUser3Stream.deposit)),
+          deposit: BigNumber.from(188795933),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(3),
+          timestamp: BigNumber.from(160)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult17, periodExpected17, users);
+
+    await testPeriod(BigNumber.from(t0),160,periodExpected17,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#17--- Period Tests passed ');
     console.log('');
@@ -2154,6 +2157,9 @@ describe.only('TOKEN Use case test', function () {
     // #endregion SEVENTEENTH PERIOD
 
     await setNextBlockTimestamp(hre, t0 + 170);
+
+
+
 
     // #region ================= EIGTHTEENTH PERIOD ============================= //
 
@@ -2199,95 +2205,97 @@ describe.only('TOKEN Use case test', function () {
       providerOrSigner: user3,
     });
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period18: IPERIOD = await getPeriod(superTokenPool);
 
     expedtedPoolBalance = utils
       .parseEther('50')
-      .add(BigNumber.from(2225))
+      .add(BigNumber.from(2215))
       .sub(+loanStream.deposit);
 
-    let periodResult18: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period18.deposit,
-      inFlowRate: period18.inFlowRate,
-      outFlowRate: period18.outFlowRate,
-      yieldAccruedSec: period18.yieldAccruedSec,
-      yieldTokenIndex: period18.yieldTokenIndex,
-      yieldInFlowRateIndex: period18.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period18.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period18.depositFromInFlowRate,
-      depositFromOutFlowRate: period18.depositFromOutFlowRate,
-      totalShares: period18.totalShares,
-      outFlowAssetsRate: period18.outFlowAssetsRate,
-    };
+
 
     let periodExpected18: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(1174),
+      deposit: BigNumber.from(1809738647),
       inFlowRate: BigNumber.from(0),
       outFlowRate: BigNumber.from(2),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(99978364),
-      yieldTokenIndex: BigNumber.from(4902042),
-      yieldOutFlowRateIndex: BigNumber.from(21469735),
+      yieldInFlowRateIndex: BigNumber.from(88528596),
+      yieldTokenIndex: BigNumber.from(4352665),
+      yieldOutFlowRateIndex: BigNumber.from(1051621),
       depositFromInFlowRate: BigNumber.from(0),
-      depositFromOutFlowRate: BigNumber.from(238),
+      depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(695),
       outFlowAssetsRate: BigNumber.from(4),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    user3Shares = await superTokenPool.balanceOf(user3.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
-
-    users = [
+  
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(1165821355),
-          shares: BigNumber.from(390),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)).add(BigNumber.from(200)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1213), 
+          shares: BigNumber.from(390), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490)).
+          add(BigNumber.from(200)),
+          deposit: BigNumber.from(986400066),            
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(130)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(819409157),
-          shares: BigNumber.from(190),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(765), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
       },
       {
         name: 'User3',
-        result: { realTimeBalance: user3RealtimeBalance, shares: user3Shares, tokenBalance: user3Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(238000000),
-          shares: BigNumber.from(115),
-          tokenBalance: utils.parseEther('10').add(BigNumber.from(45)).sub(BigNumber.from(80)),
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(230), 
+          shares: BigNumber.from(115), 
+          tokenBalance: utils
+          .parseEther('10')
+          .add(BigNumber.from(45))
+          .sub(BigNumber.from(80)),
+          deposit: BigNumber.from(230223795),
+          outAssets: BigNumber.from(4),
+          outFlow:BigNumber.from(2),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(170)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult18, periodExpected18, users);
+
+    await testPeriod(BigNumber.from(t0),170,periodExpected18,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#18--- Period Tests passed ');
     console.log('');
 
     // #endregion EIGHTTEENTH PERIOD
+
+
+  
 
     await setNextBlockTimestamp(hre, t0 + 180);
 
@@ -2335,90 +2343,87 @@ describe.only('TOKEN Use case test', function () {
       providerOrSigner: user3,
     });
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
-
-    let period19: IPERIOD = await getPeriod(superTokenPool);
 
     expedtedPoolBalance = utils
       .parseEther('50')
-      .add(BigNumber.from(2285))
+      .add(BigNumber.from(2275))
       .sub(+loanStream.deposit);
 
-    let periodResult19: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period19.deposit,
-      inFlowRate: period19.inFlowRate,
-      outFlowRate: period19.outFlowRate,
-      yieldAccruedSec: period19.yieldAccruedSec,
-      yieldTokenIndex: period19.yieldTokenIndex,
-      yieldInFlowRateIndex: period19.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period19.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period19.depositFromInFlowRate,
-      depositFromOutFlowRate: period19.depositFromOutFlowRate,
-      totalShares: period19.totalShares,
-      outFlowAssetsRate: period19.outFlowAssetsRate,
-    };
 
     let periodExpected19: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(1174),
+      deposit: BigNumber.from(1781484691),
       inFlowRate: BigNumber.from(0),
       outFlowRate: BigNumber.from(4),
       yieldAccruedSec: BigNumber.from(10),
-      yieldInFlowRateIndex: BigNumber.from(99978364),
-      yieldTokenIndex: BigNumber.from(4973881),
-      yieldOutFlowRateIndex: BigNumber.from(25384964),
+      yieldInFlowRateIndex: BigNumber.from(88528596),
+      yieldTokenIndex: BigNumber.from(4408539),
+      yieldOutFlowRateIndex: BigNumber.from(1330991),
       depositFromInFlowRate: BigNumber.from(0),
-      depositFromOutFlowRate: BigNumber.from(198),
+      depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(675),
       outFlowAssetsRate: BigNumber.from(8),
     };
 
-    ///////////// User1 balance
+ 
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
 
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    user3Shares = await superTokenPool.balanceOf(user3.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
-
-    users = [
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(1223077038),
-          shares: BigNumber.from(390),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)).add(BigNumber.from(200)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1268), 
+          shares: BigNumber.from(390), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490)).
+          add(BigNumber.from(200)),
+          deposit: BigNumber.from(986400066),            
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(130)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(846492460),
-          shares: BigNumber.from(190),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(798), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
       },
       {
         name: 'User3',
-        result: { realTimeBalance: user3RealtimeBalance, shares: user3Shares, tokenBalance: user3Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(213660916),
-          shares: BigNumber.from(95),
-          tokenBalance: utils.parseEther('10').add(BigNumber.from(105)).sub(BigNumber.from(100)),
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(201), 
+          shares: BigNumber.from(95), 
+          tokenBalance: utils
+          .parseEther('10')
+          .add(BigNumber.from(85))
+          .sub(BigNumber.from(80)),
+          deposit: BigNumber.from(201969839),
+          outAssets: BigNumber.from(8),
+          outFlow:BigNumber.from(4),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(180)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult19, periodExpected19, users);
+
+    await testPeriod(BigNumber.from(t0),180,periodExpected19,contractsTest,usersTest)
+
+
 
     console.log('\x1b[36m%s\x1b[0m', '#19--- Period Tests passed ');
     console.log('');
@@ -2426,7 +2431,7 @@ describe.only('TOKEN Use case test', function () {
     // #endregion NINETEENTH PERIOD
 
     
-
+   
     await setNextBlockTimestamp(hre, t0 + 190);
 
     // #region ================= TWENTIETH PERIOD ============================= //
@@ -2466,97 +2471,93 @@ describe.only('TOKEN Use case test', function () {
 
     await waitForTx(superTokenPool.mockYield(20));
 
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
-
-    let period20: IPERIOD = await getPeriod(superTokenPool);
-
     expedtedPoolBalance = utils
       .parseEther('50')
-      .add(BigNumber.from(2305))
+      .add(BigNumber.from(2295))
       .sub(+loanStream.deposit);
 
-    let periodResult20: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period20.deposit,
-      inFlowRate: period20.inFlowRate,
-      outFlowRate: period20.outFlowRate,
-      yieldAccruedSec: period20.yieldAccruedSec,
-      yieldTokenIndex: period20.yieldTokenIndex,
-      yieldInFlowRateIndex: period20.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period20.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period20.depositFromInFlowRate,
-      depositFromOutFlowRate: period20.depositFromOutFlowRate,
-      totalShares: period20.totalShares,
-      outFlowAssetsRate: period20.outFlowAssetsRate,
-    };
+
 
     let periodExpected20: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(1174),
+      deposit: BigNumber.from(1701484691),
       inFlowRate: BigNumber.from(0),
       outFlowRate: BigNumber.from(4),
       yieldAccruedSec: BigNumber.from(20),
-      yieldInFlowRateIndex: BigNumber.from(99978364),
-      yieldTokenIndex: BigNumber.from(5048956),
-      yieldOutFlowRateIndex: BigNumber.from(26867696),
+      yieldInFlowRateIndex: BigNumber.from(88528596),
+      yieldTokenIndex: BigNumber.from(4465961),
+      yieldOutFlowRateIndex: BigNumber.from(1618102),
       depositFromInFlowRate: BigNumber.from(0),
-      depositFromOutFlowRate: BigNumber.from(118),
+      depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(635),
       outFlowAssetsRate: BigNumber.from(8),
     };
 
-    ///////////// User1 balance
-
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
-
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    user3Shares = await superTokenPool.balanceOf(user3.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
-
-    users = [
+ 
+    usersTest  = [
       {
         name: 'User1',
-        result: { realTimeBalance: user1RealtimeBalance, shares: user1Shares, tokenBalance: user1Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(1282911813),
-          shares: BigNumber.from(390),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(490)).add(BigNumber.from(200)),
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1325), 
+          shares: BigNumber.from(390), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490)).
+          add(BigNumber.from(200)),
+          deposit: BigNumber.from(986400066),            
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(130)
         },
       },
       {
         name: 'User2',
-        result: { realTimeBalance: user2RealtimeBalance, shares: user2Shares, tokenBalance: user2Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(874795735),
-          shares: BigNumber.from(190),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380)).add(BigNumber.from(80)).add(BigNumber.from(200)),
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(832), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
         },
       },
       {
         name: 'User3',
-        result: { realTimeBalance: user3RealtimeBalance, shares: user3Shares, tokenBalance: user3Balance },
-        expected: {
-          realTimeBalance: BigNumber.from(145522772),
-          shares: BigNumber.from(55),
-          tokenBalance: utils.parseEther('10').add(BigNumber.from(185)).sub(BigNumber.from(100)),
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(131), 
+          shares: BigNumber.from(55), 
+          tokenBalance: utils
+          .parseEther('10')
+          .add(BigNumber.from(165))
+          .sub(BigNumber.from(80)),
+          deposit: BigNumber.from(121969839),
+          outAssets: BigNumber.from(8),
+          outFlow:BigNumber.from(4),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(180)
         },
-      },
+      }
     ];
 
-    await printPeriodTest(periodResult20, periodExpected20, users);
+
+    await testPeriod(BigNumber.from(t0),190,periodExpected20,contractsTest,usersTest)
+
 
     console.log('\x1b[36m%s\x1b[0m', '#20--- Period Tests passed ');
     console.log('');
 
-    // #endregion NINETEENTH PERIOD
+    // #endregion 20TH PERIOD
  
     await setNextBlockTimestamp(hre, t0 + 200);
+
+  
 
     // #region ================= 21TH PERIOD ============================= //
 
@@ -2601,58 +2602,31 @@ describe.only('TOKEN Use case test', function () {
       receiver: user3.address,
       providerOrSigner: user3,
     });
-    superPoolBalance = await supertokenContract.realtimeBalanceOfNow(superPoolTokenAddress);
 
-    let period21: IPERIOD = await getPeriod(superTokenPool);
 
     expedtedPoolBalance = utils
       .parseEther('50')
-      .add(BigNumber.from(2425))
+      .add(BigNumber.from(2415))
       .sub(+loanStream.deposit);
 
-    let periodResult21: IPERIOD_RESULT = {
-      poolTotalBalance: superPoolBalance.availableBalance,
-      deposit: period21.deposit,
-      inFlowRate: period21.inFlowRate,
-      outFlowRate: period21.outFlowRate,
-      yieldAccruedSec: period21.yieldAccruedSec,
-      yieldTokenIndex: period21.yieldTokenIndex,
-      yieldInFlowRateIndex: period21.yieldInFlowRateIndex,
-      yieldOutFlowRateIndex: period21.yieldOutFlowRateIndex,
-      depositFromInFlowRate: period21.depositFromInFlowRate,
-      depositFromOutFlowRate: period21.depositFromOutFlowRate,
-      totalShares: period21.totalShares,
-      outFlowAssetsRate: period21.outFlowAssetsRate,
-    };
+
 
     let periodExpected21: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
-      deposit: BigNumber.from(1174),
+      deposit: BigNumber.from(1640652376),
       inFlowRate: BigNumber.from(0),
       outFlowRate: BigNumber.from(1),
       yieldAccruedSec: BigNumber.from(20),
-      yieldInFlowRateIndex: BigNumber.from(99978364),
-      yieldTokenIndex: BigNumber.from(5208700),
-      yieldOutFlowRateIndex: BigNumber.from(28425203),
+      yieldInFlowRateIndex: BigNumber.from(88528596),
+      yieldTokenIndex: BigNumber.from(4586335),
+      yieldOutFlowRateIndex: BigNumber.from(2219973),
       depositFromInFlowRate: BigNumber.from(0),
-      depositFromOutFlowRate: BigNumber.from(38),
+      depositFromOutFlowRate: BigNumber.from(0),
       totalShares: BigNumber.from(595),
-      outFlowAssetsRate: BigNumber.from(10),
+      outFlowAssetsRate: BigNumber.from(3),
     };
 
-    ///////////// User1 balance
 
-    user1RealtimeBalance = await superTokenPool.totalBalanceSupplier(user1.address);
-    user2RealtimeBalance = await superTokenPool.totalBalanceSupplier(user2.address);
-    user3RealtimeBalance = await superTokenPool.totalBalanceSupplier(user3.address);
-
-    user1Shares = await superTokenPool.balanceOf(user1.address);
-    user2Shares = await superTokenPool.balanceOf(user2.address);
-    user3Shares = await superTokenPool.balanceOf(user3.address);
-
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user3.address);
 
     users = [
       {
@@ -2684,10 +2658,66 @@ describe.only('TOKEN Use case test', function () {
       },
     ];
 
-    await printPeriodTest(periodResult21, periodExpected21, users);
+    usersTest  = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(1444), 
+          shares: BigNumber.from(390), 
+          tokenBalance: utils.parseEther('10')
+          .sub(BigNumber.from(490)).
+          add(BigNumber.from(200)),
+          deposit: BigNumber.from(986400066),            
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(130)
+        },
+      },
+      {
+        name: 'User2',
+        address: user2.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(903), 
+          shares: BigNumber.from(190), 
+          tokenBalance: utils.parseEther('10').sub(BigNumber.from(380))
+          .add(BigNumber.from(90))
+          .add(BigNumber.from(200)),
+          deposit: BigNumber.from(593114786),
+          outAssets: BigNumber.from(0),
+          outFlow:BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(120)
+        },
+      },
+      {
+        name: 'User3',
+        address: user3.address,
+        expected: { 
+          realTimeBalance: BigNumber.from(61), 
+          shares: BigNumber.from(15), 
+          tokenBalance: utils
+          .parseEther('10')
+          .add(BigNumber.from(245))
+          .sub(BigNumber.from(80)),
+          deposit: BigNumber.from(61137524),
+          outAssets: BigNumber.from(3),
+          outFlow:BigNumber.from(1),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(200)
+        },
+      }
+    ];
+
+
+    await testPeriod(BigNumber.from(t0),200,periodExpected21,contractsTest,usersTest)
+
 
     console.log('\x1b[36m%s\x1b[0m', '#21--- Period Tests passed ');
     console.log('');
+
+    throw new Error("");
 
     // #endregion NINETEENTH PERIOD
   });

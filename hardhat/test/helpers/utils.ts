@@ -5,7 +5,7 @@ import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
 import { PeriodStruct, PeriodStructOutput, SuperPool } from '../../typechain-types/SuperPool';
-import { PoolFactory } from '../../typechain-types';
+import { ERC777, ISuperfluidToken, PoolFactory } from '../../typechain-types';
 
 export interface IPERIOD {
   timestamp: BigNumber;
@@ -48,12 +48,304 @@ export interface IUSER_CHECK {
   name: string;
   result: IUSER_RESULT;
   expected: IUSER_RESULT;
+
 }
 
 export interface IUSER_RESULT {
   realTimeBalance?: BigNumber;
   shares?:BigNumber;
   tokenBalance?:BigNumber;
+  deposit?: BigNumber;
+  timestamp?: BigNumber;
+  inFlow?:BigNumber;
+  outFlow?: BigNumber;
+  outAssets?: BigNumber
+}
+
+export interface IUSERTEST {address:string, name: string,expected: IUSER_RESULT}
+
+export const testPeriod = async (
+    t0:BigNumber,
+    tx:number,
+    expected:IPERIOD_RESULT,    
+     contracts: {
+      poolAddress: string,
+       superTokenContract: ISuperfluidToken, 
+       superTokenPool:PoolFactory,
+       tokenContract: ERC777
+      },
+      users:Array<IUSERTEST>,
+      
+      ) => {
+ 
+  // #region POOL      
+
+  let poolTotalBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
+
+  let result: IPERIOD = await getPeriod(contracts.superTokenPool);
+  
+  if (poolTotalBalance.availableBalance != undefined) {
+    try {
+      expect(poolTotalBalance.availableBalance).to.equal(expected.poolTotalBalance);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Assets Balance: ${poolTotalBalance.availableBalance.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${poolTotalBalance.availableBalance.toString()}, expected:${expected.poolTotalBalance!.toString()}`);
+    }
+  }
+
+  
+  if (expected.totalShares != undefined) {
+    try {
+      expect(result.totalShares).to.equal(expected.totalShares);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Shares Balance: ${result.totalShares.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Shares:', `\x1b[30m ${result.totalShares.toString()}, expected:${expected.totalShares!.toString()}`);
+    }
+  }
+
+
+  if (expected.deposit != undefined) {
+    try {
+      expect(result.deposit).to.equal(expected.deposit);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit: ${result.deposit.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Deposit:', `\x1b[30m ${result.deposit.toString()}, expected:${expected.deposit!.toString()}`);
+    }
+  }
+
+  if (expected.depositFromOutFlowRate != undefined) {
+    try {
+      expect(result.depositFromOutFlowRate).to.equal(expected.depositFromOutFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Outflow Rate: ${result.depositFromOutFlowRate.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x #Deposit from Outflow Rate:',
+        `\x1b[30m ${result.depositFromOutFlowRate.toString()}, expected:${expected.depositFromOutFlowRate!.toString()}`
+      );
+    }
+  }
+
+  if (expected.depositFromInFlowRate != undefined) {
+    try {
+      expect(result.depositFromInFlowRate).to.equal(expected.depositFromInFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Inflow Rate: ${result.depositFromInFlowRate.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x #Deposit from Inflow Rate:',
+        `\x1b[30m ${result.depositFromInFlowRate.toString()}, expected:${expected.depositFromInFlowRate!.toString()}`
+      );
+    }
+  }
+
+  if (expected.inFlowRate != undefined) {
+    try {
+      expect(result.inFlowRate).to.equal(expected.inFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#In-Flow Rate: ${result.inFlowRate.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #In-Flow Rate:', `\x1b[30m ${result.inFlowRate.toString()}, expected:${expected.inFlowRate!.toString()}`);
+    }
+  }
+
+  if (expected.outFlowRate != undefined) {
+    try {
+      expect(result.outFlowRate).to.equal(expected.outFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow Rate: ${result.outFlowRate.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Out-Flow Rate:', `\x1b[30m ${result.outFlowRate.toString()}, expected:${expected.outFlowRate!.toString()}`);
+    }
+  }
+
+ 
+  if (expected.outFlowAssetsRate != undefined) {
+    try {
+      expect(result.outFlowAssetsRate).to.equal(expected.outFlowAssetsRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow-ASSETS Rate: ${result.outFlowAssetsRate?.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Out-Flow-ASSETS Rate:', `\x1b[30m ${result.outFlowAssetsRate?.toString()}, expected:${expected.outFlowAssetsRate!.toString()}`);
+    }
+  }
+
+
+  if (expected.yieldAccruedSec != undefined) {
+    expect(result.yieldAccruedSec).to.equal(expected.yieldAccruedSec);
+    console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield accrued per sec: ${result.yieldAccruedSec.toString()}`);
+  }
+
+  if (expected.yieldTokenIndex != undefined) {
+    try {
+      expect(result.yieldTokenIndex).to.equal(expected.yieldTokenIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield Token: ${result.yieldTokenIndex.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Token: ${result.yieldTokenIndex.toString()}, expected:${expected.yieldTokenIndex!.toString()}`);
+    }
+  }
+
+  if (expected.yieldInFlowRateIndex != undefined) {
+    try {
+      expect(result.yieldInFlowRateIndex).to.equal(expected.yieldInFlowRateIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield In-FLOW : ${result.yieldInFlowRateIndex.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield In-FLOW: ${result.yieldInFlowRateIndex.toString()}, expected:${expected.yieldInFlowRateIndex!.toString()}`);
+    }
+  }
+
+  if (expected.yieldOutFlowRateIndex != undefined) {
+    try {
+      expect(result.yieldOutFlowRateIndex).to.equal(expected.yieldOutFlowRateIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield Out-FLOW : ${result.yieldOutFlowRateIndex.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#Index Yield Out-FLOW: ${result.yieldOutFlowRateIndex.toString()}, expected:${expected.yieldOutFlowRateIndex!.toString()}`
+      );
+    }
+  }
+
+  // #endregion POOL      
+
+
+  for (const user of users) {
+
+  let userRealtimeBalance = await contracts.superTokenPool.totalBalanceSupplier(user.address);
+  let userShares = await contracts.superTokenPool.balanceOf(user.address);
+  let userTokenBalance = await contracts.tokenContract.balanceOf(user.address);
+  let userState = await contracts.superTokenPool.suppliersByAddress(user.address);
+  let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
+
+  console.log('\x1b[35m%s\x1b[0m', '     ==================================', );
+
+  if (user.expected.realTimeBalance != undefined) {
+    try {
+      expect(userRealtimeBalance ).to.equal(user.expected.realTimeBalance);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Balance Assets: ${user.expected.realTimeBalance?.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} Balance Assets: ${userRealtimeBalance.toString()}, expected:${user.expected.realTimeBalance!.toString()}`
+      );
+      console.log(+userRealtimeBalance.toString()-+user.expected.realTimeBalance!.toString())
+    }
+  }
+  if (userShares != undefined) {
+    try {
+      expect(userShares).to.equal(user.expected.shares);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Shares: ${user.expected.shares?.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} Shares : ${userShares.toString()}, expected:${user.expected.shares!.toString()}`
+      );
+      console.log(+userShares.toString()-+user.expected.shares!.toString())
+    }
+
+  }
+
+  if (userTokenBalance != undefined) {
+    try {
+      expect(userTokenBalance).to.equal(user.expected.tokenBalance);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Token Balance : ${user.expected.tokenBalance?.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} Token Balance : ${userTokenBalance.toString()}, expected:${user.expected.tokenBalance!.toString()}`
+      );
+      console.log(+userTokenBalance.toString()-+user.expected.tokenBalance!.toString())
+    }
+  }
+
+
+
+  if (user.expected.deposit != undefined) {
+    let depositOutFlow = userState.deposit.amount.sub(periodSpan.mul(userState.outAssets.flow).mul(1000000))
+    
+    try {
+       expect(user.expected.deposit).to.equal(depositOutFlow );
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Deposit: ${depositOutFlow ?.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} Deposit : ${user.expected.deposit.toString()}, expected:${depositOutFlow !.toString()}`
+      );
+      console.log(+user.expected.deposit.toString()-+userState.deposit.amount!.toString())
+    }
+  }
+
+
+  if (user.expected.inFlow != undefined) {
+    try {
+      expect(user.expected.inFlow).to.equal(userState.inStream.flow);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} IN-FLOW: ${userState.inStream.flow?.toString()} units/s`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} IN-FLOW:  ${user.expected.inFlow.toString()}, expected:${userState.inStream.flow.toString()} units/s`
+      );
+      console.log(+user.expected.inFlow.toString()-+userState.inStream.flow.toString())
+    }
+  }
+
+
+  if (user.expected.outFlow != undefined) {
+    try {
+      expect(user.expected.outFlow).to.equal(userState.outStream.flow);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-FLOW: ${userState.outStream.flow?.toString()} units/s`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} OUT-FLOW:  ${user.expected.outFlow.toString()}, expected:${userState.outStream.flow.toString()} units/s`
+      );
+      console.log(+user.expected.outFlow.toString()-+userState.outStream.flow.toString())
+    }
+  }
+
+
+  if (user.expected.outAssets != undefined) {
+    try {
+      expect(user.expected.outAssets).to.equal(userState.outAssets.flow);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets: ${userState.outAssets.flow?.toString()} units/s`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} OUT-Assets:  ${user.expected.outAssets.toString()}, expected:${userState.outAssets.flow.toString()} units/s`
+      );
+      console.log(+user.expected.outAssets.toString()-+userState.outAssets.flow.toString())
+    }
+  }
+
+  if (user.expected.timestamp != undefined) {
+    let checkTimestamp = userState.timestamp.sub(t0);
+
+
+    try {
+
+     
+
+      expect(user.expected.timestamp).to.equal(checkTimestamp);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} TimeStamp: ${checkTimestamp?.toString()} ms`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} TimeStamp:  ${user.expected.timestamp.toString()}, expected:${checkTimestamp.toString()} ms`
+      );
+      console.log(+user.expected.timestamp.toString()-+checkTimestamp.toString())
+    }
+  }
+
+
+  }
+
+  
 }
 
 export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_RESULT, users?: Array<IUSER_CHECK>) => {
