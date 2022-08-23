@@ -43,7 +43,6 @@ const config: HardhatUserConfig = {
     },
   },
   defaultNetwork,
-
   networks: {
     hardhat: {
       forking: {

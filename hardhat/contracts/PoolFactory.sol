@@ -470,6 +470,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       console.log(474, supplier.deposit.amount);
       realtimeBalance = yieldSupplier + (supplier.deposit.amount) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else {
+      console.log("473xx",uint96(supplier.outAssets.flow));
       realtimeBalance = yieldSupplier + (supplier.deposit.amount) - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     }
     console.log("484XXX", realtimeBalance);
@@ -493,7 +494,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + uint256(supplierDepositUpdate);
     } else {
       console.log(496,periodByTimestamp[block.timestamp].deposit);
-      console.log(497,uint256(supplierDepositUpdate));
+      console.log(497,uint256(-supplierDepositUpdate));
       periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + yieldSupplier;
     }
 
@@ -502,8 +503,14 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     if (netFlow > 0) {
        console.log(504, supplier.deposit.amount,periodByTimestamp[block.timestamp].depositFromInFlowRate );
       periodByTimestamp[block.timestamp].depositFromInFlowRate = periodByTimestamp[block.timestamp].depositFromInFlowRate -  uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+    } else if (netFlow < 0) {
+        console.log(507, periodByTimestamp[block.timestamp].depositFromOutFlowRate);
+        console.log(507,supplier.deposit.amount );
+        console.log(507,uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION);
+        periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION  - supplier.deposit.amount  ;
+        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit   + supplier.deposit.amount  - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION ;
     }
-
+    console.log(510,  periodByTimestamp[block.timestamp].depositFromOutFlowRate);
     supplier.deposit.amount = supplierBalance;
     console.log(505, supplier.deposit.amount);
   }
@@ -540,14 +547,10 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     
 
-    console.log(543,inDeposit);
-    console.log(544, outDeposit);
-    console.log(545, supplier.shares-outDeposit);
     supplier.shares = supplier.shares + inDeposit - outDeposit;
-     console.log(545, supplier.shares);
-console.log(546, outAssets);
+
     supplier.deposit.amount = supplier.deposit.amount + inDeposit*PRECISSION - outAssets * PRECISSION;
-    console.log(546, supplier.deposit.amount);
+
     periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + inDeposit - outDeposit;
     periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outAssets* PRECISSION ;
 
@@ -592,17 +595,17 @@ console.log(546, outAssets);
       supplier.outStream.cancelTaskId = bytes32(0);
 
       //   supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(supplier.outAssets.flow);
-
-      //  periodByTimestamp[block.timestamp].totalShares =  periodByTimestamp[block.timestamp].totalShares - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
+        //  periodByTimestamp[block.timestamp].totalShares =  periodByTimestamp[block.timestamp].totalShares - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
 
       if (newNetFlow >= 0) {
         periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow;
-
+        console.log(600);
         periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + newNetFlow;
-
-        //  periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + supplier.deposit.amount;
-
-        // periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate - supplier.deposit.amount;
+           console.log(602);
+             console.log(604, periodByTimestamp[block.timestamp].deposit);
+        
+  console.log(604, supplier.deposit.amount);
+    console.log(604, periodByTimestamp[block.timestamp].deposit);
 
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
         supplier.outAssets.flow = 0;
@@ -619,7 +622,8 @@ console.log(546, outAssets);
 
         periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + outAssets;
-
+         periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
+      periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
         supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
         //// creatre timed task
       }
@@ -654,9 +658,9 @@ console.log(546, outAssets);
         periodByTimestamp[block.timestamp].outFlowRate += -newNetFlow;
         periodByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
 
-        // periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount + total;
-        //periodByTimestamp[block.timestamp].depositFromOutFlowRate = total;
-        // periodByTimestamp[block.timestamp].depositFromInFlowRate -= (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
+         periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount ;
+        periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
+       // periodByTimestamp[block.timestamp].depositFromInFlowRate -= (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
 
         // supplier.cumulatedYield = 0;
         // supplier.deposit.amount = total;
@@ -692,27 +696,15 @@ console.log(546, outAssets);
     if (netFlow >= 0) {
       uint256 yieldFromDeposit = (supplier.deposit.amount *
         (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex)).div(PRECISSION) ;
-      console.log(699, supplier.deposit.amount.div(PRECISSION));
-      console.log(699, periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex);
-      console.log(699, yieldFromDeposit);
+
       ///// Yield from flow
       uint256 yieldFromFlow = uint96(netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - periodByTimestamp[lastTimestamp].yieldInFlowRateIndex);
-      console.log(700, yieldFromFlow);
+
       yieldSupplier = yieldFromDeposit + yieldFromFlow;
     } else {
-      console.log(714, supplier.deposit.amount);
-      console.log(715, (uint96(supplier.outAssets.flow) * (lastPeriodTimestamp - lastTimestamp) * PRECISSION));
-      console.log(7111,supplier.deposit.amount-(uint96(supplier.outAssets.flow) * (lastPeriodTimestamp - lastTimestamp) * PRECISSION));
-      uint256 yieldFromDeposit = ((supplier.deposit.amount - (uint96(supplier.outAssets.flow) * (lastPeriodTimestamp - lastTimestamp) * PRECISSION)) *
-        (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex)).div(PRECISSION);
-      console.log(71553, (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex));
+        //  uint256 yieldFromDeposit = ((supplier.deposit.amount - (uint96(supplier.outAssets.flow) * (lastPeriodTimestamp - lastTimestamp) * PRECISSION)) *
+        // (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex)).div(PRECISSION);
 
-      console.log(71554, (periodByTimestamp[lastTimestamp].yieldTokenIndex));
-
-
-      console.log(71555, (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex));
-
-      console.log(716, yieldFromDeposit);
 
       ///// Yield from outFlow
       console.log(719, uint96(supplier.outAssets.flow));
@@ -720,7 +712,7 @@ console.log(546, outAssets);
         (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
 
       console.log(722, yieldFromOutFlow);
-      yieldSupplier = yieldFromOutFlow + yieldFromDeposit;
+      yieldSupplier = yieldFromOutFlow ; //+ yieldFromDeposit;
     }
   }
 
@@ -757,9 +749,9 @@ console.log(546, outAssets);
     uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
     console.log(748);
     currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * PRECISSION * periodSpan + lastPeriod.depositFromInFlowRate;
-    //currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowAssetsRate) * periodSpan;
+    currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowAssetsRate) * periodSpan * PRECISSION;
     console.log(74888);
-    currentPeriod.deposit = lastPeriod.deposit - uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * periodSpan;
+    currentPeriod.deposit = lastPeriod.deposit;// - uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * periodSpan;
     console.log(752, currentPeriod.deposit);
     (currentPeriod.yieldTokenIndex, currentPeriod.yieldInFlowRateIndex, currentPeriod.yieldOutFlowRateIndex) = _calculateIndexes();
     console.log(754);
@@ -805,10 +797,11 @@ console.log(546, outAssets);
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
 
     uint256 dollarSecondsInFlow = ((uint96(lastPeriod.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPeriod.depositFromInFlowRate * periodSpan;
+     uint256 dollarSecondsOutFlow = lastPeriod.depositFromOutFlowRate * periodSpan - (uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * (periodSpan**2)) / 2;
 
-    uint256 dollarSecondsOutFlow = (uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * (periodSpan**2)) / 2;
-
-    uint256 dollarSecondsDeposit = (lastPeriod.deposit - uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * (periodSpan)) * periodSpan;
+   // uint256 dollarSecondsOutFlow = (uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * (periodSpan**2)) / 2;
+      uint256 dollarSecondsDeposit = lastPeriod.deposit * periodSpan;
+   // uint256 dollarSecondsDeposit = (lastPeriod.deposit - uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * (periodSpan)) * periodSpan;
 
     console.log(740, dollarSecondsDeposit);
     console.log(741, dollarSecondsInFlow);
@@ -829,7 +822,7 @@ console.log(546, outAssets);
       uint256 outFlowContribution = (dollarSecondsOutFlow * PRECISSION);
       uint256 depositContribution = (dollarSecondsDeposit * PRECISSION * PRECISSION);
       if (lastPeriod.deposit != 0) {
-        periodYieldTokenIndex = ((depositContribution * yieldPeriod).div((lastPeriod.deposit - uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * periodSpan) * totalAreaPeriod));
+        periodYieldTokenIndex = ((depositContribution * yieldPeriod).div((lastPeriod.deposit) * totalAreaPeriod));
       }
       if (lastPeriod.inFlowRate != 0) {
         periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPeriod.inFlowRate) * totalAreaPeriod));
