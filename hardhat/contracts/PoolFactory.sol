@@ -186,9 +186,15 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + amount;
     periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + outAssets * PRECISSION;
 
+       _supplierUpdateCurrentState(to);
+
+
     DataTypes.Supplier storage supplierTo = _getSupplier(to);
-    supplierTo.shares = amount;
-    supplierTo.deposit.amount = outAssets * PRECISSION;
+
+ 
+
+    supplierTo.shares =supplierTo.shares + amount;
+    supplierTo.deposit.amount = supplierTo.deposit.amount  + outAssets * PRECISSION;
 
 
 
