@@ -3323,6 +3323,8 @@ describe.only('TOKEN Use case test', function () {
 
     await waitForTx(superTokenPoolUser2.redeemDeposit(250));
 
+
+
     expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(4115));
 
     let periodExpected29: IPERIOD_RESULT = {
@@ -3462,7 +3464,7 @@ describe.only('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '30--- user4 deposti 300');
 
     let erc777User4 = await ERC777__factory.connect(TOKEN1, user4);
-    console.log(user4.address)
+ 
 
     await printUser(superTokenPool,user4.address)
 
@@ -3570,5 +3572,153 @@ describe.only('TOKEN Use case test', function () {
     console.log('');
 
     // #endregion 30th PERIOD
+    await setNextBlockTimestamp(hre, t0 + 300);
+
+    // #region ================= 31st PERIOD ============================= //
+
+    /******************************************************************
+     *              31st  PERIOD (T0 + 120)
+     *              user1 redeem flo 15
+     *              ---------------------
+     *              PoolBalance = 1790 -flow deposit
+     *              PoolShares = 680
+     *
+     *              PoolDeposit = 527
+     *              Pool InFlow = 0 unitd/se8
+     *              Pool OutFlow = 5 unitd/sec
+     *              Yield Accrued units/sec = 10
+     *              Index Yield Token = 4524457
+     *              Index Yield In-FLOW =  99222906
+     *              Index Yield Out-FLOW = 15305252
+     *              ---------------------
+     *              User1 Total Balance = 961246940
+     *              User1 Total Shares = 440
+     *              User2 Total Balance = 677059612
+     *              User2 Total Shares = 190
+     *              User3 Tola Balalnce = 150000000
+     *              USer3 Total Shares = 50
+     *              ---------------------
+     *
+     *              SuperToken Contract
+     *              Pool Assest Balance = 50 eth + 1790 - flow deposit
+     *              User1 Asset Balance = 10 eth - 20   - 60 - 50 -60 -60 -60 - 60 -60 -60
+     *              User2 asset Balance = 10 eth  - 300 + 80  -40 + 100 * factor - 40
+     *              User3 asset Balance = 10 eth
+     *
+     *****************************************************************/
+
+    console.log('\x1b[36m%s\x1b[0m', '31--- user1 reddem flow 15');
+
+    await waitForTx(superTokenPoolUser1.redeemFlow(15));
+    
+    loanStream = await sf.cfaV1.getFlow({
+      superToken: TOKEN1,
+      sender: superPoolTokenAddress,
+      receiver: user1.address,
+      providerOrSigner: user1,
+    });
+
+
+    expedtedPoolBalance = utils.parseEther('50')
+    .sub(BigNumber.from(+loanStream.deposit))
+    .add(BigNumber.from(5315));
+
+    let periodExpected31: IPERIOD_RESULT = {
+      poolTotalBalance: expedtedPoolBalance,
+      deposit: BigNumber.from(2290143982),
+      inFlowRate: BigNumber.from(22),
+      outFlowRate: BigNumber.from(15),
+      yieldAccruedSec: BigNumber.from(20),
+      yieldInFlowRateIndex: BigNumber.from(98215174),
+      yieldTokenIndex: BigNumber.from(5242964),
+      yieldOutFlowRateIndex: BigNumber.from(24682084),
+      depositFromInFlowRate: BigNumber.from(690000000),
+      depositFromOutFlowRate: BigNumber.from(2055342175),
+      totalShares: BigNumber.from(2225),
+      outFlowAssetsRate: BigNumber.from(65),
+    };
+
+    usersTest = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: {
+          realTimeBalance: BigNumber.from(2055),
+          shares: BigNumber.from(470),
+          tokenBalance: utils
+            .parseEther('10')
+            .sub(BigNumber.from(670))
+            .add(BigNumber.from(200)),
+          deposit: BigNumber.from(2055342175),
+          outAssets: BigNumber.from(65),
+          outFlow: BigNumber.from(15),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(300),
+        },
+      },
+      {
+        name: 'User2',
+        address: user2.address,
+        expected: {
+          realTimeBalance: BigNumber.from(1938),
+          shares: BigNumber.from(600),
+          tokenBalance: utils
+            .parseEther('10')
+            .sub(BigNumber.from(590))
+            .add(BigNumber.from(90))
+            .add(BigNumber.from(200))
+            .sub(BigNumber.from(350))
+            .add(BigNumber.from(750))
+            .sub(+fromUser2Stream.deposit),
+          deposit: BigNumber.from(1623325886),
+          outAssets: BigNumber.from(0),
+          outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(7),
+          timestamp: BigNumber.from(280),
+        },
+      },
+      {
+        name: 'User3',
+        address: user3.address,
+        expected: {
+          realTimeBalance: BigNumber.from(538),
+          shares: BigNumber.from(455),
+          tokenBalance: utils
+            .parseEther('10')
+            .add(BigNumber.from(245))
+            .sub(BigNumber.from(490))
+            .sub(+fromUser3Stream.deposit),
+          deposit: BigNumber.from(25888206),
+          outAssets: BigNumber.from(0),
+          outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(5),
+          timestamp: BigNumber.from(210),
+        },
+      },
+      {
+        name: 'User4',
+        address: user4.address,
+        expected: {
+          realTimeBalance: BigNumber.from(782),
+          shares: BigNumber.from(700),
+          tokenBalance: utils
+            .parseEther('10')
+            .sub(BigNumber.from(700))
+            .sub(+fromUser4Stream.deposit),
+          deposit: BigNumber.from(640929890),
+          outAssets: BigNumber.from(0),
+          outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(10),
+          timestamp: BigNumber.from(290),
+        },
+      },
+    ];
+
+    await testPeriod(BigNumber.from(t0), 300, periodExpected31, contractsTest, usersTest);
+
+    console.log('\x1b[36m%s\x1b[0m', '#31--- Period Tests passed ');
+    console.log('');
+
+    // #endregion 31th PERIOD
   });
 });

@@ -349,9 +349,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     bytes memory _ctx
   ) internal returns (bytes memory newCtx) {
     newCtx = _ctx;
-    console.log(351);
     _poolUpdateCurrentState();
-    console.log(353);
     newCtx = _updateSupplierFlow(from, inFlow, 0, _ctx);
 
     emit Events.SupplyStreamStarted(from, inFlow);
@@ -416,7 +414,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   function totalYieldEarnedSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
     uint256 yieldTillLastPeriod = _calculateYieldSupplier(_supplier);
 
-    console.log(422, yieldTillLastPeriod);
+
 
     (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex, uint256 yieldOutFlowRateIndex) = _calculateIndexes();
 
@@ -426,9 +424,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     uint256 yieldInFlow = uint96(supplier.inStream.flow) * yieldInFlowRateIndex;
     uint256 yieldOutFlow = (yieldOutFlowRateIndex) * (uint256(uint96(supplier.outStream.flow))).div(PRECISSION);
 
-    console.log(432, yieldDeposit);
-    console.log(433, yieldInFlow);
-    console.log(434, yieldOutFlow);
+
 
     yieldSupplier = yieldTillLastPeriod + yieldDeposit + yieldInFlow + yieldOutFlow;
   }
@@ -468,57 +464,48 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
 
-    console.log(473, yieldSupplier);
+  
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
-    console.log(474, supplier.deposit.amount);
+   
 
     if (netFlow >= 0) {
-      console.log(474, supplier.deposit.amount);
+    
       realtimeBalance = yieldSupplier + (supplier.deposit.amount) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else {
-      console.log("473xx",uint96(supplier.outAssets.flow));
+    
       realtimeBalance = yieldSupplier + (supplier.deposit.amount) - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     }
-    console.log("484XXX", realtimeBalance);
+   
   }
 
   function _supplierUpdateCurrentState(address _supplier) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
     uint256 supplierBalance = _getSupplierBalance(_supplier);
-    console.log(491, supplierBalance);
-    console.log(492, supplier.deposit.amount);
     uint256 supplierShares = balanceOf(_supplier);
 
     supplier.shares = supplierShares;
 
     int256 supplierDepositUpdate = int256(supplierBalance) - int256(supplier.deposit.amount);
 
-    console.log(493,uint256(-supplierDepositUpdate));
+
       uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
     if (supplierDepositUpdate >= 0) {
       periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + uint256(supplierDepositUpdate);
     } else {
-      console.log(496,periodByTimestamp[block.timestamp].deposit);
-      console.log(497,uint256(-supplierDepositUpdate));
+
       periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + yieldSupplier;
     }
 
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (netFlow > 0) {
-       console.log(504, supplier.deposit.amount,periodByTimestamp[block.timestamp].depositFromInFlowRate );
-      periodByTimestamp[block.timestamp].depositFromInFlowRate = periodByTimestamp[block.timestamp].depositFromInFlowRate -  uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+          periodByTimestamp[block.timestamp].depositFromInFlowRate = periodByTimestamp[block.timestamp].depositFromInFlowRate -  uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else if (netFlow < 0) {
-        console.log(507, periodByTimestamp[block.timestamp].depositFromOutFlowRate);
-        console.log(507,supplier.deposit.amount );
-        console.log(507,uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION);
-        periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION  - supplier.deposit.amount  ;
+            periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION  - supplier.deposit.amount  ;
         periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit   + supplier.deposit.amount  - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION ;
     }
-    console.log(510,  periodByTimestamp[block.timestamp].depositFromOutFlowRate);
-    supplier.deposit.amount = supplierBalance;
-    console.log(505, supplier.deposit.amount);
+      supplier.deposit.amount = supplierBalance;
   }
 
   function _updateSupplierDeposit(
@@ -605,13 +592,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
       if (newNetFlow >= 0) {
         periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow;
-        console.log(600);
+
         periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + newNetFlow;
-           console.log(602);
-             console.log(604, periodByTimestamp[block.timestamp].deposit);
-        
-  console.log(604, supplier.deposit.amount);
-    console.log(604, periodByTimestamp[block.timestamp].deposit);
+
 
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
         supplier.outAssets.flow = 0;
@@ -623,8 +606,10 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       } else {
         uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(-currentNetFlow));
         uint256 factor = total.div(supplier.shares);
-
+        console.log(factor);
         int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow))).div(PRECISSION)));
+        console.log(611,uint96(outAssets));
+
 
         periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + outAssets;
@@ -713,11 +698,11 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
 
       ///// Yield from outFlow
-      console.log(719, uint96(supplier.outAssets.flow));
+  
       uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) *
         (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
 
-      console.log(722, yieldFromOutFlow);
+    
       yieldSupplier = yieldFromOutFlow ; //+ yieldFromDeposit;
     }
   }
@@ -751,23 +736,19 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     DataTypes.Period memory currentPeriod = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     DataTypes.Period memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
-    console.log(746);
+  
     uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
-    console.log(748);
+  
     currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * PRECISSION * periodSpan + lastPeriod.depositFromInFlowRate;
     currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowAssetsRate) * periodSpan * PRECISSION;
-    console.log(74888);
+
     currentPeriod.deposit = lastPeriod.deposit;// - uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * periodSpan;
-    console.log(752, currentPeriod.deposit);
+
     (currentPeriod.yieldTokenIndex, currentPeriod.yieldInFlowRateIndex, currentPeriod.yieldOutFlowRateIndex) = _calculateIndexes();
-    console.log(754);
+
     currentPeriod.yieldTokenIndex = currentPeriod.yieldTokenIndex + lastPeriod.yieldTokenIndex;
     currentPeriod.yieldInFlowRateIndex = currentPeriod.yieldInFlowRateIndex + lastPeriod.yieldInFlowRateIndex;
     currentPeriod.yieldOutFlowRateIndex = currentPeriod.yieldOutFlowRateIndex + lastPeriod.yieldOutFlowRateIndex;
-
-    console.log(757, currentPeriod.yieldTokenIndex);
-    console.log(758, currentPeriod.yieldInFlowRateIndex);
-    console.log(759, currentPeriod.yieldOutFlowRateIndex);
 
     currentPeriod.totalShares = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan - uint96(lastPeriod.outFlowRate) * periodSpan;
 
@@ -785,7 +766,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     lastPeriodTimestamp = block.timestamp;
 
     periodTimestampById[periodId.current()] = block.timestamp;
-    console.log(780, currentPeriod.deposit);
+ 
     console.log("pool_update");
   }
 
@@ -809,9 +790,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       uint256 dollarSecondsDeposit = lastPeriod.deposit * periodSpan;
    // uint256 dollarSecondsDeposit = (lastPeriod.deposit - uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * (periodSpan)) * periodSpan;
 
-    console.log(740, dollarSecondsDeposit);
-    console.log(741, dollarSecondsInFlow);
-    console.log(742, dollarSecondsOutFlow);
+
 
     uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow + dollarSecondsOutFlow;
 
@@ -838,9 +817,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       }
     }
 
-    console.log(827, periodYieldTokenIndex);
-    console.log(828, periodYieldInFlowRateIndex);
-    console.log(829, periodYieldOutFlowRateIndex);
+
   }
 
   function _calculatePoolYieldPeriod() internal view returns (uint256 yield) {
