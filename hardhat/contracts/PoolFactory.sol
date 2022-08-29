@@ -299,7 +299,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     uint256 assets
   ) internal {
     //// retrieve supplier or create a record for the new one
-    _getSupplier(from);
+   // _getSupplier(from);
 
     //// Update pool state "period Struct" calculating indexes and timestamp
     _poolUpdateCurrentState();

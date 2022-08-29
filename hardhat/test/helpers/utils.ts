@@ -4,7 +4,6 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { PeriodStruct, PeriodStructOutput, SuperPool } from '../../typechain-types/SuperPool';
 import { ERC777, ISuperfluidToken, PoolFactory } from '../../typechain-types';
 
 export interface IPERIOD {
