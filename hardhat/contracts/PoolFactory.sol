@@ -178,8 +178,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     uint256 myShares = balanceOf(from);
 
     uint256 total = _getSupplierBalance(from);
-    uint256 factor = total.div(myShares * PRECISSION);
-    uint256 outAssets = factor.mul(amount);
+    uint256 factor = total.div(myShares);
+    uint256 outAssets = factor.mul(amount).div(PRECISSION);
 
     _updateSupplierDeposit(from, 0, amount, outAssets);
 
