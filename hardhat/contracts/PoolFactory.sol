@@ -325,9 +325,18 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     uint256 myShares = balanceOf(supplier);
 
-    uint256 total = _getSupplierBalance(supplier);
-    uint256 factor = total.div(myShares * PRECISSION);
-    outAssets = factor.mul(redeemAmount);
+    // uint256 total = _getSupplierBalance(supplier);
+    // uint256 factor = total.div(myShares * PRECISSION);
+    // outAssets = factor.mul(redeemAmount);
+
+    
+     uint256 total = _getSupplierBalance(supplier);
+     uint256 factor = total.div(myShares);
+     outAssets = factor.mul(redeemAmount).div(PRECISSION);
+
+    console.log(332, total);
+    console.log(333,factor);
+    console.log(outAssets);
 
     ///// transfer the withdraw amount to the requester
 
@@ -542,6 +551,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
       supplier.outAssets = DataTypes.Stream(updatedOutAssets, bytes32(0));
       uint256 stopDateInMs = block.timestamp + supplier.deposit.amount / uint96(netFlow);
+      _cfaLib.updateFlow( _supplier, superToken, supplier.outAssets.flow);
       // bytes32 taskId = createTimedTask(_supplier, stopDateInMs);
     } else if (netFlow > 0) {
        }
