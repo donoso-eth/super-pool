@@ -544,8 +544,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       //// cancel prevoius task
       //  cancelTask(supplier.outStream.cancelTaskId);
       uint256 total = supplier.deposit.amount;//_getSupplierBalance(_supplier);
-      uint256 factor = total.div(supplier.shares * PRECISSION);
-      int96 updatedOutAssets = int96(int256(factor.mul(uint96(supplier.outStream.flow))));
+      uint256 factor = total.div(supplier.shares);
+      int96 updatedOutAssets = int96(int256(factor.mul(uint96(supplier.outStream.flow)).div(PRECISSION)));
       periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + updatedOutAssets;
       periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
       periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
