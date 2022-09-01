@@ -183,15 +183,18 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     _updateSupplierDeposit(from, 0, amount, outAssets);
 
-    periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + amount;
-    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + outAssets * PRECISSION;
+    // periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + amount;
+    // periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + outAssets * PRECISSION;
 
     _supplierUpdateCurrentState(to);
 
     DataTypes.Supplier storage supplierTo = _getSupplier(to);
 
-    supplierTo.shares = supplierTo.shares + amount;
-    supplierTo.deposit.amount = supplierTo.deposit.amount + outAssets * PRECISSION;
+    // supplierTo.shares = supplierTo.shares + amount;
+    supplierTo.deposit.amount = supplierTo.deposit.amount + (outAssets * PRECISSION)-(amount* PRECISSION);
+    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + (outAssets * PRECISSION)-(amount* PRECISSION);
+     _updateSupplierDeposit(to, amount,0, 0);
+
 
     emit Transfer(from, to, amount);
 
@@ -476,6 +479,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   function _supplierUpdateCurrentState(address _supplier) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
+    if (supplier.timestamp < block.timestamp) {
+
     uint256 supplierBalance = _getSupplierBalance(_supplier);
     uint256 supplierShares = balanceOf(_supplier);
 
@@ -513,7 +518,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
         PRECISSION;
     }
     supplier.deposit.amount = supplierBalance;
+    supplier.timestamp = block.timestamp;
     console.log(507, supplier.deposit.amount);
+    }
   }
 
   function _updateSupplierDeposit(
@@ -556,7 +563,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     } else if (netFlow > 0) {
        }
 
-    supplier.timestamp = block.timestamp;
+    // supplier.timestamp = block.timestamp;
   }
 
   function _updateSupplierFlow(
