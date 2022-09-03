@@ -72,6 +72,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   uint256 public lastPeriodTimestamp;
 
   uint256 public constant PRECISSION = 1_000_000;
+  uint256 public MIN_OUTFLOW_ALLOWED = 10;
 
   Counters.Counter public periodId;
   Counters.Counter public supplierId;
@@ -191,10 +192,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     DataTypes.Supplier storage supplierTo = _getSupplier(to);
 
     // supplierTo.shares = supplierTo.shares + amount;
-    supplierTo.deposit.amount = supplierTo.deposit.amount + (outAssets * PRECISSION)-(amount* PRECISSION);
-    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + (outAssets * PRECISSION)-(amount* PRECISSION);
-     _updateSupplierDeposit(to, amount,0, 0);
-
+    supplierTo.deposit.amount = supplierTo.deposit.amount + (outAssets * PRECISSION) - (amount * PRECISSION);
+    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + (outAssets * PRECISSION) - (amount * PRECISSION);
+    _updateSupplierDeposit(to, amount, 0, 0);
 
     emit Transfer(from, to, amount);
 
@@ -257,7 +257,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
    * ---- tokensReceived()
    *      implementation callback tokensReceived(). Deposit funds via erc777.send() function.
    *
-   * ---- ReddemDeposit()
+   * ---- RedeemDeposit()
    *
    * ---- inStreamCallback()
    *      implementation of start stream through supwer app call back
@@ -309,44 +309,65 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     emit Deposit(from, receiver, assets, assets);
   }
 
+  function closeAccount() public {
+    redeemAll(true);
+  }
+
+  function redeemAll(bool closeInStream) public {
+    address _supplier = msg.sender;
+
+    //// Update pool state "period Struct" calculating indexes and timestamp
+    _poolUpdateCurrentState();
+
+    _supplierUpdateCurrentState(_supplier);
+
+    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+
+    periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares - supplier.shares;
+    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
+
+    ISuperToken(superToken).send(_supplier,  supplier.deposit.amount.div(PRECISSION), "0x");
+
+    supplier.shares = 0;
+    supplier.deposit.amount = 0;
+
+    if (supplier.outStream.flow > 0) {
+      periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate - supplier.outStream.flow;
+      periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
+      _cfaLib.deleteFlow(address(this), _supplier, superToken);
+      supplier.outAssets = DataTypes.Stream(0, bytes32(0));
+      supplier.outStream = DataTypes.Stream(0, bytes32(0));
+    } else if (supplier.inStream.flow > 0 && closeInStream == true) {
+      periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate - supplier.inStream.flow;
+      _cfaLib.deleteFlow(_supplier, address(this), superToken);
+      supplier.inStream = DataTypes.Stream(0, bytes32(0));
+    }
+  }
+
   function redeemDeposit(uint256 redeemAmount) public {
     uint256 shares = balanceOf(msg.sender);
 
     address supplier = msg.sender;
 
-    require(shares >= redeemAmount, "NOT_ENOUGH_BALANCE");
+    require(shares > redeemAmount, "NOT_ENOUGH_BALANCE");
 
-    //// Update pool state "period Struct" calculating indexes and timestamp
-    _poolUpdateCurrentState();
+    if (shares == redeemAmount) {
+      redeemAll(false);
+    } else {
+      //// Update pool state "period Struct" calculating indexes and timestamp
+      _poolUpdateCurrentState();
 
-    uint256 outAssets = 0;
+      uint256 outAssets = 0;
+      uint256 myShares = balanceOf(supplier);
+      uint256 total = _getSupplierBalance(supplier);
+      uint256 factor = total.div(myShares);
+      outAssets = factor.mul(redeemAmount).div(PRECISSION);
 
-    ////// if we are widthdrawing
-    // 1- convert shares to assets
-    // 2- send back the assets to the supplier
-    // 3- supplier and pool new values
+      ISuperToken(superToken).send(supplier, outAssets, "0x");
 
-    uint256 myShares = balanceOf(supplier);
-
-    // uint256 total = _getSupplierBalance(supplier);
-    // uint256 factor = total.div(myShares * PRECISSION);
-    // outAssets = factor.mul(redeemAmount);
-
-    
-     uint256 total = _getSupplierBalance(supplier);
-     uint256 factor = total.div(myShares);
-     outAssets = factor.mul(redeemAmount).div(PRECISSION);
-
-    console.log(332, total);
-    console.log(333,factor);
-    console.log(outAssets);
-
-    ///// transfer the withdraw amount to the requester
-
-    ISuperToken(superToken).send(supplier, outAssets, "0x");
-
-    ///// suppler config updated && period
-    _updateSupplierDeposit(supplier, 0, redeemAmount, outAssets);
+      ///// suppler config updated && period
+      _updateSupplierDeposit(supplier, 0, redeemAmount, outAssets);
+    }
   }
 
   function inStreamCallback(
@@ -376,19 +397,19 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     _poolUpdateCurrentState();
 
-    uint256 stopDateInMs = (realTimeBalance).div(uint96(outFlowRate)) + block.timestamp;
+//    uint256 stopDateInMs = (realTimeBalance).div(uint96(outFlowRate)) + block.timestamp;
 
     bytes memory placeHolder = "0x";
 
     _updateSupplierFlow(msg.sender, 0, outFlowRate, placeHolder);
 
     ////// start stream
-    //+ int96 outAssets =
-    if (currentOutFlow) {
-      _cfaLib.updateFlow(msg.sender, superToken, supplier.outAssets.flow);
-    } else {
-      _cfaLib.createFlow(msg.sender, superToken, supplier.outAssets.flow);
-    }
+
+    // if (currentOutFlow) {
+    //   _cfaLib.updateFlow(msg.sender, superToken, supplier.outAssets.flow);
+    // } else {
+    //   _cfaLib.createFlow(msg.sender, superToken, supplier.outAssets.flow);
+    // }
 
     ////// createGelato Task
   }
@@ -480,46 +501,44 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
     if (supplier.timestamp < block.timestamp) {
+      uint256 supplierBalance = _getSupplierBalance(_supplier);
+      uint256 supplierShares = balanceOf(_supplier);
 
-    uint256 supplierBalance = _getSupplierBalance(_supplier);
-    uint256 supplierShares = balanceOf(_supplier);
+      supplier.shares = supplierShares;
 
-    supplier.shares = supplierShares;
+      int256 supplierDepositUpdate = int256(supplierBalance) - int256(supplier.deposit.amount);
 
-    int256 supplierDepositUpdate = int256(supplierBalance) - int256(supplier.deposit.amount);
+      uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
+      if (supplierDepositUpdate >= 0) {
+        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + uint256(supplierDepositUpdate);
+      } else {
+        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + yieldSupplier;
+      }
 
-    uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
-    if (supplierDepositUpdate >= 0) {
-      periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + uint256(supplierDepositUpdate);
-    } else {
-      periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + yieldSupplier;
-    }
+      int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
-    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
-
-    if (netFlow > 0) {
-      periodByTimestamp[block.timestamp].depositFromInFlowRate =
-        periodByTimestamp[block.timestamp].depositFromInFlowRate -
-        uint96(netFlow) *
-        (block.timestamp - supplier.timestamp) *
-        PRECISSION;
-    } else if (netFlow < 0) {
-      periodByTimestamp[block.timestamp].depositFromOutFlowRate =
-        periodByTimestamp[block.timestamp].depositFromOutFlowRate +
-        uint96(supplier.outAssets.flow) *
-        (block.timestamp - supplier.timestamp) *
-        PRECISSION -
-        supplier.deposit.amount;
-      periodByTimestamp[block.timestamp].deposit =
-        periodByTimestamp[block.timestamp].deposit +
-        supplier.deposit.amount -
-        uint96(supplier.outAssets.flow) *
-        (block.timestamp - supplier.timestamp) *
-        PRECISSION;
-    }
-    supplier.deposit.amount = supplierBalance;
-    supplier.timestamp = block.timestamp;
-    console.log(507, supplier.deposit.amount);
+      if (netFlow > 0) {
+        periodByTimestamp[block.timestamp].depositFromInFlowRate =
+          periodByTimestamp[block.timestamp].depositFromInFlowRate -
+          uint96(netFlow) *
+          (block.timestamp - supplier.timestamp) *
+          PRECISSION;
+      } else if (netFlow < 0) {
+        periodByTimestamp[block.timestamp].depositFromOutFlowRate =
+          periodByTimestamp[block.timestamp].depositFromOutFlowRate +
+          uint96(supplier.outAssets.flow) *
+          (block.timestamp - supplier.timestamp) *
+          PRECISSION -
+          supplier.deposit.amount;
+        periodByTimestamp[block.timestamp].deposit =
+          periodByTimestamp[block.timestamp].deposit +
+          supplier.deposit.amount -
+          uint96(supplier.outAssets.flow) *
+          (block.timestamp - supplier.timestamp) *
+          PRECISSION;
+      }
+      supplier.deposit.amount = supplierBalance;
+      supplier.timestamp = block.timestamp;
     }
   }
 
@@ -533,10 +552,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     _supplierUpdateCurrentState(_supplier);
 
-    /// Supplier next values
-    // uint256 yieldOfPeriod = _calculateYieldSupplier(_supplier);
-    // supplier.cumulatedYield = supplier.cumulatedYield + yieldOfPeriod;
-
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
     //////// if newnetFlow < 0 means  there is already a stream out
 
@@ -548,20 +563,25 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
 
     if (netFlow < 0) {
-      //// cancel prevoius task
-      //  cancelTask(supplier.outStream.cancelTaskId);
-      uint256 total = supplier.deposit.amount;//_getSupplierBalance(_supplier);
-      uint256 factor = total.div(supplier.shares);
-      int96 updatedOutAssets = int96(int256(factor.mul(uint96(supplier.outStream.flow)).div(PRECISSION)));
-      periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + updatedOutAssets;
-      periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
-      periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
-      supplier.outAssets = DataTypes.Stream(updatedOutAssets, bytes32(0));
-      uint256 stopDateInMs = block.timestamp + supplier.deposit.amount / uint96(netFlow);
-      _cfaLib.updateFlow( _supplier, superToken, supplier.outAssets.flow);
-      // bytes32 taskId = createTimedTask(_supplier, stopDateInMs);
+   
+        //// cancel prevoius task
+        //  cancelTask(supplier.outStream.cancelTaskId);
+        uint256 total = supplier.deposit.amount; //_getSupplierBalance(_supplier);
+        uint256 factor = total.div(supplier.shares);
+        int96 updatedOutAssets = int96(int256(factor.mul(uint96(supplier.outStream.flow)).div(PRECISSION)));
+        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + updatedOutAssets;
+        periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
+        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
+        supplier.outAssets = DataTypes.Stream(updatedOutAssets, bytes32(0));
+        uint256 stopDateInMs = block.timestamp + supplier.deposit.amount / uint96(netFlow);
+        _cfaLib.updateFlow(_supplier, superToken, supplier.outAssets.flow);
+        // bytes32 taskId = createTimedTask(_supplier, stopDateInMs);
+      
     } else if (netFlow > 0) {
-       }
+      //  if (supplier.deposit.amount == 0) {
+      //   _cfaLib.deleteFlow( _supplier, address(this),superToken);
+      //  }
+    }
 
     // supplier.timestamp = block.timestamp;
   }
@@ -578,33 +598,12 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
     _supplierUpdateCurrentState(_supplier);
 
-    /// Supplier next values
-    // uint256 yieldOfPeriod = _calculateYieldSupplier(_supplier);
-    // supplier.cumulatedYield = supplier.cumulatedYield + yieldOfPeriod;
-    // supplier.shares = balanceOf(_supplier);
-
     int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
-    if (outFlow > 0) {
-      supplier.outStream.flow = outFlow;
-      supplier.inStream.flow = 0;
-    } else if (inFlow > 0) {
-      supplier.inStream.flow = inFlow;
-      supplier.outStream.flow = 0;
-    } else {
-      console.log("should not be here till ned");
-      supplier.outStream.flow = 0;
-      supplier.inStream.flow = 0;
-    }
-
-    int96 newNetFlow = supplier.inStream.flow - supplier.outStream.flow;
+    int96 newNetFlow = inFlow - outFlow;
 
     if (currentNetFlow < 0) {
       /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
       //cancelTask(supplier.outStream.cancelTaskId);
-      supplier.outStream.cancelTaskId = bytes32(0);
-
-      //   supplier.deposit.amount = supplier.deposit.amount - (block.timestamp - supplier.timestamp) * uint96(supplier.outAssets.flow);
-      //  periodByTimestamp[block.timestamp].totalShares =  periodByTimestamp[block.timestamp].totalShares - (block.timestamp - supplier.timestamp) * uint96(-currentNetFlow);
 
       if (newNetFlow >= 0) {
         periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow;
@@ -619,18 +618,18 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
           newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
         }
       } else {
-        uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(-currentNetFlow));
-        uint256 factor = total.div(supplier.shares);
-        console.log(factor);
+        uint256 factor = supplier.deposit.amount.div(supplier.shares);
         int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow))).div(PRECISSION)));
-        console.log(611, uint96(outAssets));
-
         periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + outAssets;
         periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
         periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
+
         supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
         //// creatre timed task
+        _outStreamHasChanged(_supplier, -newNetFlow, outAssets);
+
+
       }
     } else {
       /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW THE SAME
@@ -651,14 +650,12 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       } else {
         /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW NEGATIVE
 
-        //// transfer total balance to depositFromOutFlow
-        uint256 total = (supplier.cumulatedYield).div(PRECISSION) + supplier.deposit.amount + (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
-        uint256 factor = total.div(supplier.shares);
+        uint256 factor = supplier.deposit.amount.div(supplier.shares);
 
         int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow))).div(PRECISSION)));
 
-        supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
-        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate + supplier.outAssets.flow;
+       
+        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate + outAssets;
 
         periodByTimestamp[block.timestamp].outFlowRate += -newNetFlow;
         periodByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
@@ -671,8 +668,10 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
         // supplier.deposit.amount = total;
 
         /// TO DO FIST DEPOSIT THEN sTREAM
-        _cfaLib.deleteFlow(_supplier, address(this), superToken);
-
+         supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
+        _outStreamHasChanged(_supplier, -newNetFlow, outAssets);
+        // _cfaLib.deleteFlow(_supplier, address(this), superToken);
+//
         //// creatre timed task
       }
     }
@@ -684,7 +683,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       //supplier.outStream.cancelTaskId = taskId;
     }
 
-    supplier.timestamp = block.timestamp;
+    supplier.inStream.flow = inFlow;
+    supplier.outStream.flow = outFlow;
 
     console.log("updateSupplierFlow");
   }
@@ -720,16 +720,38 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     }
   }
 
-  // function getSupplierShares(address _supplier) public view returns (uint256 sharesSupplier) {
-  //   DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
-  //   int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+  function _outStreamHasChanged(
+    address _supplier,
+    int96 newOutFlow,
+    int96 newOutAssets
+  ) internal {
+    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+        // if (currentOutFlow) {
+    //   
+    // } else {
+    //   && supplier.outAssets.cancelTaskId != bytes32(0)
+    // }
 
-  //   if (netFlow >= 0) {
-  //     sharesSupplier = supplier.shares + uint96(netFlow) * (block.timestamp - supplier.timestamp);
-  //   } else {
-  //     sharesSupplier = supplier.shares - uint96(-netFlow) * (block.timestamp - supplier.timestamp);
-  //   }
-  // }
+
+    if (supplier.inStream.flow > 0) {
+        _cfaLib.deleteFlow(_supplier, address(this), superToken);
+    }
+
+    if (supplier.outStream.flow > 0 ) {
+      _cfaLib.updateFlow(msg.sender, superToken,newOutAssets);
+      // update Previous Flow
+      // delete taskId
+      // create timedtask
+
+    } else  {
+
+      _cfaLib.createFlow(msg.sender, superToken, newOutAssets);
+    }
+
+
+
+    ///
+  }
 
   // #endregion
 
@@ -872,14 +894,14 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     _;
   }
 
-  function createTimedTask(address supplier, uint256 stopDateInMs) internal returns (bytes32 taskId) {
+  function creareStopStreamTimedTask(address _supplier, uint256 _stopDateInMs, bool _redeemAll) internal returns (bytes32 taskId) {
     taskId = IOps(ops).createTimedTask(
-      uint128(stopDateInMs),
-      180,
+      uint128(_stopDateInMs),
+      600,
       address(this),
       this.stopstream.selector,
       address(this),
-      abi.encodeWithSelector(this.checker.selector, supplier),
+      abi.encodeWithSelector(this.checkerStopStream.selector, _supplier,_redeemAll),
       ETH,
       false
     );
@@ -890,9 +912,13 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   }
 
   /// called by Gelato
-  function stopstream(address receiver) external onlyOps {
+  function stopstream(address _receiver, bool _redeemAll) external onlyOps {
     //// check if
-    (, int96 inFlowRate, , ) = cfa.getFlow(superToken, address(this), receiver);
+   
+   _poolUpdateCurrentState();
+   _supplierUpdateCurrentState(_receiver);
+   
+    (, int96 inFlowRate, , ) = cfa.getFlow(superToken, address(this), _receiver);
 
     //// every task will be payed with a transfer, therefore receive(), we have to fund the contract
     uint256 fee;
@@ -909,7 +935,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
           cfa.deleteFlow.selector,
           superToken,
           address(this),
-          receiver,
+          _receiver,
           new bytes(0) // placeholder
         ),
         "0x"
@@ -918,18 +944,33 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       //// TO DO transfer last yield won
     }
 
-    bytes32 taskId = suppliersByAddress[receiver].outStream.cancelTaskId;
+    if (_redeemAll == true) {
+    bytes32 taskId = suppliersByAddress[_receiver].outAssets.cancelTaskId;
     if (taskId != bytes32(0)) {
       cancelTask(taskId);
-      suppliersByAddress[receiver].outStream.cancelTaskId = bytes32(0);
+      suppliersByAddress[_receiver].outAssets.cancelTaskId = bytes32(0);
     }
+    } else  {
+       bytes32 taskId = suppliersByAddress[_receiver].outStream.cancelTaskId;
+    if (taskId != bytes32(0)) {
+      cancelTask(taskId);
+      suppliersByAddress[_receiver].outStream.cancelTaskId = bytes32(0);
+    }
+    }
+
+
+
+
+
+
+
   }
 
   // called by Gelato Execs
-  function checker(address receiver) external returns (bool canExec, bytes memory execPayload) {
+  function checkerStopStream(address _receiver,bool _redeemAll) external returns (bool canExec, bytes memory execPayload) {
     canExec = true;
 
-    execPayload = abi.encodeWithSelector(this.stopstream.selector, address(receiver));
+    execPayload = abi.encodeWithSelector(this.stopstream.selector, address(_receiver),_redeemAll);
   }
 
   function withdraw() external returns (bool) {
