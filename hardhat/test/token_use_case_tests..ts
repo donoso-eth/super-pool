@@ -76,7 +76,7 @@ let fromUser3Stream: IWeb3FlowInfo;
 let fromUser4Stream: IWeb3FlowInfo;
 let PRECISSION = 10 ** 6;
 
-describe.only('TOKEN Use case test', function () {
+describe('TOKEN Use case test', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -112,6 +112,13 @@ describe.only('TOKEN Use case test', function () {
     superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(TOKEN1);
 
     superTokenPool = PoolFactory__factory.connect(superPoolTokenAddress, deployer);
+
+
+    let initialPoolEth = hre.ethers.utils.parseEther('10');
+
+    let balance = await provider.getBalance(superPoolTokenAddress);
+
+    await deployer.sendTransaction({ to: superPoolTokenAddress, value: initialPoolEth });
 
     tokenContract.approve(superPoolTokenAddress, hre.ethers.constants.MaxUint256);
 

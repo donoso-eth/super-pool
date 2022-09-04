@@ -44,7 +44,7 @@ import {IERC4626} from "./interfaces/IERC4626.sol";
  *      4) New created period Updated
  *
  ****************************************************************************************************/
-contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC4626 {
+contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   // #region pool state
 
   using SafeMath for uint256;
@@ -221,31 +221,31 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
    *
    ****************************************************************************************************/
 
-  function deposit(uint256 assets, address receiver) external override returns (uint256 shares) {
-    ERC20(address(superToken)).transferFrom(msg.sender, address(this), assets);
-    _deposit(msg.sender, receiver, assets);
-    shares = assets;
-  }
+  // function deposit(uint256 assets, address receiver) external override returns (uint256 shares) {
+  //   ERC20(address(superToken)).transferFrom(msg.sender, address(this), assets);
+  //   _deposit(msg.sender, receiver, assets);
+  //   shares = assets;
+  // }
 
-  function asset() external view override returns (address assetTokenAddress) {
-    assetTokenAddress = address(this);
-  }
+  // function asset() external view override returns (address assetTokenAddress) {
+  //   assetTokenAddress = address(this);
+  // }
 
-  function totalAssets() external view override returns (uint256 totalManagedAssets) {
-    totalManagedAssets = ISuperToken(superToken).balanceOf(address(this));
-  }
+  // function totalAssets() external view override returns (uint256 totalManagedAssets) {
+  //   totalManagedAssets = ISuperToken(superToken).balanceOf(address(this));
+  // }
 
-  function convertToShares(uint256 assets) external pure override returns (uint256 shares) {
-    shares = assets;
-  }
+  // function convertToShares(uint256 assets) external pure override returns (uint256 shares) {
+  //   shares = assets;
+  // }
 
-  function convertToAssets(uint256 shares) external pure override returns (uint256 assets) {
-    assets = shares;
-  }
+  // function convertToAssets(uint256 shares) external pure override returns (uint256 assets) {
+  //   assets = shares;
+  // }
 
-  function maxDeposit(address receiver) external pure override returns (uint256 maxAssets) {
-    maxAssets = type(uint256).max;
-  }
+  // function maxDeposit(address receiver) external pure override returns (uint256 maxAssets) {
+  //   maxAssets = type(uint256).max;
+  // }
 
   // #endregion ERC4626 Interface
 
@@ -306,7 +306,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     _updateSupplierDeposit(from, assets, 0, 0);
 
     /// Events mnot yet implemented
-    emit Deposit(from, receiver, assets, assets);
+    //emit Deposit(from, receiver, assets, assets);
   }
 
   function closeAccount() public {
@@ -623,6 +623,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
         periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
         periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + outAssets;
         periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
+        console.log(626, periodByTimestamp[block.timestamp].deposit,supplier.deposit.amount);
+  
         periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
 
         supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
@@ -662,12 +664,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
 
         periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
         periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
-        // periodByTimestamp[block.timestamp].depositFromInFlowRate -= (block.timestamp - supplier.timestamp) * (uint96(currentNetFlow));
 
-        // supplier.cumulatedYield = 0;
-        // supplier.deposit.amount = total;
-
-        /// TO DO FIST DEPOSIT THEN sTREAM
          supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
         _outStreamHasChanged(_supplier, -newNetFlow, outAssets);
         // _cfaLib.deleteFlow(_supplier, address(this), superToken);
@@ -726,6 +723,13 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     int96 newOutAssets
   ) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+
+    uint256 endMs = supplier.shares.div(uint96(newOutFlow));
+    if (endMs < MIN_OUTFLOW_ALLOWED){
+      revert('No sufficent funds');
+    }
+
+
         // if (currentOutFlow) {
     //   
     // } else {
@@ -738,14 +742,15 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     }
 
     if (supplier.outStream.flow > 0 ) {
-      _cfaLib.updateFlow(msg.sender, superToken,newOutAssets);
+      _cfaLib.updateFlow(_supplier, superToken,newOutAssets);
       // update Previous Flow
       // delete taskId
       // create timedtask
 
     } else  {
-
-      _cfaLib.createFlow(msg.sender, superToken, newOutAssets);
+  
+        supplier.outAssets.cancelTaskId =   creareStopStreamTimedTask(_supplier, endMs-MIN_OUTFLOW_ALLOWED, true);
+      _cfaLib.createFlow(_supplier, superToken, newOutAssets);
     }
 
 
@@ -763,7 +768,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
    *
    *************************************************************************/
 
-  function _poolUpdateCurrentState() internal {
+  function _poolUpdateCurrentState() public {
     periodId.increment();
 
     getMockYield();
@@ -777,7 +782,6 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
     currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * PRECISSION * periodSpan + lastPeriod.depositFromInFlowRate;
     currentPeriod.depositFromOutFlowRate = lastPeriod.depositFromOutFlowRate - uint96(lastPeriod.outFlowAssetsRate) * periodSpan * PRECISSION;
 
-    console.log(lastPeriod.depositFromOutFlowRate);
 
     currentPeriod.deposit = lastPeriod.deposit; // - uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * periodSpan;
 
@@ -895,8 +899,9 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
   }
 
   function creareStopStreamTimedTask(address _supplier, uint256 _stopDateInMs, bool _redeemAll) internal returns (bytes32 taskId) {
+    console.log(905,_stopDateInMs);
     taskId = IOps(ops).createTimedTask(
-      uint128(_stopDateInMs),
+      uint128(block.timestamp + _stopDateInMs),
       600,
       address(this),
       this.stopstream.selector,
@@ -905,6 +910,8 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       ETH,
       false
     );
+  
+     
   }
 
   function cancelTask(bytes32 _taskId) public {
@@ -942,6 +949,7 @@ contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient, IERC46
       );
 
       //// TO DO transfer last yield won
+      console.log('stopStream');
     }
 
     if (_redeemAll == true) {

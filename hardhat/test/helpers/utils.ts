@@ -4,7 +4,7 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { ERC777, ISuperfluidToken, PoolFactory } from '../../typechain-types';
+import { ERC777, IOps, ISuperfluidToken, PoolFactory } from '../../typechain-types';
 
 export interface IPERIOD {
   timestamp: BigNumber;
@@ -59,6 +59,8 @@ export interface IUSER_RESULT {
   inFlow?:BigNumber;
   outFlow?: BigNumber;
   outAssets?: BigNumber
+  outAssetsId?: string
+  nextExec?:BigNumber
 }
 
 export interface IUSERTEST {address:string, name: string,expected: IUSER_RESULT}
@@ -71,7 +73,8 @@ export const testPeriod = async (
       poolAddress: string,
        superTokenContract: ISuperfluidToken, 
        superTokenPool:PoolFactory,
-       tokenContract: ERC777
+       tokenContract: ERC777,
+       ops?:IOps
       },
       users:Array<IUSERTEST>,
       
@@ -270,7 +273,7 @@ export const testPeriod = async (
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} Deposit : ${user.expected.deposit.toString()}, expected:${depositOutFlow !.toString()}`
+        `\x1b[30m#${user.name} Deposit : ${depositOutFlow !.toString()}, expected:${user.expected.deposit.toString()}`
       );
       console.log(+user.expected.deposit.toString()-+userState.deposit.amount!.toString())
     }
@@ -285,7 +288,7 @@ export const testPeriod = async (
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} IN-FLOW:  ${user.expected.inFlow.toString()}, expected:${userState.inStream.flow.toString()} units/s`
+        `\x1b[30m#${user.name} IN-FLOW:  ${userState.inStream.flow.toString()},  ${user.expected.inFlow.toString()} expected: units/s`
       );
       console.log(+user.expected.inFlow.toString()-+userState.inStream.flow.toString())
     }
@@ -300,7 +303,7 @@ export const testPeriod = async (
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} OUT-FLOW:  ${user.expected.outFlow.toString()}, expected:${userState.outStream.flow.toString()} units/s`
+        `\x1b[30m#${user.name} OUT-FLOW: ${userState.outStream.flow.toString()} , expected: ${user.expected.outFlow.toString()} units/s`
       );
       console.log(+user.expected.outFlow.toString()-+userState.outStream.flow.toString())
     }
@@ -315,9 +318,45 @@ export const testPeriod = async (
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} OUT-Assets:  ${user.expected.outAssets.toString()}, expected:${userState.outAssets.flow.toString()} units/s`
+        `\x1b[30m#${user.name} OUT-Assets:  ${userState.outAssets.flow.toString()}, expected: ${user.expected.outAssets.toString()} units/s`
       );
       console.log(+user.expected.outAssets.toString()-+userState.outAssets.flow.toString())
+    }
+  }
+
+  if (user.expected.outAssetsId != undefined) {
+    try {
+      expect(user.expected.outAssetsId ).to.equal(userState.outAssets.cancelTaskId);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets-TaskId: ${userState.outAssets.cancelTaskId?.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} OUT-Assets-TaskId:  ${userState.outAssets.cancelTaskId.toString()}, expected: ${user.expected.outAssetsId.toString()}`
+      );
+    
+    }
+  }
+
+
+  
+  if (user.expected.nextExec != undefined) {
+    let nextExec =  (await contracts.ops?.timedTask(userState.outAssets.cancelTaskId))?.nextExec as BigNumber;
+    
+    try {
+
+      
+      //console.log(+timed['nextExec'].toString())
+      console.log((+await getTimestamp()).toString())
+      expect(user.expected.nextExec).to.equal(nextExec);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Gelato Task Next Execution: ${nextExec.sub(t0).sub(BigNumber.from(tx)).toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} Gelato Task Next Execution:  ${nextExec.toString()}, expected: ${user.expected.nextExec.toString()}`
+      );
+      console.log(+nextExec.toString()-+user.expected.nextExec.toString())
     }
   }
 
@@ -326,16 +365,13 @@ export const testPeriod = async (
 
 
     try {
-
-     
-
       expect(user.expected.timestamp).to.equal(checkTimestamp);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} TimeStamp: ${checkTimestamp?.toString()} ms`);
     } catch (error) {
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} TimeStamp:  ${user.expected.timestamp.toString()}, expected:${checkTimestamp.toString()} ms`
+        `\x1b[30m#${user.name} TimeStamp: ${checkTimestamp.toString()} , expected: ${user.expected.timestamp.toString()} ms`
       );
       console.log(+user.expected.timestamp.toString()-+checkTimestamp.toString())
     }
