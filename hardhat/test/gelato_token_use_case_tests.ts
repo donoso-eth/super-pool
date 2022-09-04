@@ -541,18 +541,19 @@ describe.only('Gelato Use case test', function () {
     expedtedPoolBalance = utils
       .parseEther('50')
       .sub(+loanStream.deposit)
-      .add(BigNumber.from(53000));
+      .add(BigNumber.from(52280));
 
     let periodExpected5: IPERIOD_RESULT = {
       poolTotalBalance: expedtedPoolBalance,
       inFlowRate: BigNumber.from(500),
       yieldAccruedSec: BigNumber.from(1000),
-      totalShares: BigNumber.from(30000),
+      totalShares: BigNumber.from(33000),
       deposit: BigNumber.from(0),
-      outFlowAssetsRate: BigNumber.from(195),
+      outFlowAssetsRate: BigNumber.from(173),
       outFlowRate: BigNumber.from(100),
       depositFromInFlowRate: BigNumber.from(15000000000),
-      depositFromOutFlowRate: BigNumber.from(29255212352),
+      depositFromOutFlowRate: BigNumber.from(31298589552)
+
 
     };
 
@@ -564,11 +565,13 @@ describe.only('Gelato Use case test', function () {
         name: 'User1',
         address: user1.address,
         expected: {
-          realTimeBalance: BigNumber.from(29255),
+          realTimeBalance: BigNumber.from(31298),
           shares: BigNumber.from(18000),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(20000)),
-          deposit: BigNumber.from(29255212352),
-          outAssets: BigNumber.from(195),
+          tokenBalance: utils.parseEther('10')
+          .add(BigNumber.from(2720))
+          .sub(BigNumber.from(20000)),
+          deposit: BigNumber.from(31298589552),
+          outAssets: BigNumber.from(173),
           outAssetsId: taskId,
           nextExec: BigNumber.from(t0).add(BigNumber.from(40)).add(BigNumber.from(180)),
           outFlow: BigNumber.from(100),
@@ -580,8 +583,8 @@ describe.only('Gelato Use case test', function () {
         name: 'User2',
         address: user2.address,
         expected: {
-          realTimeBalance: BigNumber.from(23744),
-          shares: BigNumber.from(10000),
+          realTimeBalance: BigNumber.from(20981),
+          shares: BigNumber.from(15000),
           tokenBalance: utils
             .parseEther('10')
             .sub(BigNumber.from(15000))
