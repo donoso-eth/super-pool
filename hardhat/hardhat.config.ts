@@ -45,8 +45,10 @@ const config: HardhatUserConfig = {
   defaultNetwork,
   networks: {
     hardhat: {
+      allowUnlimitedContractSize: true,
       forking: {
         //your rpc url here, in this case for Mumbai
+        
         url: process.env.MUMBAI_URL || "",
         blockNumber: 26566623,
       },

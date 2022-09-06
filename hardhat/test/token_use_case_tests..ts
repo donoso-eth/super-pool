@@ -837,7 +837,7 @@ describe('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#8--- User2 RedeemFlow 4 untis/Sec t0 + 70');
 
     let superTokenPoolUser2 = PoolFactory__factory.connect(superPoolTokenAddress, user2);
-    await waitForTx(superTokenPoolUser2.redeemFlow(4));
+    await waitForTx(superTokenPoolUser2.redeemFlow(4,0));
 
     loanStream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -1179,7 +1179,7 @@ describe('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#12--- User1 redeem flow 5 units at t0 + 110');
 
     let superTokenPoolUser1 = PoolFactory__factory.connect(superPoolTokenAddress, user1);
-    await waitForTx(superTokenPoolUser1.redeemFlow(5));
+    await waitForTx(superTokenPoolUser1.redeemFlow(5,0));
 
     loanStream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -1680,7 +1680,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#18--- User3 redeemfloe 2 supertokens/s');
 
-    await waitForTx(superTokenPoolUser3.redeemFlow(2));
+    await waitForTx(superTokenPoolUser3.redeemFlow(2,0));
 
     loanStream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -1768,7 +1768,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#19--- User3 update redeemfloe to 4 supertokens/s');
 
-    await waitForTx(superTokenPoolUser3.redeemFlow(4));
+    await waitForTx(superTokenPoolUser3.redeemFlow(4,0));
 
     loanStream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -1939,7 +1939,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#21---- user3 redeem flow updated to 1');
 
-    await waitForTx(superTokenPoolUser3.redeemFlow(1));
+    await waitForTx(superTokenPoolUser3.redeemFlow(1,0));
 
     loanStream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -2958,7 +2958,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '31--- user1 reddem flow 15');
 
-    await waitForTx(superTokenPoolUser1.redeemFlow(15));
+    await waitForTx(superTokenPoolUser1.redeemFlow(15,0));
 
     loanStream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -3074,7 +3074,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '32--- user2 reddem flow 9');
 
-    await waitForTx(superTokenPoolUser2.redeemFlow(9));
+    await waitForTx(superTokenPoolUser2.redeemFlow(9,0));
 
     let loanStreamuser2 = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -4843,7 +4843,7 @@ describe('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#47--- user3 redeem flow 33');
 
  
-    await waitForTx(superTokenPoolUser3.redeemFlow(33));
+    await waitForTx(superTokenPoolUser3.redeemFlow(33,0));
 
     let loanStreamuser3 = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -4975,7 +4975,7 @@ describe('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#48--- user3 redeem flow 17');
 
  
-    await waitForTx(superTokenPoolUser4.redeemFlow(17));
+    await waitForTx(superTokenPoolUser4.redeemFlow(17,0));
 
     let loanStreamuser4 = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -5106,7 +5106,7 @@ describe('TOKEN Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#49--- user3 redeem All');
 
  
-    await waitForTx(superTokenPoolUser3.redeemAll(false));
+    await waitForTx(superTokenPoolUser3.closeAccount());
 
 
 

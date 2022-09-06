@@ -57,10 +57,12 @@ export interface IUSER_RESULT {
   deposit?: BigNumber;
   timestamp?: BigNumber;
   inFlow?:BigNumber;
+  inFlowId?: string
+  nextExecIn?:BigNumber
   outFlow?: BigNumber;
   outAssets?: BigNumber
   outAssetsId?: string
-  nextExec?:BigNumber
+  nextExecOut?:BigNumber
 }
 
 export interface IUSERTEST {address:string, name: string,expected: IUSER_RESULT}
@@ -294,6 +296,42 @@ export const testPeriod = async (
     }
   }
 
+  if (user.expected.inFlowId != undefined) {
+    try {
+      expect(user.expected.inFlowId ).to.equal(userState.inStream.cancelTaskId);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} INFLOW -TaskId: ${userState.inStream.cancelTaskId?.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} INFLOW -TaskId:  ${userState.inStream.cancelTaskId.toString()}, expected: ${user.expected.inFlowId.toString()}`
+      );
+    
+    }
+  }
+
+
+  
+  if (user.expected.nextExecIn != undefined) {
+    let nextExec =  (await contracts.ops?.timedTask(userState.inStream.cancelTaskId))?.nextExec as BigNumber;
+    
+    try {
+
+      
+      //console.log(+timed['nextExec'].toString())
+      console.log((+await getTimestamp()).toString())
+      expect(user.expected.nextExecIn).to.equal(nextExec);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Gelato Task Next Execution Inflow: ${nextExec.sub(t0).sub(BigNumber.from(tx)).toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x',
+        `\x1b[30m#${user.name} Gelato Task Next Execution Inflow:  ${nextExec.toString()}, expected: ${user.expected.nextExecIn.toString()}`
+      );
+      console.log(+nextExec.toString()-+user.expected.nextExecIn.toString())
+    }
+  }
+
 
   if (user.expected.outFlow != undefined) {
     try {
@@ -340,7 +378,7 @@ export const testPeriod = async (
 
 
   
-  if (user.expected.nextExec != undefined) {
+  if (user.expected.nextExecOut != undefined) {
     let nextExec =  (await contracts.ops?.timedTask(userState.outAssets.cancelTaskId))?.nextExec as BigNumber;
     
     try {
@@ -348,15 +386,15 @@ export const testPeriod = async (
       
       //console.log(+timed['nextExec'].toString())
       console.log((+await getTimestamp()).toString())
-      expect(user.expected.nextExec).to.equal(nextExec);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Gelato Task Next Execution: ${nextExec.sub(t0).sub(BigNumber.from(tx)).toString()}`);
+      expect(user.expected.nextExecOut).to.equal(nextExec);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Gelato Task Next Execution OutFlow: ${nextExec.sub(t0).sub(BigNumber.from(tx)).toString()}`);
     } catch (error) {
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} Gelato Task Next Execution:  ${nextExec.toString()}, expected: ${user.expected.nextExec.toString()}`
+        `\x1b[30m#${user.name} Gelato Task Next Execution OutFlow:  ${nextExec.toString()}, expected: ${user.expected.nextExecOut.toString()}`
       );
-      console.log(+nextExec.toString()-+user.expected.nextExec.toString())
+      console.log(+nextExec.toString()-+user.expected.nextExecOut.toString())
     }
   }
 
@@ -376,11 +414,8 @@ export const testPeriod = async (
       console.log(+user.expected.timestamp.toString()-+checkTimestamp.toString())
     }
   }
-
-
   }
 
-  
 }
 
 export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_RESULT, users?: Array<IUSER_CHECK>) => {

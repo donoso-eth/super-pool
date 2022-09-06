@@ -89,7 +89,7 @@ let resolverAddress;
 let resolverData;
 let resolverHash;
 
-let taskId
+let taskId;
 
 
 
@@ -302,12 +302,20 @@ describe.only('Gelato Use case test', function () {
      *****************************************************************/
     console.log('\x1b[36m%s\x1b[0m', '#2--- User2 provides starts a stream at t0 + 10 ');
 
-    const createFlowOperation = sf.cfaV1.createFlow({
+    let createFlowOperation = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '500',
       superToken: TOKEN1,
     });
     await createFlowOperation.exec(user2);
+
+
+    fromUser2Stream = await sf.cfaV1.getFlow({
+      superToken: TOKEN1,
+      sender: user2.address,
+      receiver: superPoolTokenAddress,
+      providerOrSigner: user2,
+    });
 
     expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(20000));
 
@@ -321,12 +329,6 @@ describe.only('Gelato Use case test', function () {
       depositFromInFlowRate: BigNumber.from(0),
     };
 
-    fromUser2Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
-      sender: user2.address,
-      receiver: superPoolTokenAddress,
-      providerOrSigner: user2,
-    });
 
     usersTest = [
       {
@@ -366,7 +368,10 @@ describe.only('Gelato Use case test', function () {
 
     // #endregion SECOND PERIOD
 
-    await setNextBlockTimestamp(hre, t0 + 20);
+ 
+      
+
+      await setNextBlockTimestamp(hre, t0 + 20);
 
     // #region ================= THIRD PERIOD ============================= //
 
@@ -436,7 +441,7 @@ describe.only('Gelato Use case test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#4--- user 1 redeemflow(200)');
 
     let superTokenPoolUser1 = PoolFactory__factory.connect(superPoolTokenAddress, user1);
-    await waitForTx(superTokenPoolUser1.redeemFlow(200));
+    await waitForTx(superTokenPoolUser1.redeemFlow(200,0));
 
     loanStream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -462,11 +467,11 @@ describe.only('Gelato Use case test', function () {
       depositFromOutFlowRate: BigNumber.from(27272720000),
     };
 
-    execData = superTokenPool.interface.encodeFunctionData('stopstream', [user1.address, true]);
+    execData = superTokenPool.interface.encodeFunctionData('stopstream', [user1.address, true,0]);
     execAddress = superTokenPool.address;
-    execSelector = await ops.getSelector('stopstream(address,bool)');
+    execSelector = await ops.getSelector('stopstream(address,bool,uint8)');
     resolverAddress = superTokenPool.address;
-    resolverData = await superTokenPool.interface.encodeFunctionData('checkerStopStream', [user1.address, true]);
+    resolverData = await superTokenPool.interface.encodeFunctionData('checkerStopStream', [user1.address, true,0]);
 
     resolverHash = utils.keccak256(new utils.AbiCoder().encode(['address', 'bytes'], [resolverAddress, resolverData]));
 
@@ -485,7 +490,7 @@ describe.only('Gelato Use case test', function () {
           deposit: BigNumber.from(27272720000),
           outAssets: BigNumber.from(272),
           outAssetsId: taskId,
-          nextExec: BigNumber.from(t0).add(BigNumber.from(30)).add(BigNumber.from(100)),
+          nextExecOut: BigNumber.from(t0).add(BigNumber.from(30)).add(BigNumber.from(100)),
           outFlow: BigNumber.from(200),
           inFlow: BigNumber.from(0),
           timestamp: BigNumber.from(30),
@@ -523,13 +528,16 @@ describe.only('Gelato Use case test', function () {
 
     // #endregion FOURTH PERIOD
   
+
+    
+
     await setNextBlockTimestamp(hre, t0 + 40);
 
     // #region ================= FIVE PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- user 1 redeemflow(100)');
 
-     await waitForTx(superTokenPoolUser1.redeemFlow(100));// _poolUpdateCurrentState()) ;/
+     await waitForTx(superTokenPoolUser1.redeemFlow(100,0));// _poolUpdateCurrentState()) ;/
 
     loanStream = await sf.cfaV1.getFlow({
       superToken: TOKEN1,
@@ -573,7 +581,7 @@ describe.only('Gelato Use case test', function () {
           deposit: BigNumber.from(31298589552),
           outAssets: BigNumber.from(173),
           outAssetsId: taskId,
-          nextExec: BigNumber.from(t0).add(BigNumber.from(40)).add(BigNumber.from(180)),
+          nextExecOut: BigNumber.from(t0).add(BigNumber.from(40)).add(BigNumber.from(180)),
           outFlow: BigNumber.from(100),
           inFlow: BigNumber.from(0),
           timestamp: BigNumber.from(40),
@@ -600,16 +608,412 @@ describe.only('Gelato Use case test', function () {
 
     await testPeriod(BigNumber.from(t0), 40, periodExpected5, contractsTest, usersTest);
 
-    throw new Error('');
+      console.log('\x1b[36m%s\x1b[0m', '#--- Period Tests passed ');
+    console.log('');
 
-    await setNextBlockTimestamp(hre, t0 + 130);
+    // #endregion FIVETH PERIOD
+
+    await setNextBlockTimestamp(hre, t0 + 50);
+
+    // #region ================= SIXTH PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#6--- user 2 redeemflow(10)');
+
+    let superTokenPoolUser2 = PoolFactory__factory.connect(superPoolTokenAddress, user2);
+     await waitForTx(superTokenPoolUser2.redeemFlow(10,0));// _poolUpdateCurrentState()) ;/
+
+    let loanStream2 = await sf.cfaV1.getFlow({
+      superToken: TOKEN1,
+      sender: superPoolTokenAddress,
+      receiver: user2.address,
+      providerOrSigner: user2,
+    });
+
+    expedtedPoolBalance = utils
+      .parseEther('50')
+      .sub(+loanStream.deposit)
+      .sub(+loanStream2.deposit)
+      .add(BigNumber.from(65550));
+
+    let periodExpected6: IPERIOD_RESULT = {
+      poolTotalBalance: expedtedPoolBalance,
+      inFlowRate: BigNumber.from(0),
+      yieldAccruedSec: BigNumber.from(1000),
+      totalShares: BigNumber.from(37000),
+      deposit: BigNumber.from(0),
+      outFlowAssetsRate: BigNumber.from(187),
+      outFlowRate: BigNumber.from(110),
+      depositFromInFlowRate: BigNumber.from(0),
+      depositFromOutFlowRate: BigNumber.from(59200876552),
+
+
+
+    };
+    execData = superTokenPool.interface.encodeFunctionData('stopstream', [user2.address, true,0]);
+    execAddress = superTokenPool.address;
+    execSelector = await ops.getSelector('stopstream(address,bool,uint8)');
+    resolverAddress = superTokenPool.address;
+    resolverData = await superTokenPool.interface.encodeFunctionData('checkerStopStream', [user2.address, true,0]);
+
+    resolverHash = utils.keccak256(new utils.AbiCoder().encode(['address', 'bytes'], [resolverAddress, resolverData]));
+
+    let taskIdUser2 = await ops.getTaskId(superTokenPool.address, execAddress, execSelector, false, ETH, resolverHash);
+
+   
+    ///////////// User1 balance
+
+    usersTest = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: {
+          realTimeBalance: BigNumber.from(35917),
+          shares: BigNumber.from(17000),
+          tokenBalance: utils.parseEther('10')
+          .add(BigNumber.from(4450))
+          .sub(BigNumber.from(20000)),
+          deposit: BigNumber.from(29568589552),
+          outAssets: BigNumber.from(173),
+          outAssetsId: taskId,
+          nextExecOut: BigNumber.from(t0).add(BigNumber.from(40)).add(BigNumber.from(180)),
+          outFlow: BigNumber.from(100),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(40),
+        },
+      },
+      {
+        name: 'User2',
+        address: user2.address,
+        expected: {
+          realTimeBalance: BigNumber.from(29632),
+          shares: BigNumber.from(20000),
+          tokenBalance: utils
+            .parseEther('10')
+            .sub(BigNumber.from(20000)),
+            deposit: BigNumber.from(29632287000),
+          outAssets: BigNumber.from(14),
+          outAssetsId: taskIdUser2 ,
+          nextExecOut: BigNumber.from(t0).add(BigNumber.from(50)).add(BigNumber.from(2000)),
+         outFlow: BigNumber.from(10),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(50),
+        },
+      },
+    ];
+
+    await testPeriod(BigNumber.from(t0), 50, periodExpected6, contractsTest, usersTest);
+
+  
+     console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
+    console.log('');
+
+    // #endregion SIXTH PERIOD
+
+ 
+    await setNextBlockTimestamp(hre, t0 + 60);
+
+    // #region ================= SEVENTH PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#7--- user 1 start deposit time-bound 50');
+
+    const userData = utils.defaultAbiCoder.encode(
+      ['uint256'],
+      [ '50']
+    );
+  
+
+    createFlowOperation = sf.cfaV1.createFlow({
+      receiver: superPoolTokenAddress,
+      flowRate: '300',
+      superToken: TOKEN1,
+      userData
+    });
+    await createFlowOperation.exec(user1);
+
+
+    fromUser1Stream = await sf.cfaV1.getFlow({
+      superToken: TOKEN1,
+      sender: user1.address,
+      receiver: superPoolTokenAddress,
+      providerOrSigner: user1,
+    });
+
+
+
+    expedtedPoolBalance = utils
+      .parseEther('50')
+      .sub(+loanStream2.deposit)
+      .add(BigNumber.from(73680));
+
+    let periodExpected7: IPERIOD_RESULT = {
+      poolTotalBalance: expedtedPoolBalance,
+      inFlowRate: BigNumber.from(300),
+      yieldAccruedSec: BigNumber.from(1000),
+      totalShares: BigNumber.from(35900),
+      deposit: BigNumber.from(43439041704),
+      outFlowAssetsRate: BigNumber.from(14),
+      outFlowRate: BigNumber.from(10),
+      depositFromInFlowRate: BigNumber.from(0),
+      depositFromOutFlowRate: BigNumber.from(29492287000)
+    };
+    execData = superTokenPool.interface.encodeFunctionData('stopstream', [user1.address, false,1]);
+    execAddress = superTokenPool.address;
+    execSelector = await ops.getSelector('stopstream(address,bool,uint8)');
+    resolverAddress = superTokenPool.address;
+    resolverData = await superTokenPool.interface.encodeFunctionData('checkerStopStream', [user1.address, false,1]);
+
+    resolverHash = utils.keccak256(new utils.AbiCoder().encode(['address', 'bytes'], [resolverAddress, resolverData]));
+
+    taskId = await ops.getTaskId(superTokenPool.address, execAddress, execSelector, false, ETH, resolverHash);
+
+   
+    ///////////// User1 balance
+
+    usersTest = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: {
+          realTimeBalance: BigNumber.from(43439),
+          shares: BigNumber.from(16000),
+          tokenBalance: utils.parseEther('10')
+          .add(BigNumber.from(6180))
+          .sub(+fromUser1Stream.deposit)
+          .sub(BigNumber.from(20000)),
+          deposit: BigNumber.from(43439041704),
+          outAssets: BigNumber.from(0),
+          inFlowId: taskId,
+          nextExecIn: BigNumber.from(t0).add(BigNumber.from(60)).add(BigNumber.from(50)),
+          outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(300),
+          timestamp: BigNumber.from(60),
+        },
+      },
+      {
+        name: 'User2',
+        address: user2.address,
+        expected: {
+          realTimeBalance: BigNumber.from(30240),
+          shares: BigNumber.from(19900),
+          tokenBalance: utils
+            .parseEther('10')
+            .add(BigNumber.from(140))
+            .sub(BigNumber.from(20000)),
+            deposit: BigNumber.from(29492287000),
+          outAssets: BigNumber.from(14),
+          outAssetsId: taskIdUser2 ,
+          nextExecOut: BigNumber.from(t0).add(BigNumber.from(50)).add(BigNumber.from(2000)),
+         outFlow: BigNumber.from(10),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(50),
+        },
+      },
+    ];
+
+    await testPeriod(BigNumber.from(t0), 60, periodExpected7, contractsTest, usersTest);
+
+  
+     console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
+    console.log('');
+
+    // #endregion SEVENTH PERIOD
+
+ 
+    await setNextBlockTimestamp(hre, t0 + 110);
+
+    // #region ================= EIGtTH PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#8--- GELATO executs stop INflow user 1');
+
+
+    execData = superTokenPool.interface.encodeFunctionData('stopstream', [user1.address, false,1]);
+    execAddress = superTokenPool.address;
+    execSelector = await ops.getSelector('stopstream(address,bool,uint8)');
+    resolverAddress = superTokenPool.address;
+    resolverData = await superTokenPool.interface.encodeFunctionData('checkerStopStream', [user1.address, false,1]);
+
+    resolverHash = utils.keccak256(new utils.AbiCoder().encode(['address', 'bytes'], [resolverAddress, resolverData]));
 
     await ops.connect(executor).exec(hre.ethers.utils.parseEther('0.1'), ETH, superTokenPool.address, false, true, resolverHash, execAddress, execData);
 
-    console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
+
+    expedtedPoolBalance = utils
+      .parseEther('50')
+      .sub(+loanStream2.deposit)
+      .add(BigNumber.from(137980));
+
+    let periodExpected8: IPERIOD_RESULT = {
+      poolTotalBalance: expedtedPoolBalance,
+      inFlowRate: BigNumber.from(0),
+      yieldAccruedSec: BigNumber.from(1000),
+      totalShares: BigNumber.from(50400),
+      deposit: BigNumber.from(90243598277),
+      outFlowAssetsRate: BigNumber.from(14),
+      outFlowRate: BigNumber.from(10),
+      depositFromInFlowRate: BigNumber.from(0),
+      depositFromOutFlowRate: BigNumber.from(28792287000)
+
+
+    };
+
+    taskId = await ops.getTaskId(superTokenPool.address, execAddress, execSelector, false, ETH, resolverHash);
+
+   
+    ///////////// User1 balance
+
+    usersTest = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: {
+          realTimeBalance: BigNumber.from(90243),
+          shares: BigNumber.from(31000),
+          tokenBalance: utils.parseEther('10')
+          .add(BigNumber.from(6180))
+          .sub(BigNumber.from(15000))
+          .sub(BigNumber.from(20000)),
+          deposit: BigNumber.from(90243598277),
+          outAssets: BigNumber.from(0),
+          inFlowId: ethers.utils.formatBytes32String(""),
+          nextExecIn: BigNumber.from(0),
+          outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(110),
+        },
+      },
+      {
+        name: 'User2',
+        address: user2.address,
+        expected: {
+          realTimeBalance: BigNumber.from(47736),
+          shares: BigNumber.from(19400),
+          tokenBalance: utils
+            .parseEther('10')
+            .add(BigNumber.from(140))
+            .add(BigNumber.from(700))
+            .sub(BigNumber.from(20000)),
+            deposit: BigNumber.from(28792287000),
+
+
+          outAssets: BigNumber.from(14),
+          outAssetsId: taskIdUser2 ,
+          nextExecOut: BigNumber.from(t0).add(BigNumber.from(50)).add(BigNumber.from(2000)),
+         outFlow: BigNumber.from(10),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(50),
+        },
+      },
+    ];
+
+    await testPeriod(BigNumber.from(t0), 110, periodExpected8, contractsTest, usersTest);
+
+  
+     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
     console.log('');
 
-    // #endregion FOURTH PERIOD
+    // #endregion EIGTH PERIOD
+
+
+    
+
+    await setNextBlockTimestamp(hre, t0 + 2050);
+
+    // #region ================= NINETH PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#9--- GELATO executs out stop flow');
+
+
+    execData = superTokenPool.interface.encodeFunctionData('stopstream', [user2.address, true,0]);
+    execAddress = superTokenPool.address;
+    execSelector = await ops.getSelector('stopstream(address,bool,uint8)');
+    resolverAddress = superTokenPool.address;
+    resolverData = await superTokenPool.interface.encodeFunctionData('checkerStopStream', [user2.address, true,0]);
+
+    resolverHash = utils.keccak256(new utils.AbiCoder().encode(['address', 'bytes'], [resolverAddress, resolverData]));
+
+    await ops.connect(executor).exec(hre.ethers.utils.parseEther('0.1'), ETH, superTokenPool.address, false, true, resolverHash, execAddress, execData);
+
+
+    expedtedPoolBalance = utils
+      .parseEther('50')
+      .add(BigNumber.from(1750394));
+
+
+    let periodExpected9: IPERIOD_RESULT = {
+      poolTotalBalance: expedtedPoolBalance,
+      inFlowRate: BigNumber.from(0),
+      yieldAccruedSec: BigNumber.from(1000),
+      totalShares: BigNumber.from(31000),
+      deposit: BigNumber.from(90243598277),
+      outFlowAssetsRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(0),
+      depositFromInFlowRate: BigNumber.from(0),
+      depositFromOutFlowRate: BigNumber.from(0)
+
+
+    };
+
+    taskId = await ops.getTaskId(superTokenPool.address, execAddress, execSelector, false, ETH, resolverHash);
+
+   
+    ///////////// User1 balance
+
+    usersTest = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: {
+          realTimeBalance: BigNumber.from(1750393),
+          shares: BigNumber.from(31000),
+          tokenBalance: utils.parseEther('10')
+          .add(BigNumber.from(6180))
+          .sub(BigNumber.from(15000))
+          .sub(BigNumber.from(20000)),
+          deposit: BigNumber.from(90243598277),
+          outAssets: BigNumber.from(0),
+          inFlowId: ethers.utils.formatBytes32String(""),
+          nextExecIn: BigNumber.from(0),
+          outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(110),
+        },
+      },
+      {
+        name: 'User2',
+        address: user2.address,
+        expected: {
+          realTimeBalance: BigNumber.from(0),
+          shares: BigNumber.from(0),
+          tokenBalance: utils
+          .parseEther('10')
+          .add(BigNumber.from(14).mul(BigNumber.from(1940)))
+          .add(BigNumber.from(298794))
+          .add(BigNumber.from(1632))
+          .add(BigNumber.from(140))
+          .add(BigNumber.from(700))
+          .sub(BigNumber.from(20000)),
+            deposit: BigNumber.from(0),
+
+
+          outAssets: BigNumber.from(0),
+          outAssetsId: ethers.utils.formatBytes32String("") ,
+          nextExecOut: BigNumber.from(0),
+         outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(2050),
+        },
+      },
+    ];
+
+    await testPeriod(BigNumber.from(t0), 2050, periodExpected9, contractsTest, usersTest);
+
+  
+     console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
+    console.log('');
+
+    // #endregion NINETH PERIOD
+
+
 
 
   });
