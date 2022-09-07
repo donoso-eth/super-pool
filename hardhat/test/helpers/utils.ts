@@ -4,7 +4,7 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { AllocationMock, ERC20, ERC777, IOps, ISuperfluidToken, PoolFactory } from '../../typechain-types';
+import { AllocationMock, ERC20, ERC777, IOps, ISuperfluidToken, PoolFactoryV1 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export interface IPERIOD {
@@ -75,7 +75,7 @@ export const testPeriod = async (
      contracts: {
       poolAddress: string,
        superTokenContract: ISuperfluidToken, 
-       superTokenPool:PoolFactory,
+       superTokenPool:PoolFactoryV1,
        tokenContract: ERC777,
        ops?:IOps
       },
@@ -594,7 +594,7 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
   }
 };
 
-export const getPeriod = async (superTokenPool: PoolFactory): Promise<any> => {
+export const getPeriod = async (superTokenPool: PoolFactoryV1): Promise<any> => {
   let periodTimestamp = +(await superTokenPool.lastPeriodTimestamp()).toString();
   let periodRaw = await superTokenPool.periodByTimestamp(periodTimestamp);
 
@@ -643,7 +643,7 @@ export const testMockStrategy = async (
 
 ////// CONTRACTS
 
-export const printPeriod = async (superTokenPool: PoolFactory, t0: number): Promise<any> => {
+export const printPeriod = async (superTokenPool: PoolFactoryV1, t0: number): Promise<any> => {
   let periodTimestamp = +(await superTokenPool.lastPeriodTimestamp()).toString();
   let period = await superTokenPool.periodByTimestamp(periodTimestamp);
   console.log(period.timestamp.toString());
@@ -664,7 +664,7 @@ export const printPeriod = async (superTokenPool: PoolFactory, t0: number): Prom
   return period;
 };
 
-export const printUser = async (superTokenPool: PoolFactory, userAddress: string): Promise<any> => {
+export const printUser = async (superTokenPool: PoolFactoryV1, userAddress: string): Promise<any> => {
   let user = await superTokenPool.suppliersByAddress(userAddress);
 
   console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');

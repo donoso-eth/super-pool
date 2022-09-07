@@ -4,6 +4,7 @@ import "hardhat/console.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
@@ -52,7 +53,8 @@ contract SuperPoolHost  {
     poolFactoryInitializer = DataTypes.PoolFactoryInitializer ({
       host:host,
       superToken:ISuperToken(superPoolInput.superToken),
-      ops:superPoolInput.ops
+      ops:superPoolInput.ops,
+      token:IERC20(superPoolInput.token)
     });
 
 

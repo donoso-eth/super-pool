@@ -123,6 +123,7 @@ describe('Gelato Use case test', function () {
     let superInputStruct: SuperPoolInputStruct = {
       poolFactory: poolFactory.address,
       superToken: SUPERTOKEN1,
+      token:TOKEN1,
       ops: GELATO_OPS,
     };
     await superPoolHost.createSuperPool(superInputStruct);

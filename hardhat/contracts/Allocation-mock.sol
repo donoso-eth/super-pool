@@ -15,13 +15,15 @@ contract AllocationMock {
   uint256 public amountDeposited;
   uint256 public lastTimestamp;
   uint256 public incrementStored;
-  uint256 public APY;
+  uint256 public lastIncrement;
+  uint256 public deploymentTimestamp;
 
 
   struct MockState {
   uint256  amountDeposited;
   uint256  lastTimestamp;
   uint256  incrementStored;
+  uint256 lastIncrement;
   }
 
 
@@ -29,44 +31,48 @@ contract AllocationMock {
     superPool = _superPool;
     owner = msg.sender;
     token = _token;
+    deploymentTimestamp = block.timestamp;
   }
 
   function getState() external view returns (MockState memory state){
-
-    state= MockState(amountDeposited, lastTimestamp,incrementStored);
+    console.log(lastTimestamp);
+    console.log(amountDeposited);
+    state= MockState(amountDeposited, lastTimestamp,incrementStored, lastIncrement);
   }
 
 
-  function calculateStatus() external onlyFactory returns (uint256) {
+  function calculateStatus() external onlyFactory returns (uint256 incrementCalculated) {
+    console.log(amountDeposited);
     if (amountDeposited == 0) {
       return 0;
     } else {
         uint256 currentIncrement = _getIncrement();
-        uint256 increment = currentIncrement + incrementStored;
+        lastIncrement = currentIncrement + incrementStored;
+        incrementCalculated = lastIncrement;
+        console.log(lastIncrement);
         incrementStored = 0;
-        return increment;
+   
 
     }
   }
 
   function _getIncrement() internal returns (uint256 increment) {
 
-      
+        uint256 newAPY = 500; // 1000 + block.timestamp % 1000;
         uint256 periodSpan = block.timestamp-lastTimestamp;
+        console.log(periodSpan);
 
         if (lastTimestamp == 0) {
             periodSpan = 0;
         }
 
-        increment =  (amountDeposited).mul(APY).mul(periodSpan).div(100).div(365).div(24).div(3600);
+        increment =  (amountDeposited).mul(newAPY).mul(periodSpan).div(100).div(365).div(24).div(3600);
+        console.log(increment);
         amountDeposited+= increment;
         lastTimestamp = block.timestamp;
+        console.log(lastTimestamp);
     
 
-  }
-
-  function changeAPY() public {
-      uint256 newAPY = 500; // 1000 + block.timestamp % 1000;
   }
 
 
@@ -76,6 +82,7 @@ contract AllocationMock {
     
     amountDeposited += amount;
 
+    console.log(78,token);
     SafeERC20.safeTransferFrom(IERC20(token), msg.sender, address(this), amount);
  
  

@@ -108,6 +108,7 @@ describe('TOKEN Use case test', function () {
       poolFactory: poolFactory.address,
       superToken: SUPERTOKEN1,
       ops: GELATO_OPS,
+      token: TOKEN1
     };
     await superPoolHost.createSuperPool(superInputStruct);
 

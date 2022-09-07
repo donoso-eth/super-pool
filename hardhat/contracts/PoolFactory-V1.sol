@@ -53,6 +53,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   ISuperfluid public host; // host
   IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
   ISuperToken superToken;
+  IERC20 token;
 
   using CFAv1Library for CFAv1Library.InitData;
   CFAv1Library.InitData internal _cfaLib;
@@ -80,6 +81,9 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   address public ops;
   address payable public gelato;
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+
+
 
   // #endregion pool state
 
@@ -138,6 +142,8 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       IERC20(superToken).transferFrom(mockYieldSupplier, address(this), amountToBeTransfered);
     }
   }
+
+
 
   // #region  ============= =============  ERC20  ============= ============= //
   /****************************************************************************************************

@@ -30,6 +30,8 @@ import {Events} from "./libraries/Events.sol";
 
 import {IERC4626} from "./interfaces/IERC4626.sol";
 
+import {IAllocationMock} from "./interfaces/IAllocation-mock.sol";
+
 /****************************************************************************************************
  * @title PoolFacory
  * @dev This contract provides the ability to deposit supertokens via single transactions or streaming.
@@ -81,6 +83,11 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   address payable public gelato;
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
+  uint256 MAX_INT;
+
+  address mock;
+  IERC20 token;
+
   // #endregion pool state
 
   //// ERC4626 EVents
@@ -102,6 +109,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     host = poolFactoryInitializer.host;
     superToken = poolFactoryInitializer.superToken;
     cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
+    token = poolFactoryInitializer.token;
 
     _cfaLib = CFAv1Library.InitData(host, cfa);
 
@@ -114,6 +122,8 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     bytes32 TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
 
     _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+
+    MAX_INT = 2**256 - 1;
 
     ///// initializators
   }
@@ -138,6 +148,41 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       IERC20(superToken).transferFrom(mockYieldSupplier, address(this), amountToBeTransfered);
     }
   }
+
+  // #region  ============= ============= Mock Allocatio Strategy  ============= ============= //
+
+  function setUpMock(address _mock) public {
+    mock = _mock;
+    token.approve(mock, MAX_INT);
+  }
+
+  function upgrade(uint256 amount) public {
+    superToken.upgrade(amount);
+  }
+
+  function downgrade(uint256 amount) public {
+    superToken.downgrade(amount);
+  }
+
+  function getBalanceSuperToken() public view returns(int256 balance) {
+    (balance,,,) = superToken.realtimeBalanceOfNow(address(this));
+  }
+
+  function getBalanceToken() public view returns(uint256 balance) {
+    balance = token.balanceOf(address(this));
+  }
+
+  function calculateStatus() public {
+   uint256 increment =  IAllocationMock(mock).calculateStatus();
+   console.log(177,increment);
+   
+  }
+
+  function depositMock(uint256 amount) public {
+    IAllocationMock(mock).deposit(amount);
+  }
+
+  // #endregion  ============= ============= Mock Allocatio Strategy  ============= ============= //
 
   // #region  ============= =============  ERC20  ============= ============= //
   /****************************************************************************************************
@@ -317,7 +362,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     require(shares > redeemAmount, "NOT_ENOUGH_BALANCE");
 
     if (shares == redeemAmount) {
-      _redeemAll(msg.sender,false);
+      _redeemAll(msg.sender, false);
     } else {
       //// Update pool state "period Struct" calculating indexes and timestamp
       _poolUpdateCurrentState();
@@ -355,7 +400,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     console.log(355, _endSeconds);
     if (_endSeconds > 0) {
       cancelTask(supplier.outAssets.cancelTaskId);
-      supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(msg.sender, _endSeconds - MIN_OUTFLOW_ALLOWED, false,0);
+      supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(msg.sender, _endSeconds - MIN_OUTFLOW_ALLOWED, false, 0);
     }
   }
 
@@ -370,7 +415,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   }
 
   function closeAccount() external {
-    _redeemAll(msg.sender,true);
+    _redeemAll(msg.sender, true);
   }
 
   function _inStreamCallback(
@@ -653,18 +698,16 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     if (supplier.outStream.flow > 0) {
       _cfaLib.updateFlow(_supplier, superToken, newOutAssets);
       cancelTask(supplier.outAssets.cancelTaskId);
-      supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true,0);
+      supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true, 0);
     } else {
-      supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true,0);
+      supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true, 0);
       _cfaLib.createFlow(_supplier, superToken, newOutAssets);
     }
 
     ///
   }
 
-  function _redeemAll(address _supplier,bool closeInStream) internal {
-   
-
+  function _redeemAll(address _supplier, bool closeInStream) internal {
     //// Update pool state "period Struct" calculating indexes and timestamp
     _poolUpdateCurrentState();
 
@@ -869,7 +912,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   ) external onlyOps {
     //// check if
 
-     _poolUpdateCurrentState();
+    _poolUpdateCurrentState();
     _supplierUpdateCurrentState(_receiver);
 
     //// every task will be payed with a transfer, therefore receive(), we have to fund the contract
@@ -885,8 +928,8 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       (, int96 inFlowRate, , ) = cfa.getFlow(superToken, address(this), _receiver);
 
       if (inFlowRate > 0) {
-       // _cfaLib.deleteFlow(address(this), _receiver, superToken);
-         _updateSupplierFlow(_receiver, 0, 0, "0x");
+        // _cfaLib.deleteFlow(address(this), _receiver, superToken);
+        _updateSupplierFlow(_receiver, 0, 0, "0x");
         console.log("stopStream");
       }
 
@@ -896,12 +939,9 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
         suppliersByAddress[_receiver].outAssets.cancelTaskId = bytes32(0);
       }
 
-    
-        _redeemAll(_receiver,_all);
-      
+      _redeemAll(_receiver, _all);
 
       console.log("stopOUTStream");
-
     }
     ///// INFLOW FLOW
     else if (_flowType == 1) {
@@ -960,23 +1000,20 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
     ISuperfluid.Context memory decodedContext = host.decodeCtx(_ctx);
-  
-  
 
     //// If In-Stream we will request a pool update
     console.log(decodedContext.userData.length);
     if (receiver == address(this)) {
       console.log(963);
-         console.logBytes(host.decodeCtx(_ctx).userData);
-       if (decodedContext.userData.length >0) {
+      console.logBytes(host.decodeCtx(_ctx).userData);
+      if (decodedContext.userData.length > 0) {
         DataTypes.Supplier storage supplier = suppliersByAddress[sender];
-       uint256 endSeconds = parseLoanData(host.decodeCtx(_ctx).userData);
-       console.logBytes(host.decodeCtx(_ctx).userData);
-       console.log(sender);
-       supplier.inStream.cancelTaskId = creareStopStreamTimedTask(sender, endSeconds - MIN_OUTFLOW_ALLOWED, false,1);
-       }
+        uint256 endSeconds = parseLoanData(host.decodeCtx(_ctx).userData);
+        console.logBytes(host.decodeCtx(_ctx).userData);
+        console.log(sender);
+        supplier.inStream.cancelTaskId = creareStopStreamTimedTask(sender, endSeconds - MIN_OUTFLOW_ALLOWED, false, 1);
+      }
 
-      
       newCtx = _inStreamCallback(sender, inFlowRate, 0, newCtx);
 
       // if (endSeconds > 0) {}
@@ -1036,7 +1073,6 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
    *************************************************************************/
   function parseLoanData(bytes memory data) public pure returns (uint256 endSeconds) {
     endSeconds = abi.decode(data, (uint256));
-
   }
 
   function _isCFAv1(address agreementClass) private view returns (bool) {
