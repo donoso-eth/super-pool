@@ -13,8 +13,8 @@ import {
   IOps__factory,
   ISuperfluidToken,
   ISuperfluidToken__factory,
-  PoolFactory,
-  PoolFactory__factory,
+  PoolFactoryV1,
+  PoolFactoryV1__factory,
   SuperPoolHost,
   SuperPoolHost__factory,
 } from '../typechain-types';
@@ -42,14 +42,15 @@ import { from } from 'rxjs';
 import { ethers } from 'hardhat';
 
 let superPoolHost: SuperPoolHost;
-let poolFactory: PoolFactory;
-let superTokenPool: PoolFactory;
+let poolFactory: PoolFactoryV1;
+let superTokenPool: PoolFactoryV1;
 let supertokenContract: ISuperfluidToken;
 let tokenContract: ERC777;
 let contractsTest: any;
 
 let HOST = '0xEB796bdb90fFA0f28255275e16936D25d3418603';
-let TOKEN1 = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
+let SUPERTOKEN1 = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
+let TOKEN1 = '0x15F0Ca26781C3852f8166eD2ebce5D18265cceb7';
 let GELATO_OPS = '0xB3f5503f93d5Ef84b06993a1975B9D21B962892F';
 let GELATO = '0x25aD59adbe00C2d80c86d01e2E05e1294DA84823';
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
@@ -93,7 +94,7 @@ let taskId;
 
 
 
-describe.only('Gelato Use case test', function () {
+describe('Gelato Use case test', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -112,23 +113,23 @@ describe.only('Gelato Use case test', function () {
 
     superPoolHost = await new SuperPoolHost__factory(deployer).deploy(HOST);
 
-    poolFactory = await new PoolFactory__factory(deployer).deploy();
+    poolFactory = await new PoolFactoryV1__factory(deployer).deploy();
 
     eventsLib = await new Events__factory(deployer).deploy();
 
-    supertokenContract = await ISuperfluidToken__factory.connect(TOKEN1, deployer);
-    tokenContract = await ERC777__factory.connect(TOKEN1, deployer);
+    supertokenContract = await ISuperfluidToken__factory.connect(SUPERTOKEN1, deployer);
+    tokenContract = await ERC777__factory.connect(SUPERTOKEN1, deployer);
 
     let superInputStruct: SuperPoolInputStruct = {
       poolFactory: poolFactory.address,
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       ops: GELATO_OPS,
     };
     await superPoolHost.createSuperPool(superInputStruct);
 
-    superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(TOKEN1);
+    superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
 
-    superTokenPool = PoolFactory__factory.connect(superPoolTokenAddress, deployer);
+    superTokenPool = PoolFactoryV1__factory.connect(superPoolTokenAddress, deployer);
     let initialPoolEth = hre.ethers.utils.parseEther('10');
 
     let balance = await provider.getBalance(superPoolTokenAddress);
@@ -160,11 +161,11 @@ describe.only('Gelato Use case test', function () {
 
     let authOperation = await sf.cfaV1.authorizeFlowOperatorWithFullControl({
       flowOperator: superPoolTokenAddress,
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
     await authOperation.exec(user2);
 
-    erc20 = await ERC20__factory.connect(TOKEN1, user2);
+    erc20 = await ERC20__factory.connect(SUPERTOKEN1, user2);
     // await waitForTx(erc20.increaseAllowance(superPoolTokenAddress, hre.ethers.utils.parseEther("500")))
 
     /////// Cleaning and preparing init state /////////
@@ -235,7 +236,7 @@ describe.only('Gelato Use case test', function () {
      *****************************************************************/
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 20 units at t0 ');
 
-    erc777 = await ERC777__factory.connect(TOKEN1, user1);
+    erc777 = await ERC777__factory.connect(SUPERTOKEN1, user1);
 
     await waitForTx(erc777.send(superPoolTokenAddress, 20000, '0x'));
     t0 = +(await superTokenPool.lastPeriodTimestamp());
@@ -305,13 +306,13 @@ describe.only('Gelato Use case test', function () {
     let createFlowOperation = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '500',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
     await createFlowOperation.exec(user2);
 
 
     fromUser2Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user2.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user2,
@@ -440,11 +441,11 @@ describe.only('Gelato Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- user 1 redeemflow(200)');
 
-    let superTokenPoolUser1 = PoolFactory__factory.connect(superPoolTokenAddress, user1);
+    let superTokenPoolUser1 = PoolFactoryV1__factory.connect(superPoolTokenAddress, user1);
     await waitForTx(superTokenPoolUser1.redeemFlow(200,0));
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user1.address,
       providerOrSigner: user2,
@@ -540,7 +541,7 @@ describe.only('Gelato Use case test', function () {
      await waitForTx(superTokenPoolUser1.redeemFlow(100,0));// _poolUpdateCurrentState()) ;/
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user1.address,
       providerOrSigner: user2,
@@ -619,11 +620,11 @@ describe.only('Gelato Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#6--- user 2 redeemflow(10)');
 
-    let superTokenPoolUser2 = PoolFactory__factory.connect(superPoolTokenAddress, user2);
+    let superTokenPoolUser2 = PoolFactoryV1__factory.connect(superPoolTokenAddress, user2);
      await waitForTx(superTokenPoolUser2.redeemFlow(10,0));// _poolUpdateCurrentState()) ;/
 
     let loanStream2 = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user2.address,
       providerOrSigner: user2,
@@ -725,14 +726,14 @@ describe.only('Gelato Use case test', function () {
     createFlowOperation = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '300',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       userData
     });
     await createFlowOperation.exec(user1);
 
 
     fromUser1Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user1.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user1,

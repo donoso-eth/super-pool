@@ -11,8 +11,8 @@ import {
   Events__factory,
   ISuperfluidToken,
   ISuperfluidToken__factory,
-  PoolFactory,
-  PoolFactory__factory,
+  PoolFactoryV1,
+  PoolFactoryV1__factory,
   SuperPoolHost,
   SuperPoolHost__factory,
 } from '../typechain-types';
@@ -39,14 +39,16 @@ import { SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
 import { from } from 'rxjs';
 
 let superPoolHost: SuperPoolHost;
-let poolFactory: PoolFactory;
-let superTokenPool: PoolFactory;
+let poolFactory: PoolFactoryV1;
+let superTokenPool: PoolFactoryV1;
 let supertokenContract: ISuperfluidToken;
 let tokenContract: ERC777;
 let contractsTest: any;
 
 let HOST = '0xEB796bdb90fFA0f28255275e16936D25d3418603';
-let TOKEN1 = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
+let SUPERTOKEN1 = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
+let TOKEN1 = '0x15F0Ca26781C3852f8166eD2ebce5D18265cceb7'
+
 let GELATO_OPS = '0xB3f5503f93d5Ef84b06993a1975B9D21B962892F';
 
 let deployer: SignerWithAddress;
@@ -95,23 +97,23 @@ describe('TOKEN Use case test', function () {
 
     superPoolHost = await new SuperPoolHost__factory(deployer).deploy(HOST);
 
-    poolFactory = await new PoolFactory__factory(deployer).deploy();
+    poolFactory = await new PoolFactoryV1__factory(deployer).deploy();
 
     eventsLib = await new Events__factory(deployer).deploy();
 
-    supertokenContract = await ISuperfluidToken__factory.connect(TOKEN1, deployer);
-    tokenContract = await ERC777__factory.connect(TOKEN1, deployer);
+    supertokenContract = await ISuperfluidToken__factory.connect(SUPERTOKEN1, deployer);
+    tokenContract = await ERC777__factory.connect(SUPERTOKEN1, deployer);
 
     let superInputStruct: SuperPoolInputStruct = {
       poolFactory: poolFactory.address,
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       ops: GELATO_OPS,
     };
     await superPoolHost.createSuperPool(superInputStruct);
 
-    superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(TOKEN1);
+    superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
 
-    superTokenPool = PoolFactory__factory.connect(superPoolTokenAddress, deployer);
+    superTokenPool = PoolFactoryV1__factory.connect(superPoolTokenAddress, deployer);
 
 
     let initialPoolEth = hre.ethers.utils.parseEther('10');
@@ -140,11 +142,11 @@ describe('TOKEN Use case test', function () {
 
     let authOperation = await sf.cfaV1.authorizeFlowOperatorWithFullControl({
       flowOperator: superPoolTokenAddress,
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
     await authOperation.exec(user2);
 
-    erc20 = await ERC20__factory.connect(TOKEN1, user2);
+    erc20 = await ERC20__factory.connect(SUPERTOKEN1, user2);
     // await waitForTx(erc20.increaseAllowance(superPoolTokenAddress, hre.ethers.utils.parseEther("500")))
 
     /////// Cleaning and preparing init state /////////
@@ -208,7 +210,7 @@ describe('TOKEN Use case test', function () {
      *****************************************************************/
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 20 units at t0 ');
 
-    erc777 = await ERC777__factory.connect(TOKEN1, user1);
+    erc777 = await ERC777__factory.connect(SUPERTOKEN1, user1);
 
     await waitForTx(erc777.send(superPoolTokenAddress, 20, '0x'));
     t0 = +(await superTokenPool.lastPeriodTimestamp());
@@ -278,7 +280,7 @@ describe('TOKEN Use case test', function () {
     const createFlowOperation = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '5',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
     await createFlowOperation.exec(user2);
 
@@ -295,7 +297,7 @@ describe('TOKEN Use case test', function () {
     };
 
     fromUser2Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user2.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user2,
@@ -544,7 +546,7 @@ describe('TOKEN Use case test', function () {
     const operation = sf.cfaV1.createFlow({
       receiver: superTokenPool.address,
       flowRate: '6',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operation.exec(user1);
@@ -567,7 +569,7 @@ describe('TOKEN Use case test', function () {
     ///////////// User1 balance
 
     fromUser1Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user1.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user2,
@@ -836,11 +838,11 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#8--- User2 RedeemFlow 4 untis/Sec t0 + 70');
 
-    let superTokenPoolUser2 = PoolFactory__factory.connect(superPoolTokenAddress, user2);
+    let superTokenPoolUser2 = PoolFactoryV1__factory.connect(superPoolTokenAddress, user2);
     await waitForTx(superTokenPoolUser2.redeemFlow(4,0));
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user2.address,
       providerOrSigner: user2,
@@ -866,7 +868,7 @@ describe('TOKEN Use case test', function () {
     };
 
     fromUser2Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user2.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user2,
@@ -927,7 +929,7 @@ describe('TOKEN Use case test', function () {
     const operationUpdate = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '4',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operationUpdate.exec(user2);
@@ -950,7 +952,7 @@ describe('TOKEN Use case test', function () {
     };
 
     fromUser2Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user2.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user2,
@@ -1109,7 +1111,7 @@ describe('TOKEN Use case test', function () {
     const operationDelete = sf.cfaV1.deleteFlow({
       receiver: superPoolTokenAddress,
       sender: user2.address,
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operationDelete.exec(user2);
@@ -1178,11 +1180,11 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#12--- User1 redeem flow 5 units at t0 + 110');
 
-    let superTokenPoolUser1 = PoolFactory__factory.connect(superPoolTokenAddress, user1);
+    let superTokenPoolUser1 = PoolFactoryV1__factory.connect(superPoolTokenAddress, user1);
     await waitForTx(superTokenPoolUser1.redeemFlow(5,0));
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user1.address,
       providerOrSigner: user2,
@@ -1495,13 +1497,13 @@ describe('TOKEN Use case test', function () {
     const operationUser3create = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '5',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operationUser3create.exec(user3);
 
     fromUser3Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user3.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user3,
@@ -1589,13 +1591,13 @@ describe('TOKEN Use case test', function () {
     const operationUser3update = sf.cfaV1.updateFlow({
       receiver: superPoolTokenAddress,
       flowRate: '3',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operationUser3update.exec(user3);
 
     fromUser3Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user3.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user3,
@@ -1683,7 +1685,7 @@ describe('TOKEN Use case test', function () {
     await waitForTx(superTokenPoolUser3.redeemFlow(2,0));
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user3.address,
       providerOrSigner: user3,
@@ -1771,7 +1773,7 @@ describe('TOKEN Use case test', function () {
     await waitForTx(superTokenPoolUser3.redeemFlow(4,0));
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user3.address,
       providerOrSigner: user3,
@@ -1942,7 +1944,7 @@ describe('TOKEN Use case test', function () {
     await waitForTx(superTokenPoolUser3.redeemFlow(1,0));
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user3.address,
       providerOrSigner: user3,
@@ -2034,13 +2036,13 @@ describe('TOKEN Use case test', function () {
     const operationUser3Create21 = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '5',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operationUser3Create21.exec(user3);
 
     fromUser3Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user3.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user3,
@@ -2133,13 +2135,13 @@ describe('TOKEN Use case test', function () {
     const operationUser2Create23 = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '7',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operationUser2Create23.exec(user2);
 
     fromUser2Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user2.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user2,
@@ -2322,13 +2324,13 @@ describe('TOKEN Use case test', function () {
     const operationUser1Create25 = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '3',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operationUser1Create25.exec(user1);
 
     fromUser1Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user1.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user1,
@@ -2516,13 +2518,13 @@ describe('TOKEN Use case test', function () {
     const operationUser4Create27 = sf.cfaV1.createFlow({
       receiver: superPoolTokenAddress,
       flowRate: '10',
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
     });
 
     await operationUser4Create27.exec(user4);
 
     fromUser4Stream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: user4.address,
       receiver: superPoolTokenAddress,
       providerOrSigner: user4,
@@ -2847,7 +2849,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '30--- user4 deposti 300');
 
-    let erc777User4 = await ERC777__factory.connect(TOKEN1, user4);
+    let erc777User4 = await ERC777__factory.connect(SUPERTOKEN1, user4);
 
     await waitForTx(erc777User4.send(superPoolTokenAddress, 300, '0x'));
 
@@ -2961,7 +2963,7 @@ describe('TOKEN Use case test', function () {
     await waitForTx(superTokenPoolUser1.redeemFlow(15,0));
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user1.address,
       providerOrSigner: user1,
@@ -3077,7 +3079,7 @@ describe('TOKEN Use case test', function () {
     await waitForTx(superTokenPoolUser2.redeemFlow(9,0));
 
     let loanStreamuser2 = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user2.address,
       providerOrSigner: user2,
@@ -3185,12 +3187,12 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '33--- user1 deposit 450');
 
-    let erc777User1 = await ERC777__factory.connect(TOKEN1, user1);
+    let erc777User1 = await ERC777__factory.connect(SUPERTOKEN1, user1);
 
     await waitForTx(erc777User1.send(superPoolTokenAddress, 450, '0x'));
 
     loanStream = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user1.address,
       providerOrSigner: user1,
@@ -3639,7 +3641,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#37--- user4 deposit 2000');
 
-    erc777 = await ERC777__factory.connect(TOKEN1, user4);
+    erc777 = await ERC777__factory.connect(SUPERTOKEN1, user4);
 
     await waitForTx(erc777.send(superPoolTokenAddress, 2000, '0x'));
 
@@ -3753,7 +3755,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#38--- user2 deposit 750');
 
-    erc777 = await ERC777__factory.connect(TOKEN1, user2);
+    erc777 = await ERC777__factory.connect(SUPERTOKEN1, user2);
 
     await waitForTx(erc777.send(superPoolTokenAddress, 750, '0x'));
 
@@ -4348,7 +4350,7 @@ describe('TOKEN Use case test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#43--- user 1 depost 6400');
 
-    erc777 = await ERC777__factory.connect(TOKEN1, user1);
+    erc777 = await ERC777__factory.connect(SUPERTOKEN1, user1);
 
     await waitForTx(erc777.send(superPoolTokenAddress, 6400, '0x'));
 
@@ -4846,7 +4848,7 @@ describe('TOKEN Use case test', function () {
     await waitForTx(superTokenPoolUser3.redeemFlow(33,0));
 
     let loanStreamuser3 = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user3.address,
       providerOrSigner: user3,
@@ -4978,7 +4980,7 @@ describe('TOKEN Use case test', function () {
     await waitForTx(superTokenPoolUser4.redeemFlow(17,0));
 
     let loanStreamuser4 = await sf.cfaV1.getFlow({
-      superToken: TOKEN1,
+      superToken: SUPERTOKEN1,
       sender: superPoolTokenAddress,
       receiver: user4.address,
       providerOrSigner: user4,

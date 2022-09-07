@@ -4,7 +4,8 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { ERC777, IOps, ISuperfluidToken, PoolFactory } from '../../typechain-types';
+import { AllocationMock, ERC20, ERC777, IOps, ISuperfluidToken, PoolFactory } from '../../typechain-types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export interface IPERIOD {
   timestamp: BigNumber;
@@ -614,6 +615,31 @@ export const getPeriod = async (superTokenPool: PoolFactory): Promise<any> => {
 
   return period;
 };
+
+
+export interface IMOCK_RESULT {
+  lastTimestamp: BigNumber;
+  incrementStored: BigNumber;
+  deposit?: BigNumber;
+}
+
+
+export const testMockStrategy = async (
+  t0:BigNumber,
+  tx:number,
+  expected:IMOCK_RESULT,    
+   contracts: {
+    mockAllocation: AllocationMock,
+    tokenContract: ERC20, 
+    },
+    deployer:SignerWithAddress
+    
+    ) => {
+
+ 
+
+}
+
 
 ////// CONTRACTS
 

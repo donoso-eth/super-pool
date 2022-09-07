@@ -44,7 +44,7 @@ import {IERC4626} from "./interfaces/IERC4626.sol";
  *      4) New created period Updated
  *
  ****************************************************************************************************/
-contract PoolFactory is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
+contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   // #region pool state
 
   using SafeMath for uint256;

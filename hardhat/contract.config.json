@@ -1,14 +1,29 @@
 {
-  "poolFactory": {
-    "artifactsPath": "PoolFactory.sol/PoolFactory.json",
-    "name": "PoolFactory",
-    "ctor": [],
-    "jsonName": "pool_factory"
-  },
-  "superPoolHost": {
-    "artifactsPath": "SuperPoolHost.sol/SuperPoolHost.json",
-    "name": "SuperPoolHost",
-    "ctor": [],
-    "jsonName": "super_pool_host"
-  }
+    "superPoolHost": {
+        "artifactsPath": "SuperPoolHost.sol/SuperPoolHost.json",
+        "name": "SuperPoolHost",
+        "ctor": [],
+        "jsonName": "super_pool_host"
+    },
+    "allocationMock": {
+        "name": "AllocationMock",
+        "artifactsPath": "Allocation-mock.sol/AllocationMock.json",
+        "jsonName": "allocation_mock",
+        "ctor": [
+            "_superPool:address",
+            "_token:address"
+        ]
+    },
+    "poolFactoryV2": {
+        "name": "PoolFactoryV2",
+        "artifactsPath": "PoolFactory-V2.sol/PoolFactoryV2.json",
+        "jsonName": "pool_factory_v2",
+        "ctor": []
+    },
+    "poolFactoryV1": {
+        "name": "PoolFactoryV1",
+        "artifactsPath": "PoolFactory-V1.sol/PoolFactoryV1.json",
+        "jsonName": "pool_factory_v1",
+        "ctor": []
+    }
 }

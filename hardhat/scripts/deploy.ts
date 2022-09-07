@@ -11,17 +11,20 @@ import config from "../hardhat.config";
 import { join } from "path";
 import { createHardhatAndFundPrivKeysFiles } from "../helpers/localAccounts";
 import * as hre from 'hardhat';
-import { ERC20__factory, Events__factory, PoolFactory__factory, SuperPoolHost__factory } from "../typechain-types";
+import { AllocationMock__factory, ERC20__factory, Events__factory,  PoolFactoryV1__factory,  SuperPoolHost__factory } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { utils } from "ethers";
 
 import { initEnv } from "../helpers/utils";
+import { SuperPoolInputStruct } from "../typechain-types/SuperPoolHost";
 
 
 let HOST = '0xEB796bdb90fFA0f28255275e16936D25d3418603';
 let CFA = '0x49e565Ed1bdc17F3d220f72DF0857C26FA83F873';
-let TOKEN1 = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
+let SUPERTOKEN1 = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
+let TOKEN1 = '0x15F0Ca26781C3852f8166eD2ebce5D18265cceb7';
+let GELATO_OPS = '0xB3f5503f93d5Ef84b06993a1975B9D21B962892F';
 interface ICONTRACT_DEPLOY {
   artifactsPath:string,
   name:string,
@@ -73,13 +76,13 @@ if (network == "localhost") {
 
   //// DEPLOY POOLFACTORY
 
-  const poolFactoryImpl = await new PoolFactory__factory(deployer).deploy()
+  const poolFactoryImpl = await new PoolFactoryV1__factory(deployer).deploy()
 
-  let toDeployContract = contract_config['poolFactory'];
+  let toDeployContract = contract_config['poolFactoryV1'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
-      abi:  PoolFactory__factory.abi.concat(eventAbi),
+      abi:  PoolFactoryV1__factory.abi.concat(eventAbi),
       name: toDeployContract.name,
       address: poolFactoryImpl.address,
       network: network,
@@ -88,7 +91,7 @@ if (network == "localhost") {
 
   writeFileSync(
     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-    JSON.stringify(PoolFactory__factory.abi.concat(eventAbi))
+    JSON.stringify(PoolFactoryV1__factory.abi.concat(eventAbi))
   );
 
   console.log(toDeployContract.name + ' Contract Deployed to:', poolFactoryImpl.address);
@@ -115,7 +118,7 @@ if (network == "localhost") {
 
   writeFileSync(
     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-    JSON.stringify(PoolFactory__factory.abi.concat(eventAbi))
+    JSON.stringify(PoolFactoryV1__factory.abi.concat(eventAbi))
   );
 
   console.log(toDeployContract.name + ' Contract Deployed to:', superPoolHost.address);
@@ -125,35 +128,50 @@ if (network == "localhost") {
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
 
+  //// create superPool fdaix on mumbai
+  let superInputStruct: SuperPoolInputStruct = {
+    poolFactory: poolFactoryImpl.address,
+    superToken: SUPERTOKEN1,
+    ops: GELATO_OPS,
+  };
+  await superPoolHost.createSuperPool(superInputStruct);
+
+  let superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
 
 
 
 
 
-////// DEPLOY SUPERTOKEN
-  // const superToken = await new SuperPool__factory(deployer).deploy(HOST,TOKEN1)
-
-  //  toDeployContract = contract_config['superPool'];
-  // writeFileSync(
-  //   `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
-  //   JSON.stringify({
-  //     abi: SuperPool__factory.abi.concat(eventAbi),
-  //     name: toDeployContract.name,
-  //     address: superFactory.address,
-  //     network: network,
-  //   })
-  // );
-
-  // writeFileSync(
-  //   `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-  //   JSON.stringify(SuperPool__factory.abi.concat(eventAbi))
-  // );
-
-  // console.log(toDeployContract.name + ' Contract Deployed to:', superFactory.address);
+ //// DEPLOY Mock Allocation
 
 
-  ///// copy Interfaces and create Metadata address/abi to assets folder
-  copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+ const allocationMock = await new AllocationMock__factory(deployer).deploy(superPoolTokenAddress,TOKEN1)
+
+ toDeployContract = contract_config['allocationMock'];
+writeFileSync(
+  `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
+  JSON.stringify({
+    abi:  AllocationMock__factory.abi.concat(eventAbi),
+    name: toDeployContract.name,
+    address: allocationMock.address,
+    network: network,
+  })
+);
+
+writeFileSync(
+  `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
+  JSON.stringify(PoolFactoryV1__factory.abi.concat(eventAbi))
+);
+
+console.log(toDeployContract.name + ' Contract Deployed to:', superPoolHost.address);
+
+
+///// copy Interfaces and create Metadata address/abi to assets folder
+copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+
+
+
+
 
 
 
