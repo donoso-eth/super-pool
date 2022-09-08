@@ -74,7 +74,6 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   uint256 public lastPeriodTimestamp;
 
   uint256 public constant PRECISSION = 1_000_000;
-  uint256 public MIN_OUTFLOW_ALLOWED = 10;
 
   Counters.Counter public periodId;
   Counters.Counter public supplierId;
@@ -85,7 +84,15 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
   uint256 MAX_INT;
 
-  address mock;
+  uint256 public poolBuffer; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
+
+  uint256 public MIN_OUTFLOW_ALLOWED = 3600; // 1 hour minimum flow == Buffer
+  uint8 public PARTIAL_DEPOSIT; // proportinal decrease deposit
+
+  address MOCK_ALLOCATION;
+  uint256 public DEPOSIT_TRIGGER_AMOUNT = 0;
+  uint256 public DEPOSIT_TRIGGER_TIME = 3600;
+
   IERC20 token;
 
   // #endregion pool state
@@ -152,8 +159,8 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   // #region  ============= ============= Mock Allocatio Strategy  ============= ============= //
 
   function setUpMock(address _mock) public {
-    mock = _mock;
-    token.approve(mock, MAX_INT);
+    MOCK_ALLOCATION = _mock;
+    token.approve(MOCK_ALLOCATION, MAX_INT);
   }
 
   function upgrade(uint256 amount) public {
@@ -164,22 +171,66 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     superToken.downgrade(amount);
   }
 
-  function getBalanceSuperToken() public view returns(int256 balance) {
-    (balance,,,) = superToken.realtimeBalanceOfNow(address(this));
+  function getBalanceSuperToken() public view returns (int256 balance) {
+    (balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
   }
 
-  function getBalanceToken() public view returns(uint256 balance) {
+  function getBalanceToken() public view returns (uint256 balance) {
     balance = token.balanceOf(address(this));
   }
 
   function calculateStatus() public {
-   uint256 increment =  IAllocationMock(mock).calculateStatus();
-   console.log(177,increment);
-   
+    uint256 increment = IAllocationMock(MOCK_ALLOCATION).calculateStatus();
   }
 
-  function depositMock(uint256 amount) public {
-    IAllocationMock(mock).deposit(amount);
+  function _withdrawMock(uint256 requiredAmount) internal {
+    int256 availableBalance = int256(getBalanceSuperToken()) - int256(poolBuffer);
+    uint256 withdrawalAmount;
+    if (availableBalance <= 0) {
+      withdrawalAmount = uint256(-availableBalance) + requiredAmount;
+      IAllocationMock(MOCK_ALLOCATION).withdraw(withdrawalAmount);
+      superToken.upgrade(withdrawalAmount);
+    } else if (uint256(availableBalance) < requiredAmount) {
+      withdrawalAmount = requiredAmount - uint256(availableBalance);
+      IAllocationMock(MOCK_ALLOCATION).withdraw(withdrawalAmount);
+      superToken.upgrade(withdrawalAmount);
+    }
+  }
+
+  function createDepositTask() internal returns (bytes32 taskId) {
+    taskId = IOps(ops).createTaskNoPrepayment(address(this), this.depositMock.selector, address(this), abi.encodeWithSelector(this.checkerDepositMock.selector), ETH);
+  }
+
+  // called by Gelato Execs
+  function checkerDepositMock(
+    address _receiver,
+    bool _all,
+    uint8 _flowType
+  ) external returns (bool canExec, bytes memory execPayload) {
+    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
+
+    uint256 amountToDeposit = uint256(balance) - poolBuffer;
+    canExec = uint256(balance) - poolBuffer > 5 ether;
+
+    execPayload = abi.encodeWithSelector(this.depositMock.selector);
+  }
+
+  function depositMock() external onlyOps {
+    uint256 fee;
+    address feeToken;
+
+    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
+
+    uint256 amountToDeposit = uint256(balance) - poolBuffer;
+
+    require(amountToDeposit > 5 ether, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
+
+    (fee, feeToken) = IOps(ops).getFeeDetails();
+
+    _transfer(fee, feeToken);
+
+    superToken.downgrade(amountToDeposit);
+    IAllocationMock(MOCK_ALLOCATION).deposit(amountToDeposit);
   }
 
   // #endregion  ============= ============= Mock Allocatio Strategy  ============= ============= //
@@ -373,6 +424,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       uint256 factor = total.div(myShares);
       outAssets = factor.mul(redeemAmount).div(PRECISSION);
 
+      _withdrawMock(outAssets);
       ISuperToken(superToken).send(supplier, outAssets, "0x");
 
       ///// suppler config updated && period
@@ -696,13 +748,15 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     }
 
     if (supplier.outStream.flow > 0) {
-      _cfaLib.updateFlow(_supplier, superToken, newOutAssets);
       cancelTask(supplier.outAssets.cancelTaskId);
-      supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true, 0);
+
+      _cfaLib.updateFlow(_supplier, superToken, newOutAssets);
     } else {
-      supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true, 0);
       _cfaLib.createFlow(_supplier, superToken, newOutAssets);
     }
+    supplier.outAssets.cancelTaskId = creareStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true, 0);
+
+    supplier.outAssets.stepAmount = supplier.deposit.amount.div(PARTIAL_DEPOSIT);
 
     ///
   }
@@ -718,8 +772,10 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares - supplier.shares;
     periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
 
-    ISuperToken(superToken).send(_supplier, supplier.deposit.amount.div(PRECISSION), "0x");
+    uint256 withdrawalAmount = supplier.deposit.amount.div(PRECISSION);
 
+    _withdrawMock(withdrawalAmount);
+    ISuperToken(superToken).send(_supplier, withdrawalAmount, "0x");
     supplier.shares = 0;
     supplier.deposit.amount = 0;
 
@@ -727,7 +783,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate - supplier.outStream.flow;
       periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
       _cfaLib.deleteFlow(address(this), _supplier, superToken);
-      supplier.outAssets = DataTypes.Stream(0, bytes32(0));
+      supplier.outAssets = DataTypes.OutAssets(0, bytes32(0), 0, bytes32(0));
       supplier.outStream = DataTypes.Stream(0, bytes32(0));
     } else if (supplier.inStream.flow > 0 && closeInStream == true) {
       periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate - supplier.inStream.flow;
@@ -869,11 +925,6 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   // ============= =============  Gelato functions ============= ============= //
   // #region Gelato functions
 
-  modifier onlyOps() {
-    require(msg.sender == ops, "OpsReady: onlyOps");
-    _;
-  }
-
   function creareStopStreamTimedTask(
     address _supplier,
     uint256 _stopDateInMs,
@@ -960,6 +1011,70 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
         suppliersByAddress[_receiver].inStream.cancelTaskId = bytes32(0);
       }
     }
+  }
+
+  //// Withdrawal step task
+  function creareWithdraStepTask(
+    address _supplier,
+    uint256 _stepTime,
+    bool _all,
+    uint8 _flowType
+  ) internal returns (bytes32 taskId) {
+    taskId = IOps(ops).createTimedTask(
+      uint128(block.timestamp + _stepTime),
+      uint128(_stepTime),
+      address(this),
+      this.withdrawStep.selector,
+      address(this),
+      abi.encodeWithSelector(this.checkerwithdrawStep.selector, _supplier, _all, _flowType),
+      ETH,
+      false
+    );
+  }
+
+  // called by Gelato Execs
+  function checkerwithdrawStep(
+    address _receiver,
+    bool _all,
+    uint8 _flowType
+  ) external returns (bool canExec, bytes memory execPayload) {
+    canExec = true;
+
+    execPayload = abi.encodeWithSelector(this.withdrawStep.selector, address(_receiver), _all, _flowType);
+  }
+
+  /// called by Gelato
+  function withdrawStep(
+    address _receiver,
+    bool _all,
+    uint8 _flowType
+  ) external onlyOps {
+    //// check if
+
+    _poolUpdateCurrentState();
+    _supplierUpdateCurrentState(_receiver);
+
+    //// every task will be payed with a transfer, therefore receive(), we have to fund the contract
+    uint256 fee;
+    address feeToken;
+
+    (fee, feeToken) = IOps(ops).getFeeDetails();
+
+    _transfer(fee, feeToken);
+
+    DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
+    uint256 withdrawalAmount = supplier.outAssets.stepAmount;
+
+    if (supplier.deposit.amount < supplier.outAssets.stepAmount) {
+      withdrawalAmount = supplier.deposit.amount;
+      cancelTask(supplier.outAssets.cancelWithdraId);
+    }
+    _withdrawMock(withdrawalAmount);
+  }
+
+  modifier onlyOps() {
+    require(msg.sender == ops, "OpsReady: onlyOps");
+    _;
   }
 
   function cancelTask(bytes32 _taskId) public {

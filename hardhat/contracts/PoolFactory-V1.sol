@@ -690,7 +690,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate - supplier.outStream.flow;
       periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
       _cfaLib.deleteFlow(address(this), _supplier, superToken);
-      supplier.outAssets = DataTypes.Stream(0, bytes32(0));
+      supplier.outAssets = DataTypes.OutAssets(0, bytes32(0),0, bytes32(0));
       supplier.outStream = DataTypes.Stream(0, bytes32(0));
     } else if (supplier.inStream.flow > 0 && closeInStream == true) {
       periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate - supplier.inStream.flow;

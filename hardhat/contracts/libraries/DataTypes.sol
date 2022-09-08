@@ -31,6 +31,15 @@ library DataTypes {
 
   }
 
+
+  struct OutAssets{
+    int96 flow;
+    bytes32 cancelTaskId;
+    uint256 stepAmount;
+    bytes32 cancelWithdraId;
+
+  }
+
   struct Deposit {
     uint256 amount;
     uint256 totalSupplied;
@@ -43,7 +52,7 @@ library DataTypes {
     uint256 cumulatedYield;
     Stream inStream;
     Stream outStream;
-    Stream outAssets;
+    OutAssets outAssets;
     Deposit deposit;
     uint256 shares;
     uint256 timestamp;
