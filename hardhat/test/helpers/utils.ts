@@ -320,7 +320,7 @@ export const testPeriod = async (
 
       
       //console.log(+timed['nextExec'].toString())
-      console.log((+await getTimestamp()).toString())
+    
       expect(user.expected.nextExecIn).to.equal(nextExec);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Gelato Task Next Execution Inflow: ${nextExec.sub(t0).sub(BigNumber.from(tx)).toString()}`);
     } catch (error) {

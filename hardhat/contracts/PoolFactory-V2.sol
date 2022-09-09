@@ -65,7 +65,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
   mapping(uint256 => address) supplierAdressById;
 
-  mapping(uint256 => DataTypes.Period) public periodByTimestamp;
+  mapping(uint256 => DataTypes.PeriodV2) public periodByTimestamp;
 
   mapping(uint256 => uint256) public periodTimestampById;
 
@@ -92,7 +92,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   address MOCK_ALLOCATION;
   uint256 public DEPOSIT_TRIGGER_AMOUNT = 0;
   uint256 public DEPOSIT_TRIGGER_TIME = 3600;
-
+  bytes32 public DepositTaksId;
   IERC20 token;
 
   // #endregion pool state
@@ -108,7 +108,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     __ERC20_init("sTK", "STOKE");
 
     lastPeriodTimestamp = block.timestamp;
-    periodByTimestamp[block.timestamp] = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    periodByTimestamp[block.timestamp] = DataTypes.PeriodV2(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     periodTimestampById[0] = block.timestamp;
 
@@ -135,32 +135,22 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     ///// initializators
   }
 
-  function getPeriod(uint256 _periodId) public view returns (DataTypes.Period memory) {
+  function getPeriod(uint256 _periodId) public view returns (DataTypes.PeriodV2 memory) {
     return periodByTimestamp[_periodId];
   }
 
-  function mockPoolUpdate() public {
+  function poolUpdate() public {
     _poolUpdateCurrentState();
   }
 
-  function mockYield(uint256 _yield) public {
-    mockYieldSupplier = msg.sender;
-    _updateYield(_yield);
-  }
 
-  function getMockYield() internal {
-    uint256 periodSpan = block.timestamp - lastPeriodTimestamp;
-    uint256 amountToBeTransfered = periodSpan * periodByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
-    if (mockYieldSupplier != address(0)) {
-      IERC20(superToken).transferFrom(mockYieldSupplier, address(this), amountToBeTransfered);
-    }
-  }
 
   // #region  ============= ============= Mock Allocatio Strategy  ============= ============= //
 
   function setUpMock(address _mock) public {
     MOCK_ALLOCATION = _mock;
     token.approve(MOCK_ALLOCATION, MAX_INT);
+    DepositTaksId =  createDepositTask();
   }
 
   function upgrade(uint256 amount) public {
@@ -198,19 +188,20 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   }
 
   function createDepositTask() internal returns (bytes32 taskId) {
-    taskId = IOps(ops).createTaskNoPrepayment(address(this), this.depositMock.selector, address(this), abi.encodeWithSelector(this.checkerDepositMock.selector), ETH);
+    taskId = IOps(ops).createTaskNoPrepayment(
+      address(this), 
+      this.depositMock.selector, 
+      address(this), 
+      abi.encodeWithSelector(this.checkerDepositMock.selector), ETH);
   }
 
   // called by Gelato Execs
   function checkerDepositMock(
-    address _receiver,
-    bool _all,
-    uint8 _flowType
-  ) external returns (bool canExec, bytes memory execPayload) {
+  ) external view returns (bool canExec, bytes memory execPayload) {
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
 
-    uint256 amountToDeposit = uint256(balance) - poolBuffer;
-    canExec = uint256(balance) - poolBuffer > 5 ether;
+  
+    canExec = uint256(balance) - poolBuffer >= 0.5 ether;
 
     execPayload = abi.encodeWithSelector(this.depositMock.selector);
   }
@@ -221,9 +212,10 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
 
+    console.log(215,uint(balance));
     uint256 amountToDeposit = uint256(balance) - poolBuffer;
-
-    require(amountToDeposit > 5 ether, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
+    console.log(216,amountToDeposit);
+    require(amountToDeposit >= 0.5 ether, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
 
     (fee, feeToken) = IOps(ops).getFeeDetails();
 
@@ -298,7 +290,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   }
 
   function totalSupply() public view override returns (uint256) {
-    DataTypes.Period memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
+    DataTypes.PeriodV2 memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
     uint256 _totalSupply = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan - uint96(lastPeriod.outFlowRate) * periodSpan;
 
@@ -489,13 +481,13 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
    * @dev it calculate the yield earned and add the total deposit (send+stream)
    * @return balance the realtime balance multiplied
    */
-  function totalBalanceSupplier(address _supplier) public view returns (uint256 balance) {
+  function totalBalanceSupplier(address _supplier) public  returns (uint256 balance) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
     balance = _getSupplierBalance(_supplier).div(PRECISSION);
   }
-
-  function totalYieldEarnedSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
+ 
+  function totalYieldEarnedSupplier(address _supplier) public returns (uint256 yieldSupplier) {
     uint256 yieldTillLastPeriod = _calculateYieldSupplier(_supplier);
 
     (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex, uint256 yieldOutFlowRateIndex) = _calculateIndexes();
@@ -504,7 +496,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.amount.div(PRECISSION);
     uint256 yieldInFlow = uint96(supplier.inStream.flow) * yieldInFlowRateIndex;
-    uint256 yieldOutFlow = (yieldOutFlowRateIndex) * (uint256(uint96(supplier.outStream.flow))).div(PRECISSION);
+    uint256 yieldOutFlow = 0;//(yieldOutFlowRateIndex) * (uint256(uint96(supplier.outStream.flow))).div(PRECISSION);
 
     yieldSupplier = yieldTillLastPeriod + yieldDeposit + yieldInFlow + yieldOutFlow;
   }
@@ -539,7 +531,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
    * @dev it calculate the yield earned and add the total deposit (send+stream)
    * @return realtimeBalance the realtime balance multiplied by precission (10**6)
    */
-  function _getSupplierBalance(address _supplier) internal view returns (uint256 realtimeBalance) {
+  function _getSupplierBalance(address _supplier) internal  returns (uint256 realtimeBalance) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
     uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
@@ -609,7 +601,8 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + inDeposit - outDeposit;
     periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
-
+    console.log(603,periodByTimestamp[block.timestamp].deposit);
+    console.log(603,inDeposit);
     if (netFlow < 0) {
       uint256 total = supplier.deposit.amount; //_getSupplierBalance(_supplier);
       uint256 factor = total.div(supplier.shares);
@@ -706,27 +699,17 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     ///// Yield from deposit
 
-    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+    uint256 yieldFromDeposit = (supplier.deposit.amount * (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex)).div(
+      PRECISSION
+    );
 
-    if (netFlow >= 0) {
-      uint256 yieldFromDeposit = (supplier.deposit.amount * (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex)).div(
-        PRECISSION
-      );
-
+    yieldSupplier = yieldFromDeposit;
+    if (supplier.inStream.flow > 0) {
       ///// Yield from flow
-      uint256 yieldFromFlow = uint96(netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - periodByTimestamp[lastTimestamp].yieldInFlowRateIndex);
+      uint256 yieldFromFlow = uint96(supplier.inStream.flow) *
+        (periodByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - periodByTimestamp[lastTimestamp].yieldInFlowRateIndex);
 
-      yieldSupplier = yieldFromDeposit + yieldFromFlow;
-    } else {
-      //  uint256 yieldFromDeposit = ((supplier.deposit.amount - (uint96(supplier.outAssets.flow) * (lastPeriodTimestamp - lastTimestamp) * PRECISSION)) *
-      // (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex)).div(PRECISSION);
-
-      ///// Yield from outFlow
-
-      uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) *
-        (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
-
-      yieldSupplier = yieldFromOutFlow; //+ yieldFromDeposit;
+      yieldSupplier = yieldSupplier + yieldFromFlow;
     }
   }
 
@@ -758,6 +741,10 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     supplier.outAssets.stepAmount = supplier.deposit.amount.div(PARTIAL_DEPOSIT);
 
+    supplier.outAssets.stepTime = 50;
+
+    supplier.outAssets.cancelWithdrawId =  createWithdraStepTask(_supplier, supplier.outAssets.stepTime);
+
     ///
   }
 
@@ -783,7 +770,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate - supplier.outStream.flow;
       periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
       _cfaLib.deleteFlow(address(this), _supplier, superToken);
-      supplier.outAssets = DataTypes.OutAssets(0, bytes32(0), 0, bytes32(0));
+      supplier.outAssets = DataTypes.OutAssets(0, bytes32(0), 0,0, bytes32(0));
       supplier.outStream = DataTypes.Stream(0, bytes32(0));
     } else if (supplier.inStream.flow > 0 && closeInStream == true) {
       periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate - supplier.inStream.flow;
@@ -805,11 +792,9 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   function _poolUpdateCurrentState() public {
     periodId.increment();
 
-    getMockYield();
+    DataTypes.PeriodV2 memory currentPeriod = DataTypes.PeriodV2(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-    DataTypes.Period memory currentPeriod = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
-    DataTypes.Period memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
+    DataTypes.PeriodV2 memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
     uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
 
@@ -830,7 +815,6 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     currentPeriod.inFlowRate = lastPeriod.inFlowRate;
     currentPeriod.outFlowRate = lastPeriod.outFlowRate;
 
-    currentPeriod.yieldAccruedSec = lastPeriod.yieldAccruedSec;
 
     currentPeriod.timestamp = block.timestamp;
 
@@ -845,19 +829,19 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
   function _calculateIndexes()
     internal
-    view
+
     returns (
       uint256 periodYieldTokenIndex,
       uint256 periodYieldInFlowRateIndex,
       uint256 periodYieldOutFlowRateIndex
     )
   {
-    DataTypes.Period storage lastPeriod = periodByTimestamp[lastPeriodTimestamp];
+    DataTypes.PeriodV2 storage lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
 
     uint256 dollarSecondsInFlow = ((uint96(lastPeriod.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPeriod.depositFromInFlowRate * periodSpan;
-    uint256 dollarSecondsOutFlow = lastPeriod.depositFromOutFlowRate * periodSpan - (uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * (periodSpan**2)) / 2;
+    uint256 dollarSecondsOutFlow = 0; //0lastPeriod.depositFromOutFlowRate * periodSpan - (uint96(lastPeriod.outFlowAssetsRate) * PRECISSION * (periodSpan**2)) / 2;
     uint256 dollarSecondsDeposit = lastPeriod.deposit * periodSpan;
 
     uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow + dollarSecondsOutFlow;
@@ -881,28 +865,17 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
         periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPeriod.inFlowRate) * totalAreaPeriod));
       }
       if (lastPeriod.outFlowAssetsRate != 0) {
-        periodYieldOutFlowRateIndex = ((outFlowContribution * yieldPeriod).div(uint96(lastPeriod.outFlowAssetsRate) * totalAreaPeriod));
+        periodYieldOutFlowRateIndex = 0;// ((outFlowContribution * yieldPeriod).div(uint96(lastPeriod.outFlowAssetsRate) * totalAreaPeriod));
       }
     }
   }
 
-  function _calculatePoolYieldPeriod() internal view returns (uint256 yield) {
-    yield = (block.timestamp - lastPeriodTimestamp) * periodByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
+  function _calculatePoolYieldPeriod() internal returns (uint256 yield) {
+   // yield = (block.timestamp - lastPeriodTimestamp) * periodByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
+
+    yield = IAllocationMock(MOCK_ALLOCATION).calculateStatus();
   }
 
-  /**
-   * @notice Add the yield to the Period
-   * @dev  When yield are added to the pool, if there is active stream this
-   *       function will call _poolUpdateCurrentState() fucntion
-   *       If there is not active stream, the proportion remains the same and the period remains unchanged
-   */
-  function _updateYield(uint256 yieldAmountPerSec) internal {
-    _poolUpdateCurrentState();
-
-    periodByTimestamp[block.timestamp].yieldAccruedSec = yieldAmountPerSec;
-
-    //   currentPeriod.yield = currentPeriod.yield + yieldAmount;
-  }
 
   // #endregion POOL UPDATE
 
@@ -931,7 +904,6 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     bool _all,
     uint8 _flowType
   ) internal returns (bytes32 taskId) {
-    console.log(905, _stopDateInMs);
     taskId = IOps(ops).createTimedTask(
       uint128(block.timestamp + _stopDateInMs),
       600,
@@ -1014,11 +986,9 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   }
 
   //// Withdrawal step task
-  function creareWithdraStepTask(
+  function createWithdraStepTask(
     address _supplier,
-    uint256 _stepTime,
-    bool _all,
-    uint8 _flowType
+    uint256 _stepTime
   ) internal returns (bytes32 taskId) {
     taskId = IOps(ops).createTimedTask(
       uint128(block.timestamp + _stepTime),
@@ -1026,7 +996,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       address(this),
       this.withdrawStep.selector,
       address(this),
-      abi.encodeWithSelector(this.checkerwithdrawStep.selector, _supplier, _all, _flowType),
+      abi.encodeWithSelector(this.checkerwithdrawStep.selector, _supplier),
       ETH,
       false
     );
@@ -1034,20 +1004,16 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
   // called by Gelato Execs
   function checkerwithdrawStep(
-    address _receiver,
-    bool _all,
-    uint8 _flowType
+    address _receiver
   ) external returns (bool canExec, bytes memory execPayload) {
     canExec = true;
 
-    execPayload = abi.encodeWithSelector(this.withdrawStep.selector, address(_receiver), _all, _flowType);
+    execPayload = abi.encodeWithSelector(this.withdrawStep.selector, address(_receiver));
   }
 
   /// called by Gelato
   function withdrawStep(
-    address _receiver,
-    bool _all,
-    uint8 _flowType
+    address _receiver
   ) external onlyOps {
     //// check if
 
@@ -1067,7 +1033,7 @@ contract PoolFactoryV2 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     if (supplier.deposit.amount < supplier.outAssets.stepAmount) {
       withdrawalAmount = supplier.deposit.amount;
-      cancelTask(supplier.outAssets.cancelWithdraId);
+      cancelTask(supplier.outAssets.cancelWithdrawId);
     }
     _withdrawMock(withdrawalAmount);
   }

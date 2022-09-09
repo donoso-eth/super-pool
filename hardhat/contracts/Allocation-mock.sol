@@ -6,87 +6,80 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract AllocationMock {
-
   using SafeMath for uint256;
 
   address immutable superPool;
   address immutable owner;
   address token;
-  uint256 public amountDeposited;
-  uint256 public lastTimestamp;
-  uint256 public incrementStored;
-  uint256 public lastIncrement;
-  uint256 public deploymentTimestamp;
 
+  uint256 public lastTimestamp;
+
+  uint256 public deploymentTimestamp;
+  uint256 public totalYield;
+  uint256 public amountDeposited;
+
+  uint256 public id;
+
+  mapping(uint256 => MockState) public yieldByTimestamp;
+  mapping(uint256 => uint256) public timestampbyId;
 
   struct MockState {
-  uint256  amountDeposited;
-  uint256  lastTimestamp;
-  uint256  incrementStored;
-  uint256 lastIncrement;
+    uint256 amountDeposited;
+    uint256 timestamp;
+    uint256 totalYield;
+    uint256 currentYield;
+    uint256 id;
   }
-
 
   constructor(address _superPool, address _token) {
     superPool = _superPool;
     owner = msg.sender;
     token = _token;
     deploymentTimestamp = block.timestamp;
+    yieldByTimestamp[block.timestamp] = MockState(0, block.timestamp, 0, 0, 0);
+    totalYield = 0;
+    timestampbyId[0] = block.timestamp;
   }
 
-  function getState() external view returns (MockState memory state){
-    console.log(lastTimestamp);
-    console.log(amountDeposited);
-    state= MockState(amountDeposited, lastTimestamp,incrementStored, lastIncrement);
+  function getState(uint256 _timestamp) external view returns (MockState memory state) {
+    return yieldByTimestamp[_timestamp];
   }
 
+  function getCurrentState() external view returns (MockState memory state) {
+    return yieldByTimestamp[lastTimestamp];
+  }
 
-  function calculateStatus() external onlyFactory returns (uint256 incrementCalculated) {
-    console.log(amountDeposited);
+  function calculateStatus() public returns (uint256 yieldPeriod) {
     if (amountDeposited == 0) {
-      return 0;
+      yieldPeriod = 0;
+    } else if (lastTimestamp == block.timestamp) {
+      yieldPeriod = yieldByTimestamp[lastTimestamp].currentYield;
     } else {
-        uint256 currentIncrement = _getIncrement();
-        lastIncrement = currentIncrement + incrementStored;
-        incrementCalculated = lastIncrement;
-        console.log(lastIncrement);
-        incrementStored = 0;
-   
-
+      yieldPeriod = _getIncrement();
+      totalYield += yieldPeriod;
+      lastTimestamp = block.timestamp;
+      id++;
+      yieldByTimestamp[block.timestamp] = MockState(amountDeposited, block.timestamp, totalYield, yieldPeriod, id);
+      timestampbyId[id] = block.timestamp;
     }
   }
 
-  function _getIncrement() internal returns (uint256 increment) {
+  function _getIncrement() internal view returns (uint256 increment) {
+    uint256 newAPY = 6; //block.timestamp % 20;
+    uint256 periodSpan = block.timestamp - lastTimestamp;
 
-        uint256 newAPY = 500; // 1000 + block.timestamp % 1000;
-        uint256 periodSpan = block.timestamp-lastTimestamp;
-        console.log(periodSpan);
-
-        if (lastTimestamp == 0) {
-            periodSpan = 0;
-        }
-
-        increment =  (amountDeposited).mul(newAPY).mul(periodSpan).div(100).div(365).div(24).div(3600);
-        console.log(increment);
-        amountDeposited+= increment;
-        lastTimestamp = block.timestamp;
-        console.log(lastTimestamp);
-    
-
+    if (lastTimestamp == 0) {
+      periodSpan = 0;
+    }
+    increment = (amountDeposited).mul(newAPY).mul(periodSpan).div(100).div(365).div(24).div(3600);
   }
 
-
   function deposit(uint256 amount) external onlyFactory {
-    
-    incrementStored  += _getIncrement();
-    
+    calculateStatus();
+
     amountDeposited += amount;
 
-    console.log(78,token);
     SafeERC20.safeTransferFrom(IERC20(token), msg.sender, address(this), amount);
- 
- 
- 
   }
 
   function withdraw(uint256 amount) external onlyFactory {

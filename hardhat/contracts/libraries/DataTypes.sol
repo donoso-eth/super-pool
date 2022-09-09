@@ -36,7 +36,8 @@ library DataTypes {
     int96 flow;
     bytes32 cancelTaskId;
     uint256 stepAmount;
-    bytes32 cancelWithdraId;
+    uint256 stepTime;
+    bytes32 cancelWithdrawId;
 
   }
 
@@ -75,4 +76,20 @@ library DataTypes {
     uint256 totalShares;
     int96 outFlowAssetsRate;
   }
+
+  struct PeriodV2 {
+    uint256 timestamp;
+    uint256 deposit;
+    int96 inFlowRate;
+    int96 outFlowRate;
+    uint256 depositFromInFlowRate;
+    uint256 depositFromOutFlowRate;
+    uint256 yieldTokenIndex;
+    uint256 yieldInFlowRateIndex;
+    uint256 yieldOutFlowRateIndex;
+    uint256 totalShares;
+    int96 outFlowAssetsRate;
+    uint256 yieldAccrued;
+  }
+
 }

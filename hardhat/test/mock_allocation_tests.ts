@@ -128,7 +128,7 @@ describe.only('Allocation Mock use case test', function () {
       poolFactory: poolFactory.address,
       superToken: SUPERTOKEN1,
       ops: GELATO_OPS,
-      token: TOKEN1
+      token: TOKEN1,
     };
     await superPoolHost.createSuperPool(superInputStruct);
 
@@ -146,72 +146,147 @@ describe.only('Allocation Mock use case test', function () {
     allocationMock = await new AllocationMock__factory(deployer).deploy(superPoolTokenAddress, TOKEN1);
 
     await superTokenPool.setUpMock(allocationMock.address);
-    
-
-    //erc20 = await ERC20__factory.connect(TOKEN1, deployer);
-    // erc20.approve(allocationMock.address, hre.ethers.constants.MaxUint256);
 
     /////// Cleaning and preparing init state /////////
     await tokenContract.transfer(superPoolTokenAddress, utils.parseEther('50'));
 
     user1Balance = await tokenContract.balanceOf(user1.address);
+
+    user2Balance = await tokenContract.balanceOf(user2.address);
+
+    user3Balance = await tokenContract.balanceOf(user3.address);
+
+    user4Balance = await tokenContract.balanceOf(user4.address);
+
     if (user1Balance.toString() !== '0') {
       await tokenContract.connect(user1).transfer(deployer.address, user1Balance);
     }
     await tokenContract.transfer(user1.address, utils.parseEther('10'));
 
-   // expect(user1Balance).to.equal(utils.parseEther('10'));
+    if (user2Balance.toString() !== '0') {
+      await tokenContract.connect(user2).transfer(deployer.address, user2Balance);
+    }
+    await tokenContract.transfer(user2.address, utils.parseEther('10'));
+
+    if (user3Balance.toString() !== '0') {
+      await tokenContract.connect(user3).transfer(deployer.address, user3Balance);
+    }
+    await tokenContract.transfer(user3.address, utils.parseEther('10'));
+
+    if (user4Balance.toString() !== '0') {
+      await tokenContract.connect(user4).transfer(deployer.address, user4Balance);
+    }
+    await tokenContract.transfer(user4.address, utils.parseEther('10'));
+
+    user1Balance = await tokenContract.balanceOf(user1.address);
+    user2Balance = await tokenContract.balanceOf(user2.address);
+    user3Balance = await tokenContract.balanceOf(user3.address);
+    user4Balance = await tokenContract.balanceOf(user4.address);
+
+    expect(user1Balance).to.equal(utils.parseEther('10'));
+    expect(user2Balance).to.equal(utils.parseEther('10'));
+    expect(user3Balance).to.equal(utils.parseEther('10'));
+    expect(user4Balance).to.equal(utils.parseEther('10'));
+
+    // expect(user1Balance).to.equal(utils.parseEther('10'));
 
     let balance = await erc20.balanceOf(superPoolTokenAddress);
     console.log(utils.formatEther(balance));
     //throw new Error("");
 
-    t0 = +(await allocationMock.deploymentTimestamp());
+    t0 = +(await superTokenPool.lastPeriodTimestamp());
 
     console.log(deployer.address);
+
+    await hre.network.provider.request({
+      method: 'hardhat_impersonateAccount',
+      params: ['0x25aD59adbe00C2d80c86d01e2E05e1294DA84823'],
+    });
+
+    executor = await hre.ethers.provider.getSigner('0x25aD59adbe00C2d80c86d01e2E05e1294DA84823');
   });
 
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 20 units at t0 ');
 
-   
+    execData = superTokenPool.interface.encodeFunctionData('depositMock');
+    execAddress = superTokenPool.address;
+    execSelector = await ops.getSelector('depositMock()');
+    resolverAddress = superTokenPool.address;
+    resolverData = await superTokenPool.interface.encodeFunctionData('checkerDepositMock');
 
+    resolverHash = utils.keccak256(new utils.AbiCoder().encode(['address', 'bytes'], [resolverAddress, resolverData]));
+
+    taskId = await ops.getTaskId(superTokenPool.address, execAddress, execSelector, false, ETH, resolverHash);
+
+    console.log(taskId);
+
+    let savedId = await superTokenPool.DepositTaksId();
+    console.log(savedId);
+
+    await ops.connect(executor).exec(hre.ethers.utils.parseEther('0.0001'), ETH, superTokenPool.address, false, true, resolverHash, execAddress, execData);
+
+    let balanceMock = await erc20.balanceOf(allocationMock.address);
+    console.log('mock', balanceMock.toString());
+
+    erc777 = await ERC777__factory.connect(SUPERTOKEN1, user1);
+
+    let amount = utils.parseEther('2');
+    await waitForTx(erc777.send(superPoolTokenAddress, amount, '0x'));
+    t0 = +(await superTokenPool.lastPeriodTimestamp());
+
+    balanceMock = await erc20.balanceOf(allocationMock.address);
+    console.log('mock', balanceMock.toString());
+    let mockState = await allocationMock.getCurrentState();
+    console.log(mockState.toString());
 
     let balancesuperToken = await superTokenPool.getBalanceSuperToken();
     console.log(balancesuperToken.toString());
 
-    let balanceToken = await superTokenPool.getBalanceToken()
-    console.log(balanceToken.toString())
+    await ops.connect(executor).exec(hre.ethers.utils.parseEther('0.01'), ETH, superTokenPool.address, false, true, resolverHash, execAddress, execData);
 
-    let amount = utils.parseEther("5")
-    await superTokenPool.downgrade(amount)
+    balanceMock = await erc20.balanceOf(allocationMock.address);
+    console.log('mock', balanceMock.toString());
+    mockState = await allocationMock.getCurrentState();
+    console.log(mockState.toString());
 
-   balancesuperToken = await superTokenPool.getBalanceSuperToken();
+    let canExec = (await superTokenPool.checkerDepositMock())[0];
+    console.log(canExec);
+
+    balancesuperToken = await superTokenPool.getBalanceSuperToken();
     console.log(balancesuperToken.toString());
 
-   balanceToken = await superTokenPool.getBalanceToken()
-    console.log(balanceToken.toString())
+    erc777 = await ERC777__factory.connect(SUPERTOKEN1, user2);
 
-    await superTokenPool.depositMock(amount)
-;
-    let result = await  allocationMock.getState()
+    amount = utils.parseEther('0.49');
+    await waitForTx(erc777.send(superPoolTokenAddress, amount, '0x'));
 
-    console.log(result.toString())
+    canExec = (await superTokenPool.checkerDepositMock())[0];
+    console.log(canExec);
 
-    console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tested #######');
-    console.log('');
+    mockState = await allocationMock.getCurrentState();
+    console.log(mockState.toString());
+    balancesuperToken = await superTokenPool.getBalanceSuperToken();
+    console.log(balancesuperToken.toString());
 
-    // #endregion FIST PERIOD
+    amount = utils.parseEther('0.01');
+    await waitForTx(erc777.send(superPoolTokenAddress, amount, '0x'));
+    mockState = await allocationMock.getCurrentState();
+    console.log(mockState.toString());
+    canExec = (await superTokenPool.checkerDepositMock())[0];
+    console.log(canExec);
+    console.log((+(await getTimestamp())).toString());
 
-    await setNextBlockTimestamp(hre, t0 + ONE_DAY * 100);
+    balancesuperToken = await superTokenPool.getBalanceSuperToken();
+    console.log(balancesuperToken.toString());
 
-    await  waitForTx(superTokenPool.calculateStatus());
+    await ops.connect(executor).exec(hre.ethers.utils.parseEther('0.01'), ETH, superTokenPool.address, false, true, resolverHash, execAddress, execData);
 
-    result = await  allocationMock.getState()
+    balanceMock = await erc20.balanceOf(allocationMock.address);
+    console.log('mock', balanceMock.toString());
 
-    console.log(result.toString())
-
-    
+    balancesuperToken = await superTokenPool.getBalanceSuperToken();
+    console.log(balancesuperToken.toString());
   });
 });
