@@ -1,29 +1,19 @@
 {
-    "superPoolHost": {
-        "artifactsPath": "SuperPoolHost.sol/SuperPoolHost.json",
-        "name": "SuperPoolHost",
-        "ctor": [],
-        "jsonName": "super_pool_host"
-    },
-    "allocationMock": {
-        "name": "AllocationMock",
-        "artifactsPath": "Allocation-mock.sol/AllocationMock.json",
-        "jsonName": "allocation_mock",
-        "ctor": [
-            "_superPool:address",
-            "_token:address"
-        ]
-    },
-    "poolFactoryV2": {
-        "name": "PoolFactoryV2",
-        "artifactsPath": "PoolFactory-V2.sol/PoolFactoryV2.json",
-        "jsonName": "pool_factory_v2",
-        "ctor": []
-    },
-    "poolFactoryV1": {
-        "name": "PoolFactoryV1",
-        "artifactsPath": "PoolFactory-V1.sol/PoolFactoryV1.json",
-        "jsonName": "pool_factory_v1",
-        "ctor": []
-    }
+  "superPoolHost": { "artifactsPath": "SuperPoolHost.sol/SuperPoolHost.json", "name": "SuperPoolHost", "ctor": [], "jsonName": "super_pool_host" },
+  "allocationMock": {
+    "name": "AllocationMock",
+    "artifactsPath": "Allocation-mock.sol/AllocationMock.json",
+    "jsonName": "allocation_mock",
+    "ctor": ["_superPool:address", "_token:address"]
+  },
+  "poolFactoryV2": { "name": "PoolFactoryV2", "artifactsPath": "PoolFactory-V2.sol/PoolFactoryV2.json", "jsonName": "pool_factory_v2", "ctor": [] },
+  "poolFactoryV1": { "name": "PoolFactoryV1", "artifactsPath": "PoolFactory-V1.sol/PoolFactoryV1.json", "jsonName": "pool_factory_v1", "ctor": [] },
+  "gelatoResolverV2": {
+    "name": "GelatoResolverV2",
+    "artifactsPath": "GelatoResolver-V2.sol/GelatoResolverV2.json",
+    "jsonName": "gelato_resolver_v2",
+    "ctor": ["_pool:address", "_ops:address"]
+  },
+  "poolStrategyV2": { "name": "PoolStrategyV2", "artifactsPath": "PoolStrategy-V2.sol/PoolStrategyV2.json", "jsonName": "pool_strategy_v2", "ctor": [] },
+  "sTokenFactoryV2": { "name": "STokenFactoryV2", "artifactsPath": "STokenFactory-V2.sol/STokenFactoryV2.json", "jsonName": "s_token_factory_v2", "ctor": [] }
 }

@@ -26,6 +26,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
+  constructor(){}
 
   // #region  ============= ============= Allocation Strategy  ============= ============= //
 

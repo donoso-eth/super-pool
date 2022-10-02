@@ -6,17 +6,20 @@ import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
 import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract GelatoResolverV2 {
+contract GelatoResolverV2 is Initializable {
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-  address immutable ops;
-  address immutable pool;
+  address ops;
+  IPoolFactoryV2 pool;
 
-  constructor(address _pool, address _ops) {
+  constructor() {}
+
+  function initialize(address _ops, IPoolFactoryV2 _pool) external initializer {
     ops = _ops;
     pool = _pool;
   }
-
+    
   // ============= =============  Gelato functions ============= ============= //
   // #region Gelato functions
 
@@ -29,7 +32,7 @@ contract GelatoResolverV2 {
     taskId = IOps(ops).createTimedTask(
       uint128(block.timestamp + _stopDateInMs),
       600,
-      pool,
+      address(pool),
       IPoolFactoryV2.stopstream.selector,
       address(this),
       abi.encodeWithSelector(this.checkerStopStream.selector, _supplier, _all, _flowType),
@@ -48,15 +51,15 @@ contract GelatoResolverV2 {
 
     execPayload = abi.encodeWithSelector(IPoolFactoryV2.stopstream.selector, address(_receiver), _all, _flowType);
   }
+
   //#endregion
 
-
-    //// Withdrawal step task
+  //// Withdrawal step task
   function createWithdraStepTask(address _supplier, uint256 _stepTime) external onlyPool returns (bytes32 taskId) {
     taskId = IOps(ops).createTimedTask(
       uint128(block.timestamp + _stepTime),
       uint128(_stepTime),
-      pool,
+      address(pool),
       IPoolFactoryV2.withdrawStep.selector,
       address(this),
       abi.encodeWithSelector(this.checkerwithdrawStep.selector, _supplier),
@@ -72,14 +75,8 @@ contract GelatoResolverV2 {
     execPayload = abi.encodeWithSelector(IPoolFactoryV2.withdrawStep.selector, address(_receiver));
   }
 
-
-
-    modifier onlyPool() {
+  modifier onlyPool() {
     require(msg.sender == address(pool), "Only Pool Allowed");
     _;
   }
-
-
-
-
 }

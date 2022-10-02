@@ -16,7 +16,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 
 
-contract STokenV2  is ERC20Upgradeable {
+contract STokenFactoryV2  is ERC20Upgradeable {
       using SafeMath for uint256;
   address  ops;
   IPoolFactoryV2 pool;

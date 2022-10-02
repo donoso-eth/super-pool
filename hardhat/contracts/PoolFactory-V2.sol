@@ -24,7 +24,7 @@ import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/app
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
-import {IStoken}  from './interfaces/IStoken.sol';
+import {ISTokenFactoryV2}  from './interfaces/ISTokenFactory-V2.sol';
 import {IPoolStrategyV2} from './interfaces/IPoolStrategy-V2.sol';
 import {IGelatoResolverV2} from './interfaces/IGelatoResolver-V2.sol'; 
 
@@ -90,7 +90,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   uint256 public MIN_OUTFLOW_ALLOWED = 3600; // 1 hour minimum flow == Buffer
   uint8 public PARTIAL_DEPOSIT; // proportinal decrease deposit
 
-  IStoken sToken;
+  ISTokenFactoryV2 sToken;
   IPoolStrategyV2 poolStrategy;
   IGelatoResolverV2 gelatoResolver;
 
@@ -108,8 +108,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   /**
    * @notice initializer of the Pool
    */
-  function initialize(DataTypes.PoolFactoryInitializer calldata poolFactoryInitializer, 
-  IStoken _stoken, IPoolStrategyV2 _poolStrategy, IGelatoResolverV2 _gelatoResolver) external initializer {
+  function initialize(DataTypes.PoolFactoryInitializer calldata poolFactoryInitializer) external initializer {
     ///initialState
 
 
@@ -123,9 +122,9 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     superToken = poolFactoryInitializer.superToken;
     cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
     token = poolFactoryInitializer.token;
-    sToken = _stoken;
-    poolStrategy = _poolStrategy;
-    gelatoResolver = _gelatoResolver;
+    sToken = poolFactoryInitializer.sToken;
+    poolStrategy = poolFactoryInitializer.poolStrategy;
+    gelatoResolver = poolFactoryInitializer.gelatoResolver;
     token.approve(address(poolStrategy), MAX_INT);
 
     _cfaLib = CFAv1Library.InitData(host, cfa);

@@ -11,7 +11,7 @@ import config from "../hardhat.config";
 import { join } from "path";
 import { createHardhatAndFundPrivKeysFiles } from "../helpers/localAccounts";
 import * as hre from 'hardhat';
-import { AllocationMock__factory, ERC20__factory, Events__factory,  PoolFactoryV1__factory,  SuperPoolHost__factory } from "../typechain-types";
+import { STokenFactoryV2__factory, Events__factory,  PoolFactoryV1__factory,  SuperPoolHost__factory, PoolStrategyV2__factory, GelatoResolverV2__factory } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { utils } from "ethers";
@@ -73,10 +73,9 @@ if (networ_params == undefined) {
   
 
   //// DEPLOY POOLFACTORY
-
   const poolFactoryImpl = await new PoolFactoryV1__factory(deployer).deploy()
 
-  let toDeployContract = contract_config['poolFactoryV1'];
+  let toDeployContract = contract_config['poolFactoryV2'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
@@ -99,8 +98,79 @@ if (networ_params == undefined) {
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
 
-  //// DEPLOY SuperPoolHost
 
+  //// DEPLOY SToken
+  const sTokenFactoryImpl = await new  STokenFactoryV2__factory(deployer).deploy()
+
+   toDeployContract = contract_config['sTokenFactoryV2'];
+  writeFileSync(
+    `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
+    JSON.stringify({
+      abi:  STokenFactoryV2__factory.abi,
+      name: toDeployContract.name,
+      address: sTokenFactoryImpl.address,
+      network: network,
+    })
+  );
+
+  writeFileSync(
+    `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
+    JSON.stringify(STokenFactoryV2__factory.abi)
+  );
+  console.log(toDeployContract.name + ' Contract Deployed to:', sTokenFactoryImpl.address);
+  ///// copy Interfaces and create Metadata address/abi to assets folder
+  copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+
+
+  //// DEPLOY PoolStrategy
+  const poolStrategy = await new  PoolStrategyV2__factory(deployer).deploy()
+
+   toDeployContract = contract_config['sTokenFactoryV2'];
+  writeFileSync(
+    `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
+    JSON.stringify({
+      abi:  PoolStrategyV2__factory.abi,
+      name: toDeployContract.name,
+      address: poolStrategy.address,
+      network: network,
+    })
+  );
+
+  writeFileSync(
+    `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
+    JSON.stringify(PoolStrategyV2__factory.abi)
+  );
+  console.log(toDeployContract.name + ' Contract Deployed to:', poolStrategy.address);
+  ///// copy Interfaces and create Metadata address/abi to assets folder
+  copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+
+
+    //// DEPLOY PoolStrategy
+    const gelatoResolver = await new  GelatoResolverV2__factory(deployer).deploy()
+
+    toDeployContract = contract_config['sTokenFactoryV2'];
+   writeFileSync(
+     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
+     JSON.stringify({
+       abi:  GelatoResolverV2__factory.abi,
+       name: toDeployContract.name,
+       address: gelatoResolver.address,
+       network: network,
+     })
+   );
+ 
+   writeFileSync(
+     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
+     JSON.stringify( GelatoResolverV2__factory.abi)
+   );
+   console.log(toDeployContract.name + ' Contract Deployed to:', gelatoResolver.address);
+   ///// copy Interfaces and create Metadata address/abi to assets folder
+   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+ 
+   
+
+
+  //// DEPLOY SuperPoolHost
   const superPoolHost = await new SuperPoolHost__factory(deployer).deploy(HOST)
 
    toDeployContract = contract_config['superPoolHost'];
@@ -131,44 +201,14 @@ if (networ_params == undefined) {
     poolFactory: poolFactoryImpl.address,
     superToken: SUPERTOKEN1,
     ops: GELATO_OPS,
-    token:TOKEN1
+    token:TOKEN1,
+    sToken:sTokenFactoryImpl.address,
+    poolStrategy:poolStrategy.address,
+    gelatoResolver:gelatoResolver.address,
   };
   await superPoolHost.createSuperPool(superInputStruct);
 
   let superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
-
-
-
-
-
- //// DEPLOY Mock Allocation
-
-
- const allocationMock = await new AllocationMock__factory(deployer).deploy(superPoolTokenAddress,TOKEN1)
-
- toDeployContract = contract_config['allocationMock'];
-writeFileSync(
-  `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
-  JSON.stringify({
-    abi:  AllocationMock__factory.abi.concat(eventAbi),
-    name: toDeployContract.name,
-    address: allocationMock.address,
-    network: network,
-  })
-);
-
-writeFileSync(
-  `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-  JSON.stringify(PoolFactoryV1__factory.abi.concat(eventAbi))
-);
-
-console.log(toDeployContract.name + ' Contract Deployed to:', superPoolHost.address);
-
-
-///// copy Interfaces and create Metadata address/abi to assets folder
-copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
-
-
 
 
 
