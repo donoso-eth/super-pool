@@ -131,6 +131,7 @@ if (networ_params == undefined) {
     poolFactory: poolFactoryImpl.address,
     superToken: SUPERTOKEN1,
     ops: GELATO_OPS,
+    token:TOKEN1
   };
   await superPoolHost.createSuperPool(superInputStruct);
 

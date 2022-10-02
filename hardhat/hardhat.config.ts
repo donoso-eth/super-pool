@@ -5,6 +5,7 @@ import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
+import "hardhat-contract-sizer";
 import 'solidity-coverage';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import * as glob from 'glob';
@@ -57,41 +58,11 @@ const config: HardhatUserConfig = {
       url: 'http://localhost:8545',
       chainId: 31337,
     },
-    rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${INFURA_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      // `https://speedy-nodes-nyc.moralis.io/${MORALIS_ID}/eth/rinkeby`
-      accounts:
-        process.env['DEPLOYER_KEY'] !== undefined
-          ? [process.env['DEPLOYER_KEY']]
-          : [],
-      // accounts: {
-      //   mnemonic: mnemonic(),
-      // },
-    },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${INFURA_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      // `https://speedy-nodes-nyc.moralis.io/${MORALIS_ID}/eth/kovan`
-      accounts:
-        process.env['DEPLOYER_KEY'] !== undefined
-          ? [process.env['DEPLOYER_KEY']]
-          : [],
-      // accounts: {
-      //   mnemonic: mnemonic(),
-      // },
-    },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${INFURA_ID}`, // <---- YOUR INFURA ID! (or it won't work)
       //`https://speedy-nodes-nyc.moralis.io/${MORALIS_ID}/eth/mainnet`
 
       gasPrice: mainnetGwei * 1000000000,
-          accounts:
-        process.env['DEPLOYER_KEY'] !== undefined
-          ? [process.env['DEPLOYER_KEY']]
-          : [],
-    },
-    ropsten: {
-      url: `https://ropsten.infura.io/v3/${INFURA_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      // `https://speedy-nodes-nyc.moralis.io/${MORALIS_ID}/eth/ropsten`
           accounts:
         process.env['DEPLOYER_KEY'] !== undefined
           ? [process.env['DEPLOYER_KEY']]

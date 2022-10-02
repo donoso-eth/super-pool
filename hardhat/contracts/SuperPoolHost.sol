@@ -8,7 +8,7 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 
 import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
- import {IPoolFactory} from "./interfaces/IPoolFactory.sol";
+ import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 
 
 import {DataTypes} from "./libraries/DataTypes.sol";
@@ -60,7 +60,7 @@ contract SuperPoolHost  {
 
    
 
-    IPoolFactory(poolContract).initialize(poolFactoryInitializer);
+    IPoolFactoryV2(poolContract).initialize(poolFactoryInitializer);
 
     poolAdressBySuperToken[superPoolInput.superToken] = poolContract;
 

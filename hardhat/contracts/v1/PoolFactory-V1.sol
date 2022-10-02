@@ -22,13 +22,13 @@ import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/app
 
 import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
 
-import {OpsReady} from "./gelato/OpsReady.sol";
-import {IOps} from "./gelato/IOps.sol";
+import {OpsReady} from "../gelato/OpsReady.sol";
+import {IOps} from "../gelato/IOps.sol";
 
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {Events} from "./libraries/Events.sol";
+import {DataTypes} from "../libraries/DataTypes.sol";
+import {Events} from "../libraries/Events.sol";
 
-import {IERC4626} from "./interfaces/IERC4626.sol";
+import {IERC4626} from "../interfaces/IERC4626.sol";
 
 /****************************************************************************************************
  * @title PoolFacory

@@ -83,10 +83,8 @@ library DataTypes {
     int96 inFlowRate;
     int96 outFlowRate;
     uint256 depositFromInFlowRate;
-    uint256 depositFromOutFlowRate;
     uint256 yieldTokenIndex;
     uint256 yieldInFlowRateIndex;
-    uint256 yieldOutFlowRateIndex;
     uint256 totalShares;
     int96 outFlowAssetsRate;
     uint256 yieldAccrued;
