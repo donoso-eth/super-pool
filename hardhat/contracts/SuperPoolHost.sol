@@ -29,9 +29,9 @@ contract SuperPoolHost {
   function createSuperPool(DataTypes.SuperPoolInput memory superPoolInput) external {
     require(superTokenResolverByAddress[address(superPoolInput.superToken)].pool == address(0), "POOL_EXISTS");
 
-    address poolContract = Clones.clone(superPoolInput.poolFactory);
+    address poolContract = Clones.clone(superPoolInput.poolFactoryImpl);
 
-    address sTokenContract = Clones.clone(address(superPoolInput.sToken));
+    address sTokenContract = Clones.clone(address(superPoolInput.sTokenImpl));
 
     uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL |
       SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |

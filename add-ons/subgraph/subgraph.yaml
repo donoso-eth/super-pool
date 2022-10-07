@@ -3,24 +3,29 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: GravatarRegistry
+    name: PoolFactoryV2
     network: localhost
     source:
-      address: '0x5FbDB2315678afecb367f032d93F642f64180aa3'
-      abi: GravatarRegistry
-      startBlock: 1
+      address: '0xf4F77AB325d7E8B16F29caD99c019accffAFA643'
+      abi: PoolFactoryV2
+      startBlock: 27976990 
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
-        - Gravatar
+        - Pool
+        - Supplier
       abis:
-        - name: GravatarRegistry
-          file: ./abis/gravity.json
+        - name: PoolFactoryV2
+          file: ./abis/pool_factory_v2.json
       eventHandlers:
-        - event: NewGravatar(uint256,address,string,string)
-          handler: handleNewGravatar
-        - event: UpdatedGravatar(uint256,address,string,string)
-          handler: handleUpdatedGravatar
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: >-
+            PoolUpdate((uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,int96,uint256))
+          handler: handlePoolUpdate
+        - event: >-
+            SupplyUpdate((address,uint256,uint256,(int96,bytes32),(int96,bytes32),(int96,bytes32,uint256,uint256,bytes32),(uint256,uint256),uint256,uint256,uint256,uint256))
+          handler: handleSupplyUpdate
       file: ./src/mapping.ts

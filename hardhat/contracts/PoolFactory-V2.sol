@@ -233,7 +233,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     _updateSupplierDeposit(from, assets, 0, 0);
 
     /// Events mnot yet implemented
-    //emit Deposit(from, receiver, assets, assets);
+
+ 
   }
 
   function redeemDeposit(uint256 redeemAmount) external {
@@ -419,6 +420,10 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
       _outStreamHasChanged(_supplier, -netFlow, updatedOutAssets);
     }
+
+   emit Events.SupplierUpdate(supplier);
+   console.log('event');
+ 
   }
 
   function _updateSupplierFlow(
@@ -670,7 +675,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   function _calculatePoolYieldPeriod() internal view returns (uint256 yield) {
     // yield = (block.timestamp - lastPeriodTimestamp) * periodByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
 
-    yield = 3; //IAllocationMock(MOCK_ALLOCATION).calculateStatus();
+    yield = 3000; //IAllocationMock(MOCK_ALLOCATION).calculateStatus();
   }
 
   // #endregion POOL UPDATE

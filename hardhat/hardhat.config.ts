@@ -32,7 +32,7 @@ const mainnetGwei = 21;
 
 
 let defaultNetwork = 'localhost';
-defaultNetwork = 'mumbai';
+//defaultNetwork = 'mumbai';
 
 const config: HardhatUserConfig = {
   solidity: {

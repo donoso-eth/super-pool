@@ -11,7 +11,7 @@ import {DataTypes} from "./DataTypes.sol";
  */
 library Events {
 
-      event SupplyUpdate(DataTypes.Supplier supplier);
+      event SupplierUpdate(DataTypes.Supplier supplier);
 
       event PoolUpdate(DataTypes.PoolV2 pool);
 

@@ -15,11 +15,11 @@ import {IGelatoResolverV2} from '../interfaces/IGelatoResolver-V2.sol';
  */
 library DataTypes {
   struct SuperPoolInput {
-    address poolFactory;
+    address poolFactoryImpl;
+    ISTokenFactoryV2 sTokenImpl; 
     ISuperToken  superToken;
     address ops;
     IERC20 token;
-    ISTokenFactoryV2 sToken; 
     IPoolStrategyV2 poolStrategy;
     IGelatoResolverV2 gelatoResolver;
   }
