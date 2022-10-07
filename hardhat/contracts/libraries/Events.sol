@@ -11,8 +11,9 @@ import {DataTypes} from "./DataTypes.sol";
  */
 library Events {
 
-      event SupplyDepositStarted(address supplier, uint256 amount);
+      event SupplyUpdate(DataTypes.Supplier supplier);
 
-      event SupplyStreamStarted(address supplier, int96 flowRate);
+      event PoolUpdate(DataTypes.PoolV2 pool);
+
 
 }

@@ -66,7 +66,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   mapping(uint256 => address) supplierAdressById;
 
-  mapping(uint256 => DataTypes.PeriodV2) public periodByTimestamp;
+  mapping(uint256 => DataTypes.PoolV2) public periodByTimestamp;
 
   mapping(uint256 => uint256) public periodTimestampById;
 
@@ -113,7 +113,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
 
     lastPeriodTimestamp = block.timestamp;
-    periodByTimestamp[block.timestamp] = DataTypes.PeriodV2(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    periodByTimestamp[block.timestamp] = DataTypes.PoolV2(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     periodTimestampById[0] = block.timestamp;
 
@@ -144,11 +144,11 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     ///// initializators
   }
 
-  function getPeriod(uint256 _periodId) external view returns (DataTypes.PeriodV2 memory) {
+  function getPeriod(uint256 _periodId) external view returns (DataTypes.PoolV2 memory) {
     return periodByTimestamp[_periodId];
   }
 
-  function getLastPeriod() external view returns (DataTypes.PeriodV2 memory) {
+  function getLastPeriod() external view returns (DataTypes.PoolV2 memory) {
     return periodByTimestamp[lastPeriodTimestamp];
   }
 
@@ -598,9 +598,9 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   function _poolUpdateCurrentState() public {
     periodId.increment();
 
-    DataTypes.PeriodV2 memory currentPeriod = DataTypes.PeriodV2(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    DataTypes.PoolV2 memory currentPeriod = DataTypes.PoolV2(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-    DataTypes.PeriodV2 memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
+    DataTypes.PoolV2 memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
     uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
 
@@ -638,7 +638,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       uint256 periodYieldInFlowRateIndex
     )
   {
-    DataTypes.PeriodV2 storage lastPeriod = periodByTimestamp[lastPeriodTimestamp];
+    DataTypes.PoolV2 storage lastPeriod = periodByTimestamp[lastPeriodTimestamp];
 
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
 

@@ -117,7 +117,7 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
   }
 
   function totalSupply() public view override returns (uint256) {
-    DataTypes.PeriodV2 memory lastPeriod = pool.getLastPeriod();
+    DataTypes.PoolV2 memory lastPeriod = pool.getLastPeriod();
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
     uint256 _totalSupply = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan - uint96(lastPeriod.outFlowRate) * periodSpan;
 

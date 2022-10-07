@@ -1,7 +1,48 @@
-type Gravatar @entity {
+type Member @entity {
   id: ID!
-  owner: Bytes
-  displayName: String
-  imageUrl: String
-  accepted: Boolean
+  memberId: String!
+  member: String!
+  timestamp: BigInt!
+  initTimestamp: BigInt!
+  deposit: BigInt!
+  flow: BigInt!
+  flowGelatoId: String!
+  flowDuration: BigInt!
+  yieldAccrued: BigInt!
+  amountLocked: BigInt!
+  amountLoss: BigInt!
+  currentYield: BigInt!
+  memberSpan: BigInt!
+
+}
+
+type Pool @entity {
+  id: ID!
+  poolId: String!
+  timestamp: BigInt!
+  totalDeposit: BigInt!
+  totalFlow: BigInt!
+  totalYieldStake: BigInt!
+  depositIndex: BigInt!
+  flowIndex: BigInt!
+  totalStaked: BigInt!
+  totalDelegated: BigInt!
+  percentageLocked: BigInt!
+  totalYieldCredit: BigInt!
+  liquidatedIndex: BigInt!
+  totalLiquidated: BigInt!
+  nrMembers: BigInt!
+  apy: BigInt!
+  apySpan: BigInt!
+}
+
+
+
+type ChartMonth @entity {
+  id: ID!
+  month: String!
+  year: String!
+  timestamp: BigInt!
+  balance: BigInt!
+  staked: BigInt!
 }

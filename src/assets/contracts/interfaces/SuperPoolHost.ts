@@ -20,19 +20,43 @@ export type SuperPoolInputStruct = {
   poolFactory: string;
   superToken: string;
   ops: string;
+  token: string;
+  sToken: string;
+  poolStrategy: string;
+  gelatoResolver: string;
 };
 
-export type SuperPoolInputStructOutput = [string, string, string] & {
+export type SuperPoolInputStructOutput = [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string
+] & {
   poolFactory: string;
   superToken: string;
   ops: string;
+  token: string;
+  sToken: string;
+  poolStrategy: string;
+  gelatoResolver: string;
+};
+
+export type SupertokenResolverStruct = { pool: string; sToken: string };
+
+export type SupertokenResolverStructOutput = [string, string] & {
+  pool: string;
+  sToken: string;
 };
 
 export interface SuperPoolHostInterface extends utils.Interface {
   functions: {
     "_pcrTokensIssued()": FunctionFragment;
-    "createSuperPool((address,address,address))": FunctionFragment;
-    "poolAdressBySuperToken(address)": FunctionFragment;
+    "createSuperPool((address,address,address,address,address,address,address))": FunctionFragment;
+    "getResolverBySuperToken(address)": FunctionFragment;
+    "superTokenResolverByAddress(address)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -44,7 +68,11 @@ export interface SuperPoolHostInterface extends utils.Interface {
     values: [SuperPoolInputStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "poolAdressBySuperToken",
+    functionFragment: "getResolverBySuperToken",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "superTokenResolverByAddress",
     values: [string]
   ): string;
 
@@ -57,7 +85,11 @@ export interface SuperPoolHostInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "poolAdressBySuperToken",
+    functionFragment: "getResolverBySuperToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "superTokenResolverByAddress",
     data: BytesLike
   ): Result;
 
@@ -100,10 +132,19 @@ export interface SuperPoolHost extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    poolAdressBySuperToken(
+    getResolverBySuperToken(
+      superToken: string,
+      overrides?: CallOverrides
+    ): Promise<
+      [SupertokenResolverStructOutput] & {
+        resolver: SupertokenResolverStructOutput;
+      }
+    >;
+
+    superTokenResolverByAddress(
       arg0: string,
       overrides?: CallOverrides
-    ): Promise<[string]>;
+    ): Promise<[string, string] & { pool: string; sToken: string }>;
   };
 
   _pcrTokensIssued(overrides?: CallOverrides): Promise<BigNumber>;
@@ -113,10 +154,15 @@ export interface SuperPoolHost extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  poolAdressBySuperToken(
+  getResolverBySuperToken(
+    superToken: string,
+    overrides?: CallOverrides
+  ): Promise<SupertokenResolverStructOutput>;
+
+  superTokenResolverByAddress(
     arg0: string,
     overrides?: CallOverrides
-  ): Promise<string>;
+  ): Promise<[string, string] & { pool: string; sToken: string }>;
 
   callStatic: {
     _pcrTokensIssued(overrides?: CallOverrides): Promise<BigNumber>;
@@ -126,10 +172,15 @@ export interface SuperPoolHost extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    poolAdressBySuperToken(
+    getResolverBySuperToken(
+      superToken: string,
+      overrides?: CallOverrides
+    ): Promise<SupertokenResolverStructOutput>;
+
+    superTokenResolverByAddress(
       arg0: string,
       overrides?: CallOverrides
-    ): Promise<string>;
+    ): Promise<[string, string] & { pool: string; sToken: string }>;
   };
 
   filters: {};
@@ -142,7 +193,12 @@ export interface SuperPoolHost extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    poolAdressBySuperToken(
+    getResolverBySuperToken(
+      superToken: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    superTokenResolverByAddress(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -156,7 +212,12 @@ export interface SuperPoolHost extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    poolAdressBySuperToken(
+    getResolverBySuperToken(
+      superToken: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    superTokenResolverByAddress(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

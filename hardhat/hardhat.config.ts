@@ -31,11 +31,12 @@ if (existsSync('./typechain-types')) {
 const mainnetGwei = 21;
 
 
-const defaultNetwork = 'localhost';
+let defaultNetwork = 'localhost';
+defaultNetwork = 'mumbai';
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.8.4',
+    version: '0.8.17',
     settings: {
       optimizer: {
         enabled: true,
@@ -94,7 +95,7 @@ const config: HardhatUserConfig = {
           : [],
     },
     mumbai: {
-      url: `https://speedy-nodes-nyc.moralis.io/${MORALIS_ID}/polygon/mumbai`, // <---- YOUR MORALIS ID! (not limited to infura)
+      url: process.env.MUMBAI_URL || "", // <---- YOUR MORALIS ID! (not limited to infura)
       // `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_ID_MUMBAI}`
       gasPrice: 1000000000,
           accounts:
@@ -121,7 +122,7 @@ const config: HardhatUserConfig = {
     currency: 'USD',
   },
   etherscan: {
-    apiKey: process.env['ETHERSCAN_API_KEY'],
+    apiKey: process.env['MUMBAI_API_KEY'],
   },
   mocha: {
     timeout: 100000000

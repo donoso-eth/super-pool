@@ -34,6 +34,12 @@ library DataTypes {
     IGelatoResolverV2 gelatoResolver;
   }
 
+
+  struct SupertokenResolver {
+    address pool;
+    address sToken;
+  }
+
   struct Stream {
     int96 flow;
     bytes32 cancelTaskId;
@@ -86,7 +92,7 @@ library DataTypes {
     int96 outFlowAssetsRate;
   }
 
-  struct PeriodV2 {
+  struct PoolV2 {
     uint256 timestamp;
     uint256 deposit;
     int96 inFlowRate;

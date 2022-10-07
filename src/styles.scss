@@ -1,1 +1,51 @@
-/* You can add global styles to this file, and also import other style files */
+@import "../node_modules/primeng/resources/primeng.min.css";
+@import "../node_modules/primeflex/primeflex.scss";
+@import "../node_modules/primeicons/primeicons.css";
+@import "../node_modules/prismjs/themes/prism-coy.css";
+
+@import "assets/sass/layout/_variables";
+@import "assets/sass/layout/_layout";
+@import "assets/sass/overrides/_overrides";
+
+//  .p-tabview {
+// 	display: flex;
+// }
+//  .p-tabview-nav-container {
+// 	width: 300px;
+// }
+//  .p-tabview-nav-container {
+// 	flex: 1;
+// }
+.p-tabview-nav {
+
+    justify-content: center;
+}
+
+.supply .p-tabview .p-tabview-nav {
+    background: #eff3f8;;
+    border: 1px solid #ffffff;
+    border-width: 0 0 2px 0;
+}
+
+
+.supply  .p-tabview .p-tabview-panels {
+    background: #eff3f8;;
+
+}
+.supply .p-tabview .p-tabview-nav li .p-tabview-nav-link { 
+    background: #eff3f8;
+}
+.supply .p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+    background: #eff3f8;
+  
+}
+.display .card {
+    background: var(--surface-ground);;
+}
+.supply .card {
+    background: white;;
+}
+
+.supply .light {
+    display: none;
+}

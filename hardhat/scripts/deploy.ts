@@ -11,13 +11,13 @@ import config from "../hardhat.config";
 import { join } from "path";
 import { createHardhatAndFundPrivKeysFiles } from "../helpers/localAccounts";
 import * as hre from 'hardhat';
-import { STokenFactoryV2__factory, Events__factory,  PoolFactoryV1__factory,  SuperPoolHost__factory, PoolStrategyV2__factory, GelatoResolverV2__factory } from "../typechain-types";
+import { STokenFactoryV2__factory, Events__factory,   SuperPoolHost__factory, PoolStrategyV2__factory, GelatoResolverV2__factory, PoolFactoryV2__factory } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { utils } from "ethers";
 
 import { initEnv } from "../helpers/utils";
-import { SuperPoolInputStruct } from "../typechain-types/SuperPoolHost";
+import { SuperPoolInputStruct, SupertokenResolverStruct, SupertokenResolverStructOutput } from "../typechain-types/SuperPoolHost";
 import { SuperToken } from "@superfluid-finance/sdk-core";
 
 
@@ -73,13 +73,13 @@ if (networ_params == undefined) {
   
 
   //// DEPLOY POOLFACTORY
-  const poolFactoryImpl = await new PoolFactoryV1__factory(deployer).deploy()
+  const poolFactoryImpl = await new PoolFactoryV2__factory(deployer).deploy({gasLimit:10000000})
 
   let toDeployContract = contract_config['poolFactoryV2'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
-      abi:  PoolFactoryV1__factory.abi.concat(eventAbi),
+      abi:  PoolFactoryV2__factory.abi.concat(eventAbi),
       name: toDeployContract.name,
       address: poolFactoryImpl.address,
       network: network,
@@ -88,7 +88,7 @@ if (networ_params == undefined) {
 
   writeFileSync(
     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-    JSON.stringify(PoolFactoryV1__factory.abi.concat(eventAbi))
+    JSON.stringify(PoolFactoryV2__factory.abi.concat(eventAbi))
   );
 
   console.log(toDeployContract.name + ' Contract Deployed to:', poolFactoryImpl.address);
@@ -100,7 +100,7 @@ if (networ_params == undefined) {
 
 
   //// DEPLOY SToken
-  const sTokenFactoryImpl = await new  STokenFactoryV2__factory(deployer).deploy()
+  const sTokenFactoryImpl = await new  STokenFactoryV2__factory(deployer).deploy({gasLimit:10000000})
 
    toDeployContract = contract_config['sTokenFactoryV2'];
   writeFileSync(
@@ -123,9 +123,9 @@ if (networ_params == undefined) {
 
 
   //// DEPLOY PoolStrategy
-  const poolStrategy = await new  PoolStrategyV2__factory(deployer).deploy()
+  const poolStrategy = await new  PoolStrategyV2__factory(deployer).deploy({gasLimit:10000000})
 
-   toDeployContract = contract_config['sTokenFactoryV2'];
+   toDeployContract = contract_config['poolStrategyV2'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
@@ -145,10 +145,10 @@ if (networ_params == undefined) {
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
 
-    //// DEPLOY PoolStrategy
-    const gelatoResolver = await new  GelatoResolverV2__factory(deployer).deploy()
+    //// DEPLOY Gelato Resolver
+    const gelatoResolver = await new  GelatoResolverV2__factory(deployer).deploy({gasLimit:10000000})
 
-    toDeployContract = contract_config['sTokenFactoryV2'];
+    toDeployContract = contract_config['gelatoResolverV2'];
    writeFileSync(
      `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
      JSON.stringify({
@@ -171,7 +171,7 @@ if (networ_params == undefined) {
 
 
   //// DEPLOY SuperPoolHost
-  const superPoolHost = await new SuperPoolHost__factory(deployer).deploy(HOST)
+  const superPoolHost = await new SuperPoolHost__factory(deployer).deploy(HOST,{gasLimit:10000000})
 
    toDeployContract = contract_config['superPoolHost'];
   writeFileSync(
@@ -186,7 +186,7 @@ if (networ_params == undefined) {
 
   writeFileSync(
     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-    JSON.stringify(PoolFactoryV1__factory.abi.concat(eventAbi))
+    JSON.stringify(SuperPoolHost__factory.abi.concat(eventAbi))
   );
 
   console.log(toDeployContract.name + ' Contract Deployed to:', superPoolHost.address);
@@ -206,13 +206,22 @@ if (networ_params == undefined) {
     poolStrategy:poolStrategy.address,
     gelatoResolver:gelatoResolver.address,
   };
-  await superPoolHost.createSuperPool(superInputStruct);
-
-  let superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
+  await superPoolHost.createSuperPool(superInputStruct,{gasLimit:10000000});
 
 
+  let resolver: SupertokenResolverStructOutput = await superPoolHost.getResolverBySuperToken(SUPERTOKEN1);
 
 
+  await poolStrategy.initialize(GELATO_OPS,SUPERTOKEN1,TOKEN1,resolver.pool,5,{gasLimit:10000000});
+  await gelatoResolver.initialize(GELATO_OPS,resolver.pool,{gasLimit:10000000});
+
+
+
+ // let superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
+
+
+
+  console.log(resolver);
 
 
   ///// create the local accounts file

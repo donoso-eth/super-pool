@@ -20,14 +20,14 @@ contract SuperPoolHost {
 
   ISuperfluid host;
 
-  mapping(address => address) public poolAdressBySuperToken;
+  mapping(address => DataTypes.SupertokenResolver) public superTokenResolverByAddress;
 
   constructor(ISuperfluid _host) {
     host = _host;
   }
 
   function createSuperPool(DataTypes.SuperPoolInput memory superPoolInput) external {
-    require(poolAdressBySuperToken[address(superPoolInput.superToken)] == address(0), "POOL_EXISTS");
+    require(superTokenResolverByAddress[address(superPoolInput.superToken)].pool == address(0), "POOL_EXISTS");
 
     address poolContract = Clones.clone(superPoolInput.poolFactory);
 
@@ -57,17 +57,19 @@ contract SuperPoolHost {
     ISTokenFactoryV2(sTokenContract).initialize(IPoolFactoryV2(poolContract),superPoolInput.ops,"name","symbol");
 
     
-
-    poolAdressBySuperToken[address(superPoolInput.superToken)] = poolContract;
-
+    superTokenResolverByAddress[address(superPoolInput.superToken)].pool = poolContract;
+    superTokenResolverByAddress[address(superPoolInput.superToken)].sToken = sTokenContract ;
    
-
-
-
-    console.log(poolContract);
   }
 
   // ============= View Functions ============= ============= =============  //
+
+
+  function getResolverBySuperToken(address superToken) external view returns (DataTypes.SupertokenResolver memory resolver) {
+
+    resolver =  superTokenResolverByAddress[address(superToken)];
+
+  }
 
   // #region ViewFunctions
 
