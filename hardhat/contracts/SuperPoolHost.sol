@@ -49,7 +49,10 @@ contract SuperPoolHost {
       token: superPoolInput.token,
       sToken: ISTokenFactoryV2(sTokenContract),
       poolStrategy: superPoolInput.poolStrategy,
-      gelatoResolver: superPoolInput.gelatoResolver
+      gelatoResolver: superPoolInput.gelatoResolver,
+      settings: superPoolInput.settings
+      
+      
     });
 
     IPoolFactoryV2(poolContract).initialize(poolFactoryInitializer);

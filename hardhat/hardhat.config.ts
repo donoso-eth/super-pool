@@ -32,7 +32,7 @@ const mainnetGwei = 21;
 
 
 let defaultNetwork = 'localhost';
-//defaultNetwork = 'mumbai';
+//defaultNetwork = 'goerli';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -49,10 +49,9 @@ const config: HardhatUserConfig = {
     hardhat: {
       allowUnlimitedContractSize: true,
       forking: {
-        //your rpc url here, in this case for Mumbai
-        
-        url: process.env.MUMBAI_URL || "",
-        blockNumber: 27976990 
+        url: `https://goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e`,
+        blockNumber: 7704180
+      
       },
     },
     localhost: {
@@ -70,8 +69,7 @@ const config: HardhatUserConfig = {
           : [],
     },
     goerli: {
-      url: `https://goerli.infura.io/v3/${INFURA_ID}`, // <---- YOUR INFURA ID! (or it won't work)
-      // `https://speedy-nodes-nyc.moralis.io/${MORALIS_ID}/eth/goerli`
+      url: `https://goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e`, // <---- YOUR INFURA ID! (or it won't work)
           accounts:
         process.env['DEPLOYER_KEY'] !== undefined
           ? [process.env['DEPLOYER_KEY']]
@@ -112,17 +110,13 @@ const config: HardhatUserConfig = {
           ? [process.env['DEPLOYER_KEY']]
           : [],
     },
-    // ropsten: {
-    //   url: process.env["ROPSTEN_URL"] || "",
-    //   accounts: process.env["DEPLOYER_KEY"] !== undefined ? [process.env["DEPLOYER_KEY"]] : [],
-    // },
   },
   gasReporter: {
     enabled: process.env['REPORT_GAS'] !== undefined,
     currency: 'USD',
   },
   etherscan: {
-    apiKey: process.env['MUMBAI_API_KEY'],
+    apiKey: process.env['ETHERSCAN_API_KEY'],
   },
   mocha: {
     timeout: 100000000

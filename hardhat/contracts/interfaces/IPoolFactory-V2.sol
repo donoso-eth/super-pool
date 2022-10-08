@@ -38,7 +38,7 @@ function supplierUpdateCurrentState(address _supplier) external;
 
 
 
-function getLastPeriod() external view returns (DataTypes.PoolV2 memory);
+function getLastPool() external view returns (DataTypes.PoolV2 memory);
 
 function transfer(uint256 _amount, address _paymentToken) external;
 

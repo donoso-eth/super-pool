@@ -22,7 +22,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     IERC20 token;
     bytes32 depositTaksId;
     IPoolFactoryV2 pool;
-    uint256 poolBuffer;
+    uint256 POOL_BUFFER;
 
     address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -35,13 +35,13 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     ISuperToken _superToken, 
     IERC20 _token, 
     IPoolFactoryV2 _pool,
-    uint256 _poolBuffer) external initializer {
+    uint256 _POOL_BUFFER) external initializer {
     
     ops = _ops;
     superToken = _superToken;
     token = _token;
     pool = _pool;
-    poolBuffer = _poolBuffer;
+    POOL_BUFFER = _POOL_BUFFER;
 
   }
 
@@ -72,7 +72,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   }
 
   function withdraw (uint256 requiredAmount) override  external onlyPool {
-    int256 availableBalance = int256(getBalanceSuperToken()) - int256(poolBuffer);
+    int256 availableBalance = int256(getBalanceSuperToken()) - int256(POOL_BUFFER);
     uint256 withdrawalAmount;
     if (availableBalance <= 0) {
       withdrawalAmount = uint256(-availableBalance) + requiredAmount;
@@ -104,7 +104,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   function checkerDeposit() external view returns (bool canExec, bytes memory execPayload) {
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
 
-    canExec = uint256(balance) - poolBuffer >= 0.5 ether;
+    canExec = uint256(balance) - POOL_BUFFER >= 0.5 ether;
 
     execPayload = abi.encodeWithSelector(this.depositTask.selector);
   }
@@ -116,7 +116,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
 
     console.log(215, uint256(balance));
-    uint256 amountToDeposit = uint256(balance) - poolBuffer;
+    uint256 amountToDeposit = uint256(balance) - POOL_BUFFER;
     console.log(216, amountToDeposit);
     require(amountToDeposit >= 0.5 ether, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
 

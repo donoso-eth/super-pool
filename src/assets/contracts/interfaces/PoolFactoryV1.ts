@@ -111,7 +111,7 @@ export interface PoolFactoryV1Interface extends utils.Interface {
     "decimals()": FunctionFragment;
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "gelato()": FunctionFragment;
-    "getPeriod(uint256)": FunctionFragment;
+    "getPool(uint256)": FunctionFragment;
     "host()": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
     "initialize((address,address,address))": FunctionFragment;
@@ -121,9 +121,9 @@ export interface PoolFactoryV1Interface extends utils.Interface {
     "name()": FunctionFragment;
     "ops()": FunctionFragment;
     "parseLoanData(bytes)": FunctionFragment;
-    "periodByTimestamp(uint256)": FunctionFragment;
+    "poolByTimestamp(uint256)": FunctionFragment;
     "periodId()": FunctionFragment;
-    "periodTimestampById(uint256)": FunctionFragment;
+    "poolTimestampById(uint256)": FunctionFragment;
     "redeemDeposit(uint256)": FunctionFragment;
     "redeemFlow(int96,uint256)": FunctionFragment;
     "redeemFlowStop()": FunctionFragment;
@@ -206,7 +206,7 @@ export interface PoolFactoryV1Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "gelato", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getPeriod",
+    functionFragment: "getPool",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "host", values?: undefined): string;
@@ -237,12 +237,12 @@ export interface PoolFactoryV1Interface extends utils.Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "periodByTimestamp",
+    functionFragment: "poolByTimestamp",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "periodId", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "periodTimestampById",
+    functionFragment: "poolTimestampById",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -349,7 +349,7 @@ export interface PoolFactoryV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "gelato", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getPeriod", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getPool", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "host", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "increaseAllowance",
@@ -372,12 +372,12 @@ export interface PoolFactoryV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "periodByTimestamp",
+    functionFragment: "poolByTimestamp",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "periodId", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "periodTimestampById",
+    functionFragment: "poolTimestampById",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -587,7 +587,7 @@ export interface PoolFactoryV1 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<[string]>;
 
-    getPeriod(
+    getPool(
       _periodId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[PeriodStructOutput]>;
@@ -625,7 +625,7 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { endSeconds: BigNumber }>;
 
-    periodByTimestamp(
+    poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
@@ -662,7 +662,7 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { _value: BigNumber }>;
 
-    periodTimestampById(
+    poolTimestampById(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -875,7 +875,7 @@ export interface PoolFactoryV1 extends BaseContract {
 
   gelato(overrides?: CallOverrides): Promise<string>;
 
-  getPeriod(
+  getPool(
     _periodId: BigNumberish,
     overrides?: CallOverrides
   ): Promise<PeriodStructOutput>;
@@ -910,7 +910,7 @@ export interface PoolFactoryV1 extends BaseContract {
 
   parseLoanData(data: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
-  periodByTimestamp(
+  poolByTimestamp(
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<
@@ -945,7 +945,7 @@ export interface PoolFactoryV1 extends BaseContract {
 
   periodId(overrides?: CallOverrides): Promise<BigNumber>;
 
-  periodTimestampById(
+  poolTimestampById(
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -1149,7 +1149,7 @@ export interface PoolFactoryV1 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<string>;
 
-    getPeriod(
+    getPool(
       _periodId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PeriodStructOutput>;
@@ -1182,7 +1182,7 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    periodByTimestamp(
+    poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
@@ -1217,7 +1217,7 @@ export interface PoolFactoryV1 extends BaseContract {
 
     periodId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    periodTimestampById(
+    poolTimestampById(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1452,7 +1452,7 @@ export interface PoolFactoryV1 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getPeriod(
+    getPool(
       _periodId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1490,14 +1490,14 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    periodByTimestamp(
+    poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     periodId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    periodTimestampById(
+    poolTimestampById(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1688,7 +1688,7 @@ export interface PoolFactoryV1 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getPeriod(
+    getPool(
       _periodId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1728,14 +1728,14 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    periodByTimestamp(
+    poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     periodId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    periodTimestampById(
+    poolTimestampById(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

@@ -64,9 +64,9 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
   mapping(uint256 => address) supplierAdressById;
 
-  mapping(uint256 => DataTypes.Period) public periodByTimestamp;
+  mapping(uint256 => DataTypes.Period) public poolByTimestamp;
 
-  mapping(uint256 => uint256) public periodTimestampById;
+  mapping(uint256 => uint256) public poolTimestampById;
 
   address mockYieldSupplier;
 
@@ -98,9 +98,9 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     __ERC20_init("sTK", "STOKE");
 
     lastPeriodTimestamp = block.timestamp;
-    periodByTimestamp[block.timestamp] = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    poolByTimestamp[block.timestamp] = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-    periodTimestampById[0] = block.timestamp;
+    poolTimestampById[0] = block.timestamp;
 
     //// super app && superfluid
     host = poolFactoryInitializer.host;
@@ -122,8 +122,8 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     ///// initializators
   }
 
-  function getPeriod(uint256 _periodId) public view returns (DataTypes.Period memory) {
-    return periodByTimestamp[_periodId];
+  function getPool(uint256 _periodId) public view returns (DataTypes.Period memory) {
+    return poolByTimestamp[_periodId];
   }
 
   function mockPoolUpdate() public {
@@ -137,7 +137,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
   function getMockYield() internal {
     uint256 periodSpan = block.timestamp - lastPeriodTimestamp;
-    uint256 amountToBeTransfered = periodSpan * periodByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
+    uint256 amountToBeTransfered = periodSpan * poolByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
     if (mockYieldSupplier != address(0)) {
       IERC20(superToken).transferFrom(mockYieldSupplier, address(this), amountToBeTransfered);
     }
@@ -190,16 +190,16 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     _updateSupplierDeposit(from, 0, amount, outAssets);
 
-    // periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + amount;
-    // periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + outAssets * PRECISSION;
+    // poolByTimestamp[block.timestamp].totalShares = poolByTimestamp[block.timestamp].totalShares + amount;
+    // poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + outAssets * PRECISSION;
 
     _supplierUpdateCurrentState(to);
 
     DataTypes.Supplier storage supplierTo = _getSupplier(to);
 
     // supplierTo.shares = supplierTo.shares + amount;
-    supplierTo.deposit.amount = supplierTo.deposit.amount + (outAssets * PRECISSION) - (amount * PRECISSION);
-    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + (outAssets * PRECISSION) - (amount * PRECISSION);
+    supplierTo.deposit = supplierTo.deposit + (outAssets * PRECISSION) - (amount * PRECISSION);
+    poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + (outAssets * PRECISSION) - (amount * PRECISSION);
     _updateSupplierDeposit(to, amount, 0, 0);
 
     emit Transfer(from, to, amount);
@@ -208,7 +208,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   }
 
   function totalSupply() public view override returns (uint256) {
-    DataTypes.Period memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
+    DataTypes.Period memory lastPeriod = poolByTimestamp[lastPeriodTimestamp];
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
     uint256 _totalSupply = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan - uint96(lastPeriod.outFlowRate) * periodSpan;
 
@@ -411,7 +411,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
-    uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.amount.div(PRECISSION);
+    uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.div(PRECISSION);
     uint256 yieldInFlow = uint96(supplier.inStream.flow) * yieldInFlowRateIndex;
     uint256 yieldOutFlow = (yieldOutFlowRateIndex) * (uint256(uint96(supplier.outStream.flow))).div(PRECISSION);
 
@@ -431,11 +431,12 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       supplier.timestamp = block.timestamp;
       supplierId.increment();
 
-      supplier.supplierId = supplierId.current();
+      
+      supplier.id = supplierId.current();
 
-      supplierAdressById[supplier.supplierId] = _supplier;
+      supplierAdressById[supplier.id] = _supplier;
 
-      activeSuppliers.push(supplier.supplierId);
+      activeSuppliers.push(supplier.id);
     }
 
     supplier.eventId += 1;
@@ -456,9 +457,9 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (netFlow >= 0) {
-      realtimeBalance = yieldSupplier + (supplier.deposit.amount) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+      realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else {
-      realtimeBalance = yieldSupplier + (supplier.deposit.amount) - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+      realtimeBalance = yieldSupplier + (supplier.deposit) - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     }
   }
 
@@ -471,30 +472,30 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
       supplier.shares = supplierShares;
 
-      int256 supplierDepositUpdate = int256(supplierBalance) - int256(supplier.deposit.amount);
+      int256 supplierDepositUpdate = int256(supplierBalance) - int256(supplier.deposit);
 
       uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
 
       int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
       if (netFlow >= 0) {
-        periodByTimestamp[block.timestamp].depositFromInFlowRate =
-          periodByTimestamp[block.timestamp].depositFromInFlowRate -
+        poolByTimestamp[block.timestamp].depositFromInFlowRate =
+          poolByTimestamp[block.timestamp].depositFromInFlowRate -
           uint96(netFlow) *
           (block.timestamp - supplier.timestamp) *
           PRECISSION;
-        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + uint256(supplierDepositUpdate);
+        poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + uint256(supplierDepositUpdate);
       } else if (netFlow < 0) {
-        periodByTimestamp[block.timestamp].depositFromOutFlowRate =
-          periodByTimestamp[block.timestamp].depositFromOutFlowRate +
+        poolByTimestamp[block.timestamp].depositFromOutFlowRate =
+          poolByTimestamp[block.timestamp].depositFromOutFlowRate +
           uint96(supplier.outAssets.flow) *
           (block.timestamp - supplier.timestamp) *
           PRECISSION -
-          supplier.deposit.amount;
+          supplier.deposit;
 
-        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + supplierBalance;
+        poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + supplierBalance;
       }
-      supplier.deposit.amount = supplierBalance;
+      supplier.deposit = supplierBalance;
       supplier.timestamp = block.timestamp;
     }
   }
@@ -514,18 +515,18 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     supplier.shares = supplier.shares + inDeposit - outDeposit;
 
-    supplier.deposit.amount = supplier.deposit.amount + inDeposit * PRECISSION - outAssets * PRECISSION;
+    supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
 
-    periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares + inDeposit - outDeposit;
-    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
+    poolByTimestamp[block.timestamp].totalShares = poolByTimestamp[block.timestamp].totalShares + inDeposit - outDeposit;
+    poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
 
     if (netFlow < 0) {
-      uint256 total = supplier.deposit.amount; //_getSupplierBalance(_supplier);
+      uint256 total = supplier.deposit; //_getSupplierBalance(_supplier);
       uint256 factor = total.div(supplier.shares);
       int96 updatedOutAssets = int96(int256(factor.mul(uint96(supplier.outStream.flow)).div(PRECISSION)));
-      periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + updatedOutAssets;
-      periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
-      periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
+      poolByTimestamp[block.timestamp].outFlowAssetsRate = poolByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + updatedOutAssets;
+      poolByTimestamp[block.timestamp].depositFromOutFlowRate = poolByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit;
+      poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - supplier.deposit;
       _outStreamHasChanged(_supplier, -netFlow, updatedOutAssets);
     }
   }
@@ -549,11 +550,11 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
 
       if (newNetFlow >= 0) {
-        periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow;
+        poolByTimestamp[block.timestamp].outFlowRate = poolByTimestamp[block.timestamp].outFlowRate + currentNetFlow;
 
-        periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate + newNetFlow;
+        poolByTimestamp[block.timestamp].inFlowRate = poolByTimestamp[block.timestamp].inFlowRate + newNetFlow;
 
-        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
+        poolByTimestamp[block.timestamp].outFlowAssetsRate = poolByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
 
         ///// refactor logic
         if (newNetFlow == 0) {
@@ -566,13 +567,13 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
         supplier.outAssets.cancelTaskId = bytes32(0);
         supplier.outAssets.flow = 0;
       } else {
-        uint256 factor = supplier.deposit.amount.div(supplier.shares);
+        uint256 factor = supplier.deposit.div(supplier.shares);
         int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow))).div(PRECISSION)));
-        periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
-        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + outAssets;
-        periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
+        poolByTimestamp[block.timestamp].outFlowRate = poolByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
+        poolByTimestamp[block.timestamp].outFlowAssetsRate = poolByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + outAssets;
+        poolByTimestamp[block.timestamp].depositFromOutFlowRate = poolByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit;
 
-        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
+        poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - supplier.deposit;
 
         //  supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
         //// creatre timed task
@@ -582,21 +583,21 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW THE SAME
 
       if (newNetFlow >= 0) {
-        periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate - currentNetFlow + inFlow;
+        poolByTimestamp[block.timestamp].inFlowRate = poolByTimestamp[block.timestamp].inFlowRate - currentNetFlow + inFlow;
       } else {
         /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW NEGATIVE
 
-        uint256 factor = supplier.deposit.amount.div(supplier.shares);
+        uint256 factor = supplier.deposit.div(supplier.shares);
 
         int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow))).div(PRECISSION)));
 
-        periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate + outAssets;
+        poolByTimestamp[block.timestamp].outFlowAssetsRate = poolByTimestamp[block.timestamp].outFlowAssetsRate + outAssets;
 
-        periodByTimestamp[block.timestamp].outFlowRate += -newNetFlow;
-        periodByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
+        poolByTimestamp[block.timestamp].outFlowRate += -newNetFlow;
+        poolByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
 
-        periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
-        periodByTimestamp[block.timestamp].depositFromOutFlowRate = periodByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit.amount;
+        poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - supplier.deposit;
+        poolByTimestamp[block.timestamp].depositFromOutFlowRate = poolByTimestamp[block.timestamp].depositFromOutFlowRate + supplier.deposit;
 
         _outStreamHasChanged(_supplier, -newNetFlow, outAssets);
       }
@@ -618,22 +619,22 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (netFlow >= 0) {
-      uint256 yieldFromDeposit = (supplier.deposit.amount * (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex)).div(
+      uint256 yieldFromDeposit = (supplier.deposit * (poolByTimestamp[lastPeriodTimestamp].yieldTokenIndex - poolByTimestamp[lastTimestamp].yieldTokenIndex)).div(
         PRECISSION
       );
 
       ///// Yield from flow
-      uint256 yieldFromFlow = uint96(netFlow) * (periodByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - periodByTimestamp[lastTimestamp].yieldInFlowRateIndex);
+      uint256 yieldFromFlow = uint96(netFlow) * (poolByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - poolByTimestamp[lastTimestamp].yieldInFlowRateIndex);
 
       yieldSupplier = yieldFromDeposit + yieldFromFlow;
     } else {
-      //  uint256 yieldFromDeposit = ((supplier.deposit.amount - (uint96(supplier.outAssets.flow) * (lastPeriodTimestamp - lastTimestamp) * PRECISSION)) *
-      // (periodByTimestamp[lastPeriodTimestamp].yieldTokenIndex - periodByTimestamp[lastTimestamp].yieldTokenIndex)).div(PRECISSION);
+      //  uint256 yieldFromDeposit = ((supplier.deposit - (uint96(supplier.outAssets.flow) * (lastPeriodTimestamp - lastTimestamp) * PRECISSION)) *
+      // (poolByTimestamp[lastPeriodTimestamp].yieldTokenIndex - poolByTimestamp[lastTimestamp].yieldTokenIndex)).div(PRECISSION);
 
       ///// Yield from outFlow
 
       uint256 yieldFromOutFlow = uint96(supplier.outAssets.flow) *
-        (periodByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - periodByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
+        (poolByTimestamp[lastPeriodTimestamp].yieldOutFlowRateIndex - poolByTimestamp[lastTimestamp].yieldOutFlowRateIndex);
 
       yieldSupplier = yieldFromOutFlow; //+ yieldFromDeposit;
     }
@@ -678,22 +679,22 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
-    periodByTimestamp[block.timestamp].totalShares = periodByTimestamp[block.timestamp].totalShares - supplier.shares;
-    periodByTimestamp[block.timestamp].deposit = periodByTimestamp[block.timestamp].deposit - supplier.deposit.amount;
+    poolByTimestamp[block.timestamp].totalShares = poolByTimestamp[block.timestamp].totalShares - supplier.shares;
+    poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - supplier.deposit;
 
-    ISuperToken(superToken).send(_supplier, supplier.deposit.amount.div(PRECISSION), "0x");
+    ISuperToken(superToken).send(_supplier, supplier.deposit.div(PRECISSION), "0x");
 
     supplier.shares = 0;
-    supplier.deposit.amount = 0;
+    supplier.deposit = 0;
 
     if (supplier.outStream.flow > 0) {
-      periodByTimestamp[block.timestamp].outFlowRate = periodByTimestamp[block.timestamp].outFlowRate - supplier.outStream.flow;
-      periodByTimestamp[block.timestamp].outFlowAssetsRate = periodByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
+      poolByTimestamp[block.timestamp].outFlowRate = poolByTimestamp[block.timestamp].outFlowRate - supplier.outStream.flow;
+      poolByTimestamp[block.timestamp].outFlowAssetsRate = poolByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow;
       _cfaLib.deleteFlow(address(this), _supplier, superToken);
       supplier.outAssets = DataTypes.OutAssets(0, bytes32(0),0,0, bytes32(0));
       supplier.outStream = DataTypes.Stream(0, bytes32(0));
     } else if (supplier.inStream.flow > 0 && closeInStream == true) {
-      periodByTimestamp[block.timestamp].inFlowRate = periodByTimestamp[block.timestamp].inFlowRate - supplier.inStream.flow;
+      poolByTimestamp[block.timestamp].inFlowRate = poolByTimestamp[block.timestamp].inFlowRate - supplier.inStream.flow;
       _cfaLib.deleteFlow(_supplier, address(this), superToken);
       supplier.inStream = DataTypes.Stream(0, bytes32(0));
     }
@@ -716,7 +717,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     DataTypes.Period memory currentPeriod = DataTypes.Period(block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-    DataTypes.Period memory lastPeriod = periodByTimestamp[lastPeriodTimestamp];
+    DataTypes.Period memory lastPeriod = poolByTimestamp[lastPeriodTimestamp];
 
     uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
 
@@ -741,11 +742,11 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
 
     currentPeriod.timestamp = block.timestamp;
 
-    periodByTimestamp[block.timestamp] = currentPeriod;
+    poolByTimestamp[block.timestamp] = currentPeriod;
 
     lastPeriodTimestamp = block.timestamp;
 
-    periodTimestampById[periodId.current()] = block.timestamp;
+    poolTimestampById[periodId.current()] = block.timestamp;
 
     console.log("pool_update");
   }
@@ -759,7 +760,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
       uint256 periodYieldOutFlowRateIndex
     )
   {
-    DataTypes.Period storage lastPeriod = periodByTimestamp[lastPeriodTimestamp];
+    DataTypes.Period storage lastPeriod = poolByTimestamp[lastPeriodTimestamp];
 
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
 
@@ -794,7 +795,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   }
 
   function _calculatePoolYieldPeriod() internal view returns (uint256 yield) {
-    yield = (block.timestamp - lastPeriodTimestamp) * periodByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
+    yield = (block.timestamp - lastPeriodTimestamp) * poolByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
   }
 
   /**
@@ -806,7 +807,7 @@ contract PoolFactoryV1 is ERC20Upgradeable, SuperAppBase, IERC777Recipient {
   function _updateYield(uint256 yieldAmountPerSec) internal {
     _poolUpdateCurrentState();
 
-    periodByTimestamp[block.timestamp].yieldAccruedSec = yieldAmountPerSec;
+    poolByTimestamp[block.timestamp].yieldAccruedSec = yieldAmountPerSec;
 
     //   currentPeriod.yield = currentPeriod.yield + yieldAmount;
   }

@@ -8,5 +8,6 @@
     "ctor": ["_pool:address", "_ops:address"]
   },
   "poolStrategyV2": { "name": "PoolStrategyV2", "artifactsPath": "PoolStrategy-V2.sol/PoolStrategyV2.json", "jsonName": "pool_strategy_v2", "ctor": [] },
-  "sTokenFactoryV2": { "name": "STokenFactoryV2", "artifactsPath": "STokenFactory-V2.sol/STokenFactoryV2.json", "jsonName": "s_token_factory_v2", "ctor": [] }
+  "sTokenFactoryV2": { "name": "STokenFactoryV2", "artifactsPath": "STokenFactory-V2.sol/STokenFactoryV2.json", "jsonName": "s_token_factory_v2", "ctor": [] },
+  "settingsV2": { "name": "SettingsV2", "artifactsPath": "Settings-V2.sol/SettingsV2.json", "jsonName": "settings_v2", "ctor": [] }
 }

@@ -20,7 +20,7 @@ import {
 import { BigNumber, utils } from 'ethers';
 import {
   fromBnToNumber,
-  getPeriod,
+  getPool,
   getTimestamp,
   increaseBlockTime,
   IPERIOD,

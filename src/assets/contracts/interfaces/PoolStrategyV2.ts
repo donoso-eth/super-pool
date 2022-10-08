@@ -162,7 +162,7 @@ export interface PoolStrategyV2 extends BaseContract {
       _superToken: string,
       _token: string,
       _pool: string,
-      _poolBuffer: BigNumberish,
+      _POOL_BUFFER: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -205,7 +205,7 @@ export interface PoolStrategyV2 extends BaseContract {
     _superToken: string,
     _token: string,
     _pool: string,
-    _poolBuffer: BigNumberish,
+    _POOL_BUFFER: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -241,7 +241,7 @@ export interface PoolStrategyV2 extends BaseContract {
       _superToken: string,
       _token: string,
       _pool: string,
-      _poolBuffer: BigNumberish,
+      _POOL_BUFFER: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -285,7 +285,7 @@ export interface PoolStrategyV2 extends BaseContract {
       _superToken: string,
       _token: string,
       _pool: string,
-      _poolBuffer: BigNumberish,
+      _POOL_BUFFER: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -329,7 +329,7 @@ export interface PoolStrategyV2 extends BaseContract {
       _superToken: string,
       _token: string,
       _pool: string,
-      _poolBuffer: BigNumberish,
+      _POOL_BUFFER: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

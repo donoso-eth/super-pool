@@ -17,13 +17,14 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
 export type SuperPoolInputStruct = {
-  poolFactory: string;
+  poolFactoryImpl: string;
+  sTokenImpl: string;
   superToken: string;
   ops: string;
   token: string;
-  sToken: string;
   poolStrategy: string;
   gelatoResolver: string;
+  settings: string;
 };
 
 export type SuperPoolInputStructOutput = [
@@ -33,15 +34,17 @@ export type SuperPoolInputStructOutput = [
   string,
   string,
   string,
+  string,
   string
 ] & {
-  poolFactory: string;
+  poolFactoryImpl: string;
+  sTokenImpl: string;
   superToken: string;
   ops: string;
   token: string;
-  sToken: string;
   poolStrategy: string;
   gelatoResolver: string;
+  settings: string;
 };
 
 export type SupertokenResolverStruct = { pool: string; sToken: string };
@@ -54,7 +57,7 @@ export type SupertokenResolverStructOutput = [string, string] & {
 export interface SuperPoolHostInterface extends utils.Interface {
   functions: {
     "_pcrTokensIssued()": FunctionFragment;
-    "createSuperPool((address,address,address,address,address,address,address))": FunctionFragment;
+    "createSuperPool((address,address,address,address,address,address,address,address))": FunctionFragment;
     "getResolverBySuperToken(address)": FunctionFragment;
     "superTokenResolverByAddress(address)": FunctionFragment;
   };

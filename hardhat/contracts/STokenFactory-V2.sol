@@ -76,9 +76,9 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (netFlow >= 0) {
-      realtimeBalance = yieldSupplier + (supplier.deposit.amount) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+      realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else {
-      realtimeBalance = yieldSupplier + (supplier.deposit.amount) - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+      realtimeBalance = yieldSupplier + (supplier.deposit) - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     }
 }
 
@@ -117,7 +117,7 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
   }
 
   function totalSupply() public view override returns (uint256) {
-    DataTypes.PoolV2 memory lastPeriod = pool.getLastPeriod();
+    DataTypes.PoolV2 memory lastPeriod = pool.getLastPool();
     uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
     uint256 _totalSupply = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan - uint96(lastPeriod.outFlowRate) * periodSpan;
 

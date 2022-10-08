@@ -6,6 +6,7 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 import {ISTokenFactoryV2}  from '../interfaces/ISTokenFactory-V2.sol';
 import {IPoolStrategyV2} from '../interfaces/IPoolStrategy-V2.sol';
 import {IGelatoResolverV2} from '../interfaces/IGelatoResolver-V2.sol'; 
+import {ISettingsV2} from '../interfaces/ISettings-V2.sol'; 
 
 /**
  * @title DataTypes
@@ -22,6 +23,7 @@ library DataTypes {
     IERC20 token;
     IPoolStrategyV2 poolStrategy;
     IGelatoResolverV2 gelatoResolver;
+    ISettingsV2 settings;
   }
 
   struct PoolFactoryInitializer {
@@ -32,6 +34,7 @@ library DataTypes {
     ISTokenFactoryV2 sToken; 
     IPoolStrategyV2 poolStrategy;
     IGelatoResolverV2 gelatoResolver;
+    ISettingsV2 settings;
   }
 
 
@@ -56,24 +59,20 @@ library DataTypes {
 
   }
 
-  struct Deposit {
-    uint256 amount;
-    uint256 totalSupplied;
-  
-  }
 
   struct Supplier {
+    uint256 id;
     address supplier;
-    uint256 supplierId;
     uint256 cumulatedYield;
     Stream inStream;
     Stream outStream;
     OutAssets outAssets;
-    Deposit deposit;
+    uint256 deposit;
     uint256 shares;
     uint256 timestamp;
     uint256 createdTimestamp;
     uint256 eventId;
+    APY apy;
 
   }
 
@@ -92,17 +91,32 @@ library DataTypes {
     int96 outFlowAssetsRate;
   }
 
+  struct APY {
+    uint256 span;
+    uint256 apy;
+  }
+
   struct PoolV2 {
+    uint256 id;
     uint256 timestamp;
+        
+    uint256 totalShares;
     uint256 deposit;
+    uint256 depositFromInFlowRate;
+
     int96 inFlowRate;
     int96 outFlowRate;
-    uint256 depositFromInFlowRate;
+    int96 outFlowAssetsRate;
+
     uint256 yieldTokenIndex;
     uint256 yieldInFlowRateIndex;
-    uint256 totalShares;
-    int96 outFlowAssetsRate;
+
+ 
     uint256 yieldAccrued;
+    uint256 yieldSnapshot;
+    uint256 totalYield;
+    APY apy;
+
   }
 
 }

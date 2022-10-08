@@ -17,17 +17,28 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
+export type APYStruct = { span: BigNumberish; apy: BigNumberish };
+
+export type APYStructOutput = [BigNumber, BigNumber] & {
+  span: BigNumber;
+  apy: BigNumber;
+};
+
 export type PoolV2Struct = {
+  id: BigNumberish;
   timestamp: BigNumberish;
+  totalShares: BigNumberish;
   deposit: BigNumberish;
+  depositFromInFlowRate: BigNumberish;
   inFlowRate: BigNumberish;
   outFlowRate: BigNumberish;
-  depositFromInFlowRate: BigNumberish;
+  outFlowAssetsRate: BigNumberish;
   yieldTokenIndex: BigNumberish;
   yieldInFlowRateIndex: BigNumberish;
-  totalShares: BigNumberish;
-  outFlowAssetsRate: BigNumberish;
   yieldAccrued: BigNumberish;
+  yieldSnapshot: BigNumberish;
+  totalYield: BigNumberish;
+  apy: APYStruct;
 };
 
 export type PoolV2StructOutput = [
@@ -40,18 +51,26 @@ export type PoolV2StructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
-  BigNumber
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  APYStructOutput
 ] & {
+  id: BigNumber;
   timestamp: BigNumber;
+  totalShares: BigNumber;
   deposit: BigNumber;
+  depositFromInFlowRate: BigNumber;
   inFlowRate: BigNumber;
   outFlowRate: BigNumber;
-  depositFromInFlowRate: BigNumber;
+  outFlowAssetsRate: BigNumber;
   yieldTokenIndex: BigNumber;
   yieldInFlowRateIndex: BigNumber;
-  totalShares: BigNumber;
-  outFlowAssetsRate: BigNumber;
   yieldAccrued: BigNumber;
+  yieldSnapshot: BigNumber;
+  totalYield: BigNumber;
+  apy: APYStructOutput;
 };
 
 export type StreamStruct = { flow: BigNumberish; cancelTaskId: BytesLike };
@@ -83,54 +102,47 @@ export type OutAssetsStructOutput = [
   cancelWithdrawId: string;
 };
 
-export type DepositStruct = {
-  amount: BigNumberish;
-  totalSupplied: BigNumberish;
-};
-
-export type DepositStructOutput = [BigNumber, BigNumber] & {
-  amount: BigNumber;
-  totalSupplied: BigNumber;
-};
-
 export type SupplierStruct = {
+  id: BigNumberish;
   supplier: string;
-  supplierId: BigNumberish;
   cumulatedYield: BigNumberish;
   inStream: StreamStruct;
   outStream: StreamStruct;
   outAssets: OutAssetsStruct;
-  deposit: DepositStruct;
+  deposit: BigNumberish;
   shares: BigNumberish;
   timestamp: BigNumberish;
   createdTimestamp: BigNumberish;
   eventId: BigNumberish;
+  apy: APYStruct;
 };
 
 export type SupplierStructOutput = [
-  string,
   BigNumber,
+  string,
   BigNumber,
   StreamStructOutput,
   StreamStructOutput,
   OutAssetsStructOutput,
-  DepositStructOutput,
   BigNumber,
   BigNumber,
   BigNumber,
-  BigNumber
+  BigNumber,
+  BigNumber,
+  APYStructOutput
 ] & {
+  id: BigNumber;
   supplier: string;
-  supplierId: BigNumber;
   cumulatedYield: BigNumber;
   inStream: StreamStructOutput;
   outStream: StreamStructOutput;
   outAssets: OutAssetsStructOutput;
-  deposit: DepositStructOutput;
+  deposit: BigNumber;
   shares: BigNumber;
   timestamp: BigNumber;
   createdTimestamp: BigNumber;
   eventId: BigNumber;
+  apy: APYStructOutput;
 };
 
 export type PoolFactoryInitializerStruct = {
@@ -141,9 +153,11 @@ export type PoolFactoryInitializerStruct = {
   sToken: string;
   poolStrategy: string;
   gelatoResolver: string;
+  settings: string;
 };
 
 export type PoolFactoryInitializerStructOutput = [
+  string,
   string,
   string,
   string,
@@ -159,6 +173,7 @@ export type PoolFactoryInitializerStructOutput = [
   sToken: string;
   poolStrategy: string;
   gelatoResolver: string;
+  settings: string;
 };
 
 export interface PoolFactoryV2Interface extends utils.Interface {
@@ -168,7 +183,7 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     "ETH()": FunctionFragment;
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
     "PARTIAL_DEPOSIT()": FunctionFragment;
-    "PRECISSION()": FunctionFragment;
+    "POOL_BUFFER()": FunctionFragment;
     "_poolUpdateCurrentState()": FunctionFragment;
     "afterAgreementCreated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementTerminated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
@@ -180,18 +195,17 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     "cfa()": FunctionFragment;
     "closeAccount()": FunctionFragment;
     "gelato()": FunctionFragment;
-    "getLastPeriod()": FunctionFragment;
-    "getPeriod(uint256)": FunctionFragment;
+    "getLastPool()": FunctionFragment;
+    "getPool(uint256)": FunctionFragment;
     "getSupplierByAdress(address)": FunctionFragment;
     "host()": FunctionFragment;
-    "initialize((address,address,address,address,address,address,address))": FunctionFragment;
+    "initialize((address,address,address,address,address,address,address,address))": FunctionFragment;
     "lastPeriodTimestamp()": FunctionFragment;
     "ops()": FunctionFragment;
     "parseLoanData(bytes)": FunctionFragment;
-    "periodByTimestamp(uint256)": FunctionFragment;
     "periodId()": FunctionFragment;
-    "periodTimestampById(uint256)": FunctionFragment;
-    "poolBuffer()": FunctionFragment;
+    "poolByTimestamp(uint256)": FunctionFragment;
+    "poolTimestampById(uint256)": FunctionFragment;
     "poolUpdate()": FunctionFragment;
     "poolUpdateCurrentState()": FunctionFragment;
     "redeemDeposit(uint256)": FunctionFragment;
@@ -227,7 +241,7 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "PRECISSION",
+    functionFragment: "POOL_BUFFER",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -269,11 +283,11 @@ export interface PoolFactoryV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "gelato", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getLastPeriod",
+    functionFragment: "getLastPool",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getPeriod",
+    functionFragment: "getPool",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -294,18 +308,14 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     functionFragment: "parseLoanData",
     values: [BytesLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "periodByTimestamp",
-    values: [BigNumberish]
-  ): string;
   encodeFunctionData(functionFragment: "periodId", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "periodTimestampById",
+    functionFragment: "poolByTimestamp",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "poolBuffer",
-    values?: undefined
+    functionFragment: "poolTimestampById",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "poolUpdate",
@@ -382,7 +392,10 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     functionFragment: "PARTIAL_DEPOSIT",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "PRECISSION", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "POOL_BUFFER",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "_poolUpdateCurrentState",
     data: BytesLike
@@ -419,10 +432,10 @@ export interface PoolFactoryV2Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "gelato", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getLastPeriod",
+    functionFragment: "getLastPool",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getPeriod", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getPool", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getSupplierByAdress",
     data: BytesLike
@@ -438,16 +451,15 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     functionFragment: "parseLoanData",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "periodByTimestamp",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "periodId", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "periodTimestampById",
+    functionFragment: "poolByTimestamp",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "poolBuffer", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "poolTimestampById",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "poolUpdate", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "poolUpdateCurrentState",
@@ -539,7 +551,7 @@ export interface PoolFactoryV2 extends BaseContract {
 
     PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<[number]>;
 
-    PRECISSION(overrides?: CallOverrides): Promise<[BigNumber]>;
+    POOL_BUFFER(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _poolUpdateCurrentState(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -615,9 +627,9 @@ export interface PoolFactoryV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<[string]>;
 
-    getLastPeriod(overrides?: CallOverrides): Promise<[PoolV2StructOutput]>;
+    getLastPool(overrides?: CallOverrides): Promise<[PoolV2StructOutput]>;
 
-    getPeriod(
+    getPool(
       _periodId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[PoolV2StructOutput]>;
@@ -643,7 +655,11 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { endSeconds: BigNumber }>;
 
-    periodByTimestamp(
+    periodId(
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { _value: BigNumber }>;
+
+    poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
@@ -657,31 +673,33 @@ export interface PoolFactoryV2 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        APYStructOutput
       ] & {
+        id: BigNumber;
         timestamp: BigNumber;
+        totalShares: BigNumber;
         deposit: BigNumber;
+        depositFromInFlowRate: BigNumber;
         inFlowRate: BigNumber;
         outFlowRate: BigNumber;
-        depositFromInFlowRate: BigNumber;
+        outFlowAssetsRate: BigNumber;
         yieldTokenIndex: BigNumber;
         yieldInFlowRateIndex: BigNumber;
-        totalShares: BigNumber;
-        outFlowAssetsRate: BigNumber;
         yieldAccrued: BigNumber;
+        yieldSnapshot: BigNumber;
+        totalYield: BigNumber;
+        apy: APYStructOutput;
       }
     >;
 
-    periodId(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { _value: BigNumber }>;
-
-    periodTimestampById(
+    poolTimestampById(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
-
-    poolBuffer(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -727,29 +745,31 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [
-        string,
         BigNumber,
+        string,
         BigNumber,
         StreamStructOutput,
         StreamStructOutput,
         OutAssetsStructOutput,
-        DepositStructOutput,
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber
+        BigNumber,
+        BigNumber,
+        APYStructOutput
       ] & {
+        id: BigNumber;
         supplier: string;
-        supplierId: BigNumber;
         cumulatedYield: BigNumber;
         inStream: StreamStructOutput;
         outStream: StreamStructOutput;
         outAssets: OutAssetsStructOutput;
-        deposit: DepositStructOutput;
+        deposit: BigNumber;
         shares: BigNumber;
         timestamp: BigNumber;
         createdTimestamp: BigNumber;
         eventId: BigNumber;
+        apy: APYStructOutput;
       }
     >;
 
@@ -802,7 +822,7 @@ export interface PoolFactoryV2 extends BaseContract {
 
   PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<number>;
 
-  PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+  POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
   _poolUpdateCurrentState(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -878,9 +898,9 @@ export interface PoolFactoryV2 extends BaseContract {
 
   gelato(overrides?: CallOverrides): Promise<string>;
 
-  getLastPeriod(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
+  getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
 
-  getPeriod(
+  getPool(
     _periodId: BigNumberish,
     overrides?: CallOverrides
   ): Promise<PoolV2StructOutput>;
@@ -903,7 +923,9 @@ export interface PoolFactoryV2 extends BaseContract {
 
   parseLoanData(data: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
-  periodByTimestamp(
+  periodId(overrides?: CallOverrides): Promise<BigNumber>;
+
+  poolByTimestamp(
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<
@@ -917,29 +939,33 @@ export interface PoolFactoryV2 extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
-      BigNumber
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      APYStructOutput
     ] & {
+      id: BigNumber;
       timestamp: BigNumber;
+      totalShares: BigNumber;
       deposit: BigNumber;
+      depositFromInFlowRate: BigNumber;
       inFlowRate: BigNumber;
       outFlowRate: BigNumber;
-      depositFromInFlowRate: BigNumber;
+      outFlowAssetsRate: BigNumber;
       yieldTokenIndex: BigNumber;
       yieldInFlowRateIndex: BigNumber;
-      totalShares: BigNumber;
-      outFlowAssetsRate: BigNumber;
       yieldAccrued: BigNumber;
+      yieldSnapshot: BigNumber;
+      totalYield: BigNumber;
+      apy: APYStructOutput;
     }
   >;
 
-  periodId(overrides?: CallOverrides): Promise<BigNumber>;
-
-  periodTimestampById(
+  poolTimestampById(
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
-
-  poolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
 
   poolUpdate(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -983,29 +1009,31 @@ export interface PoolFactoryV2 extends BaseContract {
     overrides?: CallOverrides
   ): Promise<
     [
-      string,
       BigNumber,
+      string,
       BigNumber,
       StreamStructOutput,
       StreamStructOutput,
       OutAssetsStructOutput,
-      DepositStructOutput,
       BigNumber,
       BigNumber,
       BigNumber,
-      BigNumber
+      BigNumber,
+      BigNumber,
+      APYStructOutput
     ] & {
+      id: BigNumber;
       supplier: string;
-      supplierId: BigNumber;
       cumulatedYield: BigNumber;
       inStream: StreamStructOutput;
       outStream: StreamStructOutput;
       outAssets: OutAssetsStructOutput;
-      deposit: DepositStructOutput;
+      deposit: BigNumber;
       shares: BigNumber;
       timestamp: BigNumber;
       createdTimestamp: BigNumber;
       eventId: BigNumber;
+      apy: APYStructOutput;
     }
   >;
 
@@ -1058,7 +1086,7 @@ export interface PoolFactoryV2 extends BaseContract {
 
     PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<number>;
 
-    PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+    POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
     _poolUpdateCurrentState(overrides?: CallOverrides): Promise<void>;
 
@@ -1127,9 +1155,9 @@ export interface PoolFactoryV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<string>;
 
-    getLastPeriod(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
+    getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
 
-    getPeriod(
+    getPool(
       _periodId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PoolV2StructOutput>;
@@ -1155,7 +1183,9 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    periodByTimestamp(
+    periodId(overrides?: CallOverrides): Promise<BigNumber>;
+
+    poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
@@ -1169,29 +1199,33 @@ export interface PoolFactoryV2 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        APYStructOutput
       ] & {
+        id: BigNumber;
         timestamp: BigNumber;
+        totalShares: BigNumber;
         deposit: BigNumber;
+        depositFromInFlowRate: BigNumber;
         inFlowRate: BigNumber;
         outFlowRate: BigNumber;
-        depositFromInFlowRate: BigNumber;
+        outFlowAssetsRate: BigNumber;
         yieldTokenIndex: BigNumber;
         yieldInFlowRateIndex: BigNumber;
-        totalShares: BigNumber;
-        outFlowAssetsRate: BigNumber;
         yieldAccrued: BigNumber;
+        yieldSnapshot: BigNumber;
+        totalYield: BigNumber;
+        apy: APYStructOutput;
       }
     >;
 
-    periodId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    periodTimestampById(
+    poolTimestampById(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    poolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
 
     poolUpdate(overrides?: CallOverrides): Promise<void>;
 
@@ -1229,29 +1263,31 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [
-        string,
         BigNumber,
+        string,
         BigNumber,
         StreamStructOutput,
         StreamStructOutput,
         OutAssetsStructOutput,
-        DepositStructOutput,
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber
+        BigNumber,
+        BigNumber,
+        APYStructOutput
       ] & {
+        id: BigNumber;
         supplier: string;
-        supplierId: BigNumber;
         cumulatedYield: BigNumber;
         inStream: StreamStructOutput;
         outStream: StreamStructOutput;
         outAssets: OutAssetsStructOutput;
-        deposit: DepositStructOutput;
+        deposit: BigNumber;
         shares: BigNumber;
         timestamp: BigNumber;
         createdTimestamp: BigNumber;
         eventId: BigNumber;
+        apy: APYStructOutput;
       }
     >;
 
@@ -1305,7 +1341,7 @@ export interface PoolFactoryV2 extends BaseContract {
 
     PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
 
-    PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+    POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
     _poolUpdateCurrentState(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1381,9 +1417,9 @@ export interface PoolFactoryV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getLastPeriod(overrides?: CallOverrides): Promise<BigNumber>;
+    getLastPool(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getPeriod(
+    getPool(
       _periodId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1409,19 +1445,17 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    periodByTimestamp(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     periodId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    periodTimestampById(
+    poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    poolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
+    poolTimestampById(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1521,7 +1555,7 @@ export interface PoolFactoryV2 extends BaseContract {
 
     PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    PRECISSION(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    POOL_BUFFER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _poolUpdateCurrentState(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1597,9 +1631,9 @@ export interface PoolFactoryV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getLastPeriod(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    getLastPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getPeriod(
+    getPool(
       _periodId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1627,19 +1661,17 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    periodByTimestamp(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     periodId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    periodTimestampById(
+    poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    poolBuffer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    poolTimestampById(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
