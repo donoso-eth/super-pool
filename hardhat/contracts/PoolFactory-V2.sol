@@ -70,7 +70,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   uint256 public lastPoolTimestamp;
 
-  Counters.Counter public periodId;
+  Counters.Counter public poolId;
   Counters.Counter public supplierId;
 
   address public ops;
@@ -143,8 +143,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     ///// initializators
   }
 
-  function getPool(uint256 _periodId) external view returns (DataTypes.PoolV2 memory) {
-    return poolByTimestamp[_periodId];
+  function getPool(uint256 _poolId) external view returns (DataTypes.PoolV2 memory) {
+    return poolByTimestamp[_poolId];
   }
 
   function getLastPool() external view returns (DataTypes.PoolV2 memory) {
@@ -172,6 +172,16 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + (outAssets * PRECISSION) - (inDeposit * PRECISSION);
     _updateSupplierDeposit(_supplier, inDeposit, outDeposit, outAssets);
   }
+
+  function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
+
+    _poolUpdateCurrentState();
+    console.log(block.timestamp);
+    console.log(lastPoolTimestamp);
+    DataTypes.PoolV2 storage pool = poolByTimestamp[lastPoolTimestamp];
+   pool.yieldSnapshot += amount;
+
+  } 
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
   /****************************************************************************************************
@@ -223,10 +233,10 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     //// retrieve supplier or create a record for the new one
     // _getSupplier(from);
 
-    //// Update pool state "period Struct" calculating indexes and timestamp
+    //// Update pool state "pool Struct" calculating indexes and timestamp
     _poolUpdateCurrentState();
 
-    ///// suppler config updated && period
+    ///// suppler config updated && pool
     _updateSupplierDeposit(from, assets, 0, 0);
 
     /// Events mnot yet implemented
@@ -242,7 +252,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     if (shares == redeemAmount) {
       _redeemAll(msg.sender, false);
     } else {
-      //// Update pool state "period Struct" calculating indexes and timestamp
+      //// Update pool state "pool Struct" calculating indexes and timestamp
       _poolUpdateCurrentState();
 
       uint256 outAssets = 0;
@@ -254,7 +264,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       poolStrategy.withdraw(outAssets);
       ISuperToken(superToken).send(supplier, outAssets, "0x");
 
-      ///// suppler config updated && period
+      ///// suppler config updated && pool
       _updateSupplierDeposit(supplier, 0, redeemAmount, outAssets);
     }
   }
@@ -290,7 +300,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     _inStreamCallback(msg.sender, 0, 0, "0x");
 
-    //// Advance period
+    //// Advance pool
   }
 
   function closeAccount() external {
@@ -547,7 +557,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   }
 
   function _redeemAll(address _supplier, bool closeInStream) internal {
-    //// Update pool state "period Struct" calculating indexes and timestamp
+    //// Update pool state "pool Struct" calculating indexes and timestamp
     _poolUpdateCurrentState();
 
     _supplierUpdateCurrentState(_supplier);
@@ -589,25 +599,40 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   function poolUpdateCurrentState() external {}
 
   function _poolUpdateCurrentState() public {
-    periodId.increment();
+    poolId.increment();
 
-    DataTypes.PoolV2 memory currentPool = DataTypes.PoolV2(periodId.current(), block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+    DataTypes.PoolV2 memory currentPool = DataTypes.PoolV2(poolId.current(), block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
     DataTypes.PoolV2 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
     uint256 periodSpan = currentPool.timestamp - lastPool.timestamp;
+
+   if (periodSpan >0) {
 
     currentPool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
 
     currentPool.deposit = lastPool.deposit;
 
     currentPool.yieldSnapshot = poolStrategy.balanceOf();
+
+
     currentPool.yieldAccrued= currentPool.yieldSnapshot - lastPool.yieldSnapshot;
+
     currentPool.totalYield += currentPool.yieldAccrued;
+
+
+    currentPool.apy.span = lastPool.apy.span + periodSpan;
+    uint periodApy;
+    lastPool.totalShares == 0 ? 0 :currentPool.yieldAccrued
+    .mul(365*24*3600*100)
+    .div(periodSpan)
+    .div(lastPool.totalShares);
+
+
+   currentPool.apy.apy = periodSpan.mul(periodApy).add(lastPool.apy.span.mul(lastPool.apy.apy)).div( currentPool.apy.span);
 
     (currentPool.yieldTokenIndex, currentPool.yieldInFlowRateIndex) = _calculateIndexes( currentPool.yieldAccrued );
 
-    console.log(629, currentPool.yieldTokenIndex, currentPool.yieldInFlowRateIndex);
 
     currentPool.yieldTokenIndex = currentPool.yieldTokenIndex + lastPool.yieldTokenIndex;
     currentPool.yieldInFlowRateIndex = currentPool.yieldInFlowRateIndex + lastPool.yieldInFlowRateIndex;
@@ -625,7 +650,9 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     lastPoolTimestamp = block.timestamp;
 
-    poolTimestampById[periodId.current()] = block.timestamp;
+    poolTimestampById[poolId.current()] = block.timestamp;
+
+   }
 
     console.log("pool_update");
   }
@@ -658,11 +685,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     }
   }
 
-  function _calculatePoolYieldPeriod() internal view returns (uint256 yield) {
-    // yield = (block.timestamp - lastPoolTimestamp) * poolByTimestamp[lastPoolTimestamp].yieldAccruedSec;
-
-    yield = 5 ether; //IAllocationMock(MOCK_ALLOCATION).calculateStatus();
-  }
 
   // #endregion POOL UPDATE
 
@@ -787,6 +809,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   function transfer(uint256 _amount, address _paymentToken) external onlyPoolStrategy {
     _transfer(_amount, _paymentToken);
   }
+
+
 
   function _transfer(uint256 _amount, address _paymentToken) internal {
     if (_paymentToken == ETH) {
