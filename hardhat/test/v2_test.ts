@@ -252,10 +252,6 @@ describe.only('V2 test', function () {
 
     await erc777.send(superPoolAddress, amount, '0x');
 
-    let timest = await superPool.lastPoolTimestamp();
-
-    let pool = await superPool.getLastPool();
-
     let expedtedPoolBalance = initialBalance.add(amount);
 
     let poolExpected: IPOOL_RESULT = {
@@ -383,6 +379,25 @@ describe.only('V2 test', function () {
     ];
 
     await testPeriod(BigNumber.from(t0), ONE_DAY, poolExpected, contractsTest, usersTest);
+
+
+    await setNextBlockTimestamp(hre, t0 + 2 * ONE_DAY);
+    erc777 = await ERC777__factory.connect(network_params.superToken, user2);
+
+    amount = utils.parseEther('300');
+
+    await waitForTx(erc777.send(superPoolAddress, amount, '0x'));
+    await testPeriod(BigNumber.from(t0), 2*ONE_DAY, poolExpected, contractsTest, usersTest);
+
+
+    await waitForTx(poolStrategy.depositMock())
+    await setNextBlockTimestamp(hre, t0 + 3 * ONE_DAY);
+
+    await waitForTx(erc777.send(superPoolAddress, amount, '0x'));
+
+    await testPeriod(BigNumber.from(t0), 3*ONE_DAY, poolExpected, contractsTest, usersTest);
+
+
 
   });
 });

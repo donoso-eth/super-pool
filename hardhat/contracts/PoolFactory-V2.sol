@@ -623,13 +623,15 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     currentPool.apy.span = lastPool.apy.span + periodSpan;
     uint periodApy;
-    lastPool.totalShares == 0 ? 0 :currentPool.yieldAccrued
+    periodApy = lastPool.totalShares == 0 ? 0 :currentPool.yieldAccrued
     .mul(365*24*3600*100)
     .div(periodSpan)
     .div(lastPool.totalShares);
 
 
-   currentPool.apy.apy = periodSpan.mul(periodApy).add(lastPool.apy.span.mul(lastPool.apy.apy)).div( currentPool.apy.span);
+   currentPool.apy.apy = ((periodSpan.mul(periodApy))
+          .add(lastPool.apy.span.mul(lastPool.apy.apy))).
+          div( currentPool.apy.span);
 
     (currentPool.yieldTokenIndex, currentPool.yieldInFlowRateIndex) = _calculateIndexes( currentPool.yieldAccrued );
 

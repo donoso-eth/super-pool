@@ -150,13 +150,33 @@ export const testPeriod = async (
 
 
     if (expected.totalYield != undefined) {
+      try {
       expect(result.totalYield).to.equal(expected.totalYield);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield accrued : ${result.totalYield.toString()}`);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Total Yield : ${result.totalYield.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Total Yield: ${result.totalYield.toString()}, expected:${expected.totalYield!.toString()}`);
+    }
     }
 
 
     //// APY
-    
+    if (expected.apy != undefined) {
+      try {
+      expect(result.apy.apy).to.equal(expected.apy);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#ApY : ${result.apy.apy.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#APY: ${result.apy.apy.toString()}, expected:${expected.apy!.toString()}`);
+    }
+    }
+
+    if (expected.apySpan != undefined) {
+      try {
+      expect(result.apy.span).to.equal(expected.apySpan);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#ApY Span : ${result.apy.span.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#APY Span: ${result.apy.span.toString()}, expected:${expected.apySpan!.toString()}`);
+    }
+    }
 
 
 
