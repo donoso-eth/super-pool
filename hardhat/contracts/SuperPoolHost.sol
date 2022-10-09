@@ -24,10 +24,14 @@ contract SuperPoolHost {
 
   constructor(ISuperfluid _host) {
     host = _host;
+
   }
 
   function createSuperPool(DataTypes.SuperPoolInput memory superPoolInput) external {
     require(superTokenResolverByAddress[address(superPoolInput.superToken)].pool == address(0), "POOL_EXISTS");
+
+
+  console.log(address(host));
 
     address poolContract = Clones.clone(superPoolInput.poolFactoryImpl);
 
@@ -38,7 +42,11 @@ contract SuperPoolHost {
       SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
       SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
 
+    console.log(poolContract);
+
     host.registerAppByFactory(ISuperApp(poolContract), configWord);
+
+    console.log(poolContract);
 
     //// INITIALIZE POOL
     DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;

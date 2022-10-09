@@ -115,7 +115,7 @@ export interface PoolFactoryV1Interface extends utils.Interface {
     "host()": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
     "initialize((address,address,address))": FunctionFragment;
-    "lastPeriodTimestamp()": FunctionFragment;
+    "lastPoolTimestamp()": FunctionFragment;
     "mockPoolUpdate()": FunctionFragment;
     "mockYield(uint256)": FunctionFragment;
     "name()": FunctionFragment;
@@ -219,7 +219,7 @@ export interface PoolFactoryV1Interface extends utils.Interface {
     values: [PoolFactoryInitializerStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "lastPeriodTimestamp",
+    functionFragment: "lastPoolTimestamp",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -357,7 +357,7 @@ export interface PoolFactoryV1Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "lastPeriodTimestamp",
+    functionFragment: "lastPoolTimestamp",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -605,7 +605,7 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    lastPeriodTimestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
+    lastPoolTimestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     mockPoolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -893,7 +893,7 @@ export interface PoolFactoryV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  lastPeriodTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
+  lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
   mockPoolUpdate(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -1167,7 +1167,7 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    lastPeriodTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
+    lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     mockPoolUpdate(overrides?: CallOverrides): Promise<void>;
 
@@ -1470,7 +1470,7 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    lastPeriodTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
+    lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     mockPoolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1706,7 +1706,7 @@ export interface PoolFactoryV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    lastPeriodTimestamp(
+    lastPoolTimestamp(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

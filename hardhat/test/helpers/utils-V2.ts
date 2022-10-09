@@ -7,91 +7,14 @@ import { expect } from 'chai';
 import { ERC20, ERC777, IOps, ISuperfluidToken, PoolFactoryV2, STokenFactoryV2 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-export interface IPOOL {
-  timestamp: BigNumber;
-  deposit: BigNumber;
-  depositFromInFlowRate: BigNumber;
-  totalShares: BigNumber;
+import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, IUSERTEST, IUSER_CHECK } from './models-v2';
 
-  inFlowRate: BigNumber;
-  outFlowRate: BigNumber;
-  outFlowAssetsRate?:BigNumber;
-
-  yieldTokenIndex: BigNumber;
-  yieldInFlowRateIndex: BigNumber;
-
-  yieldAccrued: BigNumber;
-  yieldSnapshot: BigNumber;
-  totalYield: BigNumber;
-  apy :  { 
-          span: BigNumber;
-          apy: BigNumber; 
-        }
-
-}
 
 export const fromBnToNumber = (x: BigNumber) => {
-  console.log(x);
-  console.log(+x.toString());
+
   return +x.toString();
 };
 
-export interface IPOOL_RESULT {
-  timeElapsed?: BigNumber;
-  poolTotalBalance?: BigNumber;
-
-  totalShares?:BigNumber;
-  deposit?: BigNumber;
-  depositFromInFlowRate?: BigNumber;
-
-  inFlowRate?: BigNumber;
-  outFlowRate?: BigNumber;
-  outFlowAssetsRate?:BigNumber;
-
-  yieldTokenIndex?: BigNumber;
-  yieldInFlowRateIndex?: BigNumber;
-
-
-  yieldAccrued?: BigNumber;
-  yieldSnapshot?: BigNumber;
-  totalYield?: BigNumber;
-  apySpan?: BigNumber;
-  apy?: BigNumber;
-
-}
-
-export interface IUSER_CHECK {
-  name: string;
-  result: IUSER_RESULT;
-  expected: IUSER_RESULT;
-
-}
-
-export interface IUSER_RESULT {
-  realTimeBalance?: BigNumber;
-  shares?:BigNumber;
-  tokenBalance?:BigNumber;
-  deposit?: BigNumber;
-  timestamp?: BigNumber;
-  inFlow?:BigNumber;
-  inFlowId?: string
-  nextExecIn?:BigNumber
-  outFlow?: BigNumber;
-  outAssets?: BigNumber
-  outAssetsId?: string
-  nextExecOut?:BigNumber
-}
-
-export interface IUSERTEST {address:string, name: string,expected: IUSER_RESULT}
-
-export interface ICONTRACTS_TEST  {
-  poolAddress: string,
-   superTokenContract: ISuperfluidToken, 
-   superPool:PoolFactoryV2,
-   tokenContract: ERC777,
-   ops?:IOps,
-   sToken: STokenFactoryV2
-  }
 
 
 export const testPeriod = async (
@@ -244,7 +167,7 @@ export const testPeriod = async (
 
   let userRealtimeBalance = await contracts.sToken.balanceOf(user.address);
   let userShares = await contracts.sToken.balanceOfShares(user.address);
-  let userTokenBalance = await contracts.tokenContract.balanceOf(user.address);
+  let userTokenBalance = await contracts.superTokenERC777.balanceOf(user.address);
   let userState = await contracts.superPool.suppliersByAddress(user.address);
   let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
 
@@ -623,7 +546,7 @@ export const printPeriodTest = async (result: IPOOL_RESULT, expected: IPOOL_RESU
 };
 
 export const getPool = async (superPool: PoolFactoryV2): Promise<any> => {
-  let periodTimestamp = +(await superPool.lastPeriodTimestamp()).toString();
+  let periodTimestamp = +(await superPool.lastPoolTimestamp()).toString();
   let periodRaw = await superPool.poolByTimestamp(periodTimestamp);
 
 
@@ -646,12 +569,6 @@ export const getPool = async (superPool: PoolFactoryV2): Promise<any> => {
 };
 
 
-export interface IMOCK_RESULT {
-  lastTimestamp: BigNumber;
-  incrementStored: BigNumber;
-  deposit?: BigNumber;
-}
-
 
 
 
@@ -659,7 +576,7 @@ export interface IMOCK_RESULT {
 ////// CONTRACTS
 
 export const printPeriod = async (superPool: PoolFactoryV2, t0: number): Promise<any> => {
-  let periodTimestamp = +(await superPool.lastPeriodTimestamp()).toString();
+  let periodTimestamp = +(await superPool.lastPoolTimestamp()).toString();
   let period = await superPool.poolByTimestamp(periodTimestamp);
   console.log(period.timestamp.toString());
 

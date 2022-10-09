@@ -24,6 +24,9 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     IPoolFactoryV2 pool;
     uint256 POOL_BUFFER;
 
+    uint256 mockLast;
+    uint256 timestampLast;
+
     address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
   constructor(){}
@@ -43,12 +46,16 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     pool = _pool;
     POOL_BUFFER = _POOL_BUFFER;
 
+     
+    //depositTaksId = createDepositTask();
+
   }
 
-  function setUpMock(address _mock) public {
- 
-   
-    depositTaksId = createDepositTask();
+  function balanceOf()  override external returns(uint256 balance) {
+    uint256 yield = _getMockYield();
+    mockLast+= yield;
+    balance = mockLast;
+
   }
 
   function upgrade(uint256 amount) internal {
@@ -126,6 +133,33 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     superToken.downgrade(amountToDeposit);
     _deposit(amountToDeposit);
+  }
+
+
+  function getMockYieldSinceLastTimeStmap() external  override view returns (uint256 yield) {
+     uint256 apy = 1  + uint(blockhash(block.number-1)) % 10;
+    console.log(139,apy);
+    yield = mockLast * apy * (block.timestamp - timestampLast) / (100 * 365 * 25 * 3600);
+
+  }
+
+  function _getMockYield() internal view returns (uint256 yield) {
+    uint256 apy = 1  + uint(blockhash(block.number-1)) % 10;
+    console.log(148,apy);
+    yield = mockLast * apy * (block.timestamp - timestampLast) / (100 * 365 * 25 * 3600);
+    console.log(150,yield);
+
+  }
+
+  function depositMock() override external {
+    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
+
+     superToken.transferFrom(address(pool),address(this),uint(balance));
+     uint yield = _getMockYield();
+     console.log(153, yield);
+     mockLast =  mockLast + yield + uint(balance);
+      
+ 
   }
 
   // #endregion  ============= ============= Allocation Strategy  ============= ============= //

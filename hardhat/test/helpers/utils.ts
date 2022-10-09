@@ -595,7 +595,7 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
 };
 
 export const getPool = async (superTokenPool: PoolFactoryV1): Promise<any> => {
-  let periodTimestamp = +(await superTokenPool.lastPeriodTimestamp()).toString();
+  let periodTimestamp = +(await superTokenPool.lastPoolTimestamp()).toString();
   let periodRaw = await superTokenPool.poolByTimestamp(periodTimestamp);
 
   let period: IPERIOD = {
@@ -644,7 +644,7 @@ export const testMockStrategy = async (
 ////// CONTRACTS
 
 export const printPeriod = async (superTokenPool: PoolFactoryV1, t0: number): Promise<any> => {
-  let periodTimestamp = +(await superTokenPool.lastPeriodTimestamp()).toString();
+  let periodTimestamp = +(await superTokenPool.lastPoolTimestamp()).toString();
   let period = await superTokenPool.poolByTimestamp(periodTimestamp);
   console.log(period.timestamp.toString());
 

@@ -10,7 +10,6 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-
 import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
@@ -24,15 +23,13 @@ import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/app
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
-import {ISTokenFactoryV2}  from './interfaces/ISTokenFactory-V2.sol';
-import {IPoolStrategyV2} from './interfaces/IPoolStrategy-V2.sol';
-import {IGelatoResolverV2} from './interfaces/IGelatoResolver-V2.sol'; 
-import {ISettingsV2} from './interfaces/ISettings-V2.sol';
+import {ISTokenFactoryV2} from "./interfaces/ISTokenFactory-V2.sol";
+import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
+import {IGelatoResolverV2} from "./interfaces/IGelatoResolver-V2.sol";
+import {ISettingsV2} from "./interfaces/ISettings-V2.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
-
-
 
 /****************************************************************************************************
  * @title PoolFacory
@@ -71,11 +68,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   mapping(uint256 => uint256) public poolTimestampById;
 
-
-
-  uint256 public lastPeriodTimestamp;
-
-
+  uint256 public lastPoolTimestamp;
 
   Counters.Counter public periodId;
   Counters.Counter public supplierId;
@@ -95,13 +88,10 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   uint256 public DEPOSIT_TRIGGER_AMOUNT = 0;
   uint256 public DEPOSIT_TRIGGER_TIME = 3600;
 
-
   ISTokenFactoryV2 sToken;
   IPoolStrategyV2 poolStrategy;
   IGelatoResolverV2 gelatoResolver;
   ISettingsV2 settings;
-
-
 
   IERC20 token;
 
@@ -116,9 +106,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   function initialize(DataTypes.PoolFactoryInitializer calldata poolFactoryInitializer) external initializer {
     ///initialState
 
-
-    lastPeriodTimestamp = block.timestamp;
-    poolByTimestamp[block.timestamp] = DataTypes.PoolV2(0,block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0, DataTypes.APY(0,0));
+    lastPoolTimestamp = block.timestamp;
+    poolByTimestamp[block.timestamp] = DataTypes.PoolV2(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
     poolTimestampById[0] = block.timestamp;
 
@@ -131,6 +120,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     poolStrategy = poolFactoryInitializer.poolStrategy;
     gelatoResolver = poolFactoryInitializer.gelatoResolver;
     settings = poolFactoryInitializer.settings;
+
+    MAX_INT = 2**256 - 1;
 
     token.approve(address(poolStrategy), MAX_INT);
     superToken.approve(address(poolStrategy), MAX_INT);
@@ -147,11 +138,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
-    MAX_INT = 2**256 - 1;
-
-
     PRECISSION = settings.getPrecission();
-
 
     ///// initializators
   }
@@ -161,7 +148,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   }
 
   function getLastPool() external view returns (DataTypes.PoolV2 memory) {
-    return poolByTimestamp[lastPeriodTimestamp];
+    return poolByTimestamp[lastPoolTimestamp];
   }
 
   function poolUpdate() external {
@@ -172,21 +159,19 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     return suppliersByAddress[_supplier];
   }
 
-    function updateSupplierDeposit(
+  function updateSupplierDeposit(
     address _supplier,
     uint256 inDeposit,
     uint256 outDeposit,
     uint256 outAssets
   ) external onlySToken {
-     
-     DataTypes.Supplier memory supplierTo = _getSupplier(_supplier);
+    DataTypes.Supplier memory supplierTo = _getSupplier(_supplier);
 
-     supplierTo.deposit = supplierTo.deposit + (outAssets * PRECISSION) - (inDeposit * PRECISSION);
- 
+    supplierTo.deposit = supplierTo.deposit + (outAssets * PRECISSION) - (inDeposit * PRECISSION);
+
     poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + (outAssets * PRECISSION) - (inDeposit * PRECISSION);
     _updateSupplierDeposit(_supplier, inDeposit, outDeposit, outAssets);
   }
-
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
   /****************************************************************************************************
@@ -245,8 +230,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     _updateSupplierDeposit(from, assets, 0, 0);
 
     /// Events mnot yet implemented
-
- 
   }
 
   function redeemDeposit(uint256 redeemAmount) external {
@@ -293,7 +276,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     bytes memory placeHolder = "0x";
 
     _updateSupplierFlow(msg.sender, 0, _outFlowRate, placeHolder);
-   
+
     if (_endSeconds > 0) {
       cancelTask(supplier.outAssets.cancelTaskId);
       supplier.outAssets.cancelTaskId = gelatoResolver.createStopStreamTimedTask(msg.sender, _endSeconds - MIN_OUTFLOW_ALLOWED, false, 0);
@@ -329,24 +312,24 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   // #region  ============= =============  Public Supplier Functions ============= =============
 
+  function totalYieldEarnedSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
+    uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
 
-  function totalYieldEarnedSupplier(address _supplier) public view  returns (uint256 yieldSupplier) {
-    uint256 yieldTillLastPeriod = _calculateYieldSupplier(_supplier);
+    uint yieldAccruedSincelastPool = poolStrategy.getMockYieldSinceLastTimeStmap();
 
-    (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex) = _calculateIndexes();
+    (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex) = _calculateIndexes(yieldAccruedSincelastPool);
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
     uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.div(PRECISSION);
     uint256 yieldInFlow = uint96(supplier.inStream.flow) * yieldInFlowRateIndex;
-   
-    yieldSupplier = yieldTillLastPeriod + yieldDeposit + yieldInFlow;
+
+    yieldSupplier = yieldTilllastPool + yieldDeposit + yieldInFlow;
   }
 
   // #endregion
 
   // #region  ============= =============  Internal Supplier Functions ============= ============= //
-
 
   function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
@@ -369,9 +352,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     return supplier;
   }
 
-
   function supplierUpdateCurrentState(address _supplier) external {
-    _supplierUpdateCurrentState( _supplier);
+    _supplierUpdateCurrentState(_supplier);
   }
 
   function _supplierUpdateCurrentState(address _supplier) internal {
@@ -402,8 +384,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     }
   }
 
-
-
   function _updateSupplierDeposit(
     address _supplier,
     uint256 inDeposit,
@@ -433,9 +413,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       _outStreamHasChanged(_supplier, -netFlow, updatedOutAssets);
     }
 
-   emit Events.SupplierUpdate(supplier);
-   console.log('event');
- 
+    emit Events.SupplierUpdate(supplier);
+    console.log("event");
   }
 
   function _updateSupplierFlow(
@@ -478,7 +457,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
         int96 outAssets = int96(int256((factor).mul(uint256(uint96(-newNetFlow))).div(PRECISSION)));
         poolByTimestamp[block.timestamp].outFlowRate = poolByTimestamp[block.timestamp].outFlowRate + currentNetFlow - newNetFlow;
         poolByTimestamp[block.timestamp].outFlowAssetsRate = poolByTimestamp[block.timestamp].outFlowAssetsRate - supplier.outAssets.flow + outAssets;
-        
+
         poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - supplier.deposit;
 
         //  supplier.outAssets = DataTypes.Stream(outAssets, bytes32(0));
@@ -503,7 +482,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
         poolByTimestamp[block.timestamp].inFlowRate -= currentNetFlow;
 
         poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - supplier.deposit;
-        
+
         _outStreamHasChanged(_supplier, -newNetFlow, outAssets);
       }
     }
@@ -521,15 +500,12 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     ///// Yield from deposit
 
-    uint256 yieldFromDeposit = (supplier.deposit * (poolByTimestamp[lastPeriodTimestamp].yieldTokenIndex - poolByTimestamp[lastTimestamp].yieldTokenIndex)).div(
-      PRECISSION
-    );
+    uint256 yieldFromDeposit = (supplier.deposit * (poolByTimestamp[lastPoolTimestamp].yieldTokenIndex - poolByTimestamp[lastTimestamp].yieldTokenIndex)).div(PRECISSION);
 
     yieldSupplier = yieldFromDeposit;
     if (supplier.inStream.flow > 0) {
       ///// Yield from flow
-      uint256 yieldFromFlow = uint96(supplier.inStream.flow) *
-        (poolByTimestamp[lastPeriodTimestamp].yieldInFlowRateIndex - poolByTimestamp[lastTimestamp].yieldInFlowRateIndex);
+      uint256 yieldFromFlow = uint96(supplier.inStream.flow) * (poolByTimestamp[lastPoolTimestamp].yieldInFlowRateIndex - poolByTimestamp[lastTimestamp].yieldInFlowRateIndex);
 
       yieldSupplier = yieldSupplier + yieldFromFlow;
     }
@@ -615,56 +591,55 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   function _poolUpdateCurrentState() public {
     periodId.increment();
 
-    DataTypes.PoolV2 memory currentPeriod = DataTypes.PoolV2(periodId.current(),block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0, DataTypes.APY(0,0));
+    DataTypes.PoolV2 memory currentPool = DataTypes.PoolV2(periodId.current(), block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
-    DataTypes.PoolV2 memory lastPeriod = poolByTimestamp[lastPeriodTimestamp];
+    DataTypes.PoolV2 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
-    uint256 periodSpan = currentPeriod.timestamp - lastPeriod.timestamp;
+    uint256 periodSpan = currentPool.timestamp - lastPool.timestamp;
 
-    currentPeriod.depositFromInFlowRate = uint96(lastPeriod.inFlowRate) * PRECISSION * periodSpan + lastPeriod.depositFromInFlowRate;
-    
-    currentPeriod.deposit = lastPeriod.deposit;
-    (currentPeriod.yieldTokenIndex, currentPeriod.yieldInFlowRateIndex) = _calculateIndexes();
+    currentPool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
 
-    currentPeriod.yieldTokenIndex = currentPeriod.yieldTokenIndex + lastPeriod.yieldTokenIndex;
-    currentPeriod.yieldInFlowRateIndex = currentPeriod.yieldInFlowRateIndex + lastPeriod.yieldInFlowRateIndex;
-    
-    currentPeriod.totalShares = lastPeriod.totalShares + uint96(lastPeriod.inFlowRate) * periodSpan - uint96(lastPeriod.outFlowRate) * periodSpan;
+    currentPool.deposit = lastPool.deposit;
 
-    currentPeriod.outFlowAssetsRate = lastPeriod.outFlowAssetsRate;
+    currentPool.yieldSnapshot = poolStrategy.balanceOf();
+    currentPool.yieldAccrued= currentPool.yieldSnapshot - lastPool.yieldSnapshot;
+    currentPool.totalYield += currentPool.yieldAccrued;
 
-    currentPeriod.inFlowRate = lastPeriod.inFlowRate;
-    currentPeriod.outFlowRate = lastPeriod.outFlowRate;
+    (currentPool.yieldTokenIndex, currentPool.yieldInFlowRateIndex) = _calculateIndexes( currentPool.yieldAccrued );
 
-    currentPeriod.timestamp = block.timestamp;
+    console.log(629, currentPool.yieldTokenIndex, currentPool.yieldInFlowRateIndex);
 
-    poolByTimestamp[block.timestamp] = currentPeriod;
+    currentPool.yieldTokenIndex = currentPool.yieldTokenIndex + lastPool.yieldTokenIndex;
+    currentPool.yieldInFlowRateIndex = currentPool.yieldInFlowRateIndex + lastPool.yieldInFlowRateIndex;
 
-    lastPeriodTimestamp = block.timestamp;
+    currentPool.totalShares = lastPool.totalShares + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
+
+    currentPool.outFlowAssetsRate = lastPool.outFlowAssetsRate;
+
+    currentPool.inFlowRate = lastPool.inFlowRate;
+    currentPool.outFlowRate = lastPool.outFlowRate;
+
+    currentPool.timestamp = block.timestamp;
+
+    poolByTimestamp[block.timestamp] = currentPool;
+
+    lastPoolTimestamp = block.timestamp;
 
     poolTimestampById[periodId.current()] = block.timestamp;
 
     console.log("pool_update");
   }
 
-  function _calculateIndexes()
-    internal
-    view
-    returns (
-      uint256 periodYieldTokenIndex,
-      uint256 periodYieldInFlowRateIndex
-    )
-  {
-    DataTypes.PoolV2 storage lastPeriod = poolByTimestamp[lastPeriodTimestamp];
+  function _calculateIndexes(uint256 yieldPeriod) internal view returns (uint256 periodYieldTokenIndex, uint256 periodYieldInFlowRateIndex) {
+    DataTypes.PoolV2 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
-    uint256 periodSpan = block.timestamp - lastPeriod.timestamp;
+    uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
-    uint256 dollarSecondsInFlow = ((uint96(lastPeriod.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPeriod.depositFromInFlowRate * periodSpan;
-    uint256 dollarSecondsDeposit = lastPeriod.deposit * periodSpan;
+    uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
+    uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
 
     uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow;
 
-    uint256 yieldPeriod = _calculatePoolYieldPeriod();
 
     /// we ultiply by PRECISSION for 5 decimals precision
 
@@ -674,20 +649,19 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     } else {
       uint256 inFlowContribution = (dollarSecondsInFlow * PRECISSION);
       uint256 depositContribution = (dollarSecondsDeposit * PRECISSION * PRECISSION);
-      if (lastPeriod.deposit != 0) {
-        periodYieldTokenIndex = ((depositContribution * yieldPeriod).div((lastPeriod.deposit) * totalAreaPeriod));
+      if (lastPool.deposit != 0) {
+        periodYieldTokenIndex = ((depositContribution * yieldPeriod).div((lastPool.deposit) * totalAreaPeriod));
       }
-      if (lastPeriod.inFlowRate != 0) {
-        periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPeriod.inFlowRate) * totalAreaPeriod));
+      if (lastPool.inFlowRate != 0) {
+        periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPool.inFlowRate) * totalAreaPeriod));
       }
-
     }
   }
 
   function _calculatePoolYieldPeriod() internal view returns (uint256 yield) {
-    // yield = (block.timestamp - lastPeriodTimestamp) * poolByTimestamp[lastPeriodTimestamp].yieldAccruedSec;
+    // yield = (block.timestamp - lastPoolTimestamp) * poolByTimestamp[lastPoolTimestamp].yieldAccruedSec;
 
-    yield = 3000; //IAllocationMock(MOCK_ALLOCATION).calculateStatus();
+    yield = 5 ether; //IAllocationMock(MOCK_ALLOCATION).calculateStatus();
   }
 
   // #endregion POOL UPDATE
@@ -823,16 +797,15 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     }
   }
 
-  modifier onlyPoolStrategy () {
+  modifier onlyPoolStrategy() {
     require(msg.sender == address(poolStrategy), "Only Strategy");
     _;
   }
 
-    modifier onlySToken () {
+  modifier onlySToken() {
     require(msg.sender == address(sToken), "Only Superpool Token");
     _;
   }
-
 
   // #endregion Gelato functions
 
@@ -854,9 +827,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     ISuperfluid.Context memory decodedContext = host.decodeCtx(_ctx);
 
     //// If In-Stream we will request a pool update
- 
-    if (receiver == address(this)) {
 
+    if (receiver == address(this)) {
       if (decodedContext.userData.length > 0) {
         DataTypes.Supplier storage supplier = suppliersByAddress[sender];
         uint256 endSeconds = parseLoanData(host.decodeCtx(_ctx).userData);

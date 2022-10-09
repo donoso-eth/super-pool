@@ -4,7 +4,6 @@ import * as hre from 'hardhat';
 import { expect } from 'chai';
 import { BaseProvider, TransactionReceipt } from '@ethersproject/providers';
 import {
-
   ERC20,
   ERC20__factory,
   ERC777,
@@ -16,6 +15,8 @@ import {
   IOps__factory,
   ISuperfluidToken,
   ISuperfluidToken__factory,
+  ISuperToken,
+  ISuperToken__factory,
   PoolFactoryV2,
   PoolFactoryV2__factory,
   PoolStrategyV2,
@@ -29,57 +30,39 @@ import {
 } from '../typechain-types';
 
 import { BigNumber, utils } from 'ethers';
-import {
-  fromBnToNumber,
-  getPool,
-  getTimestamp,
-  increaseBlockTime,
-
-  IPOOL_RESULT,
-  IUSER_CHECK,
-  IUSER_RESULT,
-  matchEvent,
-  printPeriod,
-  printPeriodTest,
-  printUser,
-  testPeriod,
-} from './helpers/utils-V2';
+import { fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent, printPeriod, printPeriodTest, printUser, testPeriod } from './helpers/utils-V2';
 import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core';
 
 import { SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
-import { from } from 'rxjs';
+import { concatMap, from } from 'rxjs';
 import { ethers } from 'hardhat';
-import { ICONTRACTS_TEST } from './helpers/utils-V2';
+
 import { readFileSync } from 'fs-extra';
 import { INETWORK_CONFIG } from 'hardhat/helpers/models';
 import { join } from 'path';
-
+import { faucet } from './helpers/logic-V2';
+import { ICONTRACTS_TEST, IPOOL_RESULT } from './helpers/models-v2';
+import { IUSER_RESULT } from './helpers/utils';
+import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
 
 let superPoolHost: SuperPoolHost;
 let poolFactory: PoolFactoryV2;
 let sTokenFactory: STokenFactoryV2;
 let gelatoResolver: GelatoResolverV2;
-let poolStrategy:PoolStrategyV2
+let poolStrategy: PoolStrategyV2;
 let settings: SettingsV2;
 
-let superPool:PoolFactoryV2
+let superPool: PoolFactoryV2;
 let superPoolAddress: string;
 let sToken: STokenFactoryV2;
-let sTokenAddress:string;
+let sTokenAddress: string;
 
-let supertokenContract: ISuperfluidToken;
+let superTokenContract: ISuperToken;
 
-let tokenContract: ERC777;
+let superTokenERC777: ERC777;
 let contractsTest: ICONTRACTS_TEST;
 
 
-
-
-// let HOST = '0xEB796bdb90fFA0f28255275e16936D25d3418603';
-// let network_params.superToken = '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f';
-// let network_params.token = '0x15F0Ca26781C3852f8166eD2ebce5D18265cceb7';
-// let network_params.ops = '0xB3f5503f93d5Ef84b06993a1975B9D21B962892F';
-// let GELATO = '0x25aD59adbe00C2d80c86d01e2E05e1294DA84823';
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 let deployer: SignerWithAddress;
 let user1: SignerWithAddress;
@@ -95,7 +78,7 @@ let sf: Framework;
 let t0: number;
 let ops: IOps;
 let erc777: ERC777;
-let erc20: ERC20;
+let tokenContract: ERC20;
 
 let superPoolBalance: number;
 let user1Balance: BigNumber;
@@ -110,7 +93,8 @@ let fromUser1Stream: IWeb3FlowInfo;
 let fromUser2Stream: IWeb3FlowInfo;
 let fromUser3Stream: IWeb3FlowInfo;
 let fromUser4Stream: IWeb3FlowInfo;
-let PRECISSION:BigNumber;
+let PRECISSION: BigNumber;
+let initialBalance: BigNumber;
 
 let execData;
 let execAddress;
@@ -122,14 +106,10 @@ let resolverHash;
 let taskId;
 
 let ONE_DAY = 24 * 3600;
-const processDir = process.cwd()
-let networks_config = JSON.parse(
-  readFileSync(join(processDir, 'networks.config.json'), 'utf-8')
-) as INETWORK_CONFIG;
+const processDir = process.cwd();
+let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.json'), 'utf-8')) as INETWORK_CONFIG;
 
 let network_params = networks_config['goerli'];
-
-
 
 describe.only('V2 test', function () {
   beforeEach(async () => {
@@ -138,8 +118,8 @@ describe.only('V2 test', function () {
       params: [
         {
           forking: {
-            jsonRpcUrl: process.env.MUMBAI_URL || '',
-            blockNumber: 26566623,
+            jsonRpcUrl: `https://goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e`,
+            blockNumber: 7704180,
           },
         },
       ],
@@ -149,121 +129,88 @@ describe.only('V2 test', function () {
     provider = hre.ethers.provider;
 
     superPoolHost = await new SuperPoolHost__factory(deployer).deploy(network_params.host);
-    console.log('Host---> deployed')
+    console.log('Host---> deployed');
     poolFactory = await new PoolFactoryV2__factory(deployer).deploy();
-    console.log('Pool Factory---> deployed')
-    sTokenFactory = await new STokenFactoryV2__factory(deployer).deploy()
-    console.log('Token Factory---> deployed')
+    console.log('Pool Factory---> deployed: ', poolFactory.address);
+    sTokenFactory = await new STokenFactoryV2__factory(deployer).deploy();
+    console.log('Token Factotokery---> deployed');
 
-    // 
+    //
     gelatoResolver = await new GelatoResolverV2__factory(deployer).deploy();
-    console.log('Gelato Resolver---> deployed')
+    console.log('Gelato Resolver---> deployed');
 
     poolStrategy = await new PoolStrategyV2__factory(deployer).deploy();
-    console.log('Pool Strategy---> deployed')
+    console.log('Pool Strategy---> deployed');
 
-    settings  = await new SettingsV2__factory(deployer).deploy();
-    console.log('Settings ---> deployed')
-
+    settings = await new SettingsV2__factory(deployer).deploy();
+    console.log('Settings ---> deployed');
 
     eventsLib = await new Events__factory(deployer).deploy();
 
-    supertokenContract = await ISuperfluidToken__factory.connect(network_params.superToken, deployer);
-    tokenContract = await ERC777__factory.connect(network_params.superToken, deployer);
-    erc20 = await ERC20__factory.connect(network_params.token, deployer);
+    superTokenContract = await ISuperToken__factory.connect(network_params.superToken, deployer);
+    superTokenERC777 = await ERC777__factory.connect(network_params.superToken, deployer);
+    tokenContract = new hre.ethers.Contract(network_params.token, abi_erc20mint, deployer) as ERC20;
+
     let superInputStruct: SuperPoolInputStruct = {
       poolFactoryImpl: poolFactory.address,
-      sTokenImpl:sTokenFactory.address,
+      sTokenImpl: sTokenFactory.address,
       superToken: network_params.superToken,
       ops: network_params.ops,
       token: network_params.token,
       gelatoResolver: gelatoResolver.address,
-      poolStrategy:poolStrategy.address,
-      settings: settings.address
+      poolStrategy: poolStrategy.address,
+      settings: settings.address,
     };
+
     await superPoolHost.createSuperPool(superInputStruct);
-    console.log('SuperPool ---> created')
-    superTokenResolver = await superPoolHost.getResolverBySuperToken(network_params.superToken)
+    console.log('SuperPool ---> created');
+    superTokenResolver = await superPoolHost.getResolverBySuperToken(network_params.superToken);
 
     superPoolAddress = superTokenResolver.pool;
     sTokenAddress = superTokenResolver.sToken;
 
-
-    await gelatoResolver.initialize(network_params.ops,superPoolAddress);
-    console.log('Gelato resolver ---> initialized')
-    await poolStrategy.initialize(network_params.ops,network_params.superToken,network_params.token,superPoolAddress,5);
-    console.log('Pool Strategy ---> initialized')
+    await gelatoResolver.initialize(network_params.ops, superPoolAddress);
+    console.log('Gelato resolver ---> initialized');
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, 5);
+    console.log('Pool Strategy ---> initialized');
 
     await settings.initialize();
-    console.log('Settings ---> initialized')
-
+    console.log('Settings ---> initialized');
 
     superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);
+    sToken = STokenFactoryV2__factory.connect(sTokenAddress, deployer);
+
     let initialPoolEth = hre.ethers.utils.parseEther('10');
 
     await deployer.sendTransaction({ to: superPoolAddress, value: initialPoolEth });
 
-    tokenContract.approve(superPoolAddress, hre.ethers.constants.MaxUint256);
+    superTokenERC777.approve(superPoolAddress, hre.ethers.constants.MaxUint256);
 
     ops = IOps__factory.connect(network_params.ops, deployer);
 
+    /// let balance
+    let balance_deployer = await superTokenERC777.balanceOf(deployer.address);
 
+    await faucet(deployer, tokenContract, superTokenContract);
 
-  /// let balance
- let balance_deployer = await tokenContract.balanceOf(deployer.address);
- console.log(utils.formatEther(balance_deployer));
+    balance_deployer = await superTokenERC777.balanceOf(deployer.address);
 
-    
+    /////// INITIAL POOL BALANCE /////////
+    initialBalance = utils.parseEther('1000');
 
-    /////// Cleaning and preparing init state /////////
-    await tokenContract.transfer(superPoolAddress, utils.parseEther('200'));
+    await superTokenERC777.transfer(superPoolAddress, initialBalance);
 
-    user1Balance = await tokenContract.balanceOf(user1.address);
+    await faucet(deployer, tokenContract, superTokenContract);
 
-    user2Balance = await tokenContract.balanceOf(user2.address);
+    await faucet(user1, tokenContract, superTokenContract);
 
-    user3Balance = await tokenContract.balanceOf(user3.address);
+    await faucet(user2,tokenContract,superTokenContract)
 
-    user4Balance = await tokenContract.balanceOf(user4.address);
+    let balance = await tokenContract.balanceOf(superPoolAddress);
 
-    if (user1Balance.toString() !== '0') {
-      await tokenContract.connect(user1).transfer(deployer.address, user1Balance);
-    }
-    await tokenContract.transfer(user1.address, utils.parseEther('1000'));
-
-
-    // if (user2Balance.toString() !== '0') {
-    //   await tokenContract.connect(user2).transfer(deployer.address, user2Balance);
-    // }
-    // await tokenContract.transfer(user2.address, utils.parseEther('10'));
-
-    // if (user3Balance.toString() !== '0') {
-    //   await tokenContract.connect(user3).transfer(deployer.address, user3Balance);
-    // }
-    // await tokenContract.transfer(user3.address, utils.parseEther('10'));
-
-    // if (user4Balance.toString() !== '0') {
-    //   await tokenContract.connect(user4).transfer(deployer.address, user4Balance);
-    // }
-    // await tokenContract.transfer(user4.address, utils.parseEther('10'));
-
-    // user1Balance = await tokenContract.balanceOf(user1.address);
-    // user2Balance = await tokenContract.balanceOf(user2.address);
-    // user3Balance = await tokenContract.balanceOf(user3.address);
-    // user4Balance = await tokenContract.balanceOf(user4.address);
-
-    // expect(user1Balance).to.equal(utils.parseEther('10'));
-    // expect(user2Balance).to.equal(utils.parseEther('10'));
-    // expect(user3Balance).to.equal(utils.parseEther('10'));
-    // expect(user4Balance).to.equal(utils.parseEther('10'));
-
-    // expect(user1Balance).to.equal(utils.parseEther('10'));
-
-    let balance = await erc20.balanceOf(superPoolAddress);
-    console.log(utils.formatEther(balance));
     //throw new Error("");
 
-    t0 = +(await superPool.lastPeriodTimestamp());
+    t0 = +(await superPool.lastPoolTimestamp());
 
     console.log(deployer.address);
 
@@ -276,57 +223,70 @@ describe.only('V2 test', function () {
 
     contractsTest = {
       poolAddress: superPoolAddress,
-      superTokenContract: supertokenContract,
+      superTokenContract: superTokenContract,
       superPool: superPool,
       sToken: sToken,
-      tokenContract,
+      superTokenERC777,
     };
 
-
     PRECISSION = await settings.getPrecission();
+
+    sf = await Framework.create({
+      chainId:31337,
+      provider: provider,
+      customSubgraphQueriesEndpoint: 'https://api.thegraph.com/subgraphs/name/superfluid-finance/protocol-v1-goerli',
+      resolverAddress: network_params.sfResolver,
+    });
 
 
   });
 
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
-   
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 20 units at t0 ');
 
     erc777 = await ERC777__factory.connect(network_params.superToken, user1);
 
+    let amount = utils.parseEther('500');
 
-  let amount = utils.parseEther("500")
+    await erc777.send(superPoolAddress, amount, '0x');
 
-    await erc777.send(superPoolAddress, amount, '0x')
- 
-    let timest = await superPool.lastPeriodTimestamp();
+    let timest = await superPool.lastPoolTimestamp();
 
-    let pool = await superPool.getLastPool()
+    let pool = await superPool.getLastPool();
 
+    let expedtedPoolBalance = initialBalance.add(amount);
 
-    let expedtedPoolBalance = utils.parseEther('200').add(amount)
-
-    let poolExpected1: IPOOL_RESULT = {
+    let poolExpected: IPOOL_RESULT = {
+      timeElapsed: BigNumber.from(0),
       poolTotalBalance: expedtedPoolBalance,
       totalShares: amount,
       deposit: amount.mul(PRECISSION),
+      depositFromInFlowRate: BigNumber.from(0),
+      inFlowRate: BigNumber.from(0),
+      outFlowRate: BigNumber.from(0),
+      outFlowAssetsRate: BigNumber.from(0),
+      yieldTokenIndex: BigNumber.from(0),
+      yieldInFlowRateIndex: BigNumber.from(0),
+      yieldAccrued: BigNumber.from(0),
+      yieldSnapshot: BigNumber.from(0),
+      totalYield: BigNumber.from(0),
+      apy: BigNumber.from(0),
+      apySpan: BigNumber.from(0),
     };
 
-    user1Balance = await tokenContract.balanceOf(user1.address);
-    user2Balance = await tokenContract.balanceOf(user2.address);
-    user3Balance = await tokenContract.balanceOf(user2.address);
+
 
     let usersTest: Array<{ address: string; name: string; expected: IUSER_RESULT }> = [
       {
         name: 'User1',
         address: user1.address,
         expected: {
-          realTimeBalance: BigNumber.from(20),
-          shares: BigNumber.from(20),
-          tokenBalance: utils.parseEther('10').sub(BigNumber.from(20)),
-          deposit: BigNumber.from(20).mul(BigNumber.from(PRECISSION)),
+          realTimeBalance: amount,
+          shares: amount,
+          tokenBalance: initialBalance.sub(amount),
+          deposit: amount.mul(PRECISSION),
           outAssets: BigNumber.from(0),
           outFlow: BigNumber.from(0),
           inFlow: BigNumber.from(0),
@@ -335,14 +295,94 @@ describe.only('V2 test', function () {
       },
     ];
 
-    t0 = +(await superPool.lastPeriodTimestamp());
+    t0 = +(await superPool.lastPoolTimestamp());
 
-    await testPeriod(BigNumber.from(t0), 0, poolExpected1, contractsTest, usersTest);
+    await testPeriod(BigNumber.from(t0), 0, poolExpected, contractsTest, usersTest);
 
-
-    
-    
     // #endregion ============== FIRST PERIOD ============================= //
+
+    await waitForTx(poolStrategy.depositMock())
+
+
+    // #region ================= SECOND PERIOD ============================= //
+
+    await setNextBlockTimestamp(hre, t0 + ONE_DAY);
+
+    console.log('\x1b[36m%s\x1b[0m', '#2--- User2 provides starts a stream at t0 One Day ');
+
+    // #region ================= SECOND PERIOD ============================= //
+
+
+
+    let flowRate = utils.parseEther("100").div(ONE_DAY*30)
+
+    const createFlowOperation = sf.cfaV1.createFlow({
+      receiver: superPoolAddress,
+      flowRate: flowRate.toString(),
+      superToken: network_params.superToken,
+    });
+    await createFlowOperation.exec(user2);
+
+    fromUser2Stream = await sf.cfaV1.getFlow({
+      superToken: network_params.superToken,
+      sender: user2.address,
+      receiver: superPoolAddress,
+      providerOrSigner: user2,
+    });
+
+
+    poolExpected  = {
+      timeElapsed: BigNumber.from(0),
+      poolTotalBalance: expedtedPoolBalance,
+      totalShares: amount,
+      deposit: amount.mul(PRECISSION),
+      depositFromInFlowRate: BigNumber.from(0),
+      inFlowRate: BigNumber.from(flowRate),
+      outFlowRate: BigNumber.from(0),
+      outFlowAssetsRate: BigNumber.from(0),
+      yieldTokenIndex: BigNumber.from(0),
+      yieldInFlowRateIndex: BigNumber.from(0),
+      yieldAccrued: BigNumber.from(0),
+      yieldSnapshot: BigNumber.from(0),
+      totalYield: BigNumber.from(0),
+      apy: BigNumber.from(0),
+      apySpan: BigNumber.from(0),
+    };
+
+
+
+    usersTest = [
+      {
+        name: 'User1',
+        address: user1.address,
+        expected: {
+          realTimeBalance: amount,
+          shares: amount,
+          tokenBalance: initialBalance.sub(amount),
+          deposit: amount.mul(PRECISSION),
+          outAssets: BigNumber.from(0),
+          outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(0),
+          timestamp: BigNumber.from(0),
+        },
+      },
+      {
+        name: 'User2',
+        address: user2.address,
+        expected: {
+          realTimeBalance: BigNumber.from(0),
+          shares: BigNumber.from(0),
+          tokenBalance: initialBalance.sub(fromUser2Stream.deposit),
+          deposit: BigNumber.from(0),
+          outAssets: BigNumber.from(0),
+          outFlow: BigNumber.from(0),
+          inFlow: BigNumber.from(flowRate),
+          timestamp: BigNumber.from(ONE_DAY),
+        },
+      },
+    ];
+
+    await testPeriod(BigNumber.from(t0), ONE_DAY, poolExpected, contractsTest, usersTest);
 
   });
 });

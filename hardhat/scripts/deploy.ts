@@ -244,8 +244,8 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
     //
   };
 
-  await superPoolHost.createSuperPool(superInputStruct,{gasLimit:10000000, nonce:nonce+6});
-
+  let tx = await superPoolHost.createSuperPool(superInputStruct,{gasLimit:10000000, nonce:nonce+6});
+  await tx.wait();
 
   let resolver: SupertokenResolverStructOutput = await superPoolHost.getResolverBySuperToken(network_params.superToken);
 

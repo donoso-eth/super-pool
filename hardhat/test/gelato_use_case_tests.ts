@@ -240,7 +240,7 @@ describe('Gelato Use case test', function () {
     erc777 = await ERC777__factory.connect(SUPERTOKEN1, user1);
 
     await waitForTx(erc777.send(superPoolTokenAddress, 20000, '0x'));
-    t0 = +(await superTokenPool.lastPeriodTimestamp());
+    t0 = +(await superTokenPool.lastPoolTimestamp());
 
     let expedtedPoolBalance = utils.parseEther('50').add(BigNumber.from(20000));
 
