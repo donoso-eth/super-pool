@@ -119,4 +119,12 @@ library DataTypes {
 
   }
 
+  enum SupplierEvent {
+    DEPOSIT,
+    STREAMSTART,
+    WITHDRAW,
+    STREAMSTOP,
+    PUSHTOSTRATEGY
+  }
+
 }

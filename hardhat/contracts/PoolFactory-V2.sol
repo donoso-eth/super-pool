@@ -220,7 +220,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     require(msg.sender == address(superToken), "INVALID_TOKEN");
     require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
-    console.log("tokens_reveived");
+    console.log("tokens_reveived : ",amount );
 
     _deposit(from, from, amount);
   }
@@ -344,12 +344,15 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
+    console.log(347,supplier.createdTimestamp );
+
     if (supplier.createdTimestamp == 0) {
       supplier.createdTimestamp = block.timestamp;
       supplier.supplier = _supplier;
       supplier.timestamp = block.timestamp;
       supplierId.increment();
-
+      uint256 current = supplierId.current();
+      console.log(352,current );
       supplier.id = supplierId.current();
 
       supplierAdressById[supplier.id] = _supplier;
@@ -411,8 +414,12 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
 
+    console.log(414, poolByTimestamp[block.timestamp].deposit );
+
     poolByTimestamp[block.timestamp].totalShares = poolByTimestamp[block.timestamp].totalShares + inDeposit - outDeposit;
     poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
+
+      console.log(419, poolByTimestamp[block.timestamp].deposit );
 
     if (netFlow < 0) {
       uint256 total = supplier.deposit; //_getSupplierBalance(_supplier);
@@ -607,14 +614,18 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     uint256 periodSpan = currentPool.timestamp - lastPool.timestamp;
 
+  console.log(610, periodSpan);
+
+
    if (periodSpan >0) {
 
     currentPool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
 
     currentPool.deposit = lastPool.deposit;
+    
 
     currentPool.yieldSnapshot = poolStrategy.balanceOf();
-
+    console.log(620, currentPool.yieldSnapshot);
 
     currentPool.yieldAccrued= currentPool.yieldSnapshot - lastPool.yieldSnapshot;
 
@@ -655,7 +666,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     poolTimestampById[poolId.current()] = block.timestamp;
 
    }
-
+     console.log(622,currentPool.deposit);
     console.log("pool_update");
   }
 

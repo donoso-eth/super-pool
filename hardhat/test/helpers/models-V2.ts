@@ -3,6 +3,9 @@ import { ERC20, ERC777, IOps, ISuperfluidToken, ISuperToken, PoolFactoryV2, STok
 
 
 export interface IPOOL {
+
+    id:BigNumber;
+
     timestamp: BigNumber;
     deposit: BigNumber;
     depositFromInFlowRate: BigNumber;
@@ -27,7 +30,8 @@ export interface IPOOL {
   
 
 export interface IPOOL_RESULT {
-    timeElapsed: BigNumber;
+    id:BigNumber;
+    timestamp: BigNumber;
     poolTotalBalance: BigNumber;
   
     totalShares:BigNumber;
@@ -50,6 +54,9 @@ export interface IPOOL_RESULT {
   
   }
   
+export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
+
+
   export interface IUSER_CHECK {
     name: string;
     result: IUSER_RESULT;
@@ -58,22 +65,26 @@ export interface IPOOL_RESULT {
   }
   
   export interface IUSER_RESULT {
-    realTimeBalance?: BigNumber;
-    shares?:BigNumber;
-    tokenBalance?:BigNumber;
-    deposit?: BigNumber;
-    timestamp?: BigNumber;
-    inFlow?:BigNumber;
+    id:BigNumber,
+    realTimeBalance: BigNumber;
+    shares:BigNumber;
+    tokenBalance:BigNumber;
+    deposit: BigNumber;
+    timestamp: BigNumber;
+    inFlow:BigNumber;
     inFlowId?: string
     nextExecIn?:BigNumber
-    outFlow?: BigNumber;
-    outAssets?: BigNumber
+    outFlow: BigNumber;
+    outAssets: BigNumber
     outAssetsId?: string
     nextExecOut?:BigNumber
   }
   
   export interface IUSERTEST {address:string, name: string,expected: IUSER_RESULT}
   
+ export interface IUSERS_TEST {[key:string]:IUSERTEST} 
+
+
   export interface ICONTRACTS_TEST  {
     poolAddress: string,
      superTokenContract: ISuperToken, 
