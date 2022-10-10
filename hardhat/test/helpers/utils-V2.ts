@@ -181,7 +181,6 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     let userState = await contracts.superPool.suppliersByAddress(user.address);
     let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
 
-    console.log(userState);
 
     console.log('\x1b[35m%s\x1b[0m', '     ==================================');
 

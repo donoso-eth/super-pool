@@ -225,7 +225,7 @@ describe.only('V2 test', function () {
 
     t0 = +(await superPool.lastPoolTimestamp());
 
-    console.log(deployer.address);
+  
 
     await hre.network.provider.request({
       method: 'hardhat_impersonateAccount',
