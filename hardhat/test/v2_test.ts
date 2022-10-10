@@ -277,7 +277,7 @@ describe.only('V2 test', function () {
 
     let expedtedPoolBalance = initialBalance.add(amount);
 
-    let poolExpected: IPOOL_RESULT = {
+    let poolExpected1: IPOOL_RESULT = {
       id: BigNumber.from(1),
       timestamp: t1,
       poolTotalBalance: expedtedPoolBalance,
@@ -298,7 +298,7 @@ describe.only('V2 test', function () {
 
 
 
-    pools[+poolExpected.timestamp] = poolExpected;
+    pools[+poolExpected1.timestamp] = poolExpected1;
 
 
     let usersPool:{ [key:string]: IUSERTEST} = {
@@ -321,7 +321,7 @@ describe.only('V2 test', function () {
  
 
 
-    await testPeriod(BigNumber.from(t0), +t1-t0, poolExpected, contractsTest, usersPool);
+    await testPeriod(BigNumber.from(t0), +t1-t0, poolExpected1, contractsTest, usersPool);
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tests passed ');
 
@@ -337,14 +337,14 @@ describe.only('V2 test', function () {
     await setNextBlockTimestamp(hre, +t1  + ONE_DAY);
     let timestamp = t1.add(BigNumber.from(ONE_DAY));
    
-
+    let lastPool:IPOOL_RESULT  = poolExpected1; 
 
     await waitForTx(poolStrategy.depositMock())
 
     let yieldIndex = await poolStrategy.yieldIndex();
     let pushedAmount = await poolStrategy.pushedBalance();
 
-    let lastPool:IPOOL_RESULT  = poolExpected; 
+   
 
     let pool = updatePool(lastPool,timestamp,BigNumber.from(0),PRECISSION)
    
@@ -371,13 +371,13 @@ describe.only('V2 test', function () {
 
 
 
-    throw new Error("");
+
     
 
     // #region =================  THIRD PERIOD ============================= //
    
     await setNextBlockTimestamp(hre,  +t1 + 2*ONE_DAY);
-
+    timestamp = t1.add(BigNumber.from( 2 * ONE_DAY));
     console.log('\x1b[36m%s\x1b[0m', '#3--- User2 provides starts a stream at t0 + 2*  One Day ');
 
 
@@ -403,42 +403,21 @@ describe.only('V2 test', function () {
   let deposiTindex = yieldPool.mul(PRECISSION).div(amount)
 
 
-   lastPool= Object.assign(poolExpected);
+   lastPool= Object.assign({},pool);
     
-    lastUsersPool =Object.assign(usersPool)
+   lastUsersPool =Object.assign({},usersPool)
 
-
-
-    poolExpected  = {
-      id: BigNumber.from(3),
-      timestamp: t1.add(BigNumber.from(2*ONE_DAY)),
-      poolTotalBalance: expedtedPoolBalance,
-      totalShares: amount,
-      deposit: amount.mul(PRECISSION),
-      depositFromInFlowRate: BigNumber.from(0),
-      inFlowRate: BigNumber.from(flowRate),
-      outFlowRate: BigNumber.from(0),
-      outFlowAssetsRate: BigNumber.from(0),
-      yieldTokenIndex: deposiTindex,
-      yieldInFlowRateIndex: BigNumber.from(0),
-      yieldAccrued: BigNumber.from(yieldPool),
-      yieldSnapshot: BigNumber.from(yieldPool).add(pushedAmount),
-      totalYield: BigNumber.from(yieldPool),
-      apy: BigNumber.from(0),
-      apySpan:t1.add(BigNumber.from(2*ONE_DAY)).sub(BigNumber.from(t0)),
-    };
-
-     pool = updatePool(lastPool,poolExpected.timestamp,poolExpected.yieldSnapshot,PRECISSION)
+    let  pool3 = updatePool(lastPool,timestamp,pushedAmount.add(yieldPool),PRECISSION)
      payload = abiCoder.encode(
       [ 'int96'],
       [ flowRate ]
     )
 
     if (lastUsersPool[user2.address] == undefined) {
-      lastUsersPool[user2.address] = addUser(user2.address,2,poolExpected.timestamp)
+      lastUsersPool[user2.address] = addUser(user2.address,2,timestamp)
     }
 
-   result =  await applyUserEvent(SupplierEvent.STREAMSTART,user2.address,payload,lastUsersPool,pool,pools,PRECISSION)
+   result =  await applyUserEvent(SupplierEvent.STREAMSTART,user2.address,payload,lastUsersPool,pool3,pools,PRECISSION)
 
   
    // await printPoolResult(pool)
@@ -505,32 +484,15 @@ describe.only('V2 test', function () {
  
 
 
-    lastPool = poolExpected;
+    lastPool = pool;
 
     console.log(471,lastPool.deposit.toString())
 
-    poolExpected  = {
-      id: lastPool.id.add(BigNumber.from(1)),
-      timestamp: lastPool.timestamp.add(BigNumber.from(ONE_DAY)),
-      poolTotalBalance: expedtedPoolBalance,
-      totalShares: amount.add(lastPool.totalShares).add(lastPool.inFlowRate.mul(ONE_DAY)),
-      deposit:  amount.mul(PRECISSION).add(lastPool.deposit),
-      depositFromInFlowRate: lastPool.inFlowRate.mul(ONE_DAY).mul(PRECISSION),
-      inFlowRate: BigNumber.from(flowRate),
-      outFlowRate: BigNumber.from(0),
-      outFlowAssetsRate: BigNumber.from(0),
-      yieldTokenIndex: deposiTindex,
-      yieldInFlowRateIndex: BigNumber.from(0),
-      yieldAccrued: BigNumber.from(yieldPool),
-      yieldSnapshot: BigNumber.from(yieldPool).add(pushedAmount),
-      totalYield: BigNumber.from(yieldPool),
-      apy: BigNumber.from(0),
-      apySpan: lastPool.timestamp.add(BigNumber.from(ONE_DAY)),
-    };
+
 
 
    
-    await testPeriod(BigNumber.from(t0), +t1 + 3*ONE_DAY, poolExpected, contractsTest, usersTest);
+    //await testPeriod(BigNumber.from(t0), +t1 + 3*ONE_DAY, pool, contractsTest, usersTest);
 
 
     // await waitForTx(poolStrategy.depositMock())

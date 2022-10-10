@@ -403,7 +403,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     uint256 outDeposit,
     uint256 outAssets
   ) internal {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+    DataTypes.Supplier storage supplier = _getSupplier(_supplier);
 
     _supplierUpdateCurrentState(_supplier);
 

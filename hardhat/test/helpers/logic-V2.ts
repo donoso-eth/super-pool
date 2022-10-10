@@ -17,7 +17,7 @@ export enum SupplierEvent {
 }
 
 export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSnapshot: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
-  let pool: IPOOL_RESULT = Object.assign(lastPool);
+  let pool: IPOOL_RESULT = Object.assign({},lastPool);
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
   let yieldAccrued = yieldSnapshot.sub(lastPool.yieldSnapshot);
@@ -46,7 +46,7 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSn
 
   pool.apySpan = lastPool.apySpan.add(peridodSpan);
 
-  
+
 
   return pool;
 };
@@ -65,13 +65,13 @@ export const applyUserEvent = (
 
   let activeUser: IUSERTEST = usersPool[userAddress];
 
-  let nonActiveUsers: IUSERS_TEST = Object.assign(usersPool);
+  let nonActiveUsers: IUSERS_TEST = Object.assign({},usersPool);
 
   if (activeUser !== undefined) {
     if (activeUser.expected.timestamp !== pool.timestamp) {
       [activeUser, pool] = updateUser(activeUser, pool, pools, PRECISSION);
-      delete nonActiveUsers[activeUser.address];
     }
+    delete nonActiveUsers[activeUser.address];
   }
 
   let users = updateNonActiveUsers(nonActiveUsers, pool, pools, PRECISSION);
@@ -89,18 +89,22 @@ export const applyUserEvent = (
       result = abiCoder.decode(['int96'], payload);
       pool.inFlowRate = pool.inFlowRate.add(result[0]);
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.add(result[0]);
-
       break;
-
+    case SupplierEvent.PUSHTOSTRATEGY:
+      console.log('pushio');
+      result = abiCoder.decode(['uint256'], payload);
+      console.log(result[0].toString())
+      pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
+      
     default:
       break;
   }
 
-  Object.keys(users).forEach((key) => {
-    printUserResult(users[key]);
-  });
+  // Object.keys(users).forEach((key) => {
+  //   printUserResult(users[key]);
+  // });
 
-  printPoolResult(pool);
+  // printPoolResult(pool);
 
   return [users, pool];
 };
