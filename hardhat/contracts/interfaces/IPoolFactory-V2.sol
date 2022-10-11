@@ -30,6 +30,8 @@ interface IPoolFactoryV2 {
 
   function getLastPool() external view returns (DataTypes.PoolV2 memory);
 
+  function getPool(uint256 _timestamp) external view returns (DataTypes.PoolV2 memory) ;
+
   function transfer(uint256 _amount, address _paymentToken) external;
 
   function withdrawStep(address _receiver) external;

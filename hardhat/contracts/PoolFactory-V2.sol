@@ -24,9 +24,10 @@ import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
 import {ISTokenFactoryV2} from "./interfaces/ISTokenFactory-V2.sol";
+import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
-import {IGelatoResolverV2} from "./interfaces/IGelatoResolver-V2.sol";
-import {ISettingsV2} from "./interfaces/ISettings-V2.sol";
+import {IGelatoTasksV2} from "./interfaces/IGelatoTasks-V2.sol";
+import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
@@ -70,10 +71,10 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   uint256 public lastPoolTimestamp;
 
-  Counters.Counter public poolId;
+ 
   Counters.Counter public supplierId;
 
-  address public ops;
+  IOps public ops;
   address payable public gelato;
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -90,8 +91,10 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   ISTokenFactoryV2 sToken;
   IPoolStrategyV2 poolStrategy;
-  IGelatoResolverV2 gelatoResolver;
-  ISettingsV2 settings;
+  IGelatoTasksV2 gelatoTasks;
+  IPoolInternalV2 poolInternal;
+  IResolverSettingsV2 resolverSettings;
+  
 
   IERC20 token;
 
@@ -116,10 +119,16 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     superToken = poolFactoryInitializer.superToken;
     cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
     token = poolFactoryInitializer.token;
-    sToken = poolFactoryInitializer.sToken;
-    poolStrategy = poolFactoryInitializer.poolStrategy;
-    gelatoResolver = poolFactoryInitializer.gelatoResolver;
-    settings = poolFactoryInitializer.settings;
+
+    resolverSettings = IResolverSettingsV2(poolFactoryInitializer.resolverSettings);
+    sToken = ISTokenFactoryV2(resolverSettings.getSToken());
+    poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
+    gelatoTasks = IGelatoTasksV2(resolverSettings.getGelatoTasks());
+    poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
+
+    //// gelato
+    ops = IOps(resolverSettings.getGelatoOps());
+    gelato = ops.gelato();
 
     MAX_INT = 2**256 - 1;
 
@@ -128,26 +137,22 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     _cfaLib = CFAv1Library.InitData(host, cfa);
 
-    //// gelato
-    ops = poolFactoryInitializer.ops;
-    gelato = IOps(poolFactoryInitializer.ops).gelato();
-
     //// tokens receie implementation
     IERC1820Registry _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
     bytes32 TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
 
     _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
-    PRECISSION = settings.getPrecission();
+    PRECISSION = resolverSettings.getPrecission();
 
     ///// initializators
   }
 
-  function getPool(uint256 _poolId) external view returns (DataTypes.PoolV2 memory) {
-    return poolByTimestamp[_poolId];
+  function getPool(uint256 _timestamp) external view returns (DataTypes.PoolV2 memory) {
+    return poolByTimestamp[_timestamp];
   }
 
-  function getLastPool() external view returns (DataTypes.PoolV2 memory) {
+  function getLastPool() public view returns (DataTypes.PoolV2 memory) {
     return poolByTimestamp[lastPoolTimestamp];
   }
 
@@ -174,14 +179,10 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   }
 
   function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
-
     _poolUpdateCurrentState();
-    console.log(block.timestamp);
-    console.log(lastPoolTimestamp);
-    DataTypes.PoolV2 storage pool = poolByTimestamp[lastPoolTimestamp];
-   pool.yieldSnapshot += amount;
 
-  } 
+    poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
+  }
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
   /****************************************************************************************************
@@ -220,26 +221,12 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     require(msg.sender == address(superToken), "INVALID_TOKEN");
     require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
-    console.log("tokens_reveived : ",amount );
+    console.log("tokens_reveived : ", amount);
 
-    _deposit(from, from, amount);
-  }
-
-  function _deposit(
-    address from,
-    address receiver,
-    uint256 assets
-  ) internal {
-    //// retrieve supplier or create a record for the new one
-    // _getSupplier(from);
-
-    //// Update pool state "pool Struct" calculating indexes and timestamp
     _poolUpdateCurrentState();
 
     ///// suppler config updated && pool
-    _updateSupplierDeposit(from, assets, 0, 0);
-
-    /// Events mnot yet implemented
+    _updateSupplierDeposit(from, amount, 0, 0);
   }
 
   function redeemDeposit(uint256 redeemAmount) external {
@@ -261,7 +248,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       uint256 factor = total.div(myShares);
       outAssets = factor.mul(redeemAmount).div(PRECISSION);
 
-      poolStrategy.withdraw(outAssets);
+      poolStrategy.withdraw(outAssets, supplier);
       //ISuperToken(superToken).send(supplier, outAssets, "0x");
 
       ///// suppler config updated && pool
@@ -289,7 +276,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     if (_endSeconds > 0) {
       cancelTask(supplier.outAssets.cancelTaskId);
-      supplier.outAssets.cancelTaskId = gelatoResolver.createStopStreamTimedTask(msg.sender, _endSeconds - MIN_OUTFLOW_ALLOWED, false, 0);
+      supplier.outAssets.cancelTaskId = gelatoTasks.createStopStreamTimedTask(msg.sender, _endSeconds - MIN_OUTFLOW_ALLOWED, false, 0);
     }
   }
 
@@ -322,20 +309,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   // #region  ============= =============  Public Supplier Functions ============= =============
 
-  function totalYieldEarnedSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
-    uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
-
-    uint yieldAccruedSincelastPool = poolStrategy.getMockYieldSinceLastTimeStmap();
-
-    (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex) = _calculateIndexes(yieldAccruedSincelastPool);
-
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-
-    uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.div(PRECISSION);
-    uint256 yieldInFlow = uint96(supplier.inStream.flow) * yieldInFlowRateIndex;
-
-    yieldSupplier = yieldTilllastPool + yieldDeposit + yieldInFlow;
-  }
 
   // #endregion
 
@@ -344,15 +317,12 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
-    console.log(347,supplier.createdTimestamp );
-
     if (supplier.createdTimestamp == 0) {
       supplier.createdTimestamp = block.timestamp;
       supplier.supplier = _supplier;
       supplier.timestamp = block.timestamp;
       supplierId.increment();
       uint256 current = supplierId.current();
-      console.log(352,current );
       supplier.id = supplierId.current();
 
       supplierAdressById[supplier.id] = _supplier;
@@ -380,7 +350,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
       int256 supplierDepositUpdate = int256(supplierBalance) - int256(supplier.deposit);
 
-      uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier);
+      uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
       int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
@@ -417,7 +387,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     poolByTimestamp[block.timestamp].totalShares = poolByTimestamp[block.timestamp].totalShares + inDeposit - outDeposit;
     poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
 
-
     if (netFlow < 0) {
       uint256 total = supplier.deposit; //_getSupplierBalance(_supplier);
       uint256 factor = total.div(supplier.shares);
@@ -438,7 +407,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     bytes memory _ctx
   ) internal returns (bytes memory newCtx) {
     DataTypes.Supplier storage supplier = _getSupplier(_supplier);
-   
+
     newCtx = _ctx;
 
     _supplierUpdateCurrentState(_supplier);
@@ -507,23 +476,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     console.log("updateSupplierFlow");
   }
 
-  function _calculateYieldSupplier(address _supplier) internal view returns (uint256 yieldSupplier) {
-    DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
-
-    uint256 lastTimestamp = supplier.timestamp;
-
-    ///// Yield from deposit
-
-    uint256 yieldFromDeposit = (supplier.deposit * (poolByTimestamp[lastPoolTimestamp].yieldTokenIndex - poolByTimestamp[lastTimestamp].yieldTokenIndex)).div(PRECISSION);
-
-    yieldSupplier = yieldFromDeposit;
-    if (supplier.inStream.flow > 0) {
-      ///// Yield from flow
-      uint256 yieldFromFlow = uint96(supplier.inStream.flow) * (poolByTimestamp[lastPoolTimestamp].yieldInFlowRateIndex - poolByTimestamp[lastTimestamp].yieldInFlowRateIndex);
-
-      yieldSupplier = yieldSupplier + yieldFromFlow;
-    }
-  }
 
   function _outStreamHasChanged(
     address _supplier,
@@ -549,13 +501,13 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     } else {
       _cfaLib.createFlow(_supplier, superToken, newOutAssets);
     }
-    supplier.outAssets.cancelTaskId = gelatoResolver.createStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true, 0);
+    supplier.outAssets.cancelTaskId = gelatoTasks.createStopStreamTimedTask(_supplier, endMs - MIN_OUTFLOW_ALLOWED, true, 0);
 
     supplier.outAssets.stepAmount = supplier.deposit.div(PARTIAL_DEPOSIT);
 
     supplier.outAssets.stepTime = 50;
 
-    supplier.outAssets.cancelWithdrawId = gelatoResolver.createWithdraStepTask(_supplier, supplier.outAssets.stepTime);
+    supplier.outAssets.cancelWithdrawId = gelatoTasks.createWithdraStepTask(_supplier, supplier.outAssets.stepTime);
 
     ///
   }
@@ -573,7 +525,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     uint256 withdrawalAmount = supplier.deposit.div(PRECISSION);
 
-    poolStrategy.withdraw(withdrawalAmount);
+    poolStrategy.withdraw(withdrawalAmount, _supplier);
     ISuperToken(superToken).send(_supplier, withdrawalAmount, "0x");
     supplier.shares = 0;
     supplier.deposit = 0;
@@ -602,99 +554,25 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
    *************************************************************************/
   function poolUpdateCurrentState() external {}
 
-  function _poolUpdateCurrentState() public {
-    poolId.increment();
-
-    DataTypes.PoolV2 memory currentPool = DataTypes.PoolV2(poolId.current(), block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
-
-    DataTypes.PoolV2 memory lastPool = poolByTimestamp[lastPoolTimestamp];
-
-    uint256 periodSpan = currentPool.timestamp - lastPool.timestamp;
-
-  console.log(610, periodSpan);
-
-
-   if (periodSpan >0) {
-
-    currentPool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
-
-    currentPool.deposit = lastPool.deposit;
-    
-
-    currentPool.yieldSnapshot = poolStrategy.balanceOf();
-    console.log(620, currentPool.yieldSnapshot);
-
-    currentPool.yieldAccrued= currentPool.yieldSnapshot - lastPool.yieldSnapshot;
-
-    currentPool.totalYield += currentPool.yieldAccrued;
-
-
-    currentPool.apy.span = lastPool.apy.span + periodSpan;
-    uint periodApy;
-    periodApy = lastPool.totalShares == 0 ? 0 :currentPool.yieldAccrued
-    .mul(365*24*3600*100)
-    .div(periodSpan)
-    .div(lastPool.totalShares);
-
-
-   currentPool.apy.apy = ((periodSpan.mul(periodApy))
-          .add(lastPool.apy.span.mul(lastPool.apy.apy))).
-          div( currentPool.apy.span);
-
-    (currentPool.yieldTokenIndex, currentPool.yieldInFlowRateIndex) = _calculateIndexes( currentPool.yieldAccrued );
-
-
-    currentPool.yieldTokenIndex = currentPool.yieldTokenIndex + lastPool.yieldTokenIndex;
-    currentPool.yieldInFlowRateIndex = currentPool.yieldInFlowRateIndex + lastPool.yieldInFlowRateIndex;
-
-    currentPool.totalShares = lastPool.totalShares + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
-
-    currentPool.outFlowAssetsRate = lastPool.outFlowAssetsRate;
-
-    currentPool.inFlowRate = lastPool.inFlowRate;
-    currentPool.outFlowRate = lastPool.outFlowRate;
-
-    currentPool.timestamp = block.timestamp;
-
-    poolByTimestamp[block.timestamp] = currentPool;
-
-    lastPoolTimestamp = block.timestamp;
-
-    poolTimestampById[poolId.current()] = block.timestamp;
-
-   }
-     console.log(622,currentPool.deposit);
-    console.log("pool_update");
-  }
-
-  function _calculateIndexes(uint256 yieldPeriod) internal view returns (uint256 periodYieldTokenIndex, uint256 periodYieldInFlowRateIndex) {
-    DataTypes.PoolV2 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+  function _poolUpdateCurrentState() internal{
+     
+     DataTypes.PoolV2 memory lastPool = getLastPool();
 
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
-    uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
-    uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
+    if (periodSpan > 0) {
 
-    uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow;
+      DataTypes.PoolV2 memory currentPool =  poolInternal._poolUpdate(lastPool, periodSpan, poolStrategy.balanceOf());
 
+      poolByTimestamp[block.timestamp] = currentPool;
 
-    /// we ultiply by PRECISSION for 5 decimals precision
+      lastPoolTimestamp = block.timestamp;
 
-    if (totalAreaPeriod == 0 || yieldPeriod == 0) {
-      periodYieldTokenIndex = 0;
-      periodYieldInFlowRateIndex = 0;
-    } else {
-      uint256 inFlowContribution = (dollarSecondsInFlow * PRECISSION);
-      uint256 depositContribution = (dollarSecondsDeposit * PRECISSION * PRECISSION);
-      if (lastPool.deposit != 0) {
-        periodYieldTokenIndex = ((depositContribution * yieldPeriod).div((lastPool.deposit) * totalAreaPeriod));
-      }
-      if (lastPool.inFlowRate != 0) {
-        periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPool.inFlowRate) * totalAreaPeriod));
-      }
+      poolTimestampById[currentPool.id] = block.timestamp;
     }
-  }
 
+    console.log("pool_update");
+  }
 
   // #endregion POOL UPDATE
 
@@ -797,12 +675,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       withdrawalAmount = supplier.deposit;
       cancelTask(supplier.outAssets.cancelWithdrawId);
     }
-    poolStrategy.withdraw(withdrawalAmount);
-  }
-
-  modifier onlyOps() {
-    require(msg.sender == ops, "OpsReady: onlyOps");
-    _;
+    poolStrategy.withdraw(withdrawalAmount, address(this));
   }
 
   function cancelTask(bytes32 _taskId) public {
@@ -820,8 +693,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     _transfer(_amount, _paymentToken);
   }
 
-
-
   function _transfer(uint256 _amount, address _paymentToken) internal {
     if (_paymentToken == ETH) {
       (bool success, ) = gelato.call{value: _amount}("");
@@ -838,6 +709,11 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   modifier onlySToken() {
     require(msg.sender == address(sToken), "Only Superpool Token");
+    _;
+  }
+
+  modifier onlyOps() {
+    require(msg.sender == address(ops), "OpsReady: onlyOps");
     _;
   }
 
@@ -867,7 +743,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
         DataTypes.Supplier storage supplier = suppliersByAddress[sender];
         uint256 endSeconds = parseLoanData(host.decodeCtx(_ctx).userData);
 
-        supplier.inStream.cancelTaskId = gelatoResolver.createStopStreamTimedTask(sender, endSeconds - MIN_OUTFLOW_ALLOWED, false, 1);
+        supplier.inStream.cancelTaskId = gelatoTasks.createStopStreamTimedTask(sender, endSeconds - MIN_OUTFLOW_ALLOWED, false, 1);
       }
 
       newCtx = _inStreamCallback(sender, inFlowRate, 0, newCtx);

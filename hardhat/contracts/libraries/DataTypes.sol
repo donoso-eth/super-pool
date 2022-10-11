@@ -5,8 +5,8 @@ import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinition
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ISTokenFactoryV2}  from '../interfaces/ISTokenFactory-V2.sol';
 import {IPoolStrategyV2} from '../interfaces/IPoolStrategy-V2.sol';
-import {IGelatoResolverV2} from '../interfaces/IGelatoResolver-V2.sol'; 
-import {ISettingsV2} from '../interfaces/ISettings-V2.sol'; 
+import {IGelatoTasksV2} from '../interfaces/IGelatoTasks-V2.sol'; 
+import {IResolverSettingsV2} from '../interfaces/IResolverSettings-V2.sol'; 
 
 /**
  * @title DataTypes
@@ -19,22 +19,15 @@ library DataTypes {
     address poolFactoryImpl;
     ISTokenFactoryV2 sTokenImpl; 
     ISuperToken  superToken;
-    address ops;
     IERC20 token;
-    IPoolStrategyV2 poolStrategy;
-    IGelatoResolverV2 gelatoResolver;
-    ISettingsV2 settings;
+    IResolverSettingsV2 settings;
   }
 
   struct PoolFactoryInitializer {
     ISuperfluid host;
     ISuperToken superToken;
-    address ops;
     IERC20 token;
-    ISTokenFactoryV2 sToken; 
-    IPoolStrategyV2 poolStrategy;
-    IGelatoResolverV2 gelatoResolver;
-    ISettingsV2 settings;
+    IResolverSettingsV2 resolverSettings;
   }
 
 

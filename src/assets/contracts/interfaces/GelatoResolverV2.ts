@@ -17,7 +17,7 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface GelatoResolverV2Interface extends utils.Interface {
+export interface GelatoTasksV2Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
     "checkerStopStream(address,bool,uint8)": FunctionFragment;
@@ -79,12 +79,12 @@ export type InitializedEvent = TypedEvent<[number], { version: number }>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
 
-export interface GelatoResolverV2 extends BaseContract {
+export interface GelatoTasksV2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: GelatoResolverV2Interface;
+  interface: GelatoTasksV2Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

@@ -103,15 +103,13 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     pool.transfer(fee, feeToken);
 
 
-  (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
-
-    superToken.transferFrom(address(pool), address(this), uint256(balance));
+    superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
     superToken.downgrade(amountToDeposit);
-    aavePool.supply(address(token), balance, address(this), 0);
-    pool.pushedToStrategy(uint256(balance));
+    aavePool.supply(address(token), amountToDeposit , address(this), 0);
+    pool.pushedToStrategy(uint256(amountToDeposit ));
   }
 
-  function balanceOf() external returns (uint256 balance) {
+  function balanceOf() view external returns (uint256 balance) {
     balance = aToken.balanceOf(address(this));
   }
 

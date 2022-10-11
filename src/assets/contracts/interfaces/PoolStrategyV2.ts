@@ -20,77 +20,59 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 export interface PoolStrategyV2Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
-    "calculateStatus()": FunctionFragment;
+    "balanceOf()": FunctionFragment;
     "checkerDeposit()": FunctionFragment;
-    "deposit(uint256)": FunctionFragment;
     "depositTask()": FunctionFragment;
-    "getBalanceSuperToken()": FunctionFragment;
-    "getBalanceToken()": FunctionFragment;
-    "initialize(address,address,address,address,uint256)": FunctionFragment;
-    "setUpMock(address)": FunctionFragment;
-    "withdraw(uint256)": FunctionFragment;
+    "initialize(address,address,address,address,address,address,uint256)": FunctionFragment;
+    "pushedBalance()": FunctionFragment;
+    "withdraw(uint256,address)": FunctionFragment;
+    "yieldIndex()": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "calculateStatus",
-    values?: undefined
-  ): string;
+  encodeFunctionData(functionFragment: "balanceOf", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "checkerDeposit",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "deposit",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "depositTask",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getBalanceSuperToken",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getBalanceToken",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [string, string, string, string, BigNumberish]
+    values: [string, string, string, string, string, string, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "setUpMock", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "pushedBalance",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "withdraw",
-    values: [BigNumberish]
+    values: [BigNumberish, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "yieldIndex",
+    values?: undefined
   ): string;
 
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "calculateStatus",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "checkerDeposit",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "depositTask",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "getBalanceSuperToken",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getBalanceToken",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setUpMock", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "pushedBalance",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "yieldIndex", data: BytesLike): Result;
 
   events: {
     "Initialized(uint8)": EventFragment;
@@ -132,125 +114,104 @@ export interface PoolStrategyV2 extends BaseContract {
   functions: {
     ETH(overrides?: CallOverrides): Promise<[string]>;
 
-    calculateStatus(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    balanceOf(
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { balance: BigNumber }>;
 
     checkerDeposit(
       overrides?: CallOverrides
     ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
-    deposit(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    getBalanceSuperToken(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { balance: BigNumber }>;
-
-    getBalanceToken(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { balance: BigNumber }>;
 
     initialize(
       _ops: string,
       _superToken: string,
       _token: string,
       _pool: string,
+      _aavePool: string,
+      _aToken: string,
       _POOL_BUFFER: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setUpMock(
-      _mock: string,
+    pushedBalance(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    withdraw(
+      amount: BigNumberish,
+      _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    withdraw(
-      requiredAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    yieldIndex(overrides?: CallOverrides): Promise<[BigNumber]>;
   };
 
   ETH(overrides?: CallOverrides): Promise<string>;
 
-  calculateStatus(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
 
   checkerDeposit(
     overrides?: CallOverrides
   ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
-  deposit(
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   depositTask(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
-
-  getBalanceSuperToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getBalanceToken(overrides?: CallOverrides): Promise<BigNumber>;
 
   initialize(
     _ops: string,
     _superToken: string,
     _token: string,
     _pool: string,
+    _aavePool: string,
+    _aToken: string,
     _POOL_BUFFER: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setUpMock(
-    _mock: string,
+  pushedBalance(overrides?: CallOverrides): Promise<BigNumber>;
+
+  withdraw(
+    amount: BigNumberish,
+    _supplier: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  withdraw(
-    requiredAmount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  yieldIndex(overrides?: CallOverrides): Promise<BigNumber>;
 
   callStatic: {
     ETH(overrides?: CallOverrides): Promise<string>;
 
-    calculateStatus(overrides?: CallOverrides): Promise<void>;
+    balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
 
     checkerDeposit(
       overrides?: CallOverrides
     ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
-    deposit(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
     depositTask(overrides?: CallOverrides): Promise<void>;
-
-    getBalanceSuperToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getBalanceToken(overrides?: CallOverrides): Promise<BigNumber>;
 
     initialize(
       _ops: string,
       _superToken: string,
       _token: string,
       _pool: string,
+      _aavePool: string,
+      _aToken: string,
       _POOL_BUFFER: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setUpMock(_mock: string, overrides?: CallOverrides): Promise<void>;
+    pushedBalance(overrides?: CallOverrides): Promise<BigNumber>;
 
     withdraw(
-      requiredAmount: BigNumberish,
+      amount: BigNumberish,
+      _supplier: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    yieldIndex(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   filters: {
@@ -261,86 +222,66 @@ export interface PoolStrategyV2 extends BaseContract {
   estimateGas: {
     ETH(overrides?: CallOverrides): Promise<BigNumber>;
 
-    calculateStatus(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+    balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
 
     checkerDeposit(overrides?: CallOverrides): Promise<BigNumber>;
-
-    deposit(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
-
-    getBalanceSuperToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getBalanceToken(overrides?: CallOverrides): Promise<BigNumber>;
 
     initialize(
       _ops: string,
       _superToken: string,
       _token: string,
       _pool: string,
+      _aavePool: string,
+      _aToken: string,
       _POOL_BUFFER: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setUpMock(
-      _mock: string,
+    pushedBalance(overrides?: CallOverrides): Promise<BigNumber>;
+
+    withdraw(
+      amount: BigNumberish,
+      _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    withdraw(
-      requiredAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+    yieldIndex(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
     ETH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    calculateStatus(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+    balanceOf(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     checkerDeposit(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    deposit(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
-
-    getBalanceSuperToken(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getBalanceToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     initialize(
       _ops: string,
       _superToken: string,
       _token: string,
       _pool: string,
+      _aavePool: string,
+      _aToken: string,
       _POOL_BUFFER: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setUpMock(
-      _mock: string,
+    pushedBalance(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    withdraw(
+      amount: BigNumberish,
+      _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    withdraw(
-      requiredAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+    yieldIndex(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

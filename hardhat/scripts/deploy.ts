@@ -11,7 +11,7 @@ import config from "../hardhat.config";
 import { join } from "path";
 import { createHardhatAndFundPrivKeysFiles } from "../helpers/localAccounts";
 import * as hre from 'hardhat';
-import { STokenFactoryV2__factory, Events__factory,   SuperPoolHost__factory, PoolStrategyV2__factory, GelatoResolverV2__factory, PoolFactoryV2__factory, SettingsV2__factory } from "../typechain-types";
+import { STokenFactoryV2__factory, Events__factory,   SuperPoolHost__factory, PoolStrategyV2__factory, GelatoTasksV2__factory, PoolFactoryV2__factory, ResolverSettingsV2__factory } from "../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 import { utils } from "ethers";
@@ -150,49 +150,49 @@ if (network_params == undefined) {
 
 
     //// DEPLOY Gelato Resolver
-    const gelatoResolver = await new  GelatoResolverV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+3})
+    const gelatoTasks = await new  GelatoTasksV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+3})
 
-    toDeployContract = contract_config['gelatoResolverV2'];
+    toDeployContract = contract_config['gelatoTasksV2'];
    writeFileSync(
      `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
      JSON.stringify({
-       abi:  GelatoResolverV2__factory.abi,
+       abi:  GelatoTasksV2__factory.abi,
        name: toDeployContract.name,
-       address: gelatoResolver.address,
+       address: gelatoTasks.address,
        network: network,
      })
    );
  
    writeFileSync(
      `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-     JSON.stringify( GelatoResolverV2__factory.abi)
+     JSON.stringify( GelatoTasksV2__factory.abi)
    );
-   console.log(toDeployContract.name + ' Contract Deployed to:', gelatoResolver.address);
+   console.log(toDeployContract.name + ' Contract Deployed to:', gelatoTasks.address);
    ///// copy Interfaces and create Metadata address/abi to assets folder
    copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
  
    
  
  //// DEPLOY Settings
- const settings = await new SettingsV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+4})
+ const settings = await new ResolverSettingsV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+4})
 
- toDeployContract = contract_config['settingsV2'];
+ toDeployContract = contract_config['resolverSettingsV2'];
 writeFileSync(
   `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
   JSON.stringify({
     abi:  SuperPoolHost__factory.abi.concat(eventAbi),
     name: toDeployContract.name,
-    address: settings.address,
+    address:resolverSettings.address,
     network: network,
   })
 );
 
 writeFileSync(
   `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-  JSON.stringify(SettingsV2__factory.abi.concat(eventAbi))
+  JSON.stringify(ResolverSettingsV2__factory.abi.concat(eventAbi))
 );
 
-console.log(toDeployContract.name + ' Contract Deployed to:', settings.address);
+console.log(toDeployContract.name + ' Contract Deployed to:',resolverSettings.address);
 
 
 ///// copy Interfaces and create Metadata address/abi to assets folder
@@ -239,7 +239,7 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
     token:network_params.token,
     sTokenImpl:sTokenFactoryImpl.address,
     poolStrategy:poolStrategy.address,
-    gelatoResolver:gelatoResolver.address,
+    gelatoTasks:gelatoTasks.address,
     settings:settings.address
     //
   };
@@ -253,7 +253,7 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
   await poolStrategy.initialize(network_params.ops,network_params.superToken,network_params.token,resolver.pool,5,{gasLimit:10000000, nonce:nonce+7});
   
 
-  await gelatoResolver.initialize(network_params.ops,resolver.pool,{gasLimit:10000000, nonce:nonce+8});
+  await gelatoTasks.initialize(network_params.ops,resolver.pool,{gasLimit:10000000, nonce:nonce+8});
 
 
 

@@ -53,19 +53,14 @@ contract SuperPoolHost {
     poolFactoryInitializer = DataTypes.PoolFactoryInitializer({
       host: host,
       superToken: superPoolInput.superToken,
-      ops: superPoolInput.ops,
       token: superPoolInput.token,
-      sToken: ISTokenFactoryV2(sTokenContract),
-      poolStrategy: superPoolInput.poolStrategy,
-      gelatoResolver: superPoolInput.gelatoResolver,
-      settings: superPoolInput.settings
-      
-      
+      resolverSettings: superPoolInput.settings
     });
 
     IPoolFactoryV2(poolContract).initialize(poolFactoryInitializer);
 
-    ISTokenFactoryV2(sTokenContract).initialize(IPoolFactoryV2(poolContract),superPoolInput.ops,"name","symbol");
+    
+   ISTokenFactoryV2(sTokenContract).initialize(superPoolInput.settings,"name","symbol");
 
     
     superTokenResolverByAddress[address(superPoolInput.superToken)].pool = poolContract;

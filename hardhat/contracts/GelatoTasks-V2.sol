@@ -8,7 +8,7 @@ import {IOps} from "./gelato/IOps.sol";
 import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract GelatoResolverV2 is Initializable {
+contract GelatoTasksV2 is Initializable {
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
   address ops;
   IPoolFactoryV2 pool;

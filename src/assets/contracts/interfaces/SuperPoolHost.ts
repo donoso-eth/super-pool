@@ -23,7 +23,7 @@ export type SuperPoolInputStruct = {
   ops: string;
   token: string;
   poolStrategy: string;
-  gelatoResolver: string;
+  gelatoTasks: string;
   settings: string;
 };
 
@@ -43,7 +43,7 @@ export type SuperPoolInputStructOutput = [
   ops: string;
   token: string;
   poolStrategy: string;
-  gelatoResolver: string;
+  gelatoTasks: string;
   settings: string;
 };
 

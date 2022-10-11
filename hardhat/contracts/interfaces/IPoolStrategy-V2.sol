@@ -6,17 +6,9 @@ import {IPoolFactoryV2} from "./IPoolFactory-V2.sol";
 
 interface IPoolStrategyV2 {
 
-  function balanceOf() external returns(uint256 balance);
+  function balanceOf() external view returns(uint256 balance);
 
-  function withdraw(uint256 amount) external;
-
-  function memberWithdraw(uint256 amount,address _supplier) external;
-
-  function deposit(uint256 amount) external;
-
-  function depositMock() external;
-
-  function getMockYieldSinceLastTimeStmap() external view returns (uint256 yield);
+  function withdraw(uint256 amount, address _supplier) external;
 
 
 }

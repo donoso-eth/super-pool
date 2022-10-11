@@ -1,13 +1,13 @@
 {
   "superPoolHost": { "artifactsPath": "SuperPoolHost.sol/SuperPoolHost.json", "name": "SuperPoolHost", "ctor": [], "jsonName": "super_pool_host" },
   "poolFactoryV2": { "name": "PoolFactoryV2", "artifactsPath": "PoolFactory-V2.sol/PoolFactoryV2.json", "jsonName": "pool_factory_v2", "ctor": [] },
-  "gelatoResolverV2": {
-    "name": "GelatoResolverV2",
-    "artifactsPath": "GelatoResolver-V2.sol/GelatoResolverV2.json",
+  "gelatoTasksV2": {
+    "name": "GelatoTasksV2",
+    "artifactsPath": "GelatoTasks-V2.sol/GelatoTasksV2.json",
     "jsonName": "gelato_resolver_v2",
     "ctor": ["_pool:address", "_ops:address"]
   },
   "poolStrategyV2": { "name": "PoolStrategyV2", "artifactsPath": "PoolStrategy-V2.sol/PoolStrategyV2.json", "jsonName": "pool_strategy_v2", "ctor": [] },
   "sTokenFactoryV2": { "name": "STokenFactoryV2", "artifactsPath": "STokenFactory-V2.sol/STokenFactoryV2.json", "jsonName": "s_token_factory_v2", "ctor": [] },
-  "settingsV2": { "name": "SettingsV2", "artifactsPath": "Settings-V2.sol/SettingsV2.json", "jsonName": "settings_v2", "ctor": [] }
+  "resolverSettingsV2": { "name": "ResolverSettingsV2", "artifactsPath": "Settings-V2.sol/ResolverSettingsV2.json", "jsonName": "settings_v2", "ctor": [] }
 }

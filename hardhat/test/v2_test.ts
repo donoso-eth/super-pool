@@ -9,8 +9,8 @@ import {
   ERC777,
   ERC777__factory,
   Events__factory,
-  GelatoResolverV2,
-  GelatoResolverV2__factory,
+  GelatoTasksV2,
+  GelatoTasksV2__factory,
   IOps,
   IOps__factory,
   ISuperfluidToken,
@@ -21,8 +21,8 @@ import {
   PoolFactoryV2__factory,
   PoolStrategyV2,
   PoolStrategyV2__factory,
-  SettingsV2,
-  SettingsV2__factory,
+  ResolverSettingsV2,
+  ResolverSettingsV2__factory,
   STokenFactoryV2,
   STokenFactoryV2__factory,
   SuperPoolHost,
@@ -48,9 +48,9 @@ import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
 let superPoolHost: SuperPoolHost;
 let poolFactory: PoolFactoryV2;
 let sTokenFactory: STokenFactoryV2;
-let gelatoResolver: GelatoResolverV2;
+let gelatoTasks: GelatoTasksV2;
 let poolStrategy: PoolStrategyV2;
-let settings: SettingsV2;
+let settings: ResolverSettingsV2;
 
 let superPool: PoolFactoryV2;
 let superPoolAddress: string;
@@ -149,13 +149,13 @@ describe.only('V2 test', function () {
     console.log('Token Factotokery---> deployed');
 
     //
-    gelatoResolver = await new GelatoResolverV2__factory(deployer).deploy();
+    gelatoTasks = await new GelatoTasksV2__factory(deployer).deploy();
     console.log('Gelato Resolver---> deployed');
 
     poolStrategy = await new PoolStrategyV2__factory(deployer).deploy();
     console.log('Pool Strategy---> deployed');
 
-    settings = await new SettingsV2__factory(deployer).deploy();
+    settings = await new ResolverSettingsV2__factory(deployer).deploy();
     console.log('Settings ---> deployed');
 
     eventsLib = await new Events__factory(deployer).deploy();
@@ -170,9 +170,9 @@ describe.only('V2 test', function () {
       superToken: network_params.superToken,
       ops: network_params.ops,
       token: network_params.token,
-      gelatoResolver: gelatoResolver.address,
+      gelatoTasks: gelatoTasks.address,
       poolStrategy: poolStrategy.address,
-      settings: settings.address,
+      settings:resolverSettings.address,
     };
 
     await superPoolHost.createSuperPool(superInputStruct);
@@ -182,12 +182,12 @@ describe.only('V2 test', function () {
     superPoolAddress = superTokenResolver.pool;
     sTokenAddress = superTokenResolver.sToken;
 
-    await gelatoResolver.initialize(network_params.ops, superPoolAddress);
+    await gelatoTasks.initialize(network_params.ops, superPoolAddress);
     console.log('Gelato resolver ---> initialized');
     await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, 5);
     console.log('Pool Strategy ---> initialized');
 
-    await settings.initialize();
+    awaitresolverSettings.initialize();
     console.log('Settings ---> initialized');
 
     superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);
@@ -242,7 +242,7 @@ describe.only('V2 test', function () {
       superTokenERC777,
     };
 
-    PRECISSION = await settings.getPrecission();
+    PRECISSION = awaitresolverSettings.getPrecission();
 
     sf = await Framework.create({
       chainId:31337,

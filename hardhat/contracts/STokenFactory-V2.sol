@@ -3,25 +3,25 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {Events} from "./libraries/Events.sol";
-import {IERC4626} from "./interfaces/IERC4626.sol";
-
-import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-
-
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 
+import {DataTypes} from "./libraries/DataTypes.sol";
+import {Events} from "./libraries/Events.sol";
+
+
+import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
+
 
 contract STokenFactoryV2  is ERC20Upgradeable {
       using SafeMath for uint256;
-  address  ops;
+
   IPoolFactoryV2 pool;
 
-  uint256 public constant PRECISSION = 1_000_000;
+  uint256 public  PRECISSION;
 
   constructor() {}
 
@@ -29,12 +29,11 @@ contract STokenFactoryV2  is ERC20Upgradeable {
   /**
    * @notice initializer of the Pool
    */
-  function initialize(IPoolFactoryV2 _pool, address _ops,string memory _name, string memory _symbol) external initializer {
+  function initialize(IResolverSettingsV2 resolverSettings,string memory _name, string memory _symbol) external initializer {
     ///initialState
     __ERC20_init(_name,_symbol);
-
-    ops = _ops;
-    pool = _pool;
+    pool = IPoolFactoryV2(resolverSettings.getPool());
+    PRECISSION = resolverSettings.getPrecission();
   }
 
 
