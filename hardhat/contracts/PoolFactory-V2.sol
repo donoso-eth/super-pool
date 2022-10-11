@@ -262,7 +262,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       outAssets = factor.mul(redeemAmount).div(PRECISSION);
 
       poolStrategy.withdraw(outAssets);
-      ISuperToken(superToken).send(supplier, outAssets, "0x");
+      //ISuperToken(superToken).send(supplier, outAssets, "0x");
 
       ///// suppler config updated && pool
       _updateSupplierDeposit(supplier, 0, redeemAmount, outAssets);
@@ -414,12 +414,9 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
 
-    console.log(414, poolByTimestamp[block.timestamp].deposit );
-
     poolByTimestamp[block.timestamp].totalShares = poolByTimestamp[block.timestamp].totalShares + inDeposit - outDeposit;
     poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outAssets * PRECISSION;
 
-      console.log(419, poolByTimestamp[block.timestamp].deposit );
 
     if (netFlow < 0) {
       uint256 total = supplier.deposit; //_getSupplierBalance(_supplier);
@@ -440,8 +437,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     int96 outFlow,
     bytes memory _ctx
   ) internal returns (bytes memory newCtx) {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-
+    DataTypes.Supplier storage supplier = _getSupplier(_supplier);
+   
     newCtx = _ctx;
 
     _supplierUpdateCurrentState(_supplier);

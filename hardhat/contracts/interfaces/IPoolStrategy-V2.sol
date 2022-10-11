@@ -10,6 +10,8 @@ interface IPoolStrategyV2 {
 
   function withdraw(uint256 amount) external;
 
+  function memberWithdraw(uint256 amount,address _supplier) external;
+
   function deposit(uint256 amount) external;
 
   function depositMock() external;

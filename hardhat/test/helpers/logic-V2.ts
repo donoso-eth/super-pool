@@ -5,19 +5,11 @@ import { BigNumber, constants, Contract, utils } from 'ethers';
 
 import { waitForTx } from '../../helpers/utils';
 import { ERC20, ISuperToken, ISuperfluidToken } from '../../typechain-types';
-import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST } from './models-V2';
+import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './models-V2';
 import { printPoolResult, printUserResult } from './utils-V2';
 
-export enum SupplierEvent {
-  DEPOSIT,
-  STREAMSTART,
-  WITHDRAW,
-  STREAMSTOP,
-  PUSHTOSTRATEGY,
-}
-
 export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSnapshot: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
-  let pool: IPOOL_RESULT = Object.assign({},lastPool);
+  let pool: IPOOL_RESULT = Object.assign({}, lastPool);
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
   let yieldAccrued = yieldSnapshot.sub(lastPool.yieldSnapshot);
@@ -46,8 +38,6 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSn
 
   pool.apySpan = lastPool.apySpan.add(peridodSpan);
 
-
-
   return pool;
 };
 
@@ -65,7 +55,7 @@ export const applyUserEvent = (
 
   let activeUser: IUSERTEST = usersPool[userAddress];
 
-  let nonActiveUsers: IUSERS_TEST = Object.assign({},usersPool);
+  let nonActiveUsers: IUSERS_TEST = Object.assign({}, usersPool);
 
   if (activeUser !== undefined) {
     if (activeUser.expected.timestamp !== pool.timestamp) {
@@ -84,18 +74,25 @@ export const applyUserEvent = (
       console.log('depositio');
       result = abiCoder.decode(['address', 'uint256'], payload);
       console.log(result);
-    case SupplierEvent.STREAMSTART:
+      break;
+    case SupplierEvent.WITHDRAW:
+      console.log('withdrawio');
+      result = abiCoder.decode(['address', 'uint256'], payload);
+      console.log(result);
+      break;
+    case SupplierEvent.STREAM_START:
       console.log('streamio');
       result = abiCoder.decode(['int96'], payload);
       pool.inFlowRate = pool.inFlowRate.add(result[0]);
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.add(result[0]);
       break;
-    case SupplierEvent.PUSHTOSTRATEGY:
+    case SupplierEvent.PUSH_TO_STRATEGY:
       console.log('pushio');
       result = abiCoder.decode(['uint256'], payload);
-      console.log(result[0].toString())
+      console.log(result[0].toString());
       pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
-      
+      break;
+
     default:
       break;
   }

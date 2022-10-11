@@ -94,3 +94,13 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
      sToken: STokenFactoryV2
     }
   
+
+    export enum SupplierEvent {
+      DEPOSIT,// uint256
+      WITHDRAW, // uint256
+      STREAM_START, //int96
+      STREAM_STOP, //
+      OUT_STREAM_START, //int96
+      OUT_STREAM_STOP, //
+      PUSH_TO_STRATEGY, //uint256
+    }

@@ -12,103 +12,68 @@ import {IOps} from "./gelato/IOps.sol";
 
 import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
-import { ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-
+import {IPool} from "./aave/IPool.sol";
+import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
 contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
+  using SafeMath for uint256;
 
-    using SafeMath for uint256;
+  IOps ops;
+  ISuperToken superToken;
+  IERC20 token;
+  bytes32 depositTaksId;
+  IPoolFactoryV2 pool;
+  IPool aavePool;
+  IERC20 aToken;
 
-    IOps ops;
-    ISuperToken superToken;
-    IERC20 token;
-    bytes32 depositTaksId;
-    IPoolFactoryV2 pool;
-    uint256 POOL_BUFFER;
+  uint256 POOL_BUFFER;
 
-    uint256 mockLast;
-    uint256 timestampLast;
-    uint256 public yieldIndex;
-    uint256 public pushedBalance;
+  uint256 MAX_INT;
 
-    address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+  uint256 mockLast;
+  uint256 timestampLast;
+  uint256 public yieldIndex;
+  uint256 public pushedBalance;
 
-  constructor(){}
+  address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
+  constructor() {}
 
   // #region  ============= ============= Allocation Strategy  ============= ============= //
 
   function initialize(
-    IOps _ops, 
-    ISuperToken _superToken, 
-    IERC20 _token, 
+    IOps _ops,
+    ISuperToken _superToken,
+    IERC20 _token,
     IPoolFactoryV2 _pool,
-    uint256 _POOL_BUFFER) external initializer {
-    
+    IPool _aavePool,
+    IERC20 _aToken,
+    uint256 _POOL_BUFFER
+  ) external initializer {
     ops = _ops;
     superToken = _superToken;
     token = _token;
     pool = _pool;
     POOL_BUFFER = _POOL_BUFFER;
+    aavePool = _aavePool;
+    aToken = _aToken;
 
-     
+    MAX_INT = 2**256 - 1;
+
+    token.approve(address(aavePool), MAX_INT);
     //depositTaksId = createDepositTask();
-
   }
 
-  function balanceOf()  override external returns(uint256 balance) {
-    uint256 yield = _getMockYield();
-    mockLast = mockLast +  yield;
-    balance = mockLast;
-    timestampLast = block.timestamp;
 
-    console.log(644444444444,'timestamp');
-  }
-
-  function upgrade(uint256 amount) internal {
+  function withdraw(uint256 amount, address _supplier) external onlyPool {
+    //require(amount < available, "NOT_ENOUGH:BALANCE");
+    aavePool.withdraw(address(token), amount.div(10**12), address(this));
     superToken.upgrade(amount);
-  }
-
-  function downgrade(uint256 amount) internal {
-    superToken.downgrade(amount);
-  }
-
-  function getBalanceSuperToken() public view returns (int256 balance) {
-    (balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
-  }
-
-  function getBalanceToken() public view returns (uint256 balance) {
-    balance = token.balanceOf(address(this));
-  }
-
-  function calculateStatus() public {
-   // uint256 increment = IAllocationMock(MOCK_ALLOCATION).calculateStatus();
-  }
-
-  function withdraw (uint256 requiredAmount) override  external onlyPool {
-    int256 availableBalance = int256(getBalanceSuperToken()) - int256(POOL_BUFFER);
-    uint256 withdrawalAmount;
-    if (availableBalance <= 0) {
-      withdrawalAmount = uint256(-availableBalance) + requiredAmount;
-     // IAllocationMock(MOCK_ALLOCATION).withdraw(withdrawalAmount);
-      superToken.upgrade(withdrawalAmount);
-    } else if (uint256(availableBalance) < requiredAmount) {
-      withdrawalAmount = requiredAmount - uint256(availableBalance);
-    //  IAllocationMock(MOCK_ALLOCATION).withdraw(withdrawalAmount);
-      superToken.upgrade(withdrawalAmount);
-    }
+    IERC20(address(superToken)).transfer(_supplier, amount);
   }
 
 
- function deposit(uint256 amount) override external onlyPool {
-    _deposit(amount);
- }
-
- function _deposit(uint256 amount)internal{
-
- }
-
-
-  /// execute 
+  /// execute
   function createDepositTask() internal returns (bytes32 taskId) {
     taskId = ops.createTaskNoPrepayment(address(this), this.depositTask.selector, address(this), abi.encodeWithSelector(this.checkerDeposit.selector), ETH);
   }
@@ -137,36 +102,20 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     pool.transfer(fee, feeToken);
 
+
+  (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
+
+    superToken.transferFrom(address(pool), address(this), uint256(balance));
     superToken.downgrade(amountToDeposit);
-    _deposit(amountToDeposit);
+    aavePool.supply(address(token), balance, address(this), 0);
+    pool.pushedToStrategy(uint256(balance));
+  }
+
+  function balanceOf() external returns (uint256 balance) {
+    balance = aToken.balanceOf(address(this));
   }
 
 
-  function getMockYieldSinceLastTimeStmap() external  override view returns (uint256 yield) {
- 
-    yield = mockLast * yieldIndex * (block.timestamp - timestampLast) / (100 * 365 * 24 * 3600);
-
-  }
-
-  function _getMockYield() internal view returns (uint256 yield) {
-  
-    console.log(153, ' timestamp :',block.timestamp - timestampLast);
-    yield = mockLast * yieldIndex * (block.timestamp - timestampLast) / (100 * 365 * 24 * 3600);
-    console.log(155, ' yield :',yield);
-
-  }
-
-  function depositMock() override external {
-     yieldIndex = 1  + uint(blockhash(block.number-1)) % 10;
-
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
-
-     superToken.transferFrom(address(pool),address(this),uint(balance));
-     pool.pushedToStrategy(uint(balance));
-    mockLast =  mockLast + uint(balance);
-    pushedBalance = uint(balance);
- 
-  }
 
   // #endregion  ============= ============= Allocation Strategy  ============= ============= //
 
@@ -175,9 +124,8 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     _;
   }
 
-    modifier onlyOps() {
+  modifier onlyOps() {
     require(msg.sender == address(ops), "OpsReady: onlyOps");
     _;
   }
-
 }

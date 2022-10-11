@@ -40,8 +40,8 @@ import { ethers } from 'hardhat';
 import { readFileSync } from 'fs-extra';
 import { INETWORK_CONFIG } from 'hardhat/helpers/models';
 import { join } from 'path';
-import { applyUserEvent, faucet, SupplierEvent, updatePool } from './helpers/logic-V2';
-import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST } from './helpers/models-V2';
+import { applyUserEvent, faucet,  updatePool } from './helpers/logic-V2';
+import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V2';
 
 import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
 
@@ -358,7 +358,7 @@ describe.only('V2 test', function () {
 
 
 
-    result =  await applyUserEvent(SupplierEvent.PUSHTOSTRATEGY,constants.AddressZero,payload,lastUsersPool,pool,pools,PRECISSION)
+    result =  await applyUserEvent(SupplierEvent.PUSH_TO_STRATEGY,constants.AddressZero,payload,lastUsersPool,pool,pools,PRECISSION)
 
     pools[+timestamp] = pool;
 
@@ -417,7 +417,7 @@ describe.only('V2 test', function () {
       lastUsersPool[user2.address] = addUser(user2.address,2,timestamp)
     }
 
-   result =  await applyUserEvent(SupplierEvent.STREAMSTART,user2.address,payload,lastUsersPool,pool3,pools,PRECISSION)
+   result =  await applyUserEvent(SupplierEvent.STREAM_START,user2.address,payload,lastUsersPool,pool3,pools,PRECISSION)
 
   
    // await printPoolResult(pool)
