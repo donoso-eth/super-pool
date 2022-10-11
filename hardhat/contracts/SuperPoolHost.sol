@@ -10,6 +10,7 @@ import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinition
 
 import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 import {ISTokenFactoryV2} from './interfaces/ISTokenFactory-V2.sol';
+import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
@@ -31,7 +32,7 @@ contract SuperPoolHost {
     require(superTokenResolverByAddress[address(superPoolInput.superToken)].pool == address(0), "POOL_EXISTS");
 
 
-  console.log(address(host));
+ 
 
     address poolContract = Clones.clone(superPoolInput.poolFactoryImpl);
 
@@ -48,8 +49,12 @@ contract SuperPoolHost {
 
     console.log(poolContract);
 
+
+    // INITILIZE SETTINGs
+
+
     //// INITIALIZE POOL
-    DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;
+    DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;    
     poolFactoryInitializer = DataTypes.PoolFactoryInitializer({
       host: host,
       superToken: superPoolInput.superToken,
@@ -57,12 +62,14 @@ contract SuperPoolHost {
       resolverSettings: superPoolInput.settings
     });
 
-    IPoolFactoryV2(poolContract).initialize(poolFactoryInitializer);
 
-    
+
+   IResolverSettingsV2(superPoolInput.settings).initialize(superPoolInput.settingsInitializer,poolContract,sTokenContract );
+   
+   IPoolFactoryV2(poolContract).initialize(poolFactoryInitializer);
+
    ISTokenFactoryV2(sTokenContract).initialize(superPoolInput.settings,"name","symbol");
 
-    
     superTokenResolverByAddress[address(superPoolInput.superToken)].pool = poolContract;
     superTokenResolverByAddress[address(superPoolInput.superToken)].sToken = sTokenContract ;
    

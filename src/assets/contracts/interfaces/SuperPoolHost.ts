@@ -16,15 +16,32 @@ import { FunctionFragment, Result } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
+export type ResolverSettingsInitilizerStruct = {
+  _poolStrategy: string;
+  _gelatoTaks: string;
+  _gelatoOps: string;
+  _poolInternal: string;
+};
+
+export type ResolverSettingsInitilizerStructOutput = [
+  string,
+  string,
+  string,
+  string
+] & {
+  _poolStrategy: string;
+  _gelatoTaks: string;
+  _gelatoOps: string;
+  _poolInternal: string;
+};
+
 export type SuperPoolInputStruct = {
   poolFactoryImpl: string;
   sTokenImpl: string;
   superToken: string;
-  ops: string;
   token: string;
-  poolStrategy: string;
-  gelatoTasks: string;
   settings: string;
+  settingsInitializer: ResolverSettingsInitilizerStruct;
 };
 
 export type SuperPoolInputStructOutput = [
@@ -33,18 +50,14 @@ export type SuperPoolInputStructOutput = [
   string,
   string,
   string,
-  string,
-  string,
-  string
+  ResolverSettingsInitilizerStructOutput
 ] & {
   poolFactoryImpl: string;
   sTokenImpl: string;
   superToken: string;
-  ops: string;
   token: string;
-  poolStrategy: string;
-  gelatoTasks: string;
   settings: string;
+  settingsInitializer: ResolverSettingsInitilizerStructOutput;
 };
 
 export type SupertokenResolverStruct = { pool: string; sToken: string };
@@ -57,7 +70,7 @@ export type SupertokenResolverStructOutput = [string, string] & {
 export interface SuperPoolHostInterface extends utils.Interface {
   functions: {
     "_pcrTokensIssued()": FunctionFragment;
-    "createSuperPool((address,address,address,address,address,address,address,address))": FunctionFragment;
+    "createSuperPool((address,address,address,address,address,(address,address,address,address)))": FunctionFragment;
     "getResolverBySuperToken(address)": FunctionFragment;
     "superTokenResolverByAddress(address)": FunctionFragment;
   };

@@ -11,8 +11,8 @@ import config from "../hardhat.config";
 import { join } from "path";
 import { createHardhatAndFundPrivKeysFiles } from "../helpers/localAccounts";
 import * as hre from 'hardhat';
-import { STokenFactoryV2__factory, Events__factory,   SuperPoolHost__factory, PoolStrategyV2__factory, GelatoTasksV2__factory, PoolFactoryV2__factory, ResolverSettingsV2__factory } from "../typechain-types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { STokenFactoryV2__factory, Events__factory,   SuperPoolHost__factory, PoolStrategyV2__factory, GelatoTasksV2__factory, PoolFactoryV2__factory, ResolverSettingsV2__factory, PoolInternalV2__factory } from "../typechain-types";
+import { SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 
 import { utils } from "ethers";
 
@@ -20,6 +20,8 @@ import { initEnv } from "../helpers/utils";
 import { SuperPoolInputStruct, SupertokenResolverStruct, SupertokenResolverStructOutput } from "../typechain-types/SuperPoolHost";
 import { SuperToken } from "@superfluid-finance/sdk-core";
 import { INETWORK_CONFIG } from "../helpers/models";
+import { ResolverSettingsInitilizerStruct } from "../typechain-types/ResolverSettingsV2";
+
 
 
 
@@ -172,9 +174,33 @@ if (network_params == undefined) {
    copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
  
    
+    //// DEPLOY POOL INTERNAL
+    const poolInternal = await new  PoolInternalV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+4})
+
+    toDeployContract = contract_config['gelatoTasksV2'];
+   writeFileSync(
+     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
+     JSON.stringify({
+       abi:  PoolInternalV2__factory.abi,
+       name: toDeployContract.name,
+       address: poolInternal.address,
+       network: network,
+     })
+   );
+ 
+   writeFileSync(
+     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
+     JSON.stringify(PoolInternalV2__factory.abi)
+   );
+   console.log(toDeployContract.name + ' Contract Deployed to:',  poolInternal.address);
+   ///// copy Interfaces and create Metadata address/abi to assets folder
+   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+ 
+   
+
  
  //// DEPLOY Settings
- const settings = await new ResolverSettingsV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+4})
+ const resolverSettings = await new ResolverSettingsV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+5})
 
  toDeployContract = contract_config['resolverSettingsV2'];
 writeFileSync(
@@ -201,7 +227,7 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
 
 
   //// DEPLOY SuperPoolHost
-  const superPoolHost = await new SuperPoolHost__factory(deployer).deploy(network_params.host,{gasLimit:10000000, nonce:nonce+5})
+  const superPoolHost = await new SuperPoolHost__factory(deployer).deploy(network_params.host,{gasLimit:10000000, nonce:nonce+6})
 
    toDeployContract = contract_config['superPoolHost'];
   writeFileSync(
@@ -228,36 +254,55 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
 
 
 
+  let resolverInit:ResolverSettingsInitilizerStruct = {
+    _poolStrategy:poolStrategy.address,
+    _gelatoTaks:gelatoTasks.address,
+    _gelatoOps:network_params.ops,
+    _poolInternal:poolInternal.address
+  }
 
 
 
-  //// create superPool fdaix on mumbai
+  //// create superPool goerli
   let superInputStruct: SuperPoolInputStruct = {
     poolFactoryImpl: poolFactoryImpl.address,
     superToken: network_params.superToken,
-    ops: network_params.ops,
     token:network_params.token,
     sTokenImpl:sTokenFactoryImpl.address,
-    poolStrategy:poolStrategy.address,
-    gelatoTasks:gelatoTasks.address,
-    settings:settings.address
+    settings:resolverSettings.address,
+    settingsInitializer:resolverInit
     //
   };
 
-  let tx = await superPoolHost.createSuperPool(superInputStruct,{gasLimit:10000000, nonce:nonce+6});
+  let tx = await superPoolHost.createSuperPool(superInputStruct,{gasLimit:10000000, nonce:nonce+7});
   await tx.wait();
+
+ 
 
   let resolver: SupertokenResolverStructOutput = await superPoolHost.getResolverBySuperToken(network_params.superToken);
 
+  console.log('Superpool Created: ' + resolver.pool);
 
-  await poolStrategy.initialize(network_params.ops,network_params.superToken,network_params.token,resolver.pool,5,{gasLimit:10000000, nonce:nonce+7});
+
+
+
+
+  await poolInternal.initialize(resolverSettings.address,{gasLimit:10000000, nonce:nonce+8});
+
+  console.log('Internal initialized');
+
+  let aavePool = "0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6";
+  let aToken = "0x1Ee669290939f8a8864497Af3BC83728715265FF";
+
+  console.log('Strategy initialized');
+  await poolStrategy.initialize(network_params.ops,network_params.superToken,network_params.token,resolver.pool,aavePool,aToken,5,{gasLimit:10000000, nonce:nonce+9});
   
+  console.log('GelatoTasks initialized');
+  await gelatoTasks.initialize(network_params.ops,resolver.pool,{gasLimit:10000000, nonce:nonce+10});
 
-  await gelatoTasks.initialize(network_params.ops,resolver.pool,{gasLimit:10000000, nonce:nonce+8});
 
 
-
- // let superPoolTokenAddress = await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
+ // let superPoolToken= await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
 
 
 

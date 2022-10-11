@@ -11,6 +11,7 @@ import {IOps} from "./gelato/IOps.sol";
 import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+import {DataTypes} from "./libraries/DataTypes.sol";
 import {Helpers} from "./libraries/Helpers.sol";
 
 contract ResolverSettingsV2 is Initializable, OwnableUpgradeable {
@@ -34,22 +35,15 @@ contract ResolverSettingsV2 is Initializable, OwnableUpgradeable {
 
   constructor() {}
 
-  function initialize(
-    address _pool,
-    address _sToken,
-    address _poolStrategy,
-    address _gelatoTaks,
-    address _gelatoOps,
-    address _poolInternal
-  ) external initializer {
+  function initialize( DataTypes.ResolverSettingsInitilizer memory resolverSettingsInitilizer, address _pool, address _sToken) external initializer {
     __Ownable_init_unchained();
 
     pool = _pool;
     sToken = _sToken;
-    poolStrategy = _poolStrategy;
-    gelatoTaks = _gelatoTaks;
-    gelatoOps = _gelatoOps;
-    poolInternal = _poolInternal;
+    poolStrategy = resolverSettingsInitilizer._poolStrategy;
+    gelatoTaks = resolverSettingsInitilizer._gelatoTaks;
+    gelatoOps = resolverSettingsInitilizer._gelatoOps;
+    poolInternal =resolverSettingsInitilizer. _poolInternal;
   }
 
   // ============= =============  VIEW CONTRACTS ============= ============= //

@@ -15,12 +15,24 @@ import {IResolverSettingsV2} from '../interfaces/IResolverSettings-V2.sol';
  * @notice A standard library of data types used throughout.
  */
 library DataTypes {
+
+
+
+  struct ResolverSettingsInitilizer {
+    address _poolStrategy;
+    address _gelatoTaks;
+    address _gelatoOps;
+    address _poolInternal;
+  }
+
+
   struct SuperPoolInput {
     address poolFactoryImpl;
     ISTokenFactoryV2 sTokenImpl; 
     ISuperToken  superToken;
     IERC20 token;
     IResolverSettingsV2 settings;
+    ResolverSettingsInitilizer settingsInitializer;
   }
 
   struct PoolFactoryInitializer {

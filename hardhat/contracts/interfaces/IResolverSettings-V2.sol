@@ -5,6 +5,9 @@ import {DataTypes} from "../libraries/DataTypes.sol";
 import {IPoolFactoryV2} from "./IPoolFactory-V2.sol";
 
 interface IResolverSettingsV2 {
+
+  function initialize( DataTypes.ResolverSettingsInitilizer memory resolverSettingsInitilizer, address _pool, address _sToken) external ;
+
   function getPrecission() external view returns (uint256);
 
   function setPrecission(uint256 _precission) external;

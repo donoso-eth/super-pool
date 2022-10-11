@@ -28,7 +28,7 @@ export interface STokenFactoryV2Interface extends utils.Interface {
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "getSupplierBalance(address)": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
-    "initialize(address,address,string,string)": FunctionFragment;
+    "initialize(address,string,string)": FunctionFragment;
     "name()": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
@@ -68,7 +68,7 @@ export interface STokenFactoryV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [string, string, string, string]
+    values: [string, string, string]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
@@ -219,8 +219,7 @@ export interface STokenFactoryV2 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     initialize(
-      _pool: string,
-      _ops: string,
+      resolverSettings: string,
       _name: string,
       _symbol: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -287,8 +286,7 @@ export interface STokenFactoryV2 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   initialize(
-    _pool: string,
-    _ops: string,
+    resolverSettings: string,
     _name: string,
     _symbol: string,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -355,8 +353,7 @@ export interface STokenFactoryV2 extends BaseContract {
     ): Promise<boolean>;
 
     initialize(
-      _pool: string,
-      _ops: string,
+      resolverSettings: string,
       _name: string,
       _symbol: string,
       overrides?: CallOverrides
@@ -451,8 +448,7 @@ export interface STokenFactoryV2 extends BaseContract {
     ): Promise<BigNumber>;
 
     initialize(
-      _pool: string,
-      _ops: string,
+      resolverSettings: string,
       _name: string,
       _symbol: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -523,8 +519,7 @@ export interface STokenFactoryV2 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     initialize(
-      _pool: string,
-      _ops: string,
+      resolverSettings: string,
       _name: string,
       _symbol: string,
       overrides?: Overrides & { from?: string | Promise<string> }

@@ -148,19 +148,11 @@ export type SupplierStructOutput = [
 export type PoolFactoryInitializerStruct = {
   host: string;
   superToken: string;
-  ops: string;
   token: string;
-  sToken: string;
-  poolStrategy: string;
-  gelatoTasks: string;
-  settings: string;
+  resolverSettings: string;
 };
 
 export type PoolFactoryInitializerStructOutput = [
-  string,
-  string,
-  string,
-  string,
   string,
   string,
   string,
@@ -168,12 +160,8 @@ export type PoolFactoryInitializerStructOutput = [
 ] & {
   host: string;
   superToken: string;
-  ops: string;
   token: string;
-  sToken: string;
-  poolStrategy: string;
-  gelatoTasks: string;
-  settings: string;
+  resolverSettings: string;
 };
 
 export interface PoolFactoryV2Interface extends utils.Interface {
@@ -184,7 +172,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
     "PARTIAL_DEPOSIT()": FunctionFragment;
     "POOL_BUFFER()": FunctionFragment;
-    "_poolUpdateCurrentState()": FunctionFragment;
     "afterAgreementCreated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementTerminated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementUpdated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
@@ -199,12 +186,11 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     "getPool(uint256)": FunctionFragment;
     "getSupplierByAdress(address)": FunctionFragment;
     "host()": FunctionFragment;
-    "initialize((address,address,address,address,address,address,address,address))": FunctionFragment;
+    "initialize((address,address,address,address))": FunctionFragment;
     "lastPoolTimestamp()": FunctionFragment;
     "ops()": FunctionFragment;
     "parseLoanData(bytes)": FunctionFragment;
     "poolByTimestamp(uint256)": FunctionFragment;
-    "poolId()": FunctionFragment;
     "poolTimestampById(uint256)": FunctionFragment;
     "poolUpdate()": FunctionFragment;
     "poolUpdateCurrentState()": FunctionFragment;
@@ -217,7 +203,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     "supplierUpdateCurrentState(address)": FunctionFragment;
     "suppliersByAddress(address)": FunctionFragment;
     "tokensReceived(address,address,address,uint256,bytes,bytes)": FunctionFragment;
-    "totalYieldEarnedSupplier(address)": FunctionFragment;
     "transfer(uint256,address)": FunctionFragment;
     "updateSupplierDeposit(address,uint256,uint256,uint256)": FunctionFragment;
     "withdraw()": FunctionFragment;
@@ -243,10 +228,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "POOL_BUFFER",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_poolUpdateCurrentState",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -313,7 +294,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     functionFragment: "poolByTimestamp",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "poolId", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "poolTimestampById",
     values: [BigNumberish]
@@ -363,10 +343,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     values: [string, string, string, BigNumberish, BytesLike, BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "totalYieldEarnedSupplier",
-    values: [string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "transfer",
     values: [BigNumberish, string]
   ): string;
@@ -399,10 +375,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "POOL_BUFFER",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_poolUpdateCurrentState",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -460,7 +432,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     functionFragment: "poolByTimestamp",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "poolId", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "poolTimestampById",
     data: BytesLike
@@ -495,10 +466,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "tokensReceived",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "totalYieldEarnedSupplier",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
@@ -561,10 +528,6 @@ export interface PoolFactoryV2 extends BaseContract {
     PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<[number]>;
 
     POOL_BUFFER(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _poolUpdateCurrentState(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -639,7 +602,7 @@ export interface PoolFactoryV2 extends BaseContract {
     getLastPool(overrides?: CallOverrides): Promise<[PoolV2StructOutput]>;
 
     getPool(
-      _poolId: BigNumberish,
+      _timestamp: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[PoolV2StructOutput]>;
 
@@ -700,10 +663,6 @@ export interface PoolFactoryV2 extends BaseContract {
         apy: APYStructOutput;
       }
     >;
-
-    poolId(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { _value: BigNumber }>;
 
     poolTimestampById(
       arg0: BigNumberish,
@@ -797,11 +756,6 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    totalYieldEarnedSupplier(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { yieldSupplier: BigNumber }>;
-
     transfer(
       _amount: BigNumberish,
       _paymentToken: string,
@@ -837,10 +791,6 @@ export interface PoolFactoryV2 extends BaseContract {
   PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<number>;
 
   POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _poolUpdateCurrentState(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   afterAgreementCreated(
     _superToken: string,
@@ -915,7 +865,7 @@ export interface PoolFactoryV2 extends BaseContract {
   getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
 
   getPool(
-    _poolId: BigNumberish,
+    _timestamp: BigNumberish,
     overrides?: CallOverrides
   ): Promise<PoolV2StructOutput>;
 
@@ -973,8 +923,6 @@ export interface PoolFactoryV2 extends BaseContract {
       apy: APYStructOutput;
     }
   >;
-
-  poolId(overrides?: CallOverrides): Promise<BigNumber>;
 
   poolTimestampById(
     arg0: BigNumberish,
@@ -1066,11 +1014,6 @@ export interface PoolFactoryV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  totalYieldEarnedSupplier(
-    _supplier: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   transfer(
     _amount: BigNumberish,
     _paymentToken: string,
@@ -1106,8 +1049,6 @@ export interface PoolFactoryV2 extends BaseContract {
     PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<number>;
 
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _poolUpdateCurrentState(overrides?: CallOverrides): Promise<void>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -1177,7 +1118,7 @@ export interface PoolFactoryV2 extends BaseContract {
     getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
 
     getPool(
-      _poolId: BigNumberish,
+      _timestamp: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PoolV2StructOutput>;
 
@@ -1238,8 +1179,6 @@ export interface PoolFactoryV2 extends BaseContract {
         apy: APYStructOutput;
       }
     >;
-
-    poolId(overrides?: CallOverrides): Promise<BigNumber>;
 
     poolTimestampById(
       arg0: BigNumberish,
@@ -1325,11 +1264,6 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    totalYieldEarnedSupplier(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     transfer(
       _amount: BigNumberish,
       _paymentToken: string,
@@ -1366,10 +1300,6 @@ export interface PoolFactoryV2 extends BaseContract {
     PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
 
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _poolUpdateCurrentState(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -1444,7 +1374,7 @@ export interface PoolFactoryV2 extends BaseContract {
     getLastPool(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPool(
-      _poolId: BigNumberish,
+      _timestamp: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1473,8 +1403,6 @@ export interface PoolFactoryV2 extends BaseContract {
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    poolId(overrides?: CallOverrides): Promise<BigNumber>;
 
     poolTimestampById(
       arg0: BigNumberish,
@@ -1538,11 +1466,6 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    totalYieldEarnedSupplier(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     transfer(
       _amount: BigNumberish,
       _paymentToken: string,
@@ -1585,10 +1508,6 @@ export interface PoolFactoryV2 extends BaseContract {
     PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     POOL_BUFFER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _poolUpdateCurrentState(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -1663,7 +1582,7 @@ export interface PoolFactoryV2 extends BaseContract {
     getLastPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getPool(
-      _poolId: BigNumberish,
+      _timestamp: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1692,8 +1611,6 @@ export interface PoolFactoryV2 extends BaseContract {
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
-
-    poolId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     poolTimestampById(
       arg0: BigNumberish,
@@ -1755,11 +1672,6 @@ export interface PoolFactoryV2 extends BaseContract {
       userData: BytesLike,
       operatorData: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    totalYieldEarnedSupplier(
-      _supplier: string,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     transfer(
