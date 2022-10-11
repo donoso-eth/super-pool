@@ -64,7 +64,6 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     //depositTaksId = createDepositTask();
   }
 
-
   function withdraw(uint256 amount, address _supplier) external onlyPool {
     //require(amount < available, "NOT_ENOUGH:BALANCE");
     aavePool.withdraw(address(token), amount.div(10**12), address(this));
@@ -72,10 +71,13 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     IERC20(address(superToken)).transfer(_supplier, amount);
   }
 
-
   /// execute
   function createDepositTask() internal returns (bytes32 taskId) {
-    taskId = ops.createTaskNoPrepayment(address(this), this.depositTask.selector, address(this), abi.encodeWithSelector(this.checkerDeposit.selector), ETH);
+    taskId = ops.createTaskNoPrepayment(
+      address(this), 
+      this.depositTask.selector, 
+      address(this), 
+      abi.encodeWithSelector(this.checkerDeposit.selector), ETH);
   }
 
   // called by Gelato Execs
@@ -102,18 +104,15 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     pool.transfer(fee, feeToken);
 
-
     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
     superToken.downgrade(amountToDeposit);
-    aavePool.supply(address(token), amountToDeposit , address(this), 0);
-    pool.pushedToStrategy(uint256(amountToDeposit ));
+    aavePool.supply(address(token), amountToDeposit, address(this), 0);
+    pool.pushedToStrategy(uint256(amountToDeposit));
   }
 
-  function balanceOf() view external returns (uint256 balance) {
+  function balanceOf() external view returns (uint256 balance) {
     balance = aToken.balanceOf(address(this));
   }
-
-
 
   // #endregion  ============= ============= Allocation Strategy  ============= ============= //
 

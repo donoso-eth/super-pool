@@ -53,14 +53,10 @@ contract STokenFactoryV2  is ERC20Upgradeable {
    ****************************************************************************************************/
   function balanceOfShares(address _supplier) public view returns (uint256 _shares) {
   
-    console.log(address(pool));
 
     DataTypes.Supplier memory supplier = pool.getSupplierByAdress(_supplier);
-      console.log(50);
     _shares = supplier.shares;
-  console.log(52);
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
-  console.log(53);
     if (netFlow >= 0) {
       _shares = _shares + uint96(netFlow) * (block.timestamp - supplier.timestamp);
     } else {
