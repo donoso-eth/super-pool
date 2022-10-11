@@ -14,12 +14,15 @@ import {Events} from "./libraries/Events.sol";
 
 import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
-
+import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
+import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 
 contract STokenFactoryV2  is ERC20Upgradeable {
       using SafeMath for uint256;
 
   IPoolFactoryV2 pool;
+  IPoolInternalV2 poolInternal;
+  IPoolStrategyV2 poolStrategy;
 
   uint256 public  PRECISSION;
 
@@ -33,6 +36,8 @@ contract STokenFactoryV2  is ERC20Upgradeable {
     ///initialState
     __ERC20_init(_name,_symbol);
     pool = IPoolFactoryV2(resolverSettings.getPool());
+    poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
+    poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
     PRECISSION = resolverSettings.getPrecission();
   }
 
@@ -47,11 +52,15 @@ contract STokenFactoryV2  is ERC20Upgradeable {
    *
    ****************************************************************************************************/
   function balanceOfShares(address _supplier) public view returns (uint256 _shares) {
+  
+    console.log(address(pool));
+
     DataTypes.Supplier memory supplier = pool.getSupplierByAdress(_supplier);
+      console.log(50);
     _shares = supplier.shares;
-
+  console.log(52);
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
-
+  console.log(53);
     if (netFlow >= 0) {
       _shares = _shares + uint96(netFlow) * (block.timestamp - supplier.timestamp);
     } else {
@@ -70,7 +79,7 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
     DataTypes.Supplier memory supplier = pool.getSupplierByAdress(_supplier);
 
 
-    uint256 yieldSupplier = pool.totalYieldEarnedSupplier(_supplier);
+    uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 

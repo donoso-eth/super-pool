@@ -19,6 +19,8 @@ import {
   ISuperToken__factory,
   PoolFactoryV2,
   PoolFactoryV2__factory,
+  PoolInternalV2,
+  PoolInternalV2__factory,
   PoolStrategyV2,
   PoolStrategyV2__factory,
   ResolverSettingsV2,
@@ -33,7 +35,7 @@ import { BigNumber, constants, utils } from 'ethers';
 import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent, printPeriod, printPoolResult, printUser, testPeriod } from './helpers/utils-V2';
 import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core';
 
-import { SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
+import { ResolverSettingsInitilizerStruct, SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
 import { concatMap, from } from 'rxjs';
 import { ethers } from 'hardhat';
 
@@ -51,6 +53,7 @@ let sTokenFactory: STokenFactoryV2;
 let gelatoTasks: GelatoTasksV2;
 let poolStrategy: PoolStrategyV2;
 let settings: ResolverSettingsV2;
+let poolInternal: PoolInternalV2;
 
 let superPool: PoolFactoryV2;
 let superPoolAddress: string;
@@ -61,6 +64,9 @@ let superTokenContract: ISuperToken;
 
 let superTokenERC777: ERC777;
 let contractsTest: ICONTRACTS_TEST;
+
+let aavePool = "0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6";
+let aToken = "0x1Ee669290939f8a8864497Af3BC83728715265FF";
 
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
@@ -158,21 +164,33 @@ describe.only('V2 test', function () {
     settings = await new ResolverSettingsV2__factory(deployer).deploy();
     console.log('Settings ---> deployed');
 
+    poolInternal = await new PoolInternalV2__factory(deployer).deploy();
+    console.log('PoolInternal ---> deployed');
+
+
     eventsLib = await new Events__factory(deployer).deploy();
 
     superTokenContract = await ISuperToken__factory.connect(network_params.superToken, deployer);
     superTokenERC777 = await ERC777__factory.connect(network_params.superToken, deployer);
     tokenContract = new hre.ethers.Contract(network_params.token, abi_erc20mint, deployer) as ERC20;
 
+    let resolverInit:ResolverSettingsInitilizerStruct = {
+      _poolStrategy:poolStrategy.address,
+      _gelatoTaks:gelatoTasks.address,
+      _gelatoOps:network_params.ops,
+      _poolInternal:poolInternal.address
+    }
+  
+  
+
     let superInputStruct: SuperPoolInputStruct = {
       poolFactoryImpl: poolFactory.address,
       sTokenImpl: sTokenFactory.address,
       superToken: network_params.superToken,
-      ops: network_params.ops,
       token: network_params.token,
-      gelatoTasks: gelatoTasks.address,
-      poolStrategy: poolStrategy.address,
-      settings:resolverSettings.address,
+ 
+      settings:settings.address,
+      settingsInitializer:resolverInit
     };
 
     await superPoolHost.createSuperPool(superInputStruct);
@@ -182,13 +200,16 @@ describe.only('V2 test', function () {
     superPoolAddress = superTokenResolver.pool;
     sTokenAddress = superTokenResolver.sToken;
 
+    await poolInternal.initialize(settings.address);
+    console.log('Gelato Tasks ---> initialized');
+  
+
     await gelatoTasks.initialize(network_params.ops, superPoolAddress);
-    console.log('Gelato resolver ---> initialized');
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, 5);
+    console.log('Gelato Tasks ---> initialized');
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress,aavePool,aToken, 5);
     console.log('Pool Strategy ---> initialized');
 
-    awaitresolverSettings.initialize();
-    console.log('Settings ---> initialized');
+ 
 
     superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);
     sToken = STokenFactoryV2__factory.connect(sTokenAddress, deployer);
@@ -242,7 +263,7 @@ describe.only('V2 test', function () {
       superTokenERC777,
     };
 
-    PRECISSION = awaitresolverSettings.getPrecission();
+    PRECISSION = await settings.getPrecission();
 
     sf = await Framework.create({
       chainId:31337,
@@ -332,14 +353,15 @@ describe.only('V2 test', function () {
 
     let balance = await superTokenContract.realtimeBalanceOfNow(superPoolAddress);
  
-
+    throw new Error("");
+    
 
     await setNextBlockTimestamp(hre, +t1  + ONE_DAY);
     let timestamp = t1.add(BigNumber.from(ONE_DAY));
    
     let lastPool:IPOOL_RESULT  = poolExpected1; 
 
-    await waitForTx(poolStrategy.depositMock())
+   // await waitForTx(poolStrategy.depositMock())
 
     let yieldIndex = await poolStrategy.yieldIndex();
     let pushedAmount = await poolStrategy.pushedBalance();

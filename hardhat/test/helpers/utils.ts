@@ -85,6 +85,8 @@ export const testPeriod = async (
  
   // #region POOL      
 
+    console.log('JUA JUA JUA')
+
   let poolTotalBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
 
   let result: IPERIOD = await getPool(contracts.superTokenPool);

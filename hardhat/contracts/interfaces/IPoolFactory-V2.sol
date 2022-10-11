@@ -36,8 +36,6 @@ interface IPoolFactoryV2 {
 
   function withdrawStep(address _receiver) external;
 
-  function totalYieldEarnedSupplier(address _supplier) external view returns (uint256 yieldSupplier);
-
   function pushedToStrategy(uint256 amount ) external;
 
 }

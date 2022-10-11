@@ -175,8 +175,8 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   // #endregion POOL
 
   for (const user of Object.keys(users).map(key=> users[key])) {
-    let userRealtimeBalance = await contracts.sToken.balanceOf(user.address);
     let userShares = await contracts.sToken.balanceOfShares(user.address);
+    let userRealtimeBalance = await contracts.sToken.balanceOf(user.address);
     let userTokenBalance = await contracts.superTokenERC777.balanceOf(user.address);
     let userState = await contracts.superPool.suppliersByAddress(user.address);
     let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
