@@ -35,7 +35,7 @@ contract GelatoTasksV2 is Initializable {
   ) external onlyPool returns (bytes32 taskId) {
     
     
-     bytes memory timeArgs = abi.encode( ["uint128", "uint128"], [uint128(block.timestamp + _stopDateInMs), 600]);
+     bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stopDateInMs), 600);
 
      bytes memory execData = abi.encodeWithSelector(IPoolFactoryV2.stopstream.selector, address(_supplier), _all, _flowType);
 
@@ -52,7 +52,6 @@ contract GelatoTasksV2 is Initializable {
     execData,
     moduleData,
     ETH
- 
     );
   }
 
@@ -63,7 +62,7 @@ contract GelatoTasksV2 is Initializable {
   function createWithdraStepTask(address _supplier, uint256 _stepTime) external onlyPool returns (bytes32 taskId) {
     
      
-     bytes memory timeArgs = abi.encode( ["uint128", "uint128"], [uint128(block.timestamp + _stepTime), 600]);
+     bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stepTime), 600);
 
      bytes memory execData = abi.encodeWithSelector(IPoolFactoryV2.withdrawStep.selector, address(_supplier));
 

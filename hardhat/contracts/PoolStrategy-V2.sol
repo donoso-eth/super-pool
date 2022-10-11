@@ -14,6 +14,7 @@ import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 import {IPool} from "./aave/IPool.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { LibDataTypes} from './gelato/LibDataTypes.sol';
 
 contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   using SafeMath for uint256;
@@ -61,7 +62,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     MAX_INT = 2**256 - 1;
 
     token.approve(address(aavePool), MAX_INT);
-    //depositTaksId = createDepositTask();
+    depositTaksId = createDepositTask();
   }
 
   function withdraw(uint256 amount, address _supplier) external onlyPool {
@@ -73,11 +74,27 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
   /// execute
   function createDepositTask() internal returns (bytes32 taskId) {
-    taskId = ops.createTaskNoPrepayment(
-      address(this), 
-      this.depositTask.selector, 
-      address(this), 
-      abi.encodeWithSelector(this.checkerDeposit.selector), ETH);
+    console.log(1);
+    bytes  memory  resolverData= abi.encodeWithSelector(this.checkerDeposit.selector);
+
+     console.log(2);
+
+    bytes memory resolverArgs = abi.encode(address(this), resolverData);
+  console.log(3);
+
+    LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
+
+    modules[0] = LibDataTypes.Module.RESOLVER;
+
+
+    bytes[] memory args =  new  bytes[](1);
+       console.log(6);
+    args[0] = resolverArgs;
+       console.log(7);
+
+    LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
+
+    taskId = IOps(ops).createTask(address(pool), abi.encodeWithSelector(this.depositTask.selector), moduleData, ETH);
   }
 
   // called by Gelato Execs
