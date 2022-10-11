@@ -353,7 +353,7 @@ describe.only('V2 test', function () {
 
     let balance = await superTokenContract.realtimeBalanceOfNow(superPoolAddress);
  
-    throw new Error("");
+ 
     
 
     await setNextBlockTimestamp(hre, +t1  + ONE_DAY);
@@ -361,12 +361,39 @@ describe.only('V2 test', function () {
    
     let lastPool:IPOOL_RESULT  = poolExpected1; 
 
-   // await waitForTx(poolStrategy.depositMock())
+    const resolverData =  poolStrategy.interface.encodeFunctionData("checkerDeposit");
+    const resolverArgs = ethers.utils.defaultAbiCoder.encode(
+      ["address", "bytes"],
+      [poolStrategy.address, resolverData]
+    );
 
-    let yieldIndex = await poolStrategy.yieldIndex();
-    let pushedAmount = await poolStrategy.pushedBalance();
+    execSelector =  poolStrategy.interface.getSighash("depositTask");
+    let moduleData = {
+      modules: [0],
+      args: [resolverArgs],
+    };
 
-   
+    const FEE = ethers.utils.parseEther("0.1")
+
+    const [, execData] = await poolStrategy.checkerDeposit();
+
+    await ops
+      .connect(executor)
+      .exec(
+        poolStrategy.address,
+        poolStrategy.address,
+        execData,
+        moduleData,
+        FEE,
+        ETH,
+        false,
+        true
+      );
+
+
+        throw new Error("");
+        
+
 
     let pool = updatePool(lastPool,timestamp,BigNumber.from(0),PRECISSION)
    

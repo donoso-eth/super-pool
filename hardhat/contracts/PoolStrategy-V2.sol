@@ -74,13 +74,9 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
   /// execute
   function createDepositTask() internal returns (bytes32 taskId) {
-    console.log(1);
     bytes  memory  resolverData= abi.encodeWithSelector(this.checkerDeposit.selector);
 
-     console.log(2);
-
     bytes memory resolverArgs = abi.encode(address(this), resolverData);
-  console.log(3);
 
     LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
 
@@ -88,29 +84,34 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
 
     bytes[] memory args =  new  bytes[](1);
-       console.log(6);
+
     args[0] = resolverArgs;
-       console.log(7);
+
 
     LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
 
-    taskId = IOps(ops).createTask(address(pool), abi.encodeWithSelector(this.depositTask.selector), moduleData, ETH);
+
+    taskId = IOps(ops).createTask(address(this),abi.encodePacked(this.depositTask.selector) , moduleData, ETH);
   }
 
   // called by Gelato Execs
   function checkerDeposit() external view returns (bool canExec, bytes memory execPayload) {
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
+    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
+
+    console.log(1000, uint(balance));
+    console.log(101, POOL_BUFFER);
 
     canExec = uint256(balance) - POOL_BUFFER >= 0.5 ether;
-
+ console.log(101, POOL_BUFFER);
     execPayload = abi.encodeWithSelector(this.depositTask.selector);
+     console.log(101, POOL_BUFFER);
   }
 
   function depositTask() external onlyOps {
     uint256 fee;
     address feeToken;
-
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
+ console.log(112, POOL_BUFFER);
+    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
 
     console.log(215, uint256(balance));
     uint256 amountToDeposit = uint256(balance) - POOL_BUFFER;
@@ -121,9 +122,9 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     pool.transfer(fee, feeToken);
 
-    superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
+     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
     superToken.downgrade(amountToDeposit);
-    aavePool.supply(address(token), amountToDeposit, address(this), 0);
+     aavePool.supply(address(token), amountToDeposit/10**12, address(this), 0);
     pool.pushedToStrategy(uint256(amountToDeposit));
   }
 
