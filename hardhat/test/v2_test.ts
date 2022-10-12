@@ -46,6 +46,7 @@ import { applyUserEvent, faucet,  updatePool } from './helpers/logic-V2';
 import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V2';
 
 import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
+import { gelatoPushToAave } from './helpers/gelato-V2';
 
 let superPoolHost: SuperPoolHost;
 let poolFactory: PoolFactoryV2;
@@ -114,7 +115,7 @@ let resolverHash;
 
 let taskId;
 
-let ONE_DAY = 24 * 3600;
+let ONE_DAY = 24 * 3600 *30;
 const processDir = process.cwd();
 let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.json'), 'utf-8')) as INETWORK_CONFIG;
 
@@ -132,7 +133,7 @@ describe.only('V2 test', function () {
         {
           forking: {
             jsonRpcUrl: `https://goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e`,
-            blockNumber: 7704180,
+            blockNumber: 7755313,
           },
         },
       ],
@@ -150,7 +151,7 @@ describe.only('V2 test', function () {
     superPoolHost = await new SuperPoolHost__factory(deployer).deploy(network_params.host);
     console.log('Host---> deployed');
     poolFactory = await new PoolFactoryV2__factory(deployer).deploy();
-    console.log('Pool Factory---> deployed: ', poolFactory.address);
+    console.log('Pool Factory---> deployed: ');
     sTokenFactory = await new STokenFactoryV2__factory(deployer).deploy();
     console.log('Token Factotokery---> deployed');
 
@@ -354,46 +355,15 @@ describe.only('V2 test', function () {
     let balance = await superTokenContract.realtimeBalanceOfNow(superPoolAddress);
  
  
-    
 
     await setNextBlockTimestamp(hre, +t1  + ONE_DAY);
     let timestamp = t1.add(BigNumber.from(ONE_DAY));
    
     let lastPool:IPOOL_RESULT  = poolExpected1; 
 
-    const resolverData =  poolStrategy.interface.encodeFunctionData("checkerDeposit");
-    const resolverArgs = ethers.utils.defaultAbiCoder.encode(
-      ["address", "bytes"],
-      [poolStrategy.address, resolverData]
-    );
 
-    execSelector =  poolStrategy.interface.getSighash("depositTask");
-    let moduleData = {
-      modules: [0],
-      args: [resolverArgs],
-    };
-
-    const FEE = ethers.utils.parseEther("0.1")
-
-    const [, execData] = await poolStrategy.checkerDeposit();
-
-    await ops
-      .connect(executor)
-      .exec(
-        poolStrategy.address,
-        poolStrategy.address,
-        execData,
-        moduleData,
-        FEE,
-        ETH,
-        false,
-        true
-      );
-
-
-        throw new Error("");
-        
-
+    await gelatoPushToAave(poolStrategy,ops,executor);
+      
 
     let pool = updatePool(lastPool,timestamp,BigNumber.from(0),PRECISSION)
    
@@ -406,10 +376,10 @@ describe.only('V2 test', function () {
     expedtedPoolBalance = initialBalance.add(amount);
 
 
-
     result =  await applyUserEvent(SupplierEvent.PUSH_TO_STRATEGY,constants.AddressZero,payload,lastUsersPool,pool,pools,PRECISSION)
 
     pools[+timestamp] = pool;
+
 
 
 
@@ -419,9 +389,6 @@ describe.only('V2 test', function () {
     // #endregion ================= SECOND PERIOD ============================= //
 
 
-
-
-    
 
     // #region =================  THIRD PERIOD ============================= //
    
@@ -448,15 +415,13 @@ describe.only('V2 test', function () {
     });
 
  
-  let yieldPool = BigNumber.from(ONE_DAY).mul(yieldIndex).mul(pushedAmount).div(365*ONE_DAY*100);
-  let deposiTindex = yieldPool.mul(PRECISSION).div(amount)
-
+  let yieldSnapshot = await poolStrategy.balanceOf();
 
    lastPool= Object.assign({},pool);
     
    lastUsersPool =Object.assign({},usersPool)
 
-    let  pool3 = updatePool(lastPool,timestamp,pushedAmount.add(yieldPool),PRECISSION)
+    let  pool3 = updatePool(lastPool,timestamp,yieldSnapshot,PRECISSION)
      payload = abiCoder.encode(
       [ 'int96'],
       [ flowRate ]
@@ -517,12 +482,47 @@ describe.only('V2 test', function () {
     // #endregion ================= THIRD PERIOD ============================= //
 
  
-    throw new Error("");
+      // #region ================= FOURTHPERIOD ============================= //
+      console.log('\x1b[36m%s\x1b[0m', '#4--- deposit into strategy gelato to aave');
+
+   
+  
+      await setNextBlockTimestamp(hre, +t1  + 3* ONE_DAY);
+      timestamp = t1.add(BigNumber.from(3*ONE_DAY));
+     
+       lastPool = poolExpected1; 
+  
+  
+      await gelatoPushToAave(poolStrategy,ops,executor);
+        
+  
+       pool = updatePool(lastPool,timestamp,BigNumber.from(0),PRECISSION)
+     
+      payload = abiCoder.encode(
+        [ 'uint96'],
+        [ balance.availableBalance ]
+      )
+  
+      lastUsersPool = usersPool;
+      expedtedPoolBalance = initialBalance.add(amount);
+  
+  
+      result =  await applyUserEvent(SupplierEvent.PUSH_TO_STRATEGY,constants.AddressZero,payload,lastUsersPool,pool,pools,PRECISSION)
+  
+      pools[+timestamp] = pool;
+  
+  
+  
+      await testPeriod(BigNumber.from(t0),+t1+ 3*ONE_DAY,result[1], contractsTest, result[0])
+  
+      console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
+      // #endregion =================   FOURTH PERIOD ============================= //
+  
     
 
-    // #region =================  FOURTH PERIOD ============================= //
+    // #region =================  FIVE PERIOD ============================= //
 
-    console.log('\x1b[36m%s\x1b[0m', '#4--- User2 provides ssends 300 at t0 + 3*  One Day ');
+    console.log('\x1b[36m%s\x1b[0m', '#5--- User2 provides ssends 300 at t0 + 3*  One Day ');
 
 
 

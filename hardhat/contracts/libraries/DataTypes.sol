@@ -55,7 +55,7 @@ library DataTypes {
   }
 
 
-  struct OutAssets{
+  struct OutStream{
     int96 flow;
     bytes32 cancelTaskId;
     uint256 stepAmount;
@@ -70,10 +70,10 @@ library DataTypes {
     address supplier;
     uint256 cumulatedYield;
     Stream inStream;
-    Stream outStream;
-    OutAssets outAssets;
+    OutStream outStream;
+    // OutAssets outAssets;
     uint256 deposit;
-    uint256 shares;
+    //uint256 shares;
     uint256 timestamp;
     uint256 createdTimestamp;
     uint256 eventId;
@@ -81,20 +81,7 @@ library DataTypes {
 
   }
 
-  struct Period {
-    uint256 timestamp;
-    uint256 deposit;
-    int96 inFlowRate;
-    int96 outFlowRate;
-    uint256 depositFromInFlowRate;
-    uint256 depositFromOutFlowRate;
-    uint256 yieldTokenIndex;
-    uint256 yieldInFlowRateIndex;
-    uint256 yieldOutFlowRateIndex;
-    uint256 yieldAccruedSec;
-    uint256 totalShares;
-    int96 outFlowAssetsRate;
-  }
+
 
   struct APY {
     uint256 span;
@@ -105,13 +92,13 @@ library DataTypes {
     uint256 id;
     uint256 timestamp;
         
-    uint256 totalShares;
+    // uint256 totalShares;
     uint256 deposit;
     uint256 depositFromInFlowRate;
 
     int96 inFlowRate;
     int96 outFlowRate;
-    int96 outFlowAssetsRate;
+    // int96 outFlowAssetsRate;
 
     uint256 yieldTokenIndex;
     uint256 yieldInFlowRateIndex;

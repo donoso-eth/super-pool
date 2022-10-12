@@ -37,7 +37,7 @@ contract PoolInternalV2 is Initializable {
     
     poolId++;
 
-    DataTypes.PoolV2 memory currentPool = DataTypes.PoolV2(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+    DataTypes.PoolV2 memory currentPool = DataTypes.PoolV2(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
     currentPool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
 
@@ -51,7 +51,7 @@ contract PoolInternalV2 is Initializable {
 
     currentPool.apy.span = lastPool.apy.span + periodSpan;
     uint256 periodApy;
-    periodApy = lastPool.totalShares == 0 ? 0 : currentPool.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodSpan).div(lastPool.totalShares);
+    periodApy = lastPool.deposit == 0 ? 0 : currentPool.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodSpan).div(lastPool.deposit);
 
     currentPool.apy.apy = ((periodSpan.mul(periodApy)).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(currentPool.apy.span);
 
@@ -60,9 +60,6 @@ contract PoolInternalV2 is Initializable {
     currentPool.yieldTokenIndex = currentPool.yieldTokenIndex + lastPool.yieldTokenIndex;
     currentPool.yieldInFlowRateIndex = currentPool.yieldInFlowRateIndex + lastPool.yieldInFlowRateIndex;
 
-    currentPool.totalShares = lastPool.totalShares + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
-
-    currentPool.outFlowAssetsRate = lastPool.outFlowAssetsRate;
 
     currentPool.inFlowRate = lastPool.inFlowRate;
     currentPool.outFlowRate = lastPool.outFlowRate;
@@ -123,6 +120,8 @@ contract PoolInternalV2 is Initializable {
   function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) public view returns (uint256 yieldSupplier) {
     uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
     DataTypes.PoolV2 memory lastPool = pool.getLastPool();
+    console.log(currentYieldSnapshot);
+    console.log(lastPool.yieldSnapshot);
     uint256 yieldAccruedSincelastPool = currentYieldSnapshot - lastPool.yieldSnapshot;
 
     (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex) = _calculateIndexes(yieldAccruedSincelastPool, lastPool);

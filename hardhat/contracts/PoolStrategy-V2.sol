@@ -55,7 +55,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     superToken = _superToken;
     token = _token;
     pool = _pool;
-    POOL_BUFFER = _POOL_BUFFER;
+    POOL_BUFFER = 0;//_POOL_BUFFER;
     aavePool = _aavePool;
     aToken = _aToken;
 
@@ -124,12 +124,13 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
      superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
     superToken.downgrade(amountToDeposit);
-     aavePool.supply(address(token), amountToDeposit/10**12, address(this), 0);
+  
     pool.pushedToStrategy(uint256(amountToDeposit));
+       aavePool.supply(address(token), amountToDeposit/(10**12), address(this), 0);
   }
 
   function balanceOf() external view returns (uint256 balance) {
-    balance = aToken.balanceOf(address(this));
+    balance = aToken.balanceOf(address(this))*(10**12);
   }
 
   // #endregion  ============= ============= Allocation Strategy  ============= ============= //

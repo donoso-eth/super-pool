@@ -51,18 +51,7 @@ contract STokenFactoryV2  is ERC20Upgradeable {
    * ---- totalSupply()
    *
    ****************************************************************************************************/
-  function balanceOfShares(address _supplier) public view returns (uint256 _shares) {
-  
 
-    DataTypes.Supplier memory supplier = pool.getSupplierByAdress(_supplier);
-    _shares = supplier.shares;
-    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
-    if (netFlow >= 0) {
-      _shares = _shares + uint96(netFlow) * (block.timestamp - supplier.timestamp);
-    } else {
-      _shares = _shares - uint96(-netFlow) * (block.timestamp - supplier.timestamp);
-    }
-  }
 
 function balanceOf(address _supplier) public view override returns (uint256 balance) {
 
@@ -82,7 +71,7 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
     if (netFlow >= 0) {
       realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else {
-      realtimeBalance = yieldSupplier + (supplier.deposit) - uint96(supplier.outAssets.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+      realtimeBalance = yieldSupplier + (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     }
 }
 
@@ -123,7 +112,7 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
   function totalSupply() public view override returns (uint256) {
     DataTypes.PoolV2 memory lastPool = pool.getLastPool();
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
-    uint256 _totalSupply = lastPool.totalShares + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
+    uint256 _totalSupply = lastPool.deposit + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
 
     return _totalSupply;
   }
