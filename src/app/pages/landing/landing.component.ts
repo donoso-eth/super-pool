@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { AngularContract, DappBaseComponent, DappInjector, IPOOL, Web3Actions } from 'angular-web3';
+import { AngularContract, DappBaseComponent, DappInjector,Web3Actions } from 'angular-web3';
 import { BigNumber, utils } from 'ethers';
 import { interval, Subject, takeUntil } from 'rxjs';
 import { GraphQlService } from 'src/app/dapp-injector/services/graph-ql/graph-ql.service';
 import { blockTimeToTime, formatSmallEther } from 'src/app/shared/helpers/helpers';
+import { IPOOL } from 'src/app/shared/models/pool_models';
 import { GlobalService } from 'src/app/shared/services/global.service';
 
 @Component({
@@ -134,91 +135,91 @@ this.barOptions = {
   getPool(){
 
 
-    this.graphqlService.watchPool().subscribe(val=> {
-        if (!!val && !!val.data && !!val.data.pools) { 
+    // this.graphqlService.watchPool().subscribe(val=> {
+    //     if (!!val && !!val.data && !!val.data.pools) { 
         
       
-            let staked =  val.data.pools.map((map:any)=> map.totalStaked);
+    //         let staked =  val.data.pools.map((map:any)=> map.totalStaked);
         
-            let balance=  val.data.pools.map((map:any)=> map.totalDeposit/10**12);
-            let labels=  val.data.pools.map((map:any)=> blockTimeToTime(map.timestamp));
-            this.currentPool = val.data.pools[0];
-            this.barData = {
-                labels:labels.reverse(),
-                datasets: [
-                    {
-                        label: 'pool balance',
-                        backgroundColor: '#2f4860',
-                        data: balance.reverse()
-                    },
-                    {
-                        label: 'staked',
-                        backgroundColor: '#00bb7e',
-                        data: staked.reverse()
-                    }
-                ]
-              };
+    //         let balance=  val.data.pools.map((map:any)=> map.totalDeposit/10**12);
+    //         let labels=  val.data.pools.map((map:any)=> blockTimeToTime(map.timestamp));
+    //         this.currentPool = val.data.pools[0];
+    //         this.barData = {
+    //             labels:labels.reverse(),
+    //             datasets: [
+    //                 {
+    //                     label: 'pool balance',
+    //                     backgroundColor: '#2f4860',
+    //                     data: balance.reverse()
+    //                 },
+    //                 {
+    //                     label: 'staked',
+    //                     backgroundColor: '#00bb7e',
+    //                     data: staked.reverse()
+    //                 }
+    //             ]
+    //           };
 
           
          
 
-            let currentTimestamp = new Date().getTime()/1000;
+    //         let currentTimestamp = new Date().getTime()/1000;
         
-            this.totalYieldStake = +this.currentPool.totalYieldStake;
+    //         this.totalYieldStake = +this.currentPool.totalYieldStake;
 
-           this.totalTvl = utils.formatEther(BigNumber.from(this.currentPool.totalDeposit))
+    //        this.totalTvl = utils.formatEther(BigNumber.from(this.currentPool.totalDeposit))
              
-           let value = +this.currentPool.totalFlow * ( (new Date().getTime() / 1000)- +this.currentPool.timestamp);
+    //        let value = +this.currentPool.totalFlow * ( (new Date().getTime() / 1000)- +this.currentPool.timestamp);
  
-           let formated = this.global.prepareNumbers(
-             +this.currentPool.totalDeposit + value 
-           );
-           this.twoDec = formated.twoDec;
-           this.fourDec = formated.fourDec;
+    //        let formated = this.global.prepareNumbers(
+    //          +this.currentPool.totalDeposit + value 
+    //        );
+    //        this.twoDec = formated.twoDec;
+    //        this.fourDec = formated.fourDec;
         
      
    
-           if (+this.currentPool.totalFlow > 0) {
+    //        if (+this.currentPool.totalFlow > 0) {
          
-             this.destroyFormatting.next();
-             let source = interval(500);
-             source.pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
-               const todayms = (new Date().getTime() / 1000)- +this.currentPool.timestamp;
+    //          this.destroyFormatting.next();
+    //          let source = interval(500);
+    //          source.pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
+    //            const todayms = (new Date().getTime() / 1000)- +this.currentPool.timestamp;
               
        
-               let formated = this.global.prepareNumbers(
-                 +todayms * +this.currentPool.totalFlow +  +this.currentPool.totalDeposit
-               );
-               this.twoDec = formated.twoDec;
-               this.fourDec = formated.fourDec;
-             });
-           }
+    //            let formated = this.global.prepareNumbers(
+    //              +todayms * +this.currentPool.totalFlow +  +this.currentPool.totalDeposit
+    //            );
+    //            this.twoDec = formated.twoDec;
+    //            this.fourDec = formated.fourDec;
+    //          });
+    //        }
      
 
 
-           this.totalCredit = this.currentPool.totalDelegated;
+    //        this.totalCredit = this.currentPool.totalDelegated;
     
-            this.pieData = {
-                labels: ['aave','credit'],
-                datasets: [
-                    {
-                        data: [ this.totalYieldStake,+this.currentPool.totalYieldCredit],
-                        backgroundColor: [
-                            "#37c5f4",
-                            "#9d63a2",
+    //         this.pieData = {
+    //             labels: ['aave','credit'],
+    //             datasets: [
+    //                 {
+    //                     data: [ this.totalYieldStake,+this.currentPool.totalYieldCredit],
+    //                     backgroundColor: [
+    //                         "#37c5f4",
+    //                         "#9d63a2",
                           
-                        ],
-                        hoverBackgroundColor: [
-                            "#37c5f4",
-                            "#9d63a2",
+    //                     ],
+    //                     hoverBackgroundColor: [
+    //                         "#37c5f4",
+    //                         "#9d63a2",
                          
-                        ]
-                    }
-                ]
-            };
+    //                     ]
+    //                 }
+    //             ]
+    //         };
 
-        }
-    })
+    //     }
+    // })
   }
 
   ngOnInit() {

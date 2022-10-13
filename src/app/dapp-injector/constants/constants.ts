@@ -13,6 +13,40 @@ export type NETWORK_TYPE = 'hardhat' |'localhost' | 'mainnet'| 'mumbai' | 'kovan
 
 export const address_0 = '0x0000000000000000000000000000000000000000';
 
+export const settings = {
+  localhost: {
+    host: '0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9',
+    supertoken: '0xbCE2198f789f3AC1Af76D3835BEe8A61830aAd34',
+    token: '0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43',
+    resolver: '0x3710AB3fDE2B61736B8BB0CE845D6c61F667a78E',
+    chainId: 31337,
+    subgraph:
+      'https://thegraph.com/hosted-service/subgraph/superfluid-finance/protocol-v1-goerli',
+      graphUri:"http://localhost:8000/subgraphs/name/donoso-eth/floowdy",
+      wallet:'local',
+    aavePool:"0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6",
+    aToken:"0x1Ee669290939f8a8864497Af3BC83728715265FF",
+    aStableDebtToken:"0xbaBd1C3912713d598CA2E6DE3303fC59b19d0B0F",
+    debtToken:"0xDF1742fE5b0bFc12331D8EAec6b478DfDbD31464",
+  },
+  goerli: {
+    host: '0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9',
+    supertoken: '0xbCE2198f789f3AC1Af76D3835BEe8A61830aAd34',
+    token: '0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43',
+    resolver: '0x3710AB3fDE2B61736B8BB0CE845D6c61F667a78E',
+    sfNetwork: 'goerli',
+    chainId: 5,
+    subgraph:
+      'https://thegraph.com/hosted-service/subgraph/superfluid-finance/protocol-v1-goerli',
+      graphUri:"https://api.thegraph.com/subgraphs/name/donoso-eth/floowdy",
+      wallet:'wallet',
+      aavePool:"0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6",
+      aToken:"0x1Ee669290939f8a8864497Af3BC83728715265FF",
+      aStableDebtToken:"0xbaBd1C3912713d598CA2E6DE3303fC59b19d0B0F",
+      debtToken:"0xDF1742fE5b0bFc12331D8EAec6b478DfDbD31464"
+  },
+};
+
 export interface INETWORK {
 name: NETWORK_TYPE;
 color?: string;

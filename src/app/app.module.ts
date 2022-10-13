@@ -16,6 +16,10 @@ import { SuperFluidServiceModule } from './dapp-injector/services/super-fluid/su
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { AppFooterComponent } from './shared/components/footer/app.footer.component';
 import { AppTopBarComponent } from './shared/components/toolbar/app.topbar.component';
+import { MessageService } from 'primeng/api';
+import { ERC777Service } from './shared/services/erc777.service';
+import { GlobalService } from './shared/services/global.service';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -29,6 +33,8 @@ import { AppTopBarComponent } from './shared/components/toolbar/app.topbar.compo
   imports: [
     BrowserModule,
     AppRoutingModule,
+    FormsModule,
+    ReactiveFormsModule,
     DappInjectorModule.forRoot({wallet:'local', defaultNetwork:'localhost'}),
     StoreModule.forRoot({web3: we3ReducerFunction}),
     DropdownModule,
@@ -38,7 +44,7 @@ import { AppTopBarComponent } from './shared/components/toolbar/app.topbar.compo
     SuperFluidServiceModule,
     ClipboardModule
   ],
-  providers: [],
+  providers: [MessageService,GlobalService,ERC777Service],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

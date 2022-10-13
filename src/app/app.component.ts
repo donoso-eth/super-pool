@@ -6,7 +6,7 @@ import { DappInjector } from './dapp-injector/dapp-injector.service';
 import { PrimeNGConfig } from 'primeng/api';
 import { GraphQlService } from './dapp-injector/services/graph-ql/graph-ql.service';
 import { Subject, takeUntil } from 'rxjs';
-import { web3Selectors } from './store';
+import { web3Selectors } from './dapp-injector/store';
 
 @Component({
   selector: 'app-root',

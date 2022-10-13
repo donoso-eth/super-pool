@@ -5,8 +5,8 @@ import { INETWORK, NETWORK_TYPE } from "../constants";
 
 
 export interface IDAPP_CONFIG {
-  defaultNetwork: string,
-  wallet: 'wallet' | 'privKey' | 'local',
+  defaultNetwork: 'goerli' | 'localhost',
+  wallet: string,
 }
 
 export interface IDAPP_STATE<T extends Contract> {
@@ -65,9 +65,11 @@ export interface IFUNCION_CALL_RESULT {
 }
 
 
+
 export interface ITRANSACTION_RESULT {
   success:boolean,
-  payload:any;
+  payload:any,
+  txHash:string,
   error_message?:string
 
 

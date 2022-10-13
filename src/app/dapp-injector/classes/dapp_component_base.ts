@@ -3,7 +3,7 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { Store } from '@ngrx/store';
 import { Signer } from 'ethers';
 import { pipe, Subject, takeUntil } from 'rxjs';
-import { SuperPool} from 'src/assets/contracts/interfaces/SuperPool';
+import { PoolFactory } from 'src/assets/contracts/interfaces/PoolFactory';
 import { DappInjector } from '../dapp-injector.service';
 import { NETWORK_STATUS, web3Selectors } from '../store';
 import { AngularContract } from './contract';
@@ -14,9 +14,11 @@ export class DappBaseComponent implements OnDestroy, AfterViewInit {
 
   ////// Public Available
   blockchain_is_busy: boolean = true;
+  is_busy_message = { header:'', body:''}
+
   blockchain_status: NETWORK_STATUS = 'loading';
 
-  defaultContract!: AngularContract< SuperPool>;
+  defaultContract!: any;
 
   defaultProvider!: JsonRpcProvider;
 
@@ -94,10 +96,21 @@ export class DappBaseComponent implements OnDestroy, AfterViewInit {
 
     //////////  APP IS BUSY   ///////////////////
     this.store
-      .select(web3Selectors.isNetworkBusy)
+      .select(web3Selectors.busyNetwork)
       .pipe(takeUntil(this.destroyHooks))
       .subscribe((isBusy: boolean) => {
         this.blockchain_is_busy = isBusy;
+        if (isBusy == false) {
+          this.is_busy_message = { header:'', body:''}
+        }
+      });
+
+      this.store
+      .select(web3Selectors.busyNetworkWithMessage)
+      .pipe(takeUntil(this.destroyHooks))
+      .subscribe((payload:{header:string, body:string}) => {
+        console.log(payload)
+        this.is_busy_message = payload;
       });
   }
 

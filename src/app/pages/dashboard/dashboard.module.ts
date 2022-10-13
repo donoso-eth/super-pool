@@ -11,8 +11,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TabViewModule } from 'primeng/tabview';
-import { LensProfileModule } from 'src/app/shared/components/lens-profile/lens-profile.module';
-import { CreditTableModule } from 'src/app/shared/components/credit-table/credit-table.module';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @NgModule({
@@ -32,9 +30,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     DialogModule,
     ProgressSpinnerModule,
     InputNumberModule,
-    TabViewModule,
-    LensProfileModule,
-    CreditTableModule
+    TabViewModule
   ]
 })
 export class DashboardModule { }

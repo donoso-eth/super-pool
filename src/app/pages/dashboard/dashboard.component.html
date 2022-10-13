@@ -231,39 +231,7 @@
         </div>
       </div>
 
-      <div class="col-12">
-        <p-tabView orientation="center">
-          <p-tabPanel
-            header="Your Credits"
-            class="line-height-3 m-0 text-center"
-          >
-          <div *ngIf="member!= undefined && member.creditsRequested.length == 0">
-            OOPS NO CREDITS
-          </div>
-          <button
-          pButton
-          pRipple
-          style="
-          margin: 20px auto;
-            position: relative;
-            width: fit-content;
-            border-color: var(--orange-400);
-            background-color: var(--yellow-200);
-          "
-          (click)="requestCredit()"
-          type="button"
-          label="Request Credit Delegation"
-          class="p-button-rounded mt-3 mr-2 mb-2"
-        ></button>
-          <credit-table *ngIf="member!= undefined && member.creditsRequested.length > 0" [creditType]="'none'" [credits]="member.creditsRequested"  ></credit-table>
-      
-       
-          </p-tabPanel>
-          <p-tabPanel header="Credits Delegated" class="line-height-3 m-0">
-            <credit-table *ngIf="member!= undefined"  [creditType]="'none'" [credits]="member.creditsDelegated"  ></credit-table>
-          </p-tabPanel>
-        </p-tabView>
-      </div>
+   
     </div>
   </div>
 </div>

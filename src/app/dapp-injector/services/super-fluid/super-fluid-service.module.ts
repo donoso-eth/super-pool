@@ -1,6 +1,6 @@
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SuperFluidServiceService } from './super-fluid-service.service';
+import { SuperFluidService } from './super-fluid-service.service';
 
 
 
@@ -15,7 +15,7 @@ export class SuperFluidServiceModule {
   static forRoot(): ModuleWithProviders<SuperFluidServiceModule> {
     return {
       ngModule: SuperFluidServiceModule,
-      providers: [SuperFluidServiceService],
+      providers: [SuperFluidService],
     };
   }
 }

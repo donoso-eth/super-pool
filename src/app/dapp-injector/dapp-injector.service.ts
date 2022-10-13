@@ -15,7 +15,7 @@ import { Web3ModalComponent } from './web3-modal/web3-modal.component';
 import { Subject, takeUntil } from 'rxjs';
 import { SuperPool} from 'src/assets/contracts/interfaces/SuperPool';
 import { AngularContract } from './classes';
-
+import FloowdyMetadata from 'src/assets/contracts/pool_factory_metadata.json';
 
 @Injectable({
   providedIn: 'root',
@@ -46,9 +46,8 @@ export class DappInjector implements OnDestroy {
 
 
   constructor(
-    @Inject(DappConfigService) private dappConfig: IDAPP_CONFIG,
+    @Inject(DappConfigService) public dappConfig: IDAPP_CONFIG,
     @Inject(DOCUMENT) private readonly document: any,
-    @Inject('contractMetadata') public contractMetadata: ICONTRACT_METADATA,
     private store: Store
   ) {
     ///// ---------  Blockchain Bootstrap
@@ -192,7 +191,7 @@ async localWallet(index:number) {
   private async contractInitialization() {
 
     const contract = new AngularContract<SuperPool>({
-      metadata: this.contractMetadata,
+     metadata:  FloowdyMetadata,
       provider: this.DAPP_STATE.defaultProvider!,
       signer: this.DAPP_STATE.signer!,
     });
