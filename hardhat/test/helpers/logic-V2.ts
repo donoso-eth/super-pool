@@ -1,5 +1,6 @@
 import { useReactiveVar } from '@apollo/client';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { Framework } from '@superfluid-finance/sdk-core';
 
 import { BigNumber, constants, Contract, utils } from 'ethers';
 
@@ -8,7 +9,7 @@ import { ERC20, ISuperToken, ISuperfluidToken } from '../../typechain-types';
 import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './models-V2';
 import { printPoolResult, printUserResult } from './utils-V2';
 
-export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAccrued: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
+export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAccrued: BigNumber,yieldSnapshot:BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
   let pool: IPOOL_RESULT = Object.assign({}, lastPool);
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
@@ -35,37 +36,44 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAc
 
   pool.yieldAccrued = yieldAccrued;
   pool.totalYield = lastPool.totalYield.add(yieldAccrued);
-  pool.yieldSnapshot = lastPool.yieldSnapshot.add(yieldAccrued);
+  pool.yieldSnapshot = yieldSnapshot;
 
   pool.apySpan = lastPool.apySpan.add(peridodSpan);
 
   return pool;
 };
 
-export const applyUserEvent = (
+export const applyUserEvent = async (
   code: SupplierEvent,
   userAddress: string,
   payload: string,
   usersPool: { [key: string]: IUSERTEST },
   pool: IPOOL_RESULT,
+  lastPool: IPOOL_RESULT,
   pools: { [key: number]: IPOOL_RESULT },
-  PRECISSION: BigNumber
-): [IUSERS_TEST, IPOOL_RESULT] => {
+  PRECISSION: BigNumber,
+  sf:Framework,
+  superToken: string,
+  deployer:SignerWithAddress,
+  superPoolAddress:string
+): Promise<[IUSERS_TEST, IPOOL_RESULT]> => {
   let abiCoder = new utils.AbiCoder();
   let result;
+
+  pools[+pool.timestamp] = pool;
 
   let activeUser: IUSERTEST = usersPool[userAddress];
 
   let nonActiveUsers: IUSERS_TEST = Object.assign({}, usersPool);
 
   if (activeUser !== undefined) {
-    if (activeUser.expected.timestamp !== pool.timestamp) {
-      [activeUser, pool] = updateUser(activeUser, pool, pools, PRECISSION);
-    }
+   // if (activeUser.expected.timestamp !== pool.timestamp) {
+      [activeUser, pool] = await updateUser(activeUser, pool, lastPool,pools, PRECISSION,sf, superToken, deployer, superPoolAddress);
+   // }
     delete nonActiveUsers[activeUser.address];
   }
 
-  let users = updateNonActiveUsers(nonActiveUsers, pool, pools, PRECISSION);
+  let users = await updateNonActiveUsers(nonActiveUsers, pool,lastPool, pools, PRECISSION,sf,superToken, deployer, superPoolAddress);
   if (activeUser !== undefined) {
     users[activeUser.address] = activeUser;
   }
@@ -75,18 +83,28 @@ export const applyUserEvent = (
       console.log('depositio');
       result = abiCoder.decode(['uint256'], payload);
       pool.deposit = pool.deposit.add(result[0].mul(PRECISSION))
-      console.log(result);
+
+      users[activeUser.address].expected.deposit =users[activeUser.address].expected.deposit.add(result[0].mul(PRECISSION))
+      users[activeUser.address].expected.realTimeBalance =users[activeUser.address].expected.deposit.div(PRECISSION)
+      users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.sub(result[0])
+
       break;
     case SupplierEvent.WITHDRAW:
       console.log('withdrawio');
       result = abiCoder.decode(['uint256'], payload);
-     // pool.deposit = pool.deposit.sub(result[0].mul(PRECISSION))
+      pool.deposit = pool.deposit.sub(result[0].mul(PRECISSION))
+      users[activeUser.address].expected.deposit =users[activeUser.address].expected.deposit.sub(result[0].mul(PRECISSION))
+      users[activeUser.address].expected.realTimeBalance =users[activeUser.address].expected.deposit.div(PRECISSION)
+      users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.add(result[0])
       break;
     case SupplierEvent.STREAM_START:
       console.log('streamio');
       result = abiCoder.decode(['int96'], payload);
       pool.inFlowRate = pool.inFlowRate.add(result[0]);
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.add(result[0]);
+      let deposit = await getDeposit(activeUser.address,sf,superToken,deployer,superPoolAddress)
+
+      users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.sub(deposit)
       break;
     case SupplierEvent.PUSH_TO_STRATEGY:
       console.log('pushio');
@@ -112,22 +130,35 @@ export const getUserYield = (user: IUSERTEST, pool: IPOOL_RESULT, pools: IPOOLS_
   let yieldDeposit = user.expected.deposit.mul(pool.yieldTokenIndex.sub(pools[+user.expected.timestamp].yieldTokenIndex));
   let yieldFlow = user.expected.inFlow.mul(pool.yieldInFlowRateIndex.sub(pools[+user.expected.timestamp].yieldInFlowRateIndex));
 
-  return yieldDeposit.add(yieldFlow);
+
+
+  return [yieldDeposit,yieldFlow]
 };
 
-export const updateUser = (user: IUSERTEST, pool: IPOOL_RESULT, pools: { [key: number]: IPOOL_RESULT }, PRECISSION: BigNumber): [IUSERTEST, IPOOL_RESULT] => {
+export const updateUser = async (user: IUSERTEST, pool: IPOOL_RESULT,lastPool:IPOOL_RESULT, pools: { [key: number]: IPOOL_RESULT }, PRECISSION: BigNumber, sf:Framework, superToken: string, deployer:SignerWithAddress, superPoolAddress:string): Promise<[IUSERTEST, IPOOL_RESULT]> => {
   let increment = BigNumber.from(0);
+  let deposit = BigNumber.from(0);
+  
+  let decrementToken = BigNumber.from(0);
   if (+user.expected.inFlow > 0) {
     increment = user.expected.inFlow.mul(pool.timestamp.sub(user.expected.timestamp));
+   // deposit = await getDeposit(user.address,sf,superToken,deployer,superPoolAddress)
+   decrementToken = user.expected.inFlow.mul(pool.timestamp.sub(lastPool.timestamp));
   }
 
-  let yieldUser = getUserYield(user, pool, pools);
-  user.expected.tokenBalance = user.expected.tokenBalance.sub(increment);
+  user.expected.tokenBalance = user.expected.tokenBalance.sub(decrementToken);
 
-  user.expected.realTimeBalance = user.expected.deposit.add(yieldUser).div(PRECISSION).div(PRECISSION).add(increment);
+  let yieldArray = getUserYield(user, pool, pools);
+  let yieldDeposit = yieldArray[0].div(PRECISSION)
+  let yieldFlow = yieldArray[1];
+  let yieldUser = yieldDeposit.add(yieldFlow);
 
+
+  
   let poolIncrement = user.expected.realTimeBalance.sub(user.expected.deposit);
-  user.expected.deposit = user.expected.realTimeBalance;
+  user.expected.deposit = (user.expected.deposit).add((yieldUser)).add(increment.mul(PRECISSION));
+  user.expected.realTimeBalance = user.expected.deposit.div(PRECISSION);
+
   user.expected.timestamp = pool.timestamp;
 
   pool.depositFromInFlowRate = pool.depositFromInFlowRate.sub(increment.mul(PRECISSION));
@@ -136,20 +167,30 @@ export const updateUser = (user: IUSERTEST, pool: IPOOL_RESULT, pools: { [key: n
   return [user, pool];
 };
 
-export const updateNonActiveUsers = (users: IUSERS_TEST, pool: IPOOL_RESULT, pools: { [key: number]: IPOOL_RESULT }, PRECISSION: BigNumber) => {
-  Object.keys(users).forEach((key) => {
+export const updateNonActiveUsers = async (users: IUSERS_TEST, pool: IPOOL_RESULT,lastPool:IPOOL_RESULT, pools: { [key: number]: IPOOL_RESULT }, PRECISSION: BigNumber, sf:Framework, superToken:string,deployer:SignerWithAddress, superPoolAddress:string) => {
+  
+  let keys = Object.keys(users);
+  for (const key of keys){
     let user = users[key];
 
-    let yieldUser = getUserYield(user, pool, pools);
-
+    
+  let yieldArray = getUserYield(user, pool, pools);
+  let yieldDeposit = yieldArray[0].div(PRECISSION)
+  let yieldFlow = yieldArray[1];
+  let yieldUser = yieldDeposit.add(yieldFlow);
+  let deposit = BigNumber.from(0);
     let increment = BigNumber.from(0);
+    let decrementToken = BigNumber.from(0);
     if (+user.expected.inFlow > 0) {
       increment = user.expected.inFlow.mul(pool.timestamp.sub(user.expected.timestamp));
-    }
-    user.expected.tokenBalance = user.expected.tokenBalance.sub(increment);
+      decrementToken = user.expected.inFlow.mul(pool.timestamp.sub(lastPool.timestamp));
+     //  deposit = await getDeposit(user.address,sf,superToken,deployer,superPoolAddress)
 
-    user.expected.realTimeBalance = user.expected.deposit.add(yieldUser.div(PRECISSION)).div(PRECISSION).add(increment);
-  });
+    }
+    user.expected.tokenBalance = user.expected.tokenBalance.sub(decrementToken);
+
+    user.expected.realTimeBalance = (user.expected.deposit.div(PRECISSION)).add(yieldUser.div(PRECISSION)).add(increment);
+  };
 
   return users;
 };
@@ -172,3 +213,16 @@ export const fromTokenToSuperToken = (value: BigNumber) => {
 export const fromSeperTokenToToken = (value: BigNumber) => {
   return value.div(BigNumber.from(10 ** 12));
 };
+
+
+export const getDeposit = async (user:string,sf:Framework, superToken:string,deployer:SignerWithAddress, superPoolAddress:string):Promise<BigNumber> => {
+  let deposit = BigNumber.from(0);
+  let  fromUserStream = await sf.cfaV1.getFlow({
+    superToken: superToken,
+    sender: user,
+    receiver: superPoolAddress,
+    providerOrSigner: deployer,
+  });
+
+ return deposit = BigNumber.from("0x"+ (+fromUserStream.deposit).toString(16))
+}

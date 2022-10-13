@@ -158,8 +158,8 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   }
 
   // #endregion POOL
-
-  for (const user of Object.keys(users).map(key=> users[key])) {
+  let checkUsers = Object.keys(users).map(key=> users[key]).sort((a,b)=> +a.expected.id.sub(b.expected.id))
+  for (const user of checkUsers ) {
     let userRealtimeBalance = await contracts.sToken.balanceOf(user.address);
     let userTokenBalance = await contracts.superTokenERC777.balanceOf(user.address);
     let userState = await contracts.superPool.suppliersByAddress(user.address);
@@ -338,7 +338,7 @@ export const addUser = (address: string, id: number, timestamp: BigNumber) => {
       id: BigNumber.from(id),
       realTimeBalance: BigNumber.from(0),
       shares: BigNumber.from(0),
-      tokenBalance: BigNumber.from(0),
+      tokenBalance: utils.parseEther('1000'),
       deposit: BigNumber.from(0),
       outStream: BigNumber.from(0),
       outFlow: BigNumber.from(0),
