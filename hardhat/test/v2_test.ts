@@ -362,7 +362,7 @@ describe.only('V2 test', function () {
 
     let flowRate = utils.parseEther('100').div(ONE_DAY);
 
-    const createFlowOperation = sf.cfaV1.createFlow({
+    let createFlowOperation = sf.cfaV1.createFlow({
       receiver: superPoolAddress,
       flowRate: flowRate.toString(),
       superToken: network_params.superToken,
@@ -375,6 +375,8 @@ describe.only('V2 test', function () {
       receiver: superPoolAddress,
       providerOrSigner: user2,
     });
+
+
 
   
     let yieldPool = await superPool.getLastPool();
@@ -483,6 +485,7 @@ describe.only('V2 test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
     // #endregion =================   FIVETH PERIOD ============================= //
+    
     // #region =================  SIXTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#6--- User1 Withdaw 150');
@@ -511,9 +514,89 @@ describe.only('V2 test', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    await testPeriod(BigNumber.from(t0), +t1 + 4 * ONE_DAY, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +t1 + 5 * ONE_DAY, result[1], contractsTest, result[0]);
 
     console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
-    // #endregion =================   FIVETH PERIOD ============================= //
+    // #endregion =================   SIXTH PERIOD ============================= //
+
+   // #region =================  SEVENTH PERIOD ============================= //
+
+   console.log('\x1b[36m%s\x1b[0m', '#7--- User2 streamstop');
+
+   await setNextBlockTimestamp(hre, +t1 + 6 * ONE_DAY);
+   timestamp = t1.add(BigNumber.from(6 * ONE_DAY));
+
+   let deleteFlowOperation = sf.cfaV1.deleteFlow({
+    receiver: superPoolAddress,
+    sender: user2.address,
+    superToken: network_params.superToken,
+  });
+ let tx =  await deleteFlowOperation.exec(user2);
+
+  console.log(536, fromUser2Stream.deposit )
+
+   yieldPool = await superPool.getLastPool();
+
+   yieldSnapshot = await yieldPool.yieldSnapshot;
+   yieldAccrued = yieldPool.yieldAccrued;
+   lastPool = Object.assign({}, pool);
+
+  pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+
+  console.log(usersPool[user2.address].expected.inFlow.toString());
+
+   payload = abiCoder.encode(['int96'], [usersPool[user2.address].expected.inFlow]);
+
+   lastUsersPool = usersPool;
+   expedtedPoolBalance = initialBalance.add(amount);
+
+   result = await applyUserEvent(SupplierEvent.STREAM_STOP, user2.address, payload, lastUsersPool, pool, lastPool,pools, PRECISSION,sf,network_params.superToken,deployer,superPoolAddress);
+
+   pools[+timestamp] = result[1];
+   usersPool = result[0];
+
+   await testPeriod(BigNumber.from(t0), +t1 + 6 * ONE_DAY, result[1], contractsTest, result[0]);
+
+   console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
+   // #endregion =================   FIVETH PERIOD ============================= //
+
+
+     // #region =================  EIGTH PERIOD ============================= //
+
+     console.log('\x1b[36m%s\x1b[0m', '#8--- User2 reddemFlow');
+
+     await setNextBlockTimestamp(hre, +t1 + 7 * ONE_DAY);
+     timestamp = t1.add(BigNumber.from(7 * ONE_DAY));
+  
+    let outFlowRate = flowRate.div(BigNumber.from(2))
+    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate,0))
+
+  
+     yieldPool = await superPool.getLastPool();
+  
+     yieldSnapshot = await yieldPool.yieldSnapshot;
+     yieldAccrued = yieldPool.yieldAccrued;
+     lastPool = Object.assign({}, pool);
+  
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+  
+     payload = abiCoder.encode(['int96'], [outFlowRate]);
+  
+     lastUsersPool = usersPool;
+     expedtedPoolBalance = initialBalance.add(amount);
+  
+     result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user2.address, payload, lastUsersPool, pool, lastPool,pools, PRECISSION,sf,network_params.superToken,deployer,superPoolAddress);
+  
+     pools[+timestamp] = result[1];
+     usersPool = result[0];
+  
+     await testPeriod(BigNumber.from(t0), +t1 + 7 * ONE_DAY, result[1], contractsTest, result[0]);
+  
+     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
+     // #endregion =================   FIVETH PERIOD ============================= //
+  
+  
+
+
   });
 });

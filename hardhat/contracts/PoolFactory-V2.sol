@@ -250,6 +250,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       _updateSupplierDeposit(_supplier, 0, redeemAmount);
 
       poolStrategy.withdraw(redeemAmount, _supplier);
+       poolByTimestamp[block.timestamp].yieldSnapshot = poolByTimestamp[block.timestamp].yieldSnapshot  - redeemAmount;
+
 
       if (supplier.outStream.flow < 0) {
       _outStreamHasChanged(_supplier, supplier.outStream.flow) ;
@@ -268,7 +270,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     bool currentOutFlow = supplier.outStream.flow > 0 ? true : false;
 
-    uint256 realTimeBalance = sToken.getSupplierBalance(msg.sender);
+    uint256 realTimeBalance = sToken.balanceOf(msg.sender);
 
     require(realTimeBalance > 0, "NO_BALANCE");
 
@@ -276,7 +278,12 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     bytes memory placeHolder = "0x";
 
+      console.log(281,_endSeconds);
+
+
     _updateSupplierFlow(msg.sender, 0, _outFlowRate, placeHolder);
+
+    console.log(283,_endSeconds);
 
     if (_endSeconds > 0) {
       cancelTask(supplier.outStream.cancelTaskId);
@@ -306,6 +313,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   ) internal returns (bytes memory newCtx) {
     newCtx = _ctx;
     _poolUpdateCurrentState();
+    console.log(309);
     newCtx = _updateSupplierFlow(from, inFlow, 0, _ctx);
   }
 
@@ -401,6 +409,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     _supplierUpdateCurrentState(_supplier);
 
+    console.log(412);
+
     int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
     int96 newNetFlow = inFlow - outFlow;
 
@@ -447,7 +457,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
         poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - supplier.deposit;
 
-        _outStreamHasChanged(_supplier, -newNetFlow);
+        //_outStreamHasChanged(_supplier, -newNetFlow);
       }
     }
 
@@ -475,7 +485,9 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     }
 
     if (supplier.outStream.flow > 0) {
+      if (supplier.outStream.cancelTaskId != bytes32(0)) {
       cancelTask(supplier.outStream.cancelTaskId);
+      }
 
       _cfaLib.updateFlow(_supplier, superToken, newOutFlow);
     } else {
@@ -747,7 +759,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   ) external virtual override returns (bytes memory newCtx) {
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
     newCtx = _ctx;
-
+    console.log(750,sender);
     //// If In-Stream we will request a pool update
     if (receiver == address(this)) {
       newCtx = _inStreamCallback(sender, 0, 0, newCtx);

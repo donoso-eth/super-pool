@@ -46,11 +46,12 @@ console.log(39);
     currentPool.yieldSnapshot = currentYieldSnapshot;
       console.log(47,currentPool.yieldSnapshot,lastPool.yieldSnapshot);
     currentPool.yieldAccrued = currentPool.yieldSnapshot - lastPool.yieldSnapshot;
-
+    console.log(49);
     currentPool.totalYield = lastPool.totalYield +currentPool.yieldAccrued;
-
+ console.log(51);
     currentPool.apy.span = lastPool.apy.span + periodSpan;
     uint256 periodApy;
+     console.log(54);
     periodApy = lastPool.deposit == 0 ? 0 : currentPool.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodSpan).div(lastPool.deposit);
   console.log(55);
     currentPool.apy.apy = ((periodSpan.mul(periodApy)).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(currentPool.apy.span);

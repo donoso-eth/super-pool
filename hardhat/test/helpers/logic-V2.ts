@@ -106,6 +106,18 @@ export const applyUserEvent = async (
 
       users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.sub(deposit)
       break;
+
+      case SupplierEvent.STREAM_STOP:
+        console.log('streamstoio');
+        result = abiCoder.decode(['int96'], payload);
+        pool.inFlowRate = pool.inFlowRate.sub(result[0]);
+        console.log(result[0].toString())
+        users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.sub(result[0]);
+        let oldDeposit = result[0].mul(BigNumber.from(3600))
+        console.log(oldDeposit.toString())
+
+        users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.add(oldDeposit)
+        break;
     case SupplierEvent.PUSH_TO_STRATEGY:
       console.log('pushio');
       result = abiCoder.decode(['uint256'], payload);
