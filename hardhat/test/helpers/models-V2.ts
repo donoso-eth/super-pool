@@ -9,7 +9,7 @@ export interface IPOOL {
     timestamp: BigNumber;
     deposit: BigNumber;
     depositFromInFlowRate: BigNumber;
-    totalShares: BigNumber;
+  
   
     inFlowRate: BigNumber;
     outFlowRate: BigNumber;
@@ -34,7 +34,7 @@ export interface IPOOL_RESULT {
     timestamp: BigNumber;
     poolTotalBalance: BigNumber;
   
-    totalShares:BigNumber;
+  
     deposit: BigNumber;
     depositFromInFlowRate: BigNumber;
   
@@ -67,7 +67,7 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
   export interface IUSER_RESULT {
     id:BigNumber,
     realTimeBalance: BigNumber;
-    shares:BigNumber;
+
     tokenBalance:BigNumber;
     deposit: BigNumber;
     timestamp: BigNumber;
@@ -75,8 +75,8 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
     inFlowId?: string
     nextExecIn?:BigNumber
     outFlow: BigNumber;
-    outAssets: BigNumber
-    outAssetsId?: string
+
+    outStreamId?: string
     nextExecOut?:BigNumber
   }
   

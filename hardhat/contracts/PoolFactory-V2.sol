@@ -181,6 +181,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     _poolUpdateCurrentState();
     console.log(183,  poolByTimestamp[lastPoolTimestamp].yieldSnapshot);
     poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
+
+
   }
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
@@ -544,6 +546,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
     if (periodSpan > 0) {
+
+      console.log(550,poolStrategy.balanceOf());
 
       DataTypes.PoolV2 memory currentPool =  poolInternal._poolUpdate(lastPool, periodSpan, poolStrategy.balanceOf());
 

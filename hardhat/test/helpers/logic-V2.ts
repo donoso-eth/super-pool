@@ -121,7 +121,7 @@ export const updateUser = (user: IUSERTEST, pool: IPOOL_RESULT, pools: { [key: n
 
   let yieldUser = getUserYield(user, pool, pools);
   user.expected.tokenBalance = user.expected.tokenBalance.sub(increment);
-  user.expected.shares = user.expected.shares.add(increment);
+
   user.expected.realTimeBalance = user.expected.deposit.add(yieldUser).div(PRECISSION).div(PRECISSION).add(increment);
 
   let poolIncrement = user.expected.realTimeBalance.sub(user.expected.deposit);
@@ -145,7 +145,7 @@ export const updateNonActiveUsers = (users: IUSERS_TEST, pool: IPOOL_RESULT, poo
       increment = user.expected.inFlow.mul(pool.timestamp.sub(user.expected.timestamp));
     }
     user.expected.tokenBalance = user.expected.tokenBalance.sub(increment);
-    user.expected.shares = user.expected.shares.add(increment);
+
     user.expected.realTimeBalance = user.expected.deposit.add(yieldUser.div(PRECISSION)).div(PRECISSION).add(increment);
   });
 

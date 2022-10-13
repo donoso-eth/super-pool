@@ -48,14 +48,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (expected.totalShares != undefined) {
-    try {
-      expect(result.totalShares).to.equal(expected.totalShares);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Shares Balance: ${result.totalShares.toString()}`);
-    } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Shares:', `\x1b[30m ${result.totalShares.toString()}, expected:${expected.totalShares!.toString()}`);
-    }
-  }
+
 
   if (expected.deposit != undefined) {
     try {
@@ -97,14 +90,6 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (expected.outFlowAssetsRate != undefined) {
-    try {
-      expect(result.outFlowAssetsRate).to.equal(expected.outFlowAssetsRate);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow-ASSETS Rate: ${result.outFlowAssetsRate?.toString()}`);
-    } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x #Out-Flow-ASSETS Rate:', `\x1b[30m ${result.outFlowAssetsRate?.toString()}, expected:${expected.outFlowAssetsRate!.toString()}`);
-    }
-  }
 
   if (expected.yieldTokenIndex != undefined) {
     try {
@@ -175,7 +160,6 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   // #endregion POOL
 
   for (const user of Object.keys(users).map(key=> users[key])) {
-    let userShares = await contracts.sToken.balanceOfShares(user.address);
     let userRealtimeBalance = await contracts.sToken.balanceOf(user.address);
     let userTokenBalance = await contracts.superTokenERC777.balanceOf(user.address);
     let userState = await contracts.superPool.suppliersByAddress(user.address);
@@ -202,15 +186,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
         console.log(+userRealtimeBalance.toString() - +user.expected.realTimeBalance!.toString());
       }
     }
-    if (userShares != undefined) {
-      try {
-        expect(userShares).to.equal(user.expected.shares);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Shares: ${user.expected.shares?.toString()}`);
-      } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} Shares : ${userShares.toString()}, expected:${user.expected.shares!.toString()}`);
-        console.log(+userShares.toString() - +user.expected.shares!.toString());
-      }
-    }
+
 
     if (userTokenBalance != undefined) {
       try {
@@ -223,7 +199,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
 
     if (user.expected.deposit != undefined) {
-      let depositOutFlow = userState.deposit.sub(periodSpan.mul(userState.outAssets.flow).mul(1000000));
+      let depositOutFlow = userState.deposit.sub(periodSpan.mul(userState.outStream.flow).mul(1000000));
 
       try {
         expect(user.expected.deposit).to.equal(depositOutFlow);
@@ -285,35 +261,22 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       }
     }
 
-    if (user.expected.outAssets != undefined) {
-      try {
-        expect(user.expected.outAssets).to.equal(userState.outAssets.flow);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets: ${userState.outAssets.flow?.toString()} units/s`);
-      } catch (error) {
-        console.log(
-          '\x1b[31m%s\x1b[0m',
-          '    x',
-          `\x1b[30m#${user.name} OUT-Assets:  ${userState.outAssets.flow.toString()}, expected: ${user.expected.outAssets.toString()} units/s`
-        );
-        console.log(+user.expected.outAssets.toString() - +userState.outAssets.flow.toString());
-      }
-    }
 
-    if (user.expected.outAssetsId != undefined) {
+    if (user.expected.outStreamId != undefined) {
       try {
-        expect(user.expected.outAssetsId).to.equal(userState.outAssets.cancelTaskId);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets-TaskId: ${userState.outAssets.cancelTaskId?.toString()}`);
+        expect(user.expected.outStreamId).to.equal(userState.outStream.cancelTaskId);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets-TaskId: ${userState.outStream.cancelTaskId?.toString()}`);
       } catch (error) {
         console.log(
           '\x1b[31m%s\x1b[0m',
           '    x',
-          `\x1b[30m#${user.name} OUT-Assets-TaskId:  ${userState.outAssets.cancelTaskId.toString()}, expected: ${user.expected.outAssetsId.toString()}`
+          `\x1b[30m#${user.name} OUT-Assets-TaskId:  ${userState.outStream.cancelTaskId.toString()}, expected: ${user.expected.outStreamId.toString()}`
         );
       }
     }
 
     if (user.expected.nextExecOut != undefined) {
-      let nextExec = (await contracts.ops?.timedTask(userState.outAssets.cancelTaskId))?.nextExec as BigNumber;
+      let nextExec = (await contracts.ops?.timedTask(userState.outStream.cancelTaskId))?.nextExec as BigNumber;
 
       try {
         //console.log(+timed['nextExec'].toString())
@@ -360,8 +323,6 @@ export const getPool = async (superPool: PoolFactoryV2): Promise<any> => {
     yieldAccrued: periodRaw.yieldAccrued,
     yieldSnapshot: periodRaw.yieldSnapshot,
     totalYield: periodRaw.totalYield,
-    totalShares: periodRaw.totalShares,
-    outFlowAssetsRate: periodRaw.outFlowAssetsRate,
     apy: { span: periodRaw.apy.span, apy: periodRaw.apy.apy },
   };
   return pool;
@@ -379,7 +340,7 @@ export const addUser = (address: string, id: number, timestamp: BigNumber) => {
       shares: BigNumber.from(0),
       tokenBalance: BigNumber.from(0),
       deposit: BigNumber.from(0),
-      outAssets: BigNumber.from(0),
+      outStream: BigNumber.from(0),
       outFlow: BigNumber.from(0),
       inFlow: BigNumber.from(0),
       timestamp: timestamp,
@@ -393,7 +354,6 @@ export const printPoolResult = async (pool: IPOOL_RESULT): Promise<any> => {
   console.log(`TimeStamp ${+pool.timestamp.toString()} `);
   console.log(`In-Flow ${pool.inFlowRate.toString()}  units/s`);
   console.log(`Out-Flow ${pool.outFlowRate.toString()}  units/s`);
-  console.log(`Total Shares ${pool.totalShares.toString()}  units`);
   console.log(`Deposit From InFlow ${pool.depositFromInFlowRate.toString()}  units`);
   console.log(`Deposit ${pool.deposit.toString()}  units`);
   console.log(`IndexYieldToken: ${pool.yieldTokenIndex.toString()}  units`);
@@ -412,12 +372,10 @@ export const printUserResult = async (user: IUSERTEST): Promise<any> => {
   console.log(`User ${user.name.toString()} `);
   console.log(`TimeStamp ${user.expected.timestamp.toString()}  units`);
   console.log(`RealtimeBalance: ${user.expected.realTimeBalance.toString()}  units`);
-  console.log(`Shares: ${user.expected.shares.toString()}  units`);
   console.log(`Deposit ${user.expected.deposit.toString()}  units`);
   console.log(`Token Balance: ${user.expected.tokenBalance.toString()}  units`);
   console.log(`In-Flow  ${user.expected.inFlow.toString()} units/s, `);
   console.log(`Out-Flow  ${user.expected.outFlow.toString()} units/s`);
-  console.log(`Out-Assets  ${user.expected.outAssets.toString()} units/s`);
 
   console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 

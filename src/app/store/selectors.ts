@@ -21,6 +21,11 @@ const chainStatus = createSelector(
   (state: Web3State) => state.chainStatus
 );
 
+const refreshAction = createSelector(
+  selectWeb3State,
+  (state: Web3State) => state.refreshBalance
+);
+
 
 const hookChanIsLoading = pipe(
   select(chainStatus),
@@ -51,7 +56,7 @@ const hookContractConnected = pipe(
 
 const hookForceDisconnect = pipe(
   select(chainStatus),
-  filter((val) => val == 'disconnected')
+  filter((val) => val == 'force-disconnect')
 );
 
 
@@ -62,12 +67,24 @@ const hookReadContractConnected= pipe(
 );
 
 
-
-
-const isNetworkBusy = createSelector(
-  selectWeb3State,
-  (state: Web3State) => state.isNetworkBusy
+const hookRefreshBalances = pipe(
+  select(refreshAction),
+  filter((val) => val == true)
 );
+
+
+
+const busyNetwork = createSelector(
+  selectWeb3State,
+  (state: Web3State) => state.busyNetwork
+);
+
+
+const busyNetworkWithMessage = createSelector(
+  selectWeb3State,
+  (state: Web3State) => (state.busyMessage)
+);
+
 
 
 const selectSignerNetwork = createSelector(
@@ -98,9 +115,10 @@ export const web3Selectors = {
   hookContractConnected,
   hookReadContractConnected,
   hookForceDisconnect,
+  hookRefreshBalances,
 
-  isNetworkBusy,
-
+  busyNetwork,
+  busyNetworkWithMessage,
   
   selectSignerNetwork,
   selectWalletBalance,

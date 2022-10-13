@@ -1,0 +1,28 @@
+:host {
+    color:grey;
+}
+.call-out {
+
+    margin:30px 0px;
+
+    h5 {font-size: 40px;
+    color: var(--primary-color);
+    font-weight: 200;
+    text-align: center;
+    margin-bottom:5px;
+    }
+
+    i {border: 1px solid #EBEBED1F;
+    border-radius: 20px
+;
+    background-color: #383D51;
+    box-shadow: 0px 2px 1px rgb(0 0 0 / 5%), 0px 0px 1px rgb(0 0 0 / 25%);
+    width: 40px;
+    height: 40px;
+    margin-right: 12px;
+    line-height: 40px;
+    font-size:20px;
+    text-align: center;
+    color:grey
+    }
+}
