@@ -47,7 +47,7 @@ console.log(39);
       console.log(47,currentPool.yieldSnapshot,lastPool.yieldSnapshot);
     currentPool.yieldAccrued = currentPool.yieldSnapshot - lastPool.yieldSnapshot;
 
-    currentPool.totalYield += currentPool.yieldAccrued;
+    currentPool.totalYield = lastPool.totalYield +currentPool.yieldAccrued;
 
     currentPool.apy.span = lastPool.apy.span + periodSpan;
     uint256 periodApy;

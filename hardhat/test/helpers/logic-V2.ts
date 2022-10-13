@@ -8,15 +8,14 @@ import { ERC20, ISuperToken, ISuperfluidToken } from '../../typechain-types';
 import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './models-V2';
 import { printPoolResult, printUserResult } from './utils-V2';
 
-export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSnapshot: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
+export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAccrued: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
   let pool: IPOOL_RESULT = Object.assign({}, lastPool);
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
-  let yieldAccrued = yieldSnapshot.sub(lastPool.yieldSnapshot);
 
   let depositSeconds = lastPool.deposit.mul(peridodSpan);
 
-  let flowSeconds = lastPool.depositFromInFlowRate.add(lastPool.inFlowRate.mul(peridodSpan).mul(PRECISSION));
+  let flowSeconds = lastPool.depositFromInFlowRate.mul(peridodSpan).add(lastPool.inFlowRate.mul(peridodSpan).mul(peridodSpan).mul(PRECISSION).div(2));
 
   let totalSeconds = depositSeconds.add(flowSeconds);
 
@@ -26,6 +25,8 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSn
   let indexDeposit = +depositSeconds == 0 ? 0 : depositContribution.mul(yieldAccrued).div(totalSeconds.mul(lastPool.deposit));
   let indexFlow = +flowSeconds == 0 ? 0 : inFlowContribution.mul(yieldAccrued).div(lastPool.inFlowRate.mul(totalSeconds));
 
+  pool.depositFromInFlowRate = lastPool.depositFromInFlowRate.add(lastPool.inFlowRate.mul(peridodSpan).mul(PRECISSION));
+
   pool.yieldTokenIndex = lastPool.yieldTokenIndex.add(indexDeposit);
   pool.yieldInFlowRateIndex = lastPool.yieldInFlowRateIndex.add(indexFlow);
 
@@ -34,7 +35,7 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSn
 
   pool.yieldAccrued = yieldAccrued;
   pool.totalYield = lastPool.totalYield.add(yieldAccrued);
-  pool.yieldSnapshot = yieldSnapshot;
+  pool.yieldSnapshot = lastPool.yieldSnapshot.add(yieldAccrued);
 
   pool.apySpan = lastPool.apySpan.add(peridodSpan);
 
@@ -72,13 +73,14 @@ export const applyUserEvent = (
   switch (code) {
     case SupplierEvent.DEPOSIT:
       console.log('depositio');
-      result = abiCoder.decode(['address', 'uint256'], payload);
+      result = abiCoder.decode(['uint256'], payload);
+      pool.deposit = pool.deposit.add(result[0].mul(PRECISSION))
       console.log(result);
       break;
     case SupplierEvent.WITHDRAW:
       console.log('withdrawio');
-      result = abiCoder.decode(['address', 'uint256'], payload);
-      console.log(result);
+      result = abiCoder.decode(['uint256'], payload);
+     // pool.deposit = pool.deposit.sub(result[0].mul(PRECISSION))
       break;
     case SupplierEvent.STREAM_START:
       console.log('streamio');
@@ -90,7 +92,7 @@ export const applyUserEvent = (
       console.log('pushio');
       result = abiCoder.decode(['uint256'], payload);
       console.log(result[0].toString());
-      pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
+     pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
       break;
 
     default:
@@ -129,7 +131,7 @@ export const updateUser = (user: IUSERTEST, pool: IPOOL_RESULT, pools: { [key: n
   user.expected.timestamp = pool.timestamp;
 
   pool.depositFromInFlowRate = pool.depositFromInFlowRate.sub(increment.mul(PRECISSION));
-  pool.deposit = pool.deposit.add(poolIncrement);
+  pool.deposit = pool.deposit.add(yieldUser).add(increment.mul(PRECISSION));
 
   return [user, pool];
 };

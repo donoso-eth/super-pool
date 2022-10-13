@@ -244,14 +244,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
       //// Update pool state "pool Struct" calculating indexes and timestamp
       _poolUpdateCurrentState();
 
-      // uint256 outAssets = 0;
-      // uint256 myShares = sToken.balanceOfShares(supplier);
-      // uint256 total = sToken.getSupplierBalance(supplier);
-      // uint256 factor = total.div(myShares);
-      // outAssets = factor.mul(redeemAmount).div(PRECISSION);
-
-    
-      //ISuperToken(superToken).send(supplier, outAssets, "0x");
+   
 
       ///// suppler config updated && pool
       _updateSupplierDeposit(_supplier, 0, redeemAmount);

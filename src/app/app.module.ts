@@ -5,7 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { DappInjectorModule } from './dapp-injector/dapp-injector.module';
 import { StoreModule } from '@ngrx/store';
-import { we3ReducerFunction } from 'angular-web3';
+import { settings, we3ReducerFunction } from 'angular-web3';
 import { ButtonModule } from 'primeng/button';
 
 import { LoadingComponent } from './shared/components/loading/loading.component';
@@ -20,6 +20,11 @@ import { MessageService } from 'primeng/api';
 import { ERC777Service } from './shared/services/erc777.service';
 import { GlobalService } from './shared/services/global.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { GraphQlModule } from './dapp-injector/services/graph-ql/graph-ql.module';
+import { HttpClientModule } from '@angular/common/http';
+
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+const network = 'localhost';
 
 @NgModule({
   declarations: [
@@ -32,10 +37,13 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     AppRoutingModule,
+    HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    DappInjectorModule.forRoot({wallet:'local', defaultNetwork:'localhost'}),
+    DappInjectorModule.forRoot({wallet: settings[network].wallet, defaultNetwork:network}),
+    GraphQlModule.forRoot({uri: settings[network].graphUri}),
     StoreModule.forRoot({web3: we3ReducerFunction}),
     DropdownModule,
     ProgressSpinnerModule,

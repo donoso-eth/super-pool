@@ -19,7 +19,7 @@ contract ResolverSettingsV2 is Initializable, OwnableUpgradeable {
 
   //// PARAMS
   uint256 public POOL_BUFFER; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
-  uint256 public PRECISSION = 1_000_000_000;
+  uint256 public PRECISSION = 1_000_000;
   uint256 public MIN_OUTFLOW_ALLOWED = 3600; // 1 hour minimum flow == Buffer
   uint8 public PARTIAL_DEPOSIT; // proportinal decrease deposit
   uint256 public DEPOSIT_TRIGGER_AMOUNT = 0;

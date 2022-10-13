@@ -62,14 +62,16 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     MAX_INT = 2**256 - 1;
 
     token.approve(address(aavePool), MAX_INT);
+    token.approve(address(superToken), MAX_INT);
+   // superToken.approve(address(this), MAX_INT);
     depositTaksId = createDepositTask();
   }
 
   function withdraw(uint256 amount, address _supplier) external onlyPool {
     //require(amount < available, "NOT_ENOUGH:BALANCE");
     aavePool.withdraw(address(token), amount.div(10**12), address(this));
-    superToken.upgrade(amount);
-    IERC20(address(superToken)).transfer(_supplier, amount);
+     superToken.upgrade(amount);
+     IERC20(address(superToken)).transfer(_supplier, amount);
   }
 
   /// execute

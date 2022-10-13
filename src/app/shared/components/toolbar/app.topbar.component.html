@@ -1,6 +1,6 @@
 <div class="layout-topbar">
   <a style="width: unset" class="layout-topbar-logo" routerLink="">
-    <img  style="transform: scale(0.7);" src="assets/images/logo_horizontal.png" />
+  <!-- <img  style="transform: scale(0.7);" src="assets/images/logo_horizontal.png" /> -->
   </a>
 
   <div
@@ -50,13 +50,7 @@
     >
      dashboard
     </a>
-    <a 
-    routerLink="credit-marketplace"
-    style="margin-left:30px;width:120px"
-    class="p-link layout-topbar-button menu_css" routerLinkActive="active"
-  >
-   marketplace
-  </a>
+
   </div>
   <div
     *ngIf="blockchain_status == 'wallet-connected'"

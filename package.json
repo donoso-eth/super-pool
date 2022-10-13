@@ -43,6 +43,7 @@
     "@angular/router": "~13.3.0",
     "@apollo/client": "^3.5.10",
     "@download/blockies": "^1.0.3",
+    "@ethersproject/bignumber": "^5.7.0",
     "@ngrx/store": "^13.0.2",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "@superfluid-finance/ethereum-contracts": "^1.2.2",
