@@ -6,6 +6,7 @@ import { BigNumber, constants, Contract, utils } from 'ethers';
 
 import { waitForTx } from '../../helpers/utils';
 import { ERC20, ISuperToken, ISuperfluidToken } from '../../typechain-types';
+import { getGelatoWithdrawStepId } from './gelato-V2';
 import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './models-V2';
 import { printPoolResult, printUserResult } from './utils-V2';
 
@@ -110,7 +111,7 @@ export const applyUserEvent = async (
         console.log('streamstoio');
         result = abiCoder.decode(['int96'], payload);
         pool.inFlowRate = pool.inFlowRate.sub(result[0]);
-        console.log(result[0].toString())
+     
         users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.sub(result[0]);
   
         users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.add( users[activeUser.address].expected.inFlowDeposit)
@@ -121,18 +122,19 @@ export const applyUserEvent = async (
           result = abiCoder.decode(['int96'], payload);
           users[activeUser.address].expected.outFlow  = users[activeUser.address].expected.outFlow.add(result[0]);
           
-          let minimalBalance = BigNumber.from(5*3600).mul(result[0]);
-          let stepAmount = users[activeUser.address].expected.realTimeBalance.div(BigNumber.from(10));
+           let stepAmount = users[activeUser.address].expected.realTimeBalance.div(BigNumber.from(10));
           let stepTime = stepAmount.div(result[0])
+          let minimalBalance = BigNumber.from(5*3600).mul(result[0]).add(stepAmount);
+        
           users[activeUser.address].expected.outMinBalance = minimalBalance;
           users[activeUser.address].expected.outStepAmount = stepAmount;
           users[activeUser.address].expected.outStepTime = stepTime;
 
-          users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(minimalBalance);
-
-          pool.deposit = pool.deposit.sub(minimalBalance);
+          users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(minimalBalance.mul(PRECISSION));
+          users[activeUser.address].expected.realTimeBalance = (users[activeUser.address].expected.deposit.add(minimalBalance.mul(PRECISSION))).div(PRECISSION)
+          pool.deposit = pool.deposit.sub(minimalBalance.mul(PRECISSION));
           pool.outFlowRate = pool.outFlowRate.add(result[0]);;
-          pool.yieldSnapshot = pool.yieldSnapshot.sub(minimalBalance)
+        //  pool.yieldSnapshot = pool.yieldSnapshot.sub(minimalBalance)
           pool.outFlowBuffer = pool.outFlowBuffer.add(minimalBalance)
     
           break;
@@ -171,6 +173,7 @@ export const updateUser = async (user: IUSERTEST, pool: IPOOL_RESULT,lastPool:IP
   let decrementToken = BigNumber.from(0);
   let decrement = BigNumber.from(0);
   let incrementToken = BigNumber.from(0);
+ 
   
  
   if (+user.expected.inFlow > 0) {
@@ -184,6 +187,8 @@ export const updateUser = async (user: IUSERTEST, pool: IPOOL_RESULT,lastPool:IP
     // deposit = await getDeposit(user.address,sf,superToken,deployer,superPoolAddress)
     incrementToken = user.expected.outFlow.mul(pool.timestamp.sub(lastPool.timestamp));
  
+    
+
   }
 
   user.expected.tokenBalance = user.expected.tokenBalance.sub(decrementToken).add(incrementToken);
@@ -196,7 +201,7 @@ export const updateUser = async (user: IUSERTEST, pool: IPOOL_RESULT,lastPool:IP
 
 
   user.expected.deposit = (user.expected.deposit).add((yieldUser)).add(increment.mul(PRECISSION)).sub(decrement.mul(PRECISSION));
-  user.expected.realTimeBalance = user.expected.deposit.div(PRECISSION);
+  user.expected.realTimeBalance = user.expected.deposit.div(PRECISSION).add(user.expected.outMinBalance);
 
   user.expected.timestamp = pool.timestamp;
 
@@ -237,7 +242,7 @@ export const updateNonActiveUsers = async (users: IUSERS_TEST, pool: IPOOL_RESUL
     }
     user.expected.tokenBalance = user.expected.tokenBalance.sub(decrementToken).add(incrementToken);
 
-    user.expected.realTimeBalance = (user.expected.deposit.div(PRECISSION)).add(yieldUser.div(PRECISSION)).add(increment).sub(decrement);
+    user.expected.realTimeBalance = (user.expected.deposit.div(PRECISSION)).add(user.expected.outMinBalance).add(yieldUser.div(PRECISSION)).add(increment).sub(decrement);
   };
 
   return users;

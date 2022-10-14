@@ -71,9 +71,9 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
     if (netFlow >= 0) {
       realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else {
-      realtimeBalance = yieldSupplier + supplier.outStream.stepAmount +  (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+      realtimeBalance = yieldSupplier + supplier.outStream.minBalance.mul(PRECISSION) +  (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     }
-
+    //+ supplier.outStream.stepAmount.mul(PRECISSION) 
 }
 
 

@@ -46,7 +46,7 @@ import { applyUserEvent, faucet, updatePool } from './helpers/logic-V2';
 import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V2';
 
 import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
-import { gelatoPushToAave } from './helpers/gelato-V2';
+import { gelatoPushToAave, getGelatoWithdrawStepId } from './helpers/gelato-V2';
 
 import { BigNumber } from '@ethersproject/bignumber';
 
@@ -201,6 +201,8 @@ describe.only('V2 test', function () {
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);
+
+
     sToken = STokenFactoryV2__factory.connect(sTokenAddress, deployer);
 
     let initialPoolEth = hre.ethers.utils.parseEther('10');
@@ -584,7 +586,7 @@ describe.only('V2 test', function () {
     });
     let tx = await deleteFlowOperation.exec(user2);
 
-    console.log(536, fromUser2Stream.deposit);
+
 
     yieldPool = await superPool.getLastPool();
 
@@ -594,7 +596,7 @@ describe.only('V2 test', function () {
 
     pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
 
-    console.log(usersPool[user2.address].expected.inFlow.toString());
+
 
     payload = abiCoder.encode(['int96'], [usersPool[user2.address].expected.inFlow]);
 
@@ -665,14 +667,14 @@ describe.only('V2 test', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
+    let taskId = await getGelatoWithdrawStepId(superPool,gelatoTasks,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
+    usersPool[user2.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +t1 + 7 * ONE_DAY, result[1], contractsTest, result[0]);
 
     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
-    // #endregion =================   FIVETH PERIOD ============================= //
- 
-      throw new Error("");
-      
+    // #endregion =================   EIGTH PERIOD ============================= //
 
+      
     // #region ================= NINETH PERIOD ============================= //
        console.log('\x1b[36m%s\x1b[0m', '#9--- deposit into strategy gelato to aave');
 

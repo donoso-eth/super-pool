@@ -261,16 +261,47 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       }
     }
 
+    
+    if (user.expected.outStepAmount != undefined) {
+      try {
+        expect(user.expected.outStepAmount).to.equal(userState.outStream.stepAmount);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} STEP-AMOUNT: ${userState.outStream.stepAmount?.toString()} units/s`);
+      } catch (error) {
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-AMOUNT: ${userState.outStream.stepAmount.toString()} , expected: ${user.expected.outStepAmount.toString()} units/s`);
+        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStepAmount.toString() - +userState.outStream.stepAmount.toString());
+      }
+    }
+
+    if (user.expected.outStepTime != undefined) {
+      try {
+        expect(user.expected.outStepTime).to.equal(userState.outStream.stepTime);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.stepTime?.toString()} units/s`);
+      } catch (error) {
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.stepTime.toString()} , expected: ${user.expected.outStepTime.toString()} units/s`);
+        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStepTime.toString() - +userState.outStream.stepTime.toString());
+      }
+    }
+
+    if (user.expected.outMinBalance != undefined) {
+      try {
+        expect(user.expected.outMinBalance).to.equal(userState.outStream.minBalance);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} MINIMAL BALANCE: ${userState.outStream.minBalance?.toString()} units/s`);
+      } catch (error) {
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} MINIMAL BALANCE: ${userState.outStream.minBalance.toString()} , expected: ${user.expected.outMinBalance.toString()} units/s`);
+        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outMinBalance.toString() - +userState.outStream.minBalance.toString());
+      }
+    }
+
 
     if (user.expected.outStreamId != undefined) {
       try {
-        expect(user.expected.outStreamId).to.equal(userState.outStream.cancelTaskId);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets-TaskId: ${userState.outStream.cancelTaskId?.toString()}`);
+        expect(user.expected.outStreamId).to.equal(userState.outStream.cancelWithdrawId);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets-TaskId: ${userState.outStream.cancelWithdrawId?.toString()}`);
       } catch (error) {
         console.log(
           '\x1b[31m%s\x1b[0m',
           '    x',
-          `\x1b[30m#${user.name} OUT-Assets-TaskId:  ${userState.outStream.cancelTaskId.toString()}, expected: ${user.expected.outStreamId.toString()}`
+          `\x1b[30m#${user.name} OUT-Assets-TaskId:  ${userState.outStream.cancelWithdrawId.toString()}, expected: ${user.expected.outStreamId.toString()}`
         );
       }
     }

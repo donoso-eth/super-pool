@@ -472,11 +472,11 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     uint256 userBalance =  sToken.balanceOf(_supplier);
     
-    supplier.outStream.stepAmount = supplier.deposit.div(uint256(STEPS));
+    supplier.outStream.stepAmount = userBalance.div(uint256(STEPS));
 
     supplier.outStream.stepTime = supplier.outStream.stepAmount.div(uint96(newOutFlow));
 
-    uint256 minBalance = (supplier.outStream.stepAmount.div(PRECISSION)).add((POOL_BUFFER.add(SUPERFLUID_DEPOSIT)).mul(uint96(newOutFlow)));
+    uint256 minBalance = supplier.outStream.stepAmount.add((POOL_BUFFER.add(SUPERFLUID_DEPOSIT)).mul(uint96(newOutFlow)));
 
     console.log(477, minBalance);
     console.log(userBalance);
@@ -504,17 +504,17 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
         console.log(512);
         
       poolStrategy.withdraw(minBalance, address(this));
-      poolByTimestamp[block.timestamp].yieldSnapshot = poolByTimestamp[block.timestamp].yieldSnapshot - minBalance;
+      poolByTimestamp[block.timestamp].yieldSnapshot = poolByTimestamp[block.timestamp].yieldSnapshot -  minBalance;
       poolByTimestamp[block.timestamp].outFlowBuffer = poolByTimestamp[block.timestamp].outFlowBuffer + minBalance;
-      poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - minBalance;
-      supplier.deposit = supplier.deposit - minBalance;
+      poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - minBalance.mul(PRECISSION);
+      supplier.deposit = supplier.deposit - minBalance.mul(PRECISSION);
       supplier.outStream.minBalance = minBalance;
         _cfaLib.createFlow(_supplier, superToken, newOutFlow);
       }
     }
 
 
-    supplier.outStream.cancelWithdrawId = gelatoTasks.createWithdraStepTask(_supplier, supplier.outStream.stepTime, supplier.outStream.stepAmount, minBalance);
+    supplier.outStream.cancelWithdrawId = gelatoTasks.createWithdraStepTask(_supplier, supplier.outStream.stepTime);
     console.log(525);
     ///
   }
@@ -657,7 +657,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   }
 
   /// called by Gelato
-  function withdrawStep(address _receiver, uint256 _stepAmount, uint256 _minBalance) external onlyOps {
+  function withdrawStep(address _receiver) external onlyOps {
     //// check if
 
     _poolUpdateCurrentState();
@@ -674,9 +674,10 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
 
   uint256 userBalance =  sToken.balanceOf(_receiver);
-  
+  uint256 minBalance = supplier.outStream.minBalance;
+  uint256 stepAmount = supplier.outStream.stepAmount;
   ////// user balance goes below min balance, stream will be stopped and all funds will be returned
-  if (userBalance < _minBalance) {
+  if (userBalance < minBalance) {
       cancelTask(supplier.outStream.cancelWithdrawId);
       poolStrategy.withdraw(userBalance, _receiver);
 
@@ -689,7 +690,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
 
     } else {
-    poolStrategy.withdraw(_stepAmount, address(this));
+    poolStrategy.withdraw(stepAmount, address(this));
 
 
     }

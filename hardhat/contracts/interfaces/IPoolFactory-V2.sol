@@ -34,7 +34,7 @@ interface IPoolFactoryV2 {
 
   function transfer(uint256 _amount, address _paymentToken) external;
 
-  function withdrawStep(address _receiver, uint256 _stepAmount, uint256 _minBalance)  external;
+  function withdrawStep(address _receiver)  external;
 
   function pushedToStrategy(uint256 amount ) external;
 

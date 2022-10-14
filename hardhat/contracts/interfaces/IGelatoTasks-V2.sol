@@ -13,6 +13,6 @@ interface IGelatoTasksV2  {
     uint8 _flowType
   ) external returns (bytes32 taskId);
 
- function createWithdraStepTask(address _supplier, uint256 _stepTime,uint256 _stepAmount, uint256 minBalance) external  returns (bytes32 taskId);
+ function createWithdraStepTask(address _supplier, uint256 _stepTime) external  returns (bytes32 taskId);
 
 }

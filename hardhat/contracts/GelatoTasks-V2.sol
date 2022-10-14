@@ -59,12 +59,12 @@ contract GelatoTasksV2 is Initializable {
   //#endregion
 
   //// Withdrawal step task
-  function createWithdraStepTask(address _supplier, uint256 _stepTime, uint256 _stepAmount, uint256 _minBalance) external onlyPool returns (bytes32 taskId) {
+  function createWithdraStepTask(address _supplier, uint256 _stepTime) external onlyPool returns (bytes32 taskId) {
     
      
      bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stepTime), _stepTime);
 
-     bytes memory execData = abi.encodeWithSelector(IPoolFactoryV2.withdrawStep.selector, address(_supplier),_stepAmount, _minBalance );
+     bytes memory execData = abi.encodePacked(pool.withdrawStep.selector, _supplier );
 
     LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
 
@@ -75,9 +75,8 @@ contract GelatoTasksV2 is Initializable {
 
     args[0] =  timeArgs;
 
-
     LibDataTypes.ModuleData  memory moduleData =LibDataTypes.ModuleData( modules, args);
-  
+
     
     taskId = IOps(ops).createTask(
     address(pool),
@@ -85,7 +84,7 @@ contract GelatoTasksV2 is Initializable {
     moduleData,
     ETH
     );
-    
+
 
   }
 
