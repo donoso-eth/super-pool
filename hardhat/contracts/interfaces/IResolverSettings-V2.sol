@@ -23,4 +23,17 @@ interface IResolverSettingsV2 {
   function getGelatoTasks() external view returns (address);
 
   function getGelatoOps() external view returns (address);
+
+  function getPoolBuffer() external view returns (uint256);
+
+  function setPoolBuffer(uint256 _poolBuffer) external ;
+
+  function setSuperfluidDeposit(uint256 _superfluidDeposit) external;
+
+  function getSuperfluidDeposit() external view returns (uint256);
+  
+
+  function setSteps(uint8 _steps) external;
+
+  function getSteps() external view returns (uint8);
 }

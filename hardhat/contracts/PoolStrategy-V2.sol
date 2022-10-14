@@ -14,7 +14,7 @@ import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 import {IPool} from "./aave/IPool.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import { LibDataTypes} from './gelato/LibDataTypes.sol';
+import {LibDataTypes} from "./gelato/LibDataTypes.sol";
 
 contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   using SafeMath for uint256;
@@ -55,7 +55,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     superToken = _superToken;
     token = _token;
     pool = _pool;
-    POOL_BUFFER = 0;//_POOL_BUFFER;
+    POOL_BUFFER = 0; //_POOL_BUFFER;
     aavePool = _aavePool;
     aToken = _aToken;
 
@@ -63,20 +63,20 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     token.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
-   // superToken.approve(address(this), MAX_INT);
+    // superToken.approve(address(this), MAX_INT);
     depositTaksId = createDepositTask();
   }
 
   function withdraw(uint256 amount, address _supplier) external onlyPool {
     //require(amount < available, "NOT_ENOUGH:BALANCE");
     aavePool.withdraw(address(token), amount.div(10**12), address(this));
-     superToken.upgrade(amount);
-     IERC20(address(superToken)).transfer(_supplier, amount);
+    superToken.upgrade(amount);
+    IERC20(address(superToken)).transfer(_supplier, amount);
   }
 
   /// execute
   function createDepositTask() internal returns (bytes32 taskId) {
-    bytes  memory  resolverData= abi.encodeWithSelector(this.checkerDeposit.selector);
+    bytes memory resolverData = abi.encodeWithSelector(this.checkerDeposit.selector);
 
     bytes memory resolverArgs = abi.encode(address(this), resolverData);
 
@@ -84,55 +84,59 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     modules[0] = LibDataTypes.Module.RESOLVER;
 
-
-    bytes[] memory args =  new  bytes[](1);
+    bytes[] memory args = new bytes[](1);
 
     args[0] = resolverArgs;
 
-
     LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
 
-
-    taskId = IOps(ops).createTask(address(this),abi.encodePacked(this.depositTask.selector) , moduleData, ETH);
+    taskId = IOps(ops).createTask(address(this), abi.encodePacked(this.depositTask.selector), moduleData, ETH);
   }
 
   // called by Gelato Execs
   function checkerDeposit() external view returns (bool canExec, bytes memory execPayload) {
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
 
-    console.log(1000, uint(balance));
-    console.log(101, POOL_BUFFER);
+     uint256 currentPoolBuffer = pool.getLastPool().outFlowBuffer;
 
-    canExec = uint256(balance) - POOL_BUFFER >= 0.5 ether;
- console.log(101, POOL_BUFFER);
+     uint256 currentThreshold = currentPoolBuffer.add(0.5 ether);
+
+    canExec = uint256(balance) >= currentThreshold;
+
     execPayload = abi.encodeWithSelector(this.depositTask.selector);
-     console.log(101, POOL_BUFFER);
   }
 
   function depositTask() external onlyOps {
     uint256 fee;
     address feeToken;
- console.log(112, POOL_BUFFER);
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
+    console.log(113);
+    uint256 currentPoolBuffer = pool.getLastPool().outFlowBuffer;
 
-    console.log(215, uint256(balance));
-    uint256 amountToDeposit = uint256(balance) - POOL_BUFFER;
-    console.log(216, amountToDeposit);
-    require(amountToDeposit >= 0.5 ether, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
+    uint256 currentThreshold = currentPoolBuffer.add(0.5 ether);
+
+   console.log(173);
+    require(uint256(balance) >= currentThreshold, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
+  console.log(120);
+    uint256 amountToDeposit = uint256(balance) - currentThreshold + 0.5 ether;
+  console.log(123);
 
     (fee, feeToken) = IOps(ops).getFeeDetails();
 
     pool.transfer(fee, feeToken);
-
-     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
+  console.log(127);
+    superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
+     console.log(129);
     superToken.downgrade(amountToDeposit);
-  
+ console.log(131);
     pool.pushedToStrategy(uint256(amountToDeposit));
-       aavePool.supply(address(token), amountToDeposit/(10**12), address(this), 0);
+     console.log(133);
+    aavePool.supply(address(token), amountToDeposit / (10**12), address(this), 0);
+     console.log(135);
   }
 
   function balanceOf() external view returns (uint256 balance) {
-    balance = aToken.balanceOf(address(this))*(10**12);
+    balance = aToken.balanceOf(address(this)) * (10**12);
   }
 
   // #endregion  ============= ============= Allocation Strategy  ============= ============= //

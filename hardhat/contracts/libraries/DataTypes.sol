@@ -60,7 +60,9 @@ library DataTypes {
     bytes32 cancelTaskId;
     uint256 stepAmount;
     uint256 stepTime;
+    uint256 minBalance;
     bytes32 cancelWithdrawId;
+   
 
   }
 
@@ -98,7 +100,8 @@ library DataTypes {
 
     int96 inFlowRate;
     int96 outFlowRate;
-    // int96 outFlowAssetsRate;
+   
+    uint256 outFlowBuffer;
 
     uint256 yieldTokenIndex;
     uint256 yieldInFlowRateIndex;

@@ -36,34 +36,36 @@ contract PoolInternalV2 is Initializable {
   ) public returns (DataTypes.PoolV2 memory) {
     
     poolId++;
-console.log(39);
-    DataTypes.PoolV2 memory currentPool = DataTypes.PoolV2(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
+    DataTypes.PoolV2 memory currentPool = DataTypes.PoolV2(poolId, block.timestamp, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+    console.log(41);
     currentPool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
-
+    console.log(41);
     currentPool.deposit = lastPool.deposit;
-
+    console.log(41);
     currentPool.yieldSnapshot = currentYieldSnapshot;
-      console.log(47,currentPool.yieldSnapshot,lastPool.yieldSnapshot);
+    console.log(47,currentPool.yieldSnapshot);
+    console.log(48,lastPool.yieldSnapshot);
     currentPool.yieldAccrued = currentPool.yieldSnapshot - lastPool.yieldSnapshot;
-    console.log(49);
+    console.log(41);
     currentPool.totalYield = lastPool.totalYield +currentPool.yieldAccrued;
- console.log(51);
+
     currentPool.apy.span = lastPool.apy.span + periodSpan;
     uint256 periodApy;
-     console.log(54);
+
     periodApy = lastPool.deposit == 0 ? 0 : currentPool.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodSpan).div(lastPool.deposit);
-  console.log(55);
+    console.log(41);
     currentPool.apy.apy = ((periodSpan.mul(periodApy)).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(currentPool.apy.span);
-console.log(75);
+    console.log(57);
     (currentPool.yieldTokenIndex, currentPool.yieldInFlowRateIndex) = _calculateIndexes(currentPool.yieldAccrued, lastPool);
-console.log(59);
+    console.log(59);
     currentPool.yieldTokenIndex = currentPool.yieldTokenIndex + lastPool.yieldTokenIndex;
     currentPool.yieldInFlowRateIndex = currentPool.yieldInFlowRateIndex + lastPool.yieldInFlowRateIndex;
 
 
     currentPool.inFlowRate = lastPool.inFlowRate;
     currentPool.outFlowRate = lastPool.outFlowRate;
+    currentPool.outFlowBuffer = lastPool.outFlowBuffer;
 
     currentPool.timestamp = block.timestamp;
 
@@ -77,27 +79,25 @@ console.log(59);
 
     uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
     uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
-console.log(79);
+
     uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow;
 
     /// we ultiply by PRECISSION for 5 decimals precision
-console.log(83);
+
     if (totalAreaPeriod == 0 || yieldPeriod == 0) {
       periodYieldTokenIndex = 0;
       periodYieldInFlowRateIndex = 0;
     } else {
-      console.log(88);
+    
       uint256 inFlowContribution = (dollarSecondsInFlow * PRECISSION);
       uint256 depositContribution = (dollarSecondsDeposit * PRECISSION * PRECISSION);
       if (lastPool.deposit != 0) {
-        console.log(91, depositContribution);
-         console.log(91, yieldPeriod);
-         console.log(totalAreaPeriod );
+  
         periodYieldTokenIndex = ((depositContribution * yieldPeriod).div((lastPool.deposit) * totalAreaPeriod));
-         console.log(94);
+     
       }
       if (lastPool.inFlowRate != 0) {
-         console.log(97);
+
         periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPool.inFlowRate) * totalAreaPeriod));
       }
     }
@@ -127,8 +127,6 @@ console.log(83);
   function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) public view returns (uint256 yieldSupplier) {
     uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
     DataTypes.PoolV2 memory lastPool = pool.getLastPool();
-    console.log(currentYieldSnapshot);
-    console.log(lastPool.yieldSnapshot);
 
 
     uint256 yieldAccruedSincelastPool = 0;

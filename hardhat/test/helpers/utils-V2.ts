@@ -202,10 +202,10 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       let depositOutFlow = userState.deposit.sub(periodSpan.mul(userState.outStream.flow).mul(1000000));
 
       try {
-        expect(user.expected.deposit).to.equal(depositOutFlow);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Deposit: ${depositOutFlow?.toString()}`);
+        expect(user.expected.deposit).to.equal(userState.deposit);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Deposit: ${userState.deposit.toString()}`);
       } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} Deposit : ${depositOutFlow!.toString()}, expected:${user.expected.deposit.toString()}`);
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} Deposit : ${userState.deposit!.toString()}, expected:${user.expected.deposit.toString()}`);
         console.log(+user.expected.deposit.toString() - +userState.deposit!.toString());
       }
     }
