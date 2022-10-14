@@ -723,14 +723,7 @@ describe.only('V2 test', function () {
    
        await testPeriod(BigNumber.from(t0), +t1 + 8 * ONE_DAY, result[1], contractsTest, result[0]);
    
-       fromUser2Stream = await sf.cfaV1.getFlow({
-        superToken: network_params.superToken,
-        sender: superPoolAddress,
-        receiver:user2.address,
-        providerOrSigner: user2,
-      });
 
-      console.log(fromUser2Stream)
 
 
        console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
