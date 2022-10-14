@@ -103,7 +103,7 @@ export const applyUserEvent = async (
       pool.inFlowRate = pool.inFlowRate.add(result[0]);
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.add(result[0]);
       let deposit = await getDeposit(activeUser.address,sf,superToken,deployer,superPoolAddress)
-
+    
       users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.sub(deposit)
       break;
       case SupplierEvent.STREAM_STOP:
@@ -120,9 +120,20 @@ export const applyUserEvent = async (
           console.log('out_streamio');
           result = abiCoder.decode(['int96'], payload);
           users[activeUser.address].expected.outFlow  = users[activeUser.address].expected.outFlow.add(result[0]);
+          
+          let minimalBalance = BigNumber.from(5*3600).mul(result[0]);
+          let stepAmount = users[activeUser.address].expected.realTimeBalance.div(BigNumber.from(10));
+          let stepTime = stepAmount.div(result[0])
+          users[activeUser.address].expected.outMinBalance = minimalBalance;
+          users[activeUser.address].expected.outStepAmount = stepAmount;
+          users[activeUser.address].expected.outStepTime = stepTime;
 
-        //  users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.add(oldDeposit)
-          pool.outFlowRate = pool.outFlowRate.add(result[0]);
+          users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(minimalBalance);
+
+          pool.deposit = pool.deposit.sub(minimalBalance);
+          pool.outFlowRate = pool.outFlowRate.add(result[0]);;
+          pool.yieldSnapshot = pool.yieldSnapshot.sub(minimalBalance)
+          pool.outFlowBuffer = pool.outFlowBuffer.add(minimalBalance)
     
           break;
 

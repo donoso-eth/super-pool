@@ -13,7 +13,7 @@ export interface IPOOL {
   
     inFlowRate: BigNumber;
     outFlowRate: BigNumber;
-    outFlowAssetsRate?:BigNumber;
+    outFlowBuffer?:BigNumber;
   
     yieldTokenIndex: BigNumber;
     yieldInFlowRateIndex: BigNumber;
@@ -40,7 +40,7 @@ export interface IPOOL_RESULT {
   
     inFlowRate: BigNumber;
     outFlowRate: BigNumber;
-    outFlowAssetsRate:BigNumber;
+    outFlowBuffer:BigNumber;
   
     yieldTokenIndex: BigNumber;
     yieldInFlowRateIndex: BigNumber;
@@ -74,10 +74,13 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
     inFlow:BigNumber;
     inFlowId?: string
     nextExecIn?:BigNumber
+    
     outFlow: BigNumber;
-
-    outStreamId?: string
-    nextExecOut?:BigNumber
+    outStepAmount: BigNumber;
+    outStepTime: BigNumber;
+    outMinBalance: BigNumber;
+    outStreamId?: string;
+    nextExecOut?:BigNumber;
   }
   
   export interface IUSERTEST {address:string, name: string,expected: IUSER_RESULT}
