@@ -103,7 +103,7 @@ export const applyUserEvent = async (
       pool.inFlowRate = pool.inFlowRate.add(result[0]);
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.add(result[0]);
       let deposit = await getDeposit(activeUser.address,sf,superToken,deployer,superPoolAddress)
-    
+      users[activeUser.address].expected.inFlowDeposit = deposit;
       users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.sub(deposit)
       break;
       case SupplierEvent.STREAM_STOP:
@@ -112,8 +112,8 @@ export const applyUserEvent = async (
         pool.inFlowRate = pool.inFlowRate.sub(result[0]);
         console.log(result[0].toString())
         users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.sub(result[0]);
-        let oldDeposit = result[0].mul(BigNumber.from(3600))
-        users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.add(oldDeposit)
+  
+        users[activeUser.address].expected.tokenBalance =  users[activeUser.address].expected.tokenBalance.add( users[activeUser.address].expected.inFlowDeposit)
         break;
 
         case SupplierEvent.OUT_STREAM_START:

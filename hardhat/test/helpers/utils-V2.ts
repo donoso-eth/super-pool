@@ -331,22 +331,23 @@ export const getPool = async (superPool: PoolFactoryV2): Promise<any> => {
 
 ////// CONTRACTS
 
-export const addUser = (address: string, id: number, timestamp: BigNumber) => {
+export const addUser = (address: string, id: number, timestamp: BigNumber):IUSERTEST  => {
   return {
     name: 'User' + id.toString(),
     address: address,
     expected: {
       id: BigNumber.from(id),
       realTimeBalance: BigNumber.from(0),
-      shares: BigNumber.from(0),
+      
       tokenBalance: utils.parseEther('1000'),
       deposit: BigNumber.from(0),
       outStepAmount:BigNumber.from(0),
       outStepTime: BigNumber.from(0),
       outMinBalance: BigNumber.from(0),
-      outStream: BigNumber.from(0),
+      outStreamId: "0x0000000000000000000000000000000000000000000000000000000000000000",
       outFlow: BigNumber.from(0),
       inFlow: BigNumber.from(0),
+      inFlowDeposit: BigNumber.from(0),
       timestamp: timestamp,
     },
   };

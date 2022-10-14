@@ -72,6 +72,7 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
     deposit: BigNumber;
     timestamp: BigNumber;
     inFlow:BigNumber;
+    inFlowDeposit:BigNumber;
     inFlowId?: string
     nextExecIn?:BigNumber
     
