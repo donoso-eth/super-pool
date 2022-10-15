@@ -60,6 +60,7 @@ library DataTypes {
     bytes32 cancelTaskId;
     uint256 stepAmount;
     uint256 stepTime;
+    uint256 initTime;
     uint256 minBalance;
     bytes32 cancelWithdrawId;
    

@@ -71,7 +71,6 @@ export const getGelatoWithdrawStepId = async (pool: PoolFactoryV2,gelatoTask: Ge
     [timestamp + interval, interval]
   );
 
-
   let moduleData = {
     modules: [1],
     args: [timeArgs],
@@ -96,15 +95,27 @@ export const gelatoWithdrawStep = async (pool: PoolFactoryV2,gelatoTask: GelatoT
 
   const execData =  pool.interface.encodeFunctionData("withdrawStep",[user]);
   const timeArgs = utils.defaultAbiCoder.encode(
-    ["address", "bytes"],
+    ["uint256", "uint256"],
     [timestamp + interval, interval]
   );
-
+  console.log(execData);
 
   let moduleData = {
     modules: [1],
     args: [timeArgs],
   };
+
+  let  execSelector =  pool.interface.getSighash("withdrawStep");
+  let taskId = getTaskId(
+
+    gelatoTask.address,
+    pool.address,
+    execSelector,
+    moduleData,
+    ETH
+  );
+
+    console.log(taskId);
 
   const FEE = utils.parseEther("0.1")
 

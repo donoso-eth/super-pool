@@ -80,8 +80,9 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
     outStepAmount: BigNumber;
     outStepTime: BigNumber;
     outMinBalance: BigNumber;
-    outStreamId?: string;
-    nextExecOut?:BigNumber;
+    outStreamId: string;
+    outStreamInit: BigNumber;
+    nextExecOut:BigNumber;
   }
   
   export interface IUSERTEST {address:string, name: string,expected: IUSER_RESULT}
@@ -107,4 +108,6 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
       OUT_STREAM_START, //int96
       OUT_STREAM_STOP, //
       PUSH_TO_STRATEGY, //uint256
+      WITHDRAW_STEP,//
+      REBALANCE //
     }

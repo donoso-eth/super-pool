@@ -64,7 +64,7 @@ contract GelatoTasksV2 is Initializable {
      
      bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stepTime), _stepTime);
 
-     bytes memory execData = abi.encodePacked(pool.withdrawStep.selector, _supplier );
+     bytes memory execData = abi.encodeWithSelector(pool.withdrawStep.selector, _supplier );
 
     LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
 
@@ -77,6 +77,7 @@ contract GelatoTasksV2 is Initializable {
 
     LibDataTypes.ModuleData  memory moduleData =LibDataTypes.ModuleData( modules, args);
 
+
     
     taskId = IOps(ops).createTask(
     address(pool),
@@ -84,7 +85,7 @@ contract GelatoTasksV2 is Initializable {
     moduleData,
     ETH
     );
-
+console.logBytes32(taskId);
 
   }
 

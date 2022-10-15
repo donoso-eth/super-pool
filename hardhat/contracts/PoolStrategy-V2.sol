@@ -70,8 +70,16 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   function withdraw(uint256 amount, address _supplier) external onlyPool {
     //require(amount < available, "NOT_ENOUGH:BALANCE");
     aavePool.withdraw(address(token), amount.div(10**12), address(this));
+    console.log(73, amount);
     superToken.upgrade(amount);
+       console.log(75);
+  uint256 bal =   IERC20(address(superToken)).balanceOf(address(this));
+  console.log(bal);
+    if (bal < amount) {
+      amount = bal;
+    }
     IERC20(address(superToken)).transfer(_supplier, amount);
+       console.log(77);
   }
 
   /// execute

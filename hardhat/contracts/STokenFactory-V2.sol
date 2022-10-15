@@ -66,14 +66,21 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
 
     uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
+    console.log(69,yieldSupplier);
+    console.log(70, uint96(supplier.inStream.flow));
+    console.log(71,supplier.timestamp );
+    console.log(72, block.timestamp);
+     console.log(73, supplier.deposit);
+    
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (netFlow >= 0) {
       realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else {
-      realtimeBalance = yieldSupplier + supplier.outStream.minBalance.mul(PRECISSION) +  (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+      realtimeBalance = yieldSupplier + supplier.outStream.minBalance.mul(PRECISSION) +  (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime) * PRECISSION;
     }
     //+ supplier.outStream.stepAmount.mul(PRECISSION) 
+    console.log(83,realtimeBalance);
 }
 
 

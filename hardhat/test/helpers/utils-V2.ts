@@ -56,6 +56,8 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit: ${result.deposit.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x #Deposit:', `\x1b[30m ${result.deposit.toString()}, expected:${expected.deposit!.toString()}`);
+      console.log(+expected.deposit.toString() - +result.deposit!.toString());
+
     }
   }
 
@@ -307,18 +309,18 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
 
     if (user.expected.nextExecOut != undefined) {
-      let nextExec = (await contracts.ops?.timedTask(userState.outStream.cancelTaskId))?.nextExec as BigNumber;
+      let nextExec = (await contracts.ops?.timedTask(userState.outStream.cancelWithdrawId))?.nextExec as BigNumber;
 
       try {
         //console.log(+timed['nextExec'].toString())
         console.log((+(await getTimestamp())).toString());
         expect(user.expected.nextExecOut).to.equal(nextExec);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Gelato Task Next Execution OutFlow: ${nextExec.sub(t0).sub(BigNumber.from(tx)).toString()}`);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Gelato Task Next Withdraw Step: ${nextExec}`);
       } catch (error) {
         console.log(
           '\x1b[31m%s\x1b[0m',
           '    x',
-          `\x1b[30m#${user.name} Gelato Task Next Execution OutFlow:  ${nextExec.toString()}, expected: ${user.expected.nextExecOut.toString()}`
+          `\x1b[30m#${user.name} Gelato Task Next  Withdraw Step:  ${nextExec.toString()}, expected: ${user.expected.nextExecOut.toString()}`
         );
         console.log(+nextExec.toString() - +user.expected.nextExecOut.toString());
       }
@@ -373,9 +375,11 @@ export const addUser = (address: string, id: number, timestamp: BigNumber):IUSER
       tokenBalance: utils.parseEther('1000'),
       deposit: BigNumber.from(0),
       outStepAmount:BigNumber.from(0),
+      outStreamInit:  BigNumber.from(0),
       outStepTime: BigNumber.from(0),
       outMinBalance: BigNumber.from(0),
       outStreamId: "0x0000000000000000000000000000000000000000000000000000000000000000",
+      nextExecOut:BigNumber.from(0),
       outFlow: BigNumber.from(0),
       inFlow: BigNumber.from(0),
       inFlowDeposit: BigNumber.from(0),
