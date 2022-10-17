@@ -236,7 +236,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     _updateSupplierDeposit(from, amount, 0);
   }
 
-  function redeemDeposit(uint256 redeemAmount) external {
+  function redeemDeposit(uint256 redeemAmount) public {
     uint256 balance = sToken.balanceOf(msg.sender);
 
     address _supplier = msg.sender;
@@ -244,25 +244,26 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     require(balance > redeemAmount, "NOT_ENOUGH_BALANCE");
     DataTypes.Supplier memory supplier = _getSupplier(_supplier);
 
-    if (balance == redeemAmount) {
-      _redeemAll(msg.sender, false);
-    } else {
-      //// Update pool state "pool Struct" calculating indexes and timestamp
-      _poolUpdateCurrentState();
+    //// Update pool state "pool Struct" calculating indexes and timestamp
+    _poolUpdateCurrentState();
 
-      ///// suppler config updated && pool
-      _updateSupplierDeposit(_supplier, 0, redeemAmount);
+    ///// suppler config updated && pool
+    _updateSupplierDeposit(_supplier, 0, redeemAmount);
 
-      poolStrategy.withdraw(redeemAmount, _supplier);
-      poolByTimestamp[block.timestamp].yieldSnapshot = poolByTimestamp[block.timestamp].yieldSnapshot - redeemAmount;
+    //poolStrategy.withdraw(redeemAmount, _supplier);
+    _withdrawDispatcher(_supplier, _supplier,  redeemAmount);
 
-      if (supplier.outStream.flow < 0) {
-        _outStreamHasChanged(_supplier, supplier.outStream.flow);
+    // poolByTimestamp[block.timestamp].yieldSnapshot = poolByTimestamp[block.timestamp].yieldSnapshot - redeemAmount;
+
+    if (supplier.outStream.flow > 0) {
+      uint256 userBalance = sToken.balanceOf(_supplier);
+      if (userBalance < supplier.outStream.minBalance) {
+        _cancelFlow(_supplier, userBalance, supplier.outStream.minBalance);
       }
-
-      emit Events.SupplierUpdate(supplier);
-      console.log("event");
     }
+
+    emit Events.SupplierUpdate(supplier);
+    console.log("event");
   }
 
   function redeemFlow(int96 _outFlowRate, uint256 _endSeconds) external {
@@ -283,6 +284,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     _updateSupplierFlow(msg.sender, 0, _outFlowRate, placeHolder);
 
+
+
     if (_endSeconds > 0) {
       cancelTask(supplier.outStream.cancelTaskId);
       supplier.outStream.cancelTaskId = gelatoTasks.createStopStreamTimedTask(msg.sender, _endSeconds - MIN_OUTFLOW_ALLOWED, false, 0);
@@ -299,9 +302,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     //// Advance pool
   }
 
-  function closeAccount() external {
-    _redeemAll(msg.sender, true);
-  }
+  function closeAccount() external {}
 
   function _inStreamCallback(
     address from,
@@ -355,12 +356,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     if (supplier.timestamp < block.timestamp) {
       uint256 supplierBalance = sToken.getSupplierBalance(_supplier);
 
-      console.log(358, supplierBalance);
-
       uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
-      console.log(362, yieldSupplier);
-      console.log(363, supplier.deposit);
       if (supplier.inStream.flow > 0) {
         uint256 inflow = uint96(supplier.inStream.flow) * (block.timestamp - supplier.timestamp);
 
@@ -373,7 +370,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
         // pool.deposit = yieldSupplier + pool.deposit;
         // supplier.deposit = supplier.deposit + yieldSupplier;
       }
-      console.log(375, supplier.deposit);
+
       pool.deposit = yieldSupplier + pool.deposit;
       supplier.deposit = supplier.deposit + yieldSupplier;
       supplier.timestamp = block.timestamp;
@@ -385,20 +382,15 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     uint256 inDeposit,
     uint256 outDeposit
   ) internal {
+    console.log(385);
     DataTypes.Supplier storage supplier = _getSupplier(_supplier);
-
+    console.log(387);
     _supplierUpdateCurrentState(_supplier);
-
-    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
-    //////// if newnetFlow < 0 means  there is already a stream out
-
+    console.log(389);
     supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
-
+    console.log(391);
     poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
-
-    if (supplier.outStream.flow > 0) {
-      _outStreamHasChanged(_supplier, supplier.outStream.flow);
-    }
+        console.log(393);
   }
 
   function _updateSupplierFlow(
@@ -412,8 +404,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     newCtx = _ctx;
 
     _supplierUpdateCurrentState(_supplier);
-
-    console.log(413, supplier.deposit);
 
     int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
     int96 newNetFlow = inFlow - outFlow;
@@ -433,13 +423,18 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
           newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
         }
 
-        cancelTask(supplier.outStream.cancelTaskId);
-        supplier.outStream.cancelTaskId = bytes32(0);
-        supplier.outStream.flow = 0;
+        gelatoTasks.cancelTask(supplier.outStream.cancelWithdrawId);
+        uint256 alreadyStreamed = uint96(supplier.outStream.flow)*(block.timestamp - supplier.outStream.initTime);
+        supplier.deposit = supplier.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
+        pool.deposit = pool.deposit + supplier.outStream.minBalance.mul(PRECISSION)- alreadyStreamed.mul(PRECISSION);
+        pool.outFlowBuffer = pool.outFlowBuffer - supplier.outStream.minBalance;
+        supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
+
+
       } else {
         pool.outFlowRate = pool.outFlowRate + currentNetFlow - newNetFlow;
 
-        pool.deposit = pool.deposit - supplier.deposit;
+     //   pool.deposit = pool.deposit - supplier.deposit;
 
         //// creatre timed task
         _outStreamHasChanged(_supplier, -newNetFlow);
@@ -456,7 +451,13 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
         pool.inFlowRate -= currentNetFlow;
 
         pool.deposit = pool.deposit;
-
+        if (currentNetFlow > 0) {
+          _cfaLib.deleteFlow(_supplier, address(this), superToken);
+        }
+        if (supplier.inStream.cancelTaskId != bytes32(0)) {
+          cancelTask(supplier.inStream.cancelTaskId);
+        }
+   
         _outStreamHasChanged(_supplier, -newNetFlow);
       }
     }
@@ -467,98 +468,80 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     console.log("updateSupplierFlow");
   }
 
+  function _createOutStream(
+    address _supplier,
+    uint256 newMinBalance,
+    int96 newOutFlow,
+    uint256 prevoiusMinBalance,
+    uint256 stepAmount,
+    uint256 stepTime
+  ) internal {
+    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+
+   
+
+    if (newMinBalance > prevoiusMinBalance) {
+
+          _withdrawDispatcher(_supplier, address(this), newMinBalance-prevoiusMinBalance);
+    }
+
+  
+
+ 
+    pool.outFlowBuffer = pool.outFlowBuffer + newMinBalance;
+    pool.deposit = pool.deposit - newMinBalance.mul(PRECISSION);
+
+    supplier.deposit = supplier.deposit - newMinBalance.mul(PRECISSION);
+
+    supplier.outStream.minBalance = newMinBalance;
+
+
+    supplier.outStream.stepAmount = stepAmount;
+
+    supplier.outStream.stepTime = stepTime;
+    supplier.outStream.initTime = block.timestamp;
+
+    supplier.outStream.cancelWithdrawId = gelatoTasks.createWithdraStepTask(_supplier, supplier.outStream.stepTime);
+
+  }
+
   function _outStreamHasChanged(address _supplier, int96 newOutFlow) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
     DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+
     uint256 userBalance = sToken.balanceOf(_supplier);
-    uint256 stepAmount = userBalance.div(uint256(STEPS));
-    uint256 stepTime =  stepAmount.div(uint96(newOutFlow));
+    uint256 stepTime = userBalance.div(uint256(STEPS)).div(uint96(newOutFlow));
+    uint256 stepAmount = (uint96(newOutFlow)) * (stepTime);
     uint256 minBalance = stepAmount.add((POOL_BUFFER.add(SUPERFLUID_DEPOSIT)).mul(uint96(newOutFlow)));
 
-    console.log(498);
-
-    if (supplier.inStream.flow > 0) {
-      _cfaLib.deleteFlow(_supplier, address(this), superToken);
-      if (supplier.inStream.cancelTaskId != bytes32(0)) {
-        cancelTask(supplier.inStream.cancelTaskId);
-      }
-    }
     if (supplier.outStream.flow == 0) {
       if (userBalance < minBalance) {
         revert("No sufficent funds");
       }
-      console.log(512);
-      console.log(499, supplier.deposit);
 
-      poolStrategy.withdraw(minBalance, address(this));
-      pool.yieldSnapshot = pool.yieldSnapshot - minBalance;
-      pool.outFlowBuffer = pool.outFlowBuffer + minBalance;
-      pool.deposit = pool.deposit - minBalance.mul(PRECISSION);
-      supplier.deposit = supplier.deposit - minBalance.mul(PRECISSION);
-      supplier.outStream.minBalance = minBalance;
-      supplier.outStream.stepAmount = stepAmount;
-      supplier.outStream.stepTime = stepTime;
+      // poolStrategy.withdraw(minBalance, address(this));
+      _createOutStream(_supplier, minBalance, newOutFlow, 0, stepAmount, stepTime);
 
-      supplier.outStream.initTime = block.timestamp;
       _cfaLib.createFlow(_supplier, superToken, newOutFlow);
-      console.log(508, supplier.deposit);
-      supplier.outStream.cancelWithdrawId = gelatoTasks.createWithdraStepTask(_supplier, supplier.outStream.stepTime);
+ 
     } else if (supplier.outStream.flow > 0) {
       if (supplier.outStream.cancelTaskId != bytes32(0)) {
         cancelTask(supplier.outStream.cancelTaskId);
       }
 
       if (userBalance < minBalance) {
-        console.log(513);
-        cancelTask(supplier.outStream.cancelWithdrawId);
-        poolStrategy.withdraw(userBalance, _supplier);
-
-        pool.deposit = pool.deposit - userBalance;
-        pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
-
-        supplier.deposit = 0;
-        supplier.outStream.flow = 0;
-        supplier.outStream.minBalance = 0;
-        supplier.outStream.initTime = 0;
-        supplier.outStream.stepAmount = 0;
-        supplier.outStream.stepTime = 0;
-        supplier.outStream.cancelWithdrawId = bytes32(0);
-        _cfaLib.deleteFlow(address(this), _supplier, superToken);
+        _cancelFlow(_supplier, userBalance, minBalance);
       } else if (supplier.outStream.flow != newOutFlow) {
+        gelatoTasks.cancelTask(supplier.outStream.cancelWithdrawId);
+
+        uint256 alreadyStreamed = uint96(supplier.outStream.flow)*(block.timestamp - supplier.outStream.initTime);
+        supplier.deposit = supplier.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
+        pool.deposit = pool.deposit + supplier.outStream.minBalance.mul(PRECISSION)- alreadyStreamed.mul(PRECISSION);
+        pool.outFlowBuffer = pool.outFlowBuffer - supplier.outStream.minBalance;
+        _createOutStream(_supplier, minBalance, newOutFlow, supplier.outStream.minBalance, stepAmount, stepTime);
         _cfaLib.updateFlow(_supplier, superToken, newOutFlow);
       }
-    }
-
-    console.log(525);
-    ///
-  }
-
-  function _redeemAll(address _supplier, bool closeInStream) internal {
-    //// Update pool state "pool Struct" calculating indexes and timestamp
-    _poolUpdateCurrentState();
-
-    _supplierUpdateCurrentState(_supplier);
-
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
-
-    pool.deposit = pool.deposit - supplier.deposit;
-
-    uint256 withdrawalAmount = supplier.deposit.div(PRECISSION);
-
-    poolStrategy.withdraw(withdrawalAmount, _supplier);
-    ISuperToken(superToken).send(_supplier, withdrawalAmount, "0x");
-
-    supplier.deposit = 0;
-
-    if (supplier.outStream.flow > 0) {
-      pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
-      _cfaLib.deleteFlow(address(this), _supplier, superToken);
-      supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
-    } else if (supplier.inStream.flow > 0 && closeInStream == true) {
-      pool.inFlowRate = pool.inFlowRate - supplier.inStream.flow;
-      _cfaLib.deleteFlow(_supplier, address(this), superToken);
-      supplier.inStream = DataTypes.Stream(0, bytes32(0));
     }
   }
 
@@ -613,11 +596,7 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   // #region Gelato functions
 
   /// called by Gelato
-  function stopstream(
-    address _receiver,
-    bool _all,
-    uint8 _flowType
-  ) external onlyOps {
+  function stopstream(address _receiver, uint8 _flowType) external onlyOps {
     //// check if
 
     _poolUpdateCurrentState();
@@ -647,8 +626,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
         suppliersByAddress[_receiver].outStream.cancelTaskId = bytes32(0);
       }
 
-      _redeemAll(_receiver, _all);
-
       console.log("stopOUTStream");
     }
     ///// INFLOW FLOW
@@ -670,6 +647,75 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     }
   }
 
+  function _withdrawDispatcher(
+    address _supplier,
+    address _receiver,
+    uint256 withdrawAmount
+  ) internal {
+
+  
+    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+
+ 
+
+    uint256 poolAvailable = 0;
+    if (superToken.balanceOf(address(this)) > (pool.outFlowBuffer)){
+        poolAvailable = superToken.balanceOf(address(this)) - (pool.outFlowBuffer);
+    } 
+
+    console.log(633, poolAvailable);
+
+    if (poolAvailable >= withdrawAmount) {
+      console.log("NOT PUSHED");
+      if (_supplier == _receiver) {
+        IERC20(address(superToken)).transfer(_receiver, withdrawAmount);
+      }
+    } else {
+      console.log("YES PUSHED");
+      uint256 balance = poolStrategy.balanceOf();
+      uint256 fromStrategy = withdrawAmount - poolAvailable;
+      uint256 correction;
+      if (fromStrategy > balance) {
+            correction = fromStrategy-balance;
+            poolStrategy.withdraw(balance, _receiver);
+             pool.yieldSnapshot = pool.yieldSnapshot - balance;
+          if (_supplier == _receiver) {
+              IERC20(address(superToken)).transfer(_receiver, correction);
+            }
+
+      } else {
+          poolStrategy.withdraw(fromStrategy, _receiver);
+            pool.yieldSnapshot = pool.yieldSnapshot - fromStrategy;
+          // if (_supplier == _receiver) {
+          //   IERC20(address(superToken)).transfer(_receiver, poolAvailable);
+          // }
+      }
+
+    
+        
+    }
+     console.log(668,pool.yieldSnapshot);
+  }
+
+  function _cancelFlow(
+    address _receiver,
+    uint256 userBalance,
+    uint256 minBalance
+  ) internal {
+    DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
+    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+
+    gelatoTasks.cancelTask(supplier.outStream.cancelWithdrawId);
+
+    pool.outFlowBuffer = pool.outFlowBuffer - minBalance;
+    _withdrawDispatcher(_receiver, _receiver,  userBalance);
+
+    pool.deposit = pool.deposit - userBalance;
+    pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
+    supplier.deposit = 0;
+    supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
+  }
+
   /// called by Gelato
   function withdrawStep(address _receiver) external onlyOps {
     //// check if
@@ -686,31 +732,23 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     _transfer(fee, feeToken);
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
-
+    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
     uint256 userBalance = sToken.balanceOf(_receiver);
     uint256 minBalance = supplier.outStream.minBalance;
-    uint256 stepAmount = supplier.outStream.stepAmount;
-    console.log(693, stepAmount);
+    uint256 stepAmount = (uint96(supplier.outStream.flow)) * (supplier.outStream.stepTime);
+
     ////// user balance goes below min balance, stream will be stopped and all funds will be returned
     if (userBalance < minBalance) {
-      cancelTask(supplier.outStream.cancelWithdrawId);
-      poolStrategy.withdraw(userBalance, _receiver);
-
-      poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit - userBalance;
-      poolByTimestamp[block.timestamp].outFlowRate = poolByTimestamp[block.timestamp].outFlowRate - supplier.outStream.flow;
-
-      supplier.deposit = 0;
-      supplier.outStream.flow = 0;
+      console.log("XXXXXXXXXXXXX 696 XXXXXXXXXXXX");
+      _cancelFlow(_receiver, userBalance, minBalance);
     } else {
-      console.log(704);
-      poolStrategy.withdraw(stepAmount, address(this));
-        console.log(706,supplier.deposit);
 
-      supplier.deposit = supplier.deposit -  supplier.outStream.stepAmount.mul(PRECISSION);
-      console.log(708,supplier.deposit);
+      _withdrawDispatcher(_receiver, address(this),  stepAmount);
+
+       pool.deposit = pool.deposit.sub(stepAmount.mul(PRECISSION));
+       
+      supplier.deposit = supplier.deposit.sub(stepAmount.mul(PRECISSION));
       supplier.outStream.initTime = block.timestamp;
-         console.log(708);
-
     }
   }
 

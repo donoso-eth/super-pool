@@ -17,7 +17,11 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   
   // #region POOL
 
-  let poolTotalBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
+  let poolBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
+  let aaveBalance = (await contracts.aaveERC20.balanceOf(contracts.strategyAddresse));
+
+  let poolTotalBalance  = (poolBalance.availableBalance.div(10**12)).add(aaveBalance);
+
 
   let result: IPOOL = await getPool(contracts.superPool);
 
@@ -39,12 +43,12 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (poolTotalBalance.availableBalance != undefined) {
+  if (poolTotalBalance != undefined) {
     try {
-      expect(poolTotalBalance.availableBalance).to.equal(expected.poolTotalBalance);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Assets Balance: ${poolTotalBalance.availableBalance.toString()}`);
+      expect(poolTotalBalance).to.equal(expected.poolTotalBalance.div(10**12));
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Assets Balance: ${poolTotalBalance.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${poolTotalBalance.availableBalance.toString()}, expected:${expected.poolTotalBalance!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${poolTotalBalance.toString()}, expected:${expected.poolTotalBalance.div(10**12)!.toString()}`);
     }
   }
 
@@ -92,6 +96,15 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
+  if (expected.outFlowBuffer != undefined) {
+    try {
+      expect(result.outFlowBuffer).to.equal(expected.outFlowBuffer);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow Buffer: ${result.outFlowBuffer.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Out-Flow Buffer: ', `\x1b[30m ${result.outFlowBuffer.toString()}, expected:${expected.outFlowBuffer.toString()}`);
+    }
+  }
+
 
   if (expected.yieldTokenIndex != undefined) {
     try {
@@ -124,10 +137,10 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   if (expected.yieldSnapshot != undefined) {
     try {
-      expect(result.yieldSnapshot).to.equal(expected.yieldSnapshot);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${result.yieldSnapshot.toString()}`);
+      expect(result.yieldSnapshot.div(10**12)).to.equal(aaveBalance);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${result.yieldSnapshot.toString()}, expected:${expected.yieldSnapshot!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}, expected:${(result.yieldSnapshot.div(10**12))!.toString()}`);
     }
   }
 
@@ -269,7 +282,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
         expect(user.expected.outStepAmount).to.equal(userState.outStream.stepAmount);
         console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} STEP-AMOUNT: ${userState.outStream.stepAmount?.toString()} units/s`);
       } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-AMOUNT: ${userState.outStream.stepAmount.toString()} , expected: ${user.expected.outStepAmount.toString()} units/s`);
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-AMOUNT: ${userState.outStream.stepAmount.toString()} , expected: ${user.expected.outStepAmount.toString()} units`);
         console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStepAmount.toString() - +userState.outStream.stepAmount.toString());
       }
     }
@@ -279,8 +292,18 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
         expect(user.expected.outStepTime).to.equal(userState.outStream.stepTime);
         console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.stepTime?.toString()} units/s`);
       } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.stepTime.toString()} , expected: ${user.expected.outStepTime.toString()} units/s`);
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.stepTime.toString()} , expected: ${user.expected.outStepTime.toString()} units`);
         console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStepTime.toString() - +userState.outStream.stepTime.toString());
+      }
+    }
+
+    if (user.expected.outStreamInit != undefined) {
+      try {
+        expect(user.expected.outStreamInit ).to.equal(userState.outStream.initTime);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} INIT-TIME: ${userState.outStream.initTime?.toString()} units/s`);
+      } catch (error) {
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} INIT-TIME: ${userState.outStream.initTime.toString()} , expected: ${user.expected.outStreamInit.toString()} units`);
+        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStreamInit.toString() - +userState.outStream.initTime.toString());
       }
     }
 
@@ -289,7 +312,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
         expect(user.expected.outMinBalance).to.equal(userState.outStream.minBalance);
         console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} MINIMAL BALANCE: ${userState.outStream.minBalance?.toString()} units/s`);
       } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} MINIMAL BALANCE: ${userState.outStream.minBalance.toString()} , expected: ${user.expected.outMinBalance.toString()} units/s`);
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} MINIMAL BALANCE: ${userState.outStream.minBalance.toString()} , expected: ${user.expected.outMinBalance.toString()} units`);
         console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outMinBalance.toString() - +userState.outStream.minBalance.toString());
       }
     }
@@ -378,6 +401,7 @@ export const addUser = (address: string, id: number, timestamp: BigNumber):IUSER
       outStreamInit:  BigNumber.from(0),
       outStepTime: BigNumber.from(0),
       outMinBalance: BigNumber.from(0),
+      outStreamCreated: BigNumber.from(0),
       outStreamId: "0x0000000000000000000000000000000000000000000000000000000000000000",
       nextExecOut:BigNumber.from(0),
       outFlow: BigNumber.from(0),

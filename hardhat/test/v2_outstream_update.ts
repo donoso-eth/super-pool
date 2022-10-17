@@ -124,7 +124,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe('V2 test', function () {
+describe.only('V2 test OUTSTREAM ONLY', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -166,6 +166,8 @@ describe('V2 test', function () {
 
     eventsLib = await new Events__factory(deployer).deploy();
 
+    let aaveERC20: IERC20 = await IERC20__factory.connect(network_params.aToken, deployer);
+
     superTokenContract = await ISuperToken__factory.connect(network_params.superToken, deployer);
     superTokenERC777 = await IERC777__factory.connect(network_params.superToken, deployer);
     tokenContract = new hre.ethers.Contract(network_params.token, abi_erc20mint, deployer) as ERC20;
@@ -204,7 +206,6 @@ describe('V2 test', function () {
 
     superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);
 
-
     sToken = STokenFactoryV2__factory.connect(sTokenAddress, deployer);
 
     let initialPoolEth = hre.ethers.utils.parseEther('10');
@@ -225,7 +226,7 @@ describe('V2 test', function () {
     /////// INITIAL POOL BALANCE /////////
     initialBalance = utils.parseEther('1000');
 
-    await superTokenContract.transfer(superPoolAddress, initialBalance);
+    // await superTokenContract.transfer(superPoolAddress, initialBalance);
 
     await faucet(deployer, tokenContract, superTokenContract);
 
@@ -247,8 +248,6 @@ describe('V2 test', function () {
     executor = await hre.ethers.provider.getSigner(network_params.opsExec);
 
     PRECISSION = await settings.getPrecission();
-    let aaveERC20:IERC20 = await  IERC20__factory.connect(network_params.aToken, deployer)
-
 
     contractsTest = {
       poolAddress: superPoolAddress,
@@ -258,10 +257,9 @@ describe('V2 test', function () {
       superTokenERC777,
       aaveERC20,
       strategyAddresse: poolStrategy.address,
-      ops:ops,
-      PRECISSION
+      ops: ops,
+      PRECISSION,
     };
-    PRECISSION = await settings.getPrecission();
 
     sf = await Framework.create({
       chainId: 31337,
@@ -277,11 +275,11 @@ describe('V2 test', function () {
     t0 = +(await superPool.lastPoolTimestamp());
     console.log(t0.toString());
 
-    console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 20 units at t0 ');
+    console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 800 units at t0 ');
 
-    erc777 = await IERC777__factory.connect(network_params.superToken, user1);
+    erc777 = await IERC777__factory.connect(network_params.superToken, user2);
 
-    let amount = utils.parseEther('500');
+    let amount = utils.parseEther('800');
 
     await erc777.send(superPoolAddress, amount, '0x');
 
@@ -289,7 +287,7 @@ describe('V2 test', function () {
 
     let result: [IUSERS_TEST, IPOOL_RESULT];
 
-    let expedtedPoolBalance = initialBalance.add(amount);
+    let expedtedPoolBalance = amount;
 
     let poolExpected1: IPOOL_RESULT = {
       id: BigNumber.from(1),
@@ -312,20 +310,20 @@ describe('V2 test', function () {
     pools[+poolExpected1.timestamp] = poolExpected1;
 
     let usersPool: { [key: string]: IUSERTEST } = {
-      [user1.address]: {
-        name: 'User1',
-        address: user1.address,
+      [user2.address]: {
+        name: 'User2',
+        address: user2.address,
         expected: {
-          id: BigNumber.from(1),
+          id: BigNumber.from(2),
           realTimeBalance: amount,
           tokenBalance: initialBalance.sub(amount),
           deposit: amount.mul(PRECISSION),
           outFlow: BigNumber.from(0),
-          outStepAmount:BigNumber.from(0),
+          outStepAmount: BigNumber.from(0),
           outStepTime: BigNumber.from(0),
-          outStreamCreated: BigNumber.from(0),
-          outStreamInit:BigNumber.from(0),
+          outStreamInit: BigNumber.from(0),
           outMinBalance: BigNumber.from(0),
+          outStreamCreated: BigNumber.from(0),
           outStreamId: '0x0000000000000000000000000000000000000000000000000000000000000000',
           nextExecOut: BigNumber.from(0),
           inFlow: BigNumber.from(0),
@@ -383,46 +381,39 @@ describe('V2 test', function () {
 
     // #endregion ================= SECOND PERIOD ============================= //
 
-    // #region =================  THIRD PERIOD ============================= //
+    // #region ================= THIRD PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#3--- User2 reddemFlow');
 
     await setNextBlockTimestamp(hre, +t1 + 2 * ONE_DAY);
     timestamp = t1.add(BigNumber.from(2 * ONE_DAY));
-    console.log('\x1b[36m%s\x1b[0m', '#3--- User2 provides starts a stream at t0 + 2*  One Day ');
-
     let flowRate = utils.parseEther('100').div(ONE_DAY);
-
-    let createFlowOperation = sf.cfaV1.createFlow({
-      receiver: superPoolAddress,
-      flowRate: flowRate.toString(),
-      superToken: network_params.superToken,
-    });
-    await createFlowOperation.exec(user2);
-
-    fromUser2Stream = await sf.cfaV1.getFlow({
-      superToken: network_params.superToken,
-      sender: user2.address,
-      receiver: superPoolAddress,
-      providerOrSigner: user2,
-    });
+    let outFlowRate = flowRate.div(BigNumber.from(2));
+    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate, 0));
 
     let yieldPool = await superPool.getLastPool();
 
     let yieldSnapshot = await yieldPool.yieldSnapshot;
     let yieldAccrued = yieldPool.yieldAccrued;
-
     lastPool = Object.assign({}, pool);
 
-    lastUsersPool = Object.assign({}, usersPool);
-
     pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-    payload = abiCoder.encode(['int96'], [flowRate]);
 
-    if (lastUsersPool[user2.address] == undefined) {
-      lastUsersPool[user2.address] = addUser(user2.address, 2, timestamp);
-    }
+    loanStream = await sf.cfaV1.getFlow({
+      superToken: network_params.superToken,
+      sender: superPoolAddress,
+      receiver: user2.address,
+      providerOrSigner: user2,
+    });
+
+    pool.poolTotalBalance = pool.poolTotalBalance.sub(loanStream.deposit);
+    payload = abiCoder.encode(['int96'], [outFlowRate]);
+
+    lastUsersPool = usersPool;
+    expedtedPoolBalance = initialBalance.add(amount);
 
     result = await applyUserEvent(
-      SupplierEvent.STREAM_START,
+      SupplierEvent.OUT_STREAM_START,
       user2.address,
       payload,
       lastUsersPool,
@@ -435,72 +426,29 @@ describe('V2 test', function () {
       deployer,
       superPoolAddress
     );
+
     pools[+timestamp] = result[1];
     usersPool = result[0];
-    await testPeriod(BigNumber.from(t0), +t1 + ONE_DAY * 2, result[1], contractsTest, result[0]);
 
-    // #endregion ================= THIRD PERIOD ============================= //
+    let taskId = await getGelatoWithdrawStepId(superPool, gelatoTasks, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
+    usersPool[user2.address].expected.outStreamId = taskId;
+    await testPeriod(BigNumber.from(t0), +t1 + 2 * ONE_DAY, result[1], contractsTest, result[0]);
 
-    // #region ================= FOURTHPERIOD ============================= //
-    console.log('\x1b[36m%s\x1b[0m', '#4--- deposit into strategy gelato to aave');
+    console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
+    // #endregion =================   THIRD PERIOD ============================= //
+
+    // #region =================  FOURTH PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#4--- User2 provides sends 100 at t0 + 3*  One Day ');
 
     await setNextBlockTimestamp(hre, +t1 + 3 * ONE_DAY);
+    await setNextBlockTimestamp(hre, +t1 + 3 * ONE_DAY);
     timestamp = t1.add(BigNumber.from(3 * ONE_DAY));
-
-    balance = await superTokenContract.realtimeBalanceOfNow(superPoolAddress);
-
-    await gelatoPushToAave(poolStrategy, ops, executor);
-
-    lastPool = Object.assign({}, pool);
-
-    yieldPool = await superPool.getLastPool();
-
-    yieldSnapshot = await yieldPool.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldAccrued;
-
-    let pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
-
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
-
-    //let pushio = BigNumber.from('0x' + (99999999999999360000).toString(16));
-
-    payload = abiCoder.encode(['uint256'], [pushio]);
-
-    lastUsersPool = usersPool;
-    expedtedPoolBalance = initialBalance.add(amount);
-
-    result = await applyUserEvent(
-      SupplierEvent.PUSH_TO_STRATEGY,
-      constants.AddressZero,
-      payload,
-      lastUsersPool,
-      pool,
-      lastPool,
-      pools,
-      PRECISSION,
-      sf,
-      network_params.superToken,
-      deployer,
-      superPoolAddress
-    );
-
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-
-    await testPeriod(BigNumber.from(t0), +t1 + 3 * ONE_DAY, result[1], contractsTest, result[0]);
-
-    console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
-    // #endregion =================   FOURTH PERIOD ============================= //
-
-    // #region =================  FIVE PERIOD ============================= //
-
-    console.log('\x1b[36m%s\x1b[0m', '#5--- User2 provides sends 300 at t0 + 3*  One Day ');
-
-    await setNextBlockTimestamp(hre, +t1 + 4 * ONE_DAY);
-    timestamp = t1.add(BigNumber.from(4 * ONE_DAY));
     erc777 = await IERC777__factory.connect(network_params.superToken, user2);
-    amount = utils.parseEther('300');
+    amount = utils.parseEther('100');
     await waitForTx(erc777.send(superPoolAddress, amount, '0x'));
+
+    // await waitForTx(superPool.poolUpdateUser(user2.address) )
 
     lastPool = Object.assign({}, pool);
 
@@ -533,39 +481,327 @@ describe('V2 test', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    await testPeriod(BigNumber.from(t0), +t1 + 4 * ONE_DAY, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +t1 + 3 * ONE_DAY, result[1], contractsTest, result[0]);
 
-    console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
-    // #endregion =================   FIVETH PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
+    // #endregion =================   FOURTH PERIOD ============================= //
 
+    // #region ================= 5th  PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', `#${5}--- gelto withdfraw ${1} step`);
 
-      
+    let incrementTime = +usersPool[user2.address].expected.nextExecOut;
 
-    // #region =================  SIXTH PERIOD ============================= //
+    await setNextBlockTimestamp(hre, incrementTime);
+    timestamp = usersPool[user2.address].expected.nextExecOut; //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
 
-    console.log('\x1b[36m%s\x1b[0m', '#6--- User1 Withdaw 150');
+    await gelatoWithdrawStep(
+      superPool,
+      gelatoTasks,
+      ops,
+      executor,
+      user2.address,
+      +usersPool[user2.address].expected.outStreamCreated,
+      +usersPool[user2.address].expected.outStepTime
+    );
 
-    await setNextBlockTimestamp(hre, +t1 + 5 * ONE_DAY);
-    timestamp = t1.add(BigNumber.from(5 * ONE_DAY));
-
-    amount = utils.parseEther('150');
-    await waitForTx(superPool.connect(user1).redeemDeposit(amount));
+    lastPool = Object.assign({}, pool);
 
     yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldSnapshot;
     yieldAccrued = yieldPool.yieldAccrued;
-    lastPool = Object.assign({}, pool);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    let pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
 
-    payload = abiCoder.encode(['uint256'], [amount]);
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
+
+    //let pushio = BigNumber.from('0x' + (99999999999999360000).toString(16));
+
+    payload = ''; //abiCoder.encode(['uint256'], [pushio]);
 
     lastUsersPool = usersPool;
-    expedtedPoolBalance = initialBalance.add(amount);
 
     result = await applyUserEvent(
-      SupplierEvent.WITHDRAW,
+      SupplierEvent.WITHDRAW_STEP,
+      user2.address,
+      payload,
+      lastUsersPool,
+      pool,
+      lastPool,
+      pools,
+      PRECISSION,
+      sf,
+      network_params.superToken,
+      deployer,
+      superPoolAddress
+    );
+
+    pools[+timestamp] = result[1];
+    usersPool = result[0];
+
+    await testPeriod(BigNumber.from(t0), +incrementTime, result[1], contractsTest, result[0]);
+
+    console.log('\x1b[36m%s\x1b[0m', `#${5}-- Period Tests passed `);
+    // #endregion =================   FIVE PERIOD ============================= //
+
+    // #region ================= 6th  PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', `#${6}--- update flow to /2`);
+
+    await setNextBlockTimestamp(hre, incrementTime + +ONE_DAY);
+    timestamp = BigNumber.from(ONE_DAY).add(BigNumber.from(incrementTime)); //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
+
+    outFlowRate = flowRate;
+    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate, 0));
+
+    lastPool = Object.assign({}, pool);
+
+    yieldPool = await superPool.getLastPool();
+
+    yieldSnapshot = await yieldPool.yieldSnapshot;
+    yieldAccrued = yieldPool.yieldAccrued;
+
+    pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
+
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
+
+    //let pushio = BigNumber.from('0x' + (99999999999999360000).toString(16));
+    pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit);
+    loanStream = await sf.cfaV1.getFlow({
+      superToken: network_params.superToken,
+      sender: superPoolAddress,
+      receiver: user2.address,
+      providerOrSigner: user2,
+    });
+    pool.poolTotalBalance = pool.poolTotalBalance.sub(loanStream.deposit);
+    payload = abiCoder.encode(['int96'], [outFlowRate]);
+
+    lastUsersPool = usersPool;
+
+    result = await applyUserEvent(
+      SupplierEvent.OUT_STREAM_UPDATE,
+      user2.address,
+      payload,
+      lastUsersPool,
+      pool,
+      lastPool,
+      pools,
+      PRECISSION,
+      sf,
+      network_params.superToken,
+      deployer,
+      superPoolAddress
+    );
+
+    pools[+timestamp] = result[1];
+    usersPool = result[0];
+    taskId = await getGelatoWithdrawStepId(superPool, gelatoTasks, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
+    usersPool[user2.address].expected.outStreamId = taskId;
+    await testPeriod(BigNumber.from(t0), +incrementTime + ONE_DAY, result[1], contractsTest, result[0]);
+
+    console.log('\x1b[36m%s\x1b[0m', `#${6}-- Period Tests passed `);
+    // #endregion =================   SIXTB PERIOD ============================= //
+
+    // #region ================= 7th  PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', `#${7}--- update flow to /5`);
+
+    timestamp = timestamp.add(BigNumber.from(100)); //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
+    await setNextBlockTimestamp(hre, +timestamp);
+
+    outFlowRate = flowRate.div(BigNumber.from(5));
+    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate, 0));
+
+    lastPool = Object.assign({}, pool);
+
+    yieldPool = await superPool.getLastPool();
+
+    yieldSnapshot = await yieldPool.yieldSnapshot;
+    yieldAccrued = yieldPool.yieldAccrued;
+
+    pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
+
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
+
+    //let pushio = BigNumber.from('0x' + (99999999999999360000).toString(16));
+    pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit);
+    loanStream = await sf.cfaV1.getFlow({
+      superToken: network_params.superToken,
+      sender: superPoolAddress,
+      receiver: user2.address,
+      providerOrSigner: user2,
+    });
+    pool.poolTotalBalance = pool.poolTotalBalance.sub(loanStream.deposit);
+    payload = abiCoder.encode(['int96'], [outFlowRate]);
+
+    lastUsersPool = usersPool;
+
+    result = await applyUserEvent(
+      SupplierEvent.OUT_STREAM_UPDATE,
+      user2.address,
+      payload,
+      lastUsersPool,
+      pool,
+      lastPool,
+      pools,
+      PRECISSION,
+      sf,
+      network_params.superToken,
+      deployer,
+      superPoolAddress
+    );
+
+    pools[+timestamp] = result[1];
+    usersPool = result[0];
+    taskId = await getGelatoWithdrawStepId(superPool, gelatoTasks, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
+    usersPool[user2.address].expected.outStreamId = taskId;
+    await testPeriod(BigNumber.from(t0), +incrementTime + ONE_DAY, result[1], contractsTest, result[0]);
+
+    console.log('\x1b[36m%s\x1b[0m', `#${7}-- Period Tests passed `);
+    // #endregion =================   SEVENTH PERIOD ============================= //
+
+    // #region ================= 8th  PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', `#${8}--- update flow to /5`);
+
+    timestamp = timestamp.add(BigNumber.from(ONE_DAY)); //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
+    await setNextBlockTimestamp(hre, +timestamp);
+
+    await waitForTx(superPool.connect(user2).redeemFlowStop());
+
+    lastPool = Object.assign({}, pool);
+
+    yieldPool = await superPool.getLastPool();
+
+    yieldSnapshot = await yieldPool.yieldSnapshot;
+    yieldAccrued = yieldPool.yieldAccrued;
+
+    pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
+
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
+
+    //let pushio = BigNumber.from('0x' + (99999999999999360000).toString(16));
+    pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit);
+
+    payload = abiCoder.encode(['int96'], [outFlowRate]);
+
+    lastUsersPool = usersPool;
+
+    result = await applyUserEvent(
+      SupplierEvent.OUT_STREAM_STOP,
+      user2.address,
+      payload,
+      lastUsersPool,
+      pool,
+      lastPool,
+      pools,
+      PRECISSION,
+      sf,
+      network_params.superToken,
+      deployer,
+      superPoolAddress
+    );
+
+    pools[+timestamp] = result[1];
+    usersPool = result[0];
+
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+
+    console.log('\x1b[36m%s\x1b[0m', `#${8}-- Period Tests passed `);
+    // #endregion =================   EIGTH PERIOD ============================= //
+  
+    // #region ================= 9th PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#9--- deposit into strategy gelato to aave');
+
+    balance = await superTokenContract.realtimeBalanceOfNow(superPoolAddress);
+
+   timestamp = timestamp.add(BigNumber.from(ONE_DAY));
+    await setNextBlockTimestamp(hre, +timestamp);
+    await gelatoPushToAave(poolStrategy, ops, executor);
+
+    lastPool = Object.assign({}, pool);
+
+    yieldPool = await superPool.getLastPool();
+
+    yieldSnapshot = await yieldPool.yieldSnapshot;
+    yieldAccrued = yieldPool.yieldAccrued;
+
+    pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
+
+
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
+
+     payload = abiCoder.encode(['uint96'], [balance.availableBalance]);
+
+    lastUsersPool = usersPool;
+  
+    result = await applyUserEvent(
+      SupplierEvent.PUSH_TO_STRATEGY,
+      constants.AddressZero,
+      payload,
+      lastUsersPool,
+      pool,
+      lastPool,
+      pools,
+      PRECISSION,
+      sf,
+      network_params.superToken,
+      deployer,
+      superPoolAddress
+    );
+
+    pools[+timestamp] = result[1];
+    usersPool = result[0];
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
+
+    // #endregion ================= 9th PERIOD ============================= //
+
+  
+    // #region ================= 10th PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#10---  user1 start stream 100/month');
+
+    balance = await superTokenContract.realtimeBalanceOfNow(superPoolAddress);
+
+   timestamp = timestamp.add(BigNumber.from(ONE_DAY));
+    await setNextBlockTimestamp(hre, +timestamp);
+   
+
+    let createFlowOperation = sf.cfaV1.createFlow({
+      receiver: superPoolAddress,
+      flowRate: flowRate.toString(),
+      superToken: network_params.superToken,
+    });
+    await createFlowOperation.exec(user1);
+
+    fromUser1Stream = await sf.cfaV1.getFlow({
+      superToken: network_params.superToken,
+      sender: user1.address,
+      receiver: superPoolAddress,
+      providerOrSigner: user1,
+    });
+
+
+    lastPool = Object.assign({}, pool);
+
+    yieldPool = await superPool.getLastPool();
+
+    yieldSnapshot = await yieldPool.yieldSnapshot;
+    yieldAccrued = yieldPool.yieldAccrued;
+
+    pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
+
+
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
+
+     payload = abiCoder.encode(['int96'], [flowRate]);
+
+    lastUsersPool = usersPool;
+
+    if (lastUsersPool[user1.address] == undefined) {
+      lastUsersPool[user1.address] = addUser(user1.address, 1, timestamp);
+    }
+
+  
+    result = await applyUserEvent(
+      SupplierEvent.STREAM_START,
       user1.address,
       payload,
       lastUsersPool,
@@ -581,180 +817,22 @@ describe('V2 test', function () {
 
     pools[+timestamp] = result[1];
     usersPool = result[0];
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    console.log('\x1b[36m%s\x1b[0m', '#10--- Period Tests passed ');
 
-    await testPeriod(BigNumber.from(t0), +t1 + 5 * ONE_DAY, result[1], contractsTest, result[0]);
-
-    console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
-    // #endregion =================   SIXTH PERIOD ============================= //
-
-    // #region =================  SEVENTH PERIOD ============================= //
-
-    console.log('\x1b[36m%s\x1b[0m', '#7--- User2 streamstop');
-
-    await setNextBlockTimestamp(hre, +t1 + 6 * ONE_DAY);
-    timestamp = t1.add(BigNumber.from(6 * ONE_DAY));
-
-    let deleteFlowOperation = sf.cfaV1.deleteFlow({
-      receiver: superPoolAddress,
-      sender: user2.address,
-      superToken: network_params.superToken,
-    });
-    let tx = await deleteFlowOperation.exec(user2);
+    // #endregion ================= 10th PERIOD ============================= //
 
 
+    // #region ================= 11th PERIOD ============================= //
+        console.log('\x1b[36m%s\x1b[0m', '#10---  user1 start stream 100/month');
 
-    yieldPool = await superPool.getLastPool();
-
-    yieldSnapshot = await yieldPool.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldAccrued;
-    lastPool = Object.assign({}, pool);
-
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-
-
-
-    payload = abiCoder.encode(['int96'], [usersPool[user2.address].expected.inFlow]);
-
-    lastUsersPool = usersPool;
-    expedtedPoolBalance = initialBalance.add(amount);
-
-    result = await applyUserEvent(
-      SupplierEvent.STREAM_STOP,
-      user2.address,
-      payload,
-      lastUsersPool,
-      pool,
-      lastPool,
-      pools,
-      PRECISSION,
-      sf,
-      network_params.superToken,
-      deployer,
-      superPoolAddress
-    );
-
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-
-    await testPeriod(BigNumber.from(t0), +t1 + 6 * ONE_DAY, result[1], contractsTest, result[0]);
-
-    console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
-    // #endregion =================   FIVETH PERIOD ============================= //
-
-    // #region =================  EIGTH PERIOD ============================= //
-
-    console.log('\x1b[36m%s\x1b[0m', '#8--- User2 reddemFlow');
-
-    await setNextBlockTimestamp(hre, +t1 + 7 * ONE_DAY);
-    timestamp = t1.add(BigNumber.from(7 * ONE_DAY));
-
-    let outFlowRate = flowRate.div(BigNumber.from(2));
-    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate, 0));
-
-    yieldPool = await superPool.getLastPool();
-
-    yieldSnapshot = await yieldPool.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldAccrued;
-    lastPool = Object.assign({}, pool);
-
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-
-    payload = abiCoder.encode(['int96'], [outFlowRate]);
-
-    lastUsersPool = usersPool;
-    expedtedPoolBalance = initialBalance.add(amount);
-
-    result = await applyUserEvent(
-      SupplierEvent.OUT_STREAM_START,
-      user2.address,
-      payload,
-      lastUsersPool,
-      pool,
-      lastPool,
-      pools,
-      PRECISSION,
-      sf,
-      network_params.superToken,
-      deployer,
-      superPoolAddress
-    );
-
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-
-    let taskId = await getGelatoWithdrawStepId(superPool,gelatoTasks,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
-    usersPool[user2.address].expected.outStreamId = taskId;
-    await testPeriod(BigNumber.from(t0), +t1 + 7 * ONE_DAY, result[1], contractsTest, result[0]);
-
-    console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
-    // #endregion =================   EIGTH PERIOD ============================= //
-
-    // #region ================= NINETH PERIOD ============================= //
-       console.log('\x1b[36m%s\x1b[0m', '#9--- deposit into strategy gelato to aave');
-
-       await setNextBlockTimestamp(hre, +t1 + 8 * ONE_DAY);
-       timestamp = t1.add(BigNumber.from(8 * ONE_DAY));
-   
-       balance = await superTokenContract.realtimeBalanceOfNow(superPoolAddress);
-   
-       await gelatoPushToAave(poolStrategy, ops, executor);
-   
-       lastPool = Object.assign({}, pool);
-   
-       yieldPool = await superPool.getLastPool();
-   
-       yieldSnapshot = await yieldPool.yieldSnapshot;
-       yieldAccrued = yieldPool.yieldAccrued;
-   
-       pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
-   
-       pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
-   
-       //let pushio = BigNumber.from('0x' + (99999999999999360000).toString(16));
-   
-       payload = abiCoder.encode(['uint256'], [pushio]);
-   
-       lastUsersPool = usersPool;
-       expedtedPoolBalance = initialBalance.add(amount);
-   
-       result = await applyUserEvent(
-         SupplierEvent.PUSH_TO_STRATEGY,
-         constants.AddressZero,
-         payload,
-         lastUsersPool,
-         pool,
-         lastPool,
-         pools,
-         PRECISSION,
-         sf,
-         network_params.superToken,
-         deployer,
-         superPoolAddress
-       );
-   
-       pools[+timestamp] = result[1];
-       usersPool = result[0];
-   
-       await testPeriod(BigNumber.from(t0), +t1 + 8 * ONE_DAY, result[1], contractsTest, result[0]);
-   
-
-
-
-       console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
-       // #endregion =================   NINETH PERIOD ============================= //
-   
-
-        // #region ================= 10th  PERIOD ============================= //
-        console.log('\x1b[36m%s\x1b[0m', '#10--- gelto withdfraw step');
-
-        let incrementTime =  +usersPool[user2.address].expected.nextExecOut;
-
-        await setNextBlockTimestamp(hre,  incrementTime);
-        timestamp = usersPool[user2.address].expected.nextExecOut; //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
+        balance = await superTokenContract.realtimeBalanceOfNow(superPoolAddress);
     
-  
-        await gelatoWithdrawStep(superPool,gelatoTasks,ops,executor,user2.address,+usersPool[user2.address].expected.outStreamInit,+usersPool[user2.address].expected.outStepTime);
-
+       timestamp = timestamp.add(BigNumber.from(ONE_DAY));
+        await setNextBlockTimestamp(hre, +timestamp);
+       
+        let transferAmount = utils.parseEther("75")
+        sToken.connect(user2).transfer(user1.address,transferAmount)
     
         lastPool = Object.assign({}, pool);
     
@@ -765,17 +843,18 @@ describe('V2 test', function () {
     
         pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
     
+    
         pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
     
-        //let pushio = BigNumber.from('0x' + (99999999999999360000).toString(16));
-    
-        payload = abiCoder.encode(['uint256'], [pushio]);
+         payload = abiCoder.encode(['address','uint256'], [user1.address,transferAmount]);
     
         lastUsersPool = usersPool;
-        expedtedPoolBalance = initialBalance.add(amount);
     
+   
+    
+      
         result = await applyUserEvent(
-          SupplierEvent.WITHDRAW_STEP,
+          SupplierEvent.TRANSFER,
           user2.address,
           payload,
           lastUsersPool,
@@ -791,17 +870,11 @@ describe('V2 test', function () {
     
         pools[+timestamp] = result[1];
         usersPool = result[0];
+        await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+        console.log('\x1b[36m%s\x1b[0m', '#11--- Period Tests passed ');
     
-        await testPeriod(BigNumber.from(t0), +incrementTime , result[1], contractsTest, result[0]);
+        // #endregion ================= 11th PERIOD ============================= //
     
- 
- 
- 
-        console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
-        // #endregion =================   NINETH PERIOD ============================= //
-    
- 
-
 
   });
 });

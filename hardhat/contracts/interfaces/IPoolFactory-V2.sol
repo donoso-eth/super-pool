@@ -20,8 +20,7 @@ interface IPoolFactoryV2 {
   function updateSupplierDeposit(
     address _supplier,
     uint256 inDeposit,
-    uint256 outDeposit,
-    uint256 outAssets
+    uint256 outDeposit
   ) external;
 
   function supplierUpdateCurrentState(address _supplier) external;

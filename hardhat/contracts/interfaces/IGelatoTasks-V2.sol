@@ -15,4 +15,6 @@ interface IGelatoTasksV2  {
 
  function createWithdraStepTask(address _supplier, uint256 _stepTime) external  returns (bytes32 taskId);
 
+ function cancelTask (bytes32 taskId) external;
+
 }

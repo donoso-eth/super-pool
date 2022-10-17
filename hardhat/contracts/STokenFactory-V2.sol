@@ -67,20 +67,24 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
     uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
     console.log(69,yieldSupplier);
-    console.log(70, uint96(supplier.inStream.flow));
-    console.log(71,supplier.timestamp );
+    console.log(70, uint96(supplier.outStream.flow));
+    console.log(71,supplier.outStream.initTime );
     console.log(72, block.timestamp);
      console.log(73, supplier.deposit);
-    
+     console.log(74,  supplier.outStream.minBalance.mul(PRECISSION));
+    console.log(75, supplier.deposit + supplier.outStream.minBalance.mul(PRECISSION));
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (netFlow >= 0) {
       realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
     } else {
+      console.log(uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime));
+       console.log(uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime)*PRECISSION);
       realtimeBalance = yieldSupplier + supplier.outStream.minBalance.mul(PRECISSION) +  (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime) * PRECISSION;
     }
     //+ supplier.outStream.stepAmount.mul(PRECISSION) 
     console.log(83,realtimeBalance);
+      
 }
 
 
@@ -92,6 +96,8 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
   ) internal virtual override {
     require(from != address(0), "ERC20: transfer from the zero address");
     require(to != address(0), "ERC20: transfer to the zero address");
+  console.log(922222);
+
 
     _beforeTokenTransfer(from, to, amount);
 
@@ -100,18 +106,11 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
 
     pool.poolUpdateCurrentState();
 
-    uint256 myShares = balanceOf(from);
 
-    uint256 total = getSupplierBalance(from);
-    uint256 factor = total.div(myShares);
-    uint256 outAssets = factor.mul(amount).div(PRECISSION);
-
-    pool.updateSupplierDeposit(from, 0, amount, outAssets);
-
-    pool.supplierUpdateCurrentState(to);
-
-    pool.updateSupplierDeposit(to, amount, 0, 0);
-
+    pool.updateSupplierDeposit(from, 0, amount);
+    console.log('DELETE DEPOSIT');
+    pool.updateSupplierDeposit(to, amount, 0);
+ console.log('UPDATE DEPOSIT');
     emit Transfer(from, to, amount);
 
     _afterTokenTransfer(from, to, amount);

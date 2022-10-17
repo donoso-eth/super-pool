@@ -58,6 +58,11 @@ contract GelatoTasksV2 is Initializable {
 
   //#endregion
 
+
+ function cancelTask (bytes32 taskId) external onlyPool {
+  IOps(ops).cancelTask(taskId);
+ }
+
   //// Withdrawal step task
   function createWithdraStepTask(address _supplier, uint256 _stepTime) external onlyPool returns (bytes32 taskId) {
     

@@ -98,7 +98,7 @@ export const gelatoWithdrawStep = async (pool: PoolFactoryV2,gelatoTask: GelatoT
     ["uint256", "uint256"],
     [timestamp + interval, interval]
   );
-  console.log(execData);
+
 
   let moduleData = {
     modules: [1],
@@ -115,7 +115,7 @@ export const gelatoWithdrawStep = async (pool: PoolFactoryV2,gelatoTask: GelatoT
     ETH
   );
 
-    console.log(taskId);
+
 
   const FEE = utils.parseEther("0.1")
 
