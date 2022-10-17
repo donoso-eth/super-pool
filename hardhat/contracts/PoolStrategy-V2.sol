@@ -48,8 +48,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     IERC20 _token,
     IPoolFactoryV2 _pool,
     IPool _aavePool,
-    IERC20 _aToken,
-    uint256 _POOL_BUFFER
+    IERC20 _aToken
   ) external initializer {
     ops = _ops;
     superToken = _superToken;
@@ -123,24 +122,24 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     uint256 currentThreshold = currentPoolBuffer.add(0.5 ether);
 
-   console.log(173);
+
     require(uint256(balance) >= currentThreshold, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
-  console.log(120);
+
     uint256 amountToDeposit = uint256(balance) - currentThreshold + 0.5 ether;
-  console.log(123);
+
 
     (fee, feeToken) = IOps(ops).getFeeDetails();
 
     pool.transfer(fee, feeToken);
-  console.log(127);
+
     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
-     console.log(129);
+
     superToken.downgrade(amountToDeposit);
- console.log(131);
+
     pool.pushedToStrategy(uint256(amountToDeposit));
-     console.log(133);
+
     aavePool.supply(address(token), amountToDeposit / (10**12), address(this), 0);
-     console.log(135);
+ 
   }
 
   function balanceOf() external view returns (uint256 balance) {

@@ -186,7 +186,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   }
 
   function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
-    _poolUpdateCurrentState();
 
     poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
   }
@@ -596,56 +595,56 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
   // #region Gelato functions
 
   /// called by Gelato
-  function stopstream(address _receiver, uint8 _flowType) external onlyOps {
-    //// check if
+  // function stopstream(address _receiver, uint8 _flowType) external onlyOps {
+  //   //// check if
 
-    _poolUpdateCurrentState();
-    _supplierUpdateCurrentState(_receiver);
+  //   _poolUpdateCurrentState();
+  //   _supplierUpdateCurrentState(_receiver);
 
-    //// every task will be payed with a transfer, therefore receive(), we have to fund the contract
-    uint256 fee;
-    address feeToken;
+  //   //// every task will be payed with a transfer, therefore receive(), we have to fund the contract
+  //   uint256 fee;
+  //   address feeToken;
 
-    (fee, feeToken) = IOps(ops).getFeeDetails();
+  //   (fee, feeToken) = IOps(ops).getFeeDetails();
 
-    _transfer(fee, feeToken);
+  //   _transfer(fee, feeToken);
 
-    ///// OUtFLOW
-    if (_flowType == 0) {
-      (, int96 inFlowRate, , ) = cfa.getFlow(superToken, address(this), _receiver);
+  //   ///// OUtFLOW
+  //   if (_flowType == 0) {
+  //     (, int96 inFlowRate, , ) = cfa.getFlow(superToken, address(this), _receiver);
 
-      if (inFlowRate > 0) {
-        // _cfaLib.deleteFlow(address(this), _receiver, superToken);
-        _updateSupplierFlow(_receiver, 0, 0, "0x");
-        console.log("stopStream");
-      }
+  //     if (inFlowRate > 0) {
+  //       // _cfaLib.deleteFlow(address(this), _receiver, superToken);
+  //       _updateSupplierFlow(_receiver, 0, 0, "0x");
+  //       console.log("stopStream");
+  //     }
 
-      bytes32 taskId = suppliersByAddress[_receiver].outStream.cancelTaskId;
-      if (taskId != bytes32(0)) {
-        cancelTask(taskId);
-        suppliersByAddress[_receiver].outStream.cancelTaskId = bytes32(0);
-      }
+  //     bytes32 taskId = suppliersByAddress[_receiver].outStream.cancelTaskId;
+  //     if (taskId != bytes32(0)) {
+  //       cancelTask(taskId);
+  //       suppliersByAddress[_receiver].outStream.cancelTaskId = bytes32(0);
+  //     }
 
-      console.log("stopOUTStream");
-    }
-    ///// INFLOW FLOW
-    else if (_flowType == 1) {
-      console.log("stopINStream--1");
-      (, int96 inFlowRate, , ) = cfa.getFlow(superToken, _receiver, address(this));
+  //     console.log("stopOUTStream");
+  //   }
+  //   ///// INFLOW FLOW
+  //   else if (_flowType == 1) {
+  //     console.log("stopINStream--1");
+  //     (, int96 inFlowRate, , ) = cfa.getFlow(superToken, _receiver, address(this));
 
-      if (inFlowRate > 0) {
-        _cfaLib.deleteFlow(_receiver, address(this), superToken);
-        _updateSupplierFlow(_receiver, 0, 0, "0x");
-        console.log("stopINStream");
-      }
+  //     if (inFlowRate > 0) {
+  //       _cfaLib.deleteFlow(_receiver, address(this), superToken);
+  //       _updateSupplierFlow(_receiver, 0, 0, "0x");
+  //       console.log("stopINStream");
+  //     }
 
-      bytes32 taskId = suppliersByAddress[_receiver].inStream.cancelTaskId;
-      if (taskId != bytes32(0)) {
-        cancelTask(taskId);
-        suppliersByAddress[_receiver].inStream.cancelTaskId = bytes32(0);
-      }
-    }
-  }
+  //     bytes32 taskId = suppliersByAddress[_receiver].inStream.cancelTaskId;
+  //     if (taskId != bytes32(0)) {
+  //       cancelTask(taskId);
+  //       suppliersByAddress[_receiver].inStream.cancelTaskId = bytes32(0);
+  //     }
+  //   }
+  // }
 
   function _withdrawDispatcher(
     address _supplier,
@@ -709,7 +708,6 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     pool.outFlowBuffer = pool.outFlowBuffer - minBalance;
     _withdrawDispatcher(_receiver, _receiver,  userBalance);
-
     pool.deposit = pool.deposit - userBalance;
     pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
     supplier.deposit = 0;

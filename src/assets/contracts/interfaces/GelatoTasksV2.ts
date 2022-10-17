@@ -20,8 +20,7 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 export interface GelatoTasksV2Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
-    "checkerStopStream(address,bool,uint8)": FunctionFragment;
-    "checkerwithdrawStep(address)": FunctionFragment;
+    "cancelTask(bytes32)": FunctionFragment;
     "createStopStreamTimedTask(address,uint256,bool,uint8)": FunctionFragment;
     "createWithdraStepTask(address,uint256)": FunctionFragment;
     "initialize(address,address)": FunctionFragment;
@@ -29,12 +28,8 @@ export interface GelatoTasksV2Interface extends utils.Interface {
 
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "checkerStopStream",
-    values: [string, boolean, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "checkerwithdrawStep",
-    values: [string]
+    functionFragment: "cancelTask",
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "createStopStreamTimedTask",
@@ -50,14 +45,7 @@ export interface GelatoTasksV2Interface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "checkerStopStream",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "checkerwithdrawStep",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "cancelTask", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "createStopStreamTimedTask",
     data: BytesLike
@@ -108,15 +96,8 @@ export interface GelatoTasksV2 extends BaseContract {
   functions: {
     ETH(overrides?: CallOverrides): Promise<[string]>;
 
-    checkerStopStream(
-      _receiver: string,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
-
-    checkerwithdrawStep(
-      _receiver: string,
+    cancelTask(
+      taskId: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -143,15 +124,8 @@ export interface GelatoTasksV2 extends BaseContract {
 
   ETH(overrides?: CallOverrides): Promise<string>;
 
-  checkerStopStream(
-    _receiver: string,
-    _all: boolean,
-    _flowType: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
-
-  checkerwithdrawStep(
-    _receiver: string,
+  cancelTask(
+    taskId: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -178,17 +152,7 @@ export interface GelatoTasksV2 extends BaseContract {
   callStatic: {
     ETH(overrides?: CallOverrides): Promise<string>;
 
-    checkerStopStream(
-      _receiver: string,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
-
-    checkerwithdrawStep(
-      _receiver: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
+    cancelTask(taskId: BytesLike, overrides?: CallOverrides): Promise<void>;
 
     createStopStreamTimedTask(
       _supplier: string,
@@ -219,15 +183,8 @@ export interface GelatoTasksV2 extends BaseContract {
   estimateGas: {
     ETH(overrides?: CallOverrides): Promise<BigNumber>;
 
-    checkerStopStream(
-      _receiver: string,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    checkerwithdrawStep(
-      _receiver: string,
+    cancelTask(
+      taskId: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -255,15 +212,8 @@ export interface GelatoTasksV2 extends BaseContract {
   populateTransaction: {
     ETH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    checkerStopStream(
-      _receiver: string,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    checkerwithdrawStep(
-      _receiver: string,
+    cancelTask(
+      taskId: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 
 import { Contract, providers, Wallet } from 'ethers';
 
-import { netWorkById, NETWORKS } from './constants/constants';
+import { netWorkById, NETWORKS, settings } from './constants/constants';
 import { DappConfigService } from './dapp-injector.module';
 
 import { ICONTRACT_METADATA, IDAPP_CONFIG, IDAPP_STATE,  ITRANSACTION_DETAILS, ITRANSACTION_RESULT } from './models';
@@ -15,7 +15,12 @@ import { Web3ModalComponent } from './web3-modal/web3-modal.component';
 import { Subject, takeUntil } from 'rxjs';
 import { SuperPool} from 'src/assets/contracts/interfaces/SuperPool';
 import { AngularContract } from './classes';
-import FloowdyMetadata from 'src/assets/contracts/pool_factory_metadata.json';
+import HostMetadata from 'src/assets/contracts/super_pool_host_metadata.json';
+import PoolMetadata from 'src/assets/contracts/pool_factory_v2_metadata.json';
+import StokenMetadata from 'src/assets/contracts/s_token_factory_v2_metadata.json';
+import { PoolFactory } from 'src/assets/contracts/interfaces/PoolFactory';
+import { PoolFactoryV2 } from 'src/assets/contracts/interfaces/PoolFactoryV2';
+import { STokenFactoryV2 } from 'src/assets/contracts/interfaces/STokenFactoryV2';
 
 @Injectable({
   providedIn: 'root',
@@ -25,7 +30,7 @@ export class DappInjector implements OnDestroy {
   private destroyHooks: Subject<void> = new Subject();
 
   ///// ---------  DAPP STATE INITIALIZATION
-  DAPP_STATE:IDAPP_STATE<SuperPool> = {
+  DAPP_STATE:IDAPP_STATE<PoolFactoryV2, STokenFactoryV2> = {
    
     defaultProvider: null,
     connectedNetwork: null,
@@ -34,6 +39,7 @@ export class DappInjector implements OnDestroy {
     signerAddress:null,
 
     defaultContract:  null,
+    sTokenContract: null,
     viewContract:null,
 
   }
@@ -190,17 +196,35 @@ async localWallet(index:number) {
   ///// ---------  Contract Initialization
   private async contractInitialization() {
 
-    const contract = new AngularContract<SuperPool>({
-     metadata:  FloowdyMetadata,
+
+    let hostContract = new Contract(HostMetadata.address, HostMetadata.abi,this.DAPP_STATE.signer!) ;
+    let resolver = await hostContract.getResolverBySuperToken(settings.goerli.supertoken);
+
+    PoolMetadata.address = resolver.pool
+
+    const contract = new AngularContract<PoolFactoryV2>({
+     metadata:  PoolMetadata,
       provider: this.DAPP_STATE.defaultProvider!,
       signer: this.DAPP_STATE.signer!,
     });
 
     await contract.init()
 
+
+    StokenMetadata.address = resolver.sToken;
+    const contractStoken = new AngularContract<STokenFactoryV2>({
+      metadata:   StokenMetadata,
+       provider: this.DAPP_STATE.defaultProvider!,
+       signer: this.DAPP_STATE.signer!,
+     });
+ 
+     await contractStoken.init()
+ 
     this.DAPP_STATE.defaultContract = contract;
 
-    const b = this.DAPP_STATE.defaultContract;
+
+
+
     const providerNetwork = await this.DAPP_STATE.defaultProvider!.getNetwork();
 
     const networkString = netWorkById(providerNetwork.chainId)?.name as string;

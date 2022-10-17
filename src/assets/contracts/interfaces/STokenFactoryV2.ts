@@ -23,7 +23,6 @@ export interface STokenFactoryV2Interface extends utils.Interface {
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
-    "balanceOfShares(address)": FunctionFragment;
     "decimals()": FunctionFragment;
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "getSupplierBalance(address)": FunctionFragment;
@@ -49,10 +48,6 @@ export interface STokenFactoryV2Interface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "balanceOfShares",
-    values: [string]
-  ): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "decreaseAllowance",
@@ -89,10 +84,6 @@ export interface STokenFactoryV2Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "balanceOfShares",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decreaseAllowance",
@@ -194,11 +185,6 @@ export interface STokenFactoryV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { balance: BigNumber }>;
 
-    balanceOfShares(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { _shares: BigNumber }>;
-
     decimals(overrides?: CallOverrides): Promise<[number]>;
 
     decreaseAllowance(
@@ -261,11 +247,6 @@ export interface STokenFactoryV2 extends BaseContract {
 
   balanceOf(_supplier: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-  balanceOfShares(
-    _supplier: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   decimals(overrides?: CallOverrides): Promise<number>;
 
   decreaseAllowance(
@@ -327,11 +308,6 @@ export interface STokenFactoryV2 extends BaseContract {
     ): Promise<boolean>;
 
     balanceOf(_supplier: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    balanceOfShares(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     decimals(overrides?: CallOverrides): Promise<number>;
 
@@ -423,11 +399,6 @@ export interface STokenFactoryV2 extends BaseContract {
 
     balanceOf(_supplier: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    balanceOfShares(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     decimals(overrides?: CallOverrides): Promise<BigNumber>;
 
     decreaseAllowance(
@@ -490,11 +461,6 @@ export interface STokenFactoryV2 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     balanceOf(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    balanceOfShares(
       _supplier: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

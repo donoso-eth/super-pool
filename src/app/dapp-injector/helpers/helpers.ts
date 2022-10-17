@@ -1,4 +1,5 @@
-import { ethers} from 'ethers'
+import { Contract, ethers, Signer} from 'ethers'
+import { abi_ERC20 } from 'src/app/shared/helpers/abis/erc20';
 
 export const  convertEtherToWei = (ether_value:number)=> {
   return (ether_value * 10 ** 18).toFixed(0);
@@ -24,3 +25,6 @@ export const displayUsd = (usdBalance:any)=> {
   return usdBalance.toFixed(0, 2)
 }
 
+export const createERC20Instance = (ERC: string, signer: Signer): Contract => {
+  return new Contract(ERC, abi_ERC20, signer);
+};

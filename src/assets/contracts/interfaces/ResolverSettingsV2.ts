@@ -42,20 +42,27 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     "DEPOSIT_TRIGGER_TIME()": FunctionFragment;
     "ETH()": FunctionFragment;
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
-    "PARTIAL_DEPOSIT()": FunctionFragment;
     "POOL_BUFFER()": FunctionFragment;
     "PRECISSION()": FunctionFragment;
+    "STEPS()": FunctionFragment;
+    "SUPERFLUID_DEPOSIT()": FunctionFragment;
     "getGelatoOps()": FunctionFragment;
     "getGelatoTasks()": FunctionFragment;
     "getPool()": FunctionFragment;
+    "getPoolBuffer()": FunctionFragment;
     "getPoolInternal()": FunctionFragment;
     "getPoolStrategy()": FunctionFragment;
     "getPrecission()": FunctionFragment;
     "getSToken()": FunctionFragment;
+    "getSteps()": FunctionFragment;
+    "getSuperfluidDeposit()": FunctionFragment;
     "initialize((address,address,address,address),address,address)": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
+    "setPoolBuffer(uint256)": FunctionFragment;
     "setPrecission(uint256)": FunctionFragment;
+    "setSteps(uint8)": FunctionFragment;
+    "setSuperfluidDeposit(uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
   };
 
@@ -73,15 +80,16 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "PARTIAL_DEPOSIT",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "POOL_BUFFER",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "PRECISSION",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "STEPS", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "SUPERFLUID_DEPOSIT",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -93,6 +101,10 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "getPool", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getPoolBuffer",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "getPoolInternal",
     values?: undefined
@@ -106,6 +118,11 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "getSToken", values?: undefined): string;
+  encodeFunctionData(functionFragment: "getSteps", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getSuperfluidDeposit",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "initialize",
     values: [ResolverSettingsInitilizerStruct, string, string]
@@ -116,7 +133,19 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "setPoolBuffer",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setPrecission",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setSteps",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setSuperfluidDeposit",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -138,14 +167,15 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "PARTIAL_DEPOSIT",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "POOL_BUFFER",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "PRECISSION", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "STEPS", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "SUPERFLUID_DEPOSIT",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getGelatoOps",
     data: BytesLike
@@ -155,6 +185,10 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getPool", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getPoolBuffer",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getPoolInternal",
     data: BytesLike
@@ -168,6 +202,11 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getSToken", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getSteps", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getSuperfluidDeposit",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
@@ -175,7 +214,16 @@ export interface ResolverSettingsV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setPoolBuffer",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setPrecission",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "setSteps", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setSuperfluidDeposit",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -239,17 +287,21 @@ export interface ResolverSettingsV2 extends BaseContract {
 
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<[number]>;
-
     POOL_BUFFER(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     PRECISSION(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    STEPS(overrides?: CallOverrides): Promise<[number]>;
+
+    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getGelatoOps(overrides?: CallOverrides): Promise<[string]>;
 
     getGelatoTasks(overrides?: CallOverrides): Promise<[string]>;
 
     getPool(overrides?: CallOverrides): Promise<[string]>;
+
+    getPoolBuffer(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getPoolInternal(overrides?: CallOverrides): Promise<[string]>;
 
@@ -258,6 +310,10 @@ export interface ResolverSettingsV2 extends BaseContract {
     getPrecission(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getSToken(overrides?: CallOverrides): Promise<[string]>;
+
+    getSteps(overrides?: CallOverrides): Promise<[number]>;
+
+    getSuperfluidDeposit(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     initialize(
       resolverSettingsInitilizer: ResolverSettingsInitilizerStruct,
@@ -272,8 +328,23 @@ export interface ResolverSettingsV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setPoolBuffer(
+      _poolBuffer: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     setPrecission(
       _precission: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setSteps(
+      _steps: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setSuperfluidDeposit(
+      _superfluidDeposit: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -291,17 +362,21 @@ export interface ResolverSettingsV2 extends BaseContract {
 
   MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
-  PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<number>;
-
   POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
   PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+
+  STEPS(overrides?: CallOverrides): Promise<number>;
+
+  SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
 
   getGelatoOps(overrides?: CallOverrides): Promise<string>;
 
   getGelatoTasks(overrides?: CallOverrides): Promise<string>;
 
   getPool(overrides?: CallOverrides): Promise<string>;
+
+  getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
 
   getPoolInternal(overrides?: CallOverrides): Promise<string>;
 
@@ -310,6 +385,10 @@ export interface ResolverSettingsV2 extends BaseContract {
   getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
 
   getSToken(overrides?: CallOverrides): Promise<string>;
+
+  getSteps(overrides?: CallOverrides): Promise<number>;
+
+  getSuperfluidDeposit(overrides?: CallOverrides): Promise<BigNumber>;
 
   initialize(
     resolverSettingsInitilizer: ResolverSettingsInitilizerStruct,
@@ -324,8 +403,23 @@ export interface ResolverSettingsV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setPoolBuffer(
+    _poolBuffer: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   setPrecission(
     _precission: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setSteps(
+    _steps: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setSuperfluidDeposit(
+    _superfluidDeposit: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -343,17 +437,21 @@ export interface ResolverSettingsV2 extends BaseContract {
 
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
-    PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<number>;
-
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
     PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+
+    STEPS(overrides?: CallOverrides): Promise<number>;
+
+    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
 
     getGelatoOps(overrides?: CallOverrides): Promise<string>;
 
     getGelatoTasks(overrides?: CallOverrides): Promise<string>;
 
     getPool(overrides?: CallOverrides): Promise<string>;
+
+    getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPoolInternal(overrides?: CallOverrides): Promise<string>;
 
@@ -362,6 +460,10 @@ export interface ResolverSettingsV2 extends BaseContract {
     getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSToken(overrides?: CallOverrides): Promise<string>;
+
+    getSteps(overrides?: CallOverrides): Promise<number>;
+
+    getSuperfluidDeposit(overrides?: CallOverrides): Promise<BigNumber>;
 
     initialize(
       resolverSettingsInitilizer: ResolverSettingsInitilizerStruct,
@@ -374,8 +476,20 @@ export interface ResolverSettingsV2 extends BaseContract {
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
+    setPoolBuffer(
+      _poolBuffer: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setPrecission(
       _precission: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setSteps(_steps: BigNumberish, overrides?: CallOverrides): Promise<void>;
+
+    setSuperfluidDeposit(
+      _superfluidDeposit: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -408,17 +522,21 @@ export interface ResolverSettingsV2 extends BaseContract {
 
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
-    PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
-
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
     PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+
+    STEPS(overrides?: CallOverrides): Promise<BigNumber>;
+
+    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
 
     getGelatoOps(overrides?: CallOverrides): Promise<BigNumber>;
 
     getGelatoTasks(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPool(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPoolInternal(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -427,6 +545,10 @@ export interface ResolverSettingsV2 extends BaseContract {
     getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSToken(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getSteps(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getSuperfluidDeposit(overrides?: CallOverrides): Promise<BigNumber>;
 
     initialize(
       resolverSettingsInitilizer: ResolverSettingsInitilizerStruct,
@@ -441,8 +563,23 @@ export interface ResolverSettingsV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setPoolBuffer(
+      _poolBuffer: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     setPrecission(
       _precission: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setSteps(
+      _steps: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setSuperfluidDeposit(
+      _superfluidDeposit: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -467,17 +604,23 @@ export interface ResolverSettingsV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     POOL_BUFFER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     PRECISSION(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    STEPS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    SUPERFLUID_DEPOSIT(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getGelatoOps(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getGelatoTasks(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getPoolBuffer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getPoolInternal(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -486,6 +629,12 @@ export interface ResolverSettingsV2 extends BaseContract {
     getPrecission(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getSToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getSteps(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getSuperfluidDeposit(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     initialize(
       resolverSettingsInitilizer: ResolverSettingsInitilizerStruct,
@@ -500,8 +649,23 @@ export interface ResolverSettingsV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    setPoolBuffer(
+      _poolBuffer: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     setPrecission(
       _precission: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setSteps(
+      _steps: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setSuperfluidDeposit(
+      _superfluidDeposit: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

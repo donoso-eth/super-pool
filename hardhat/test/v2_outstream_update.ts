@@ -201,7 +201,7 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
 
     await gelatoTasks.initialize(network_params.ops, superPoolAddress);
     console.log('Gelato Tasks ---> initialized');
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken, 5);
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken);
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);
@@ -351,31 +351,10 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
 
     await gelatoPushToAave(poolStrategy, ops, executor);
 
-    let pool = updatePool(lastPool, timestamp, BigNumber.from(0), BigNumber.from(0), PRECISSION);
-
+    let pool = lastPool;  
+    pool.yieldSnapshot = pool.yieldSnapshot.add(balance.availableBalance);
+  
     let payload = abiCoder.encode(['uint96'], [balance.availableBalance]);
-
-    let lastUsersPool: IUSERS_TEST = usersPool;
-    expedtedPoolBalance = initialBalance.add(amount);
-
-    result = await applyUserEvent(
-      SupplierEvent.PUSH_TO_STRATEGY,
-      constants.AddressZero,
-      payload,
-      lastUsersPool,
-      pool,
-      lastPool,
-      pools,
-      PRECISSION,
-      sf,
-      network_params.superToken,
-      deployer,
-      superPoolAddress
-    );
-
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-    await testPeriod(BigNumber.from(t0), +t1 + ONE_DAY, result[1], contractsTest, result[0]);
 
     console.log('\x1b[36m%s\x1b[0m', '#2--- Period Tests passed ');
 
@@ -409,7 +388,7 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
     pool.poolTotalBalance = pool.poolTotalBalance.sub(loanStream.deposit);
     payload = abiCoder.encode(['int96'], [outFlowRate]);
 
-    lastUsersPool = usersPool;
+    let lastUsersPool = usersPool;
     expedtedPoolBalance = initialBalance.add(amount);
 
     result = await applyUserEvent(

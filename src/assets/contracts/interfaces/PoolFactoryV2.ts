@@ -27,12 +27,11 @@ export type APYStructOutput = [BigNumber, BigNumber] & {
 export type PoolV2Struct = {
   id: BigNumberish;
   timestamp: BigNumberish;
-  totalShares: BigNumberish;
   deposit: BigNumberish;
   depositFromInFlowRate: BigNumberish;
   inFlowRate: BigNumberish;
   outFlowRate: BigNumberish;
-  outFlowAssetsRate: BigNumberish;
+  outFlowBuffer: BigNumberish;
   yieldTokenIndex: BigNumberish;
   yieldInFlowRateIndex: BigNumberish;
   yieldAccrued: BigNumberish;
@@ -54,17 +53,15 @@ export type PoolV2StructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
-  BigNumber,
   APYStructOutput
 ] & {
   id: BigNumber;
   timestamp: BigNumber;
-  totalShares: BigNumber;
   deposit: BigNumber;
   depositFromInFlowRate: BigNumber;
   inFlowRate: BigNumber;
   outFlowRate: BigNumber;
-  outFlowAssetsRate: BigNumber;
+  outFlowBuffer: BigNumber;
   yieldTokenIndex: BigNumber;
   yieldInFlowRateIndex: BigNumber;
   yieldAccrued: BigNumber;
@@ -80,17 +77,21 @@ export type StreamStructOutput = [BigNumber, string] & {
   cancelTaskId: string;
 };
 
-export type OutAssetsStruct = {
+export type OutStreamStruct = {
   flow: BigNumberish;
   cancelTaskId: BytesLike;
   stepAmount: BigNumberish;
   stepTime: BigNumberish;
+  initTime: BigNumberish;
+  minBalance: BigNumberish;
   cancelWithdrawId: BytesLike;
 };
 
-export type OutAssetsStructOutput = [
+export type OutStreamStructOutput = [
   BigNumber,
   string,
+  BigNumber,
+  BigNumber,
   BigNumber,
   BigNumber,
   string
@@ -99,6 +100,8 @@ export type OutAssetsStructOutput = [
   cancelTaskId: string;
   stepAmount: BigNumber;
   stepTime: BigNumber;
+  initTime: BigNumber;
+  minBalance: BigNumber;
   cancelWithdrawId: string;
 };
 
@@ -107,10 +110,8 @@ export type SupplierStruct = {
   supplier: string;
   cumulatedYield: BigNumberish;
   inStream: StreamStruct;
-  outStream: StreamStruct;
-  outAssets: OutAssetsStruct;
+  outStream: OutStreamStruct;
   deposit: BigNumberish;
-  shares: BigNumberish;
   timestamp: BigNumberish;
   createdTimestamp: BigNumberish;
   eventId: BigNumberish;
@@ -122,9 +123,7 @@ export type SupplierStructOutput = [
   string,
   BigNumber,
   StreamStructOutput,
-  StreamStructOutput,
-  OutAssetsStructOutput,
-  BigNumber,
+  OutStreamStructOutput,
   BigNumber,
   BigNumber,
   BigNumber,
@@ -135,10 +134,8 @@ export type SupplierStructOutput = [
   supplier: string;
   cumulatedYield: BigNumber;
   inStream: StreamStructOutput;
-  outStream: StreamStructOutput;
-  outAssets: OutAssetsStructOutput;
+  outStream: OutStreamStructOutput;
   deposit: BigNumber;
-  shares: BigNumber;
   timestamp: BigNumber;
   createdTimestamp: BigNumber;
   eventId: BigNumber;
@@ -166,12 +163,11 @@ export type PoolFactoryInitializerStructOutput = [
 
 export interface PoolFactoryV2Interface extends utils.Interface {
   functions: {
-    "DEPOSIT_TRIGGER_AMOUNT()": FunctionFragment;
-    "DEPOSIT_TRIGGER_TIME()": FunctionFragment;
     "ETH()": FunctionFragment;
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
-    "PARTIAL_DEPOSIT()": FunctionFragment;
     "POOL_BUFFER()": FunctionFragment;
+    "STEPS()": FunctionFragment;
+    "SUPERFLUID_DEPOSIT()": FunctionFragment;
     "afterAgreementCreated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementTerminated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementUpdated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
@@ -194,40 +190,33 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     "poolTimestampById(uint256)": FunctionFragment;
     "poolUpdate()": FunctionFragment;
     "poolUpdateCurrentState()": FunctionFragment;
+    "poolUpdateUser(address)": FunctionFragment;
     "pushedToStrategy(uint256)": FunctionFragment;
     "redeemDeposit(uint256)": FunctionFragment;
     "redeemFlow(int96,uint256)": FunctionFragment;
     "redeemFlowStop()": FunctionFragment;
-    "stopstream(address,bool,uint8)": FunctionFragment;
     "supplierId()": FunctionFragment;
     "supplierUpdateCurrentState(address)": FunctionFragment;
     "suppliersByAddress(address)": FunctionFragment;
     "tokensReceived(address,address,address,uint256,bytes,bytes)": FunctionFragment;
     "transfer(uint256,address)": FunctionFragment;
-    "updateSupplierDeposit(address,uint256,uint256,uint256)": FunctionFragment;
+    "updateSupplierDeposit(address,uint256,uint256)": FunctionFragment;
     "withdraw()": FunctionFragment;
     "withdrawStep(address)": FunctionFragment;
   };
 
-  encodeFunctionData(
-    functionFragment: "DEPOSIT_TRIGGER_AMOUNT",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "DEPOSIT_TRIGGER_TIME",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "MIN_OUTFLOW_ALLOWED",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "PARTIAL_DEPOSIT",
+    functionFragment: "POOL_BUFFER",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "STEPS", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "POOL_BUFFER",
+    functionFragment: "SUPERFLUID_DEPOSIT",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -307,6 +296,10 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "poolUpdateUser",
+    values: [string]
+  ): string;
+  encodeFunctionData(
     functionFragment: "pushedToStrategy",
     values: [BigNumberish]
   ): string;
@@ -321,10 +314,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "redeemFlowStop",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "stopstream",
-    values: [string, boolean, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "supplierId",
@@ -348,7 +337,7 @@ export interface PoolFactoryV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "updateSupplierDeposit",
-    values: [string, BigNumberish, BigNumberish, BigNumberish]
+    values: [string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
   encodeFunctionData(
@@ -356,25 +345,18 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     values: [string]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "DEPOSIT_TRIGGER_AMOUNT",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "DEPOSIT_TRIGGER_TIME",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "MIN_OUTFLOW_ALLOWED",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "PARTIAL_DEPOSIT",
+    functionFragment: "POOL_BUFFER",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "STEPS", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "POOL_BUFFER",
+    functionFragment: "SUPERFLUID_DEPOSIT",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -442,6 +424,10 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "poolUpdateUser",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "pushedToStrategy",
     data: BytesLike
   ): Result;
@@ -454,7 +440,6 @@ export interface PoolFactoryV2Interface extends utils.Interface {
     functionFragment: "redeemFlowStop",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "stopstream", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "supplierId", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supplierUpdateCurrentState",
@@ -517,17 +502,15 @@ export interface PoolFactoryV2 extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    DEPOSIT_TRIGGER_TIME(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     ETH(overrides?: CallOverrides): Promise<[string]>;
 
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<[number]>;
-
     POOL_BUFFER(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    STEPS(overrides?: CallOverrides): Promise<[number]>;
+
+    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -644,17 +627,15 @@ export interface PoolFactoryV2 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
         APYStructOutput
       ] & {
         id: BigNumber;
         timestamp: BigNumber;
-        totalShares: BigNumber;
         deposit: BigNumber;
         depositFromInFlowRate: BigNumber;
         inFlowRate: BigNumber;
         outFlowRate: BigNumber;
-        outFlowAssetsRate: BigNumber;
+        outFlowBuffer: BigNumber;
         yieldTokenIndex: BigNumber;
         yieldInFlowRateIndex: BigNumber;
         yieldAccrued: BigNumber;
@@ -674,6 +655,11 @@ export interface PoolFactoryV2 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     poolUpdateCurrentState(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    poolUpdateUser(
+      user: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -697,13 +683,6 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    stopstream(
-      _receiver: string,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     supplierId(
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { _value: BigNumber }>;
@@ -722,9 +701,7 @@ export interface PoolFactoryV2 extends BaseContract {
         string,
         BigNumber,
         StreamStructOutput,
-        StreamStructOutput,
-        OutAssetsStructOutput,
-        BigNumber,
+        OutStreamStructOutput,
         BigNumber,
         BigNumber,
         BigNumber,
@@ -735,10 +712,8 @@ export interface PoolFactoryV2 extends BaseContract {
         supplier: string;
         cumulatedYield: BigNumber;
         inStream: StreamStructOutput;
-        outStream: StreamStructOutput;
-        outAssets: OutAssetsStructOutput;
+        outStream: OutStreamStructOutput;
         deposit: BigNumber;
-        shares: BigNumber;
         timestamp: BigNumber;
         createdTimestamp: BigNumber;
         eventId: BigNumber;
@@ -766,7 +741,6 @@ export interface PoolFactoryV2 extends BaseContract {
       _supplier: string,
       inDeposit: BigNumberish,
       outDeposit: BigNumberish,
-      outAssets: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -780,17 +754,15 @@ export interface PoolFactoryV2 extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
-  DEPOSIT_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
-
   ETH(overrides?: CallOverrides): Promise<string>;
 
   MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
-  PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<number>;
-
   POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
+
+  STEPS(overrides?: CallOverrides): Promise<number>;
+
+  SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
 
   afterAgreementCreated(
     _superToken: string,
@@ -904,17 +876,15 @@ export interface PoolFactoryV2 extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
-      BigNumber,
       APYStructOutput
     ] & {
       id: BigNumber;
       timestamp: BigNumber;
-      totalShares: BigNumber;
       deposit: BigNumber;
       depositFromInFlowRate: BigNumber;
       inFlowRate: BigNumber;
       outFlowRate: BigNumber;
-      outFlowAssetsRate: BigNumber;
+      outFlowBuffer: BigNumber;
       yieldTokenIndex: BigNumber;
       yieldInFlowRateIndex: BigNumber;
       yieldAccrued: BigNumber;
@@ -934,6 +904,11 @@ export interface PoolFactoryV2 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   poolUpdateCurrentState(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  poolUpdateUser(
+    user: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -957,13 +932,6 @@ export interface PoolFactoryV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  stopstream(
-    _receiver: string,
-    _all: boolean,
-    _flowType: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
   supplierUpdateCurrentState(
@@ -980,9 +948,7 @@ export interface PoolFactoryV2 extends BaseContract {
       string,
       BigNumber,
       StreamStructOutput,
-      StreamStructOutput,
-      OutAssetsStructOutput,
-      BigNumber,
+      OutStreamStructOutput,
       BigNumber,
       BigNumber,
       BigNumber,
@@ -993,10 +959,8 @@ export interface PoolFactoryV2 extends BaseContract {
       supplier: string;
       cumulatedYield: BigNumber;
       inStream: StreamStructOutput;
-      outStream: StreamStructOutput;
-      outAssets: OutAssetsStructOutput;
+      outStream: OutStreamStructOutput;
       deposit: BigNumber;
-      shares: BigNumber;
       timestamp: BigNumber;
       createdTimestamp: BigNumber;
       eventId: BigNumber;
@@ -1024,7 +988,6 @@ export interface PoolFactoryV2 extends BaseContract {
     _supplier: string,
     inDeposit: BigNumberish,
     outDeposit: BigNumberish,
-    outAssets: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -1038,17 +1001,15 @@ export interface PoolFactoryV2 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
-    DEPOSIT_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
-
     ETH(overrides?: CallOverrides): Promise<string>;
 
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
-    PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<number>;
-
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
+
+    STEPS(overrides?: CallOverrides): Promise<number>;
+
+    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -1160,17 +1121,15 @@ export interface PoolFactoryV2 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
         APYStructOutput
       ] & {
         id: BigNumber;
         timestamp: BigNumber;
-        totalShares: BigNumber;
         deposit: BigNumber;
         depositFromInFlowRate: BigNumber;
         inFlowRate: BigNumber;
         outFlowRate: BigNumber;
-        outFlowAssetsRate: BigNumber;
+        outFlowBuffer: BigNumber;
         yieldTokenIndex: BigNumber;
         yieldInFlowRateIndex: BigNumber;
         yieldAccrued: BigNumber;
@@ -1188,6 +1147,8 @@ export interface PoolFactoryV2 extends BaseContract {
     poolUpdate(overrides?: CallOverrides): Promise<void>;
 
     poolUpdateCurrentState(overrides?: CallOverrides): Promise<void>;
+
+    poolUpdateUser(user: string, overrides?: CallOverrides): Promise<void>;
 
     pushedToStrategy(
       amount: BigNumberish,
@@ -1207,13 +1168,6 @@ export interface PoolFactoryV2 extends BaseContract {
 
     redeemFlowStop(overrides?: CallOverrides): Promise<void>;
 
-    stopstream(
-      _receiver: string,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
     supplierUpdateCurrentState(
@@ -1230,9 +1184,7 @@ export interface PoolFactoryV2 extends BaseContract {
         string,
         BigNumber,
         StreamStructOutput,
-        StreamStructOutput,
-        OutAssetsStructOutput,
-        BigNumber,
+        OutStreamStructOutput,
         BigNumber,
         BigNumber,
         BigNumber,
@@ -1243,10 +1195,8 @@ export interface PoolFactoryV2 extends BaseContract {
         supplier: string;
         cumulatedYield: BigNumber;
         inStream: StreamStructOutput;
-        outStream: StreamStructOutput;
-        outAssets: OutAssetsStructOutput;
+        outStream: OutStreamStructOutput;
         deposit: BigNumber;
-        shares: BigNumber;
         timestamp: BigNumber;
         createdTimestamp: BigNumber;
         eventId: BigNumber;
@@ -1274,7 +1224,6 @@ export interface PoolFactoryV2 extends BaseContract {
       _supplier: string,
       inDeposit: BigNumberish,
       outDeposit: BigNumberish,
-      outAssets: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1289,17 +1238,15 @@ export interface PoolFactoryV2 extends BaseContract {
   };
 
   estimateGas: {
-    DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
-    DEPOSIT_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
-
     ETH(overrides?: CallOverrides): Promise<BigNumber>;
 
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
-    PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
-
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
+
+    STEPS(overrides?: CallOverrides): Promise<BigNumber>;
+
+    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -1417,6 +1364,11 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    poolUpdateUser(
+      user: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     pushedToStrategy(
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1434,13 +1386,6 @@ export interface PoolFactoryV2 extends BaseContract {
     ): Promise<BigNumber>;
 
     redeemFlowStop(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    stopstream(
-      _receiver: string,
-      _all: boolean,
-      _flowType: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1476,7 +1421,6 @@ export interface PoolFactoryV2 extends BaseContract {
       _supplier: string,
       inDeposit: BigNumberish,
       outDeposit: BigNumberish,
-      outAssets: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1491,23 +1435,19 @@ export interface PoolFactoryV2 extends BaseContract {
   };
 
   populateTransaction: {
-    DEPOSIT_TRIGGER_AMOUNT(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    DEPOSIT_TRIGGER_TIME(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     ETH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     MIN_OUTFLOW_ALLOWED(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    PARTIAL_DEPOSIT(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     POOL_BUFFER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    STEPS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    SUPERFLUID_DEPOSIT(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -1625,6 +1565,11 @@ export interface PoolFactoryV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    poolUpdateUser(
+      user: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     pushedToStrategy(
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1642,13 +1587,6 @@ export interface PoolFactoryV2 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     redeemFlowStop(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    stopstream(
-      _receiver: string,
-      _all: boolean,
-      _flowType: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1684,7 +1622,6 @@ export interface PoolFactoryV2 extends BaseContract {
       _supplier: string,
       inDeposit: BigNumberish,
       outDeposit: BigNumberish,
-      outAssets: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
