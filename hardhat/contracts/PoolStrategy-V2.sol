@@ -16,16 +16,27 @@ import {IPool} from "./aave/IPool.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {LibDataTypes} from "./gelato/LibDataTypes.sol";
 
+interface ERC20mintable {
+
+  function mint(address receiver, uint256 amount) external;
+  function mint(uint256 amount) external;
+  function balanceOf(address receiver) external returns (uint256) ;
+  function approve(address approver, uint256 amount) external;
+}
+
+
 contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   using SafeMath for uint256;
 
   IOps ops;
   ISuperToken superToken;
-  IERC20 token;
+  ERC20mintable token;
   bytes32 depositTaksId;
   IPoolFactoryV2 pool;
   IPool aavePool;
   IERC20 aToken;
+
+  ERC20mintable aaveToken;
 
   uint256 POOL_BUFFER;
 
@@ -45,10 +56,11 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   function initialize(
     IOps _ops,
     ISuperToken _superToken,
-    IERC20 _token,
+    ERC20mintable _token,
     IPoolFactoryV2 _pool,
     IPool _aavePool,
-    IERC20 _aToken
+    IERC20 _aToken,
+    ERC20mintable _aaveToken
   ) external initializer {
     ops = _ops;
     superToken = _superToken;
@@ -57,10 +69,10 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     POOL_BUFFER = 0; //_POOL_BUFFER;
     aavePool = _aavePool;
     aToken = _aToken;
-
+    aaveToken = _aaveToken;
     MAX_INT = 2**256 - 1;
 
-    token.approve(address(aavePool), MAX_INT);
+    aaveToken.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
     // superToken.approve(address(this), MAX_INT);
     depositTaksId = createDepositTask();
@@ -68,15 +80,21 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
   function withdraw(uint256 amount, address _supplier) external onlyPool {
     //require(amount < available, "NOT_ENOUGH:BALANCE");
-    aavePool.withdraw(address(token), amount.div(10**12), address(this));
-    console.log(73, amount);
-    superToken.upgrade(amount);
-       console.log(75);
-  uint256 bal =   IERC20(address(superToken)).balanceOf(address(this));
-  console.log(bal);
-    if (bal < amount) {
-      amount = bal;
+    aavePool.withdraw(address(aaveToken), amount.div(10**12), address(this));
+    
+    uint256 balanceToken = token.balanceOf(address(this));
+
+    if (balanceToken < amount) {
+      token.mint(address(this),amount-balanceToken);
     }
+
+    superToken.upgrade(amount);
+ 
+  // uint256 bal =   IERC20(address(superToken)).balanceOf(address(this));
+  // console.log(bal);
+  //   if (bal < amount) {
+  //     amount = bal;
+  //   }
     IERC20(address(superToken)).transfer(_supplier, amount);
        console.log(77);
   }
@@ -138,7 +156,9 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     pool.pushedToStrategy(uint256(amountToDeposit));
 
-    aavePool.supply(address(token), amountToDeposit / (10**12), address(this), 0);
+    aaveToken.mint( amountToDeposit / (10**12));
+
+    aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
  
   }
 
