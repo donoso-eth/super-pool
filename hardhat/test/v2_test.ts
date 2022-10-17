@@ -199,7 +199,7 @@ describe('V2 test', function () {
 
     await gelatoTasks.initialize(network_params.ops, superPoolAddress);
     console.log('Gelato Tasks ---> initialized');
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken);
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43');
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);

@@ -197,11 +197,11 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
     sTokenAddress = superTokenResolver.sToken;
 
     await poolInternal.initialize(settings.address);
-    console.log('Gelato Tasks ---> initialized');
+    console.log('Pool Internal ---> initialized');
 
     await gelatoTasks.initialize(network_params.ops, superPoolAddress);
     console.log('Gelato Tasks ---> initialized');
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken);
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43');
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);
@@ -695,40 +695,8 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
     await setNextBlockTimestamp(hre, +timestamp);
     await gelatoPushToAave(poolStrategy, ops, executor);
 
-    lastPool = Object.assign({}, pool);
+    pool.yieldSnapshot = pool.yieldSnapshot.add(balance.availableBalance)
 
-    yieldPool = await superPool.getLastPool();
-
-    yieldSnapshot = await yieldPool.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldAccrued;
-
-    pushio = yieldSnapshot.sub(lastPool.yieldSnapshot).sub(yieldAccrued);
-
-
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot.sub(pushio), PRECISSION);
-
-     payload = abiCoder.encode(['uint96'], [balance.availableBalance]);
-
-    lastUsersPool = usersPool;
-  
-    result = await applyUserEvent(
-      SupplierEvent.PUSH_TO_STRATEGY,
-      constants.AddressZero,
-      payload,
-      lastUsersPool,
-      pool,
-      lastPool,
-      pools,
-      PRECISSION,
-      sf,
-      network_params.superToken,
-      deployer,
-      superPoolAddress
-    );
-
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
     console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
 
     // #endregion ================= 9th PERIOD ============================= //

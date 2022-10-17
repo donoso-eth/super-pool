@@ -384,7 +384,7 @@ export const faucet = async (user: SignerWithAddress, tokenContract: ERC20, supe
   let amount = 10000 * 10 ** 6;
 
   let amountSuper = utils.parseEther('1000');
-  await waitForTx((tokenContract as Contract).connect(user)['mint(uint256)'](amount));
+  await waitForTx((tokenContract as Contract).connect(user)['mint(address,uint256)'](user.address,amountSuper));
 
   await waitForTx((tokenContract as Contract).connect(user).approve(superTOkenContract?.address, constants.MaxUint256));
 

@@ -176,12 +176,12 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     address _supplier,
     uint256 inDeposit,
     uint256 outDeposit
-  ) external onlySToken {
-    DataTypes.Supplier memory supplierTo = _getSupplier(_supplier);
+   ) external onlySToken {
+  //   DataTypes.Supplier memory supplierTo = _getSupplier(_supplier);
 
-    supplierTo.deposit = supplierTo.deposit + (outDeposit * PRECISSION) - (inDeposit * PRECISSION);
+  //   supplierTo.deposit = supplierTo.deposit + (outDeposit * PRECISSION) - (inDeposit * PRECISSION);
 
-    poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + (outDeposit * PRECISSION) - (inDeposit * PRECISSION);
+  //   poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + (outDeposit * PRECISSION) - (inDeposit * PRECISSION);
     _updateSupplierDeposit(_supplier, inDeposit, outDeposit);
   }
 
