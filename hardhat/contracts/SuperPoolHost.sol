@@ -5,7 +5,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
 import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
@@ -31,10 +31,12 @@ contract SuperPoolHost {
   function createSuperPool(DataTypes.SuperPoolInput memory superPoolInput) external {
     require(superTokenResolverByAddress[address(superPoolInput.superToken)].pool == address(0), "POOL_EXISTS");
 
-
- 
-
     address poolContract = Clones.clone(superPoolInput.poolFactoryImpl);
+
+        //    ERC1967Proxy proxy = new ERC1967Proxy(
+        //     superPoolInput.poolFactoryImpl,
+        //     abi.encodeWithSelector(MyTokenUpgradeable(address(0)).initialize.selector, name, symbol, initialSupply, owner)
+        // );
 
     address sTokenContract = Clones.clone(address(superPoolInput.sTokenImpl));
 
@@ -43,11 +45,10 @@ contract SuperPoolHost {
       SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP |
       SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
 
-    console.log(poolContract);
 
     host.registerAppByFactory(ISuperApp(poolContract), configWord);
 
-    console.log(poolContract);
+
 
 
     // INITILIZE SETTINGs
@@ -59,7 +60,8 @@ contract SuperPoolHost {
       host: host,
       superToken: superPoolInput.superToken,
       token: superPoolInput.token,
-      resolverSettings: superPoolInput.settings
+      resolverSettings: superPoolInput.settings,
+      owner: msg.sender
     });
 
 

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
+import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
 import "@openzeppelin/contracts/token/ERC777/ERC777.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
@@ -47,11 +47,14 @@ import {Events} from "./libraries/Events.sol";
  *      4) New created period Updated
  *
  ****************************************************************************************************/
-contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
+contract PoolFactoryV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient {
   // #region pool state
 
   using SafeMath for uint256;
   using Counters for Counters.Counter;
+
+  address owner;
+  address superHost;
 
   ISuperfluid public host; // host
   IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
@@ -117,6 +120,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
     superToken = poolFactoryInitializer.superToken;
     cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
     token = poolFactoryInitializer.token;
+    owner = poolFactoryInitializer.owner;
+    superHost = msg.owner;
 
     resolverSettings = IResolverSettingsV2(poolFactoryInitializer.resolverSettings);
     sToken = ISTokenFactoryV2(resolverSettings.getSToken());
@@ -150,6 +155,8 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
     ///// initializators
   }
+
+function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
   function getPool(uint256 _timestamp) external view returns (DataTypes.PoolV2 memory) {
     return poolByTimestamp[_timestamp];
@@ -786,6 +793,13 @@ contract PoolFactoryV2 is Initializable, SuperAppBase, IERC777Recipient {
 
   modifier onlyOps() {
     require(msg.sender == address(ops), "OpsReady: onlyOps");
+    _;
+  }
+
+
+
+    modifier onlyOwner() {
+    require(msg.sender == owner, "Only Owner");
     _;
   }
 

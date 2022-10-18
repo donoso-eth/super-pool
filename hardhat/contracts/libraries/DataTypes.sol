@@ -40,6 +40,7 @@ library DataTypes {
     ISuperToken superToken;
     IERC20 token;
     IResolverSettingsV2 resolverSettings;
+    address owner;
   }
 
 
