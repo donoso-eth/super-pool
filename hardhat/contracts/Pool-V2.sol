@@ -138,7 +138,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     
 
     _cfaLib = CFAv1Library.InitData(host, cfa);
-    console.log(152);
+  
     //// tokens receie implementation
     IERC1820Registry _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
     bytes32 TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
@@ -262,7 +262,6 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     require(msg.sender == address(superToken), "INVALID_TOKEN");
     require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
-    console.log("tokens_reveived : ", amount);
 
     _poolUpdateCurrentState();
 
@@ -424,15 +423,15 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     uint256 inDeposit,
     uint256 outDeposit
   ) internal {
-    console.log(385);
+ 
     DataTypes.Supplier storage supplier = _getSupplier(_supplier);
-    console.log(387);
+
     _supplierUpdateCurrentState(_supplier);
-    console.log(389);
+
     supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
-    console.log(391);
+ 
     poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
-        console.log(393);
+     
   }
 
   function _updateSupplierFlow(
@@ -507,7 +506,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     supplier.inStream.flow = inFlow;
     supplier.outStream.flow = outFlow;
 
-    console.log("updateSupplierFlow");
+  
   }
 
   function _createOutStream(
@@ -705,7 +704,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
         poolAvailable = superToken.balanceOf(address(this)) - (pool.outFlowBuffer);
     } 
 
-    console.log(633, poolAvailable);
+    
 
     if (poolAvailable >= withdrawAmount) {
       console.log("NOT PUSHED");
@@ -736,7 +735,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     
         
     }
-     console.log(668,pool.yieldSnapshot);
+ 
   }
 
   function _cancelFlow(
