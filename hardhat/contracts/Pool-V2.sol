@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -50,7 +49,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
   // #region pool state
 
   using SafeMath for uint256;
-  using Counters for Counters.Counter;
+
 
   address owner;
   address superHost;
@@ -62,7 +61,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
   using CFAv1Library for CFAv1Library.InitData;
   CFAv1Library.InitData internal _cfaLib;
 
-  uint256[] activeSuppliers;
+  uint256 supplierId;
 
   mapping(address => DataTypes.Supplier) public suppliersByAddress;
 
@@ -74,7 +73,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
 
   uint256 public lastPoolTimestamp;
 
-  Counters.Counter public supplierId;
+
 
   IOps public ops;
   address payable public gelato;
@@ -158,8 +157,9 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
     
     ops = IOps(resolverSettings.getGelatoOps());
-
     gelato = ops.gelato();
+
+    _cfaLib.authorizeFlowOperatorWithFullControl(address(poolInternal), superToken);
 
     token.approve(address(poolStrategy), MAX_INT);
     superToken.approve(address(poolStrategy), MAX_INT);
@@ -181,10 +181,10 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     return poolByTimestamp[lastPoolTimestamp];
   }
 
-  function poolUpdateUser(address user) external {
-    _poolUpdateCurrentState();
-    _supplierUpdateCurrentState(user);
-  }
+  // function poolUpdateUser(address user) external {
+  //   _poolUpdateCurrentState();
+  //   poolInternal._supplierUpdateCurrentState(user);
+  // }
 
   function poolUpdate() external {
     _poolUpdateCurrentState();
@@ -199,9 +199,9 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     address _receiver,
     uint256 amount
    ) external onlySToken {
-    _supplierUpdateCurrentState(_sender);
+    poolInternal._supplierUpdateCurrentState(_sender);
     DataTypes.Supplier  storage sender = _getSupplier(_sender);
-       _supplierUpdateCurrentState(_receiver);
+       poolInternal._supplierUpdateCurrentState(_receiver);
     DataTypes.Supplier storage receiver = _getSupplier(_sender);
 
     sender.deposit -= amount;
@@ -224,7 +224,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW,payload,block.timestamp,address(0));
   }
 
-  // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
+  // #region  ============= =============  Pool Events (supplier nalaction) ============= ============= //
   /****************************************************************************************************
    * @notice Supplier (User) interaction
    * @dev Following interactions are expected:
@@ -281,7 +281,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
 
     require(balance > redeemAmount, "NOT_ENOUGH_BALANCE");
     DataTypes.Supplier memory supplier = _getSupplier(_supplier);
-
+    DataTypes.PoolV2 memory pool;
     //// Update pool state "pool Struct" calculating indexes and timestamp
     _poolUpdateCurrentState();
 
@@ -289,13 +289,13 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     _updateSupplierDeposit(_supplier, 0, redeemAmount);
 
     //poolStrategy.withdraw(redeemAmount, _supplier);
-    _withdrawDispatcher(_supplier, _supplier,  redeemAmount);
+   (supplier, pool) =  poolInternal.withdrawDispatcher(supplier,pool, _supplier,  redeemAmount);
 
  
     if (supplier.outStream.flow > 0) {
       uint256 userBalance = sToken.balanceOf(_supplier);
       if (userBalance < supplier.outStream.minBalance) {
-        _cancelFlow(_supplier, userBalance, supplier.outStream.minBalance);
+       (supplier, pool) =  poolInternal.cancelFlow(supplier, pool,userBalance, supplier.outStream.minBalance);
       }
     }
 
@@ -304,12 +304,16 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     bytes  memory payload = abi.encode(redeemAmount);
     emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW,payload,block.timestamp,msg.sender);
 
+       
+    poolByTimestamp[pool.timestamp] = pool;
+    suppliersByAddress[supplier.supplier] = supplier;
+
   }
 
   function redeemFlow(int96 _outFlowRate) external {
     //// update state supplier
-    DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
-
+    DataTypes.Supplier memory supplier = suppliersByAddress[msg.sender];
+    DataTypes.PoolV2 memory pool;
     DataTypes.SupplierEvent flowEvent = supplier.outStream.flow > 0 ? DataTypes.SupplierEvent.OUT_STREAM_UPDATE  : DataTypes.SupplierEvent.OUT_STREAM_START ;
 
     uint256 realTimeBalance = sToken.balanceOf(msg.sender);
@@ -320,7 +324,11 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
 
     bytes memory placeHolder = "0x";
 
-    _updateSupplierFlow(msg.sender, 0, _outFlowRate, placeHolder);
+     poolInternal._supplierUpdateCurrentState(supplier.supplier);
+
+    (, supplier , ) = poolInternal._updateSupplierFlow(msg.sender, 0, _outFlowRate, placeHolder);
+
+  
 
 
     emit Events.SupplierUpdate(supplier);
@@ -342,7 +350,8 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     emit Events.SupplierEvent(DataTypes.SupplierEvent.OUT_STREAM_STOP,payload,block.timestamp,msg.sender);
   }
 
-  function closeAccount() external {}
+
+
 
   function _inStreamCallback(
     address from,
@@ -353,7 +362,13 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     newCtx = _ctx;
     _poolUpdateCurrentState();
 
-    newCtx = _updateSupplierFlow(from, inFlow, 0, _ctx);
+    poolInternal._supplierUpdateCurrentState(from);
+
+  
+    poolInternal._updateSupplierFlow(from, inFlow, 0, _ctx);
+
+
+    
   }
 
   // #endregion User Interaction PoolEvents
@@ -371,13 +386,13 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
       supplier.createdTimestamp = block.timestamp;
       supplier.supplier = _supplier;
       supplier.timestamp = block.timestamp;
-      supplierId.increment();
-      uint256 current = supplierId.current();
-      supplier.id = supplierId.current();
+      supplierId++;
+      uint256 current = supplierId;
+      supplier.id = supplierId;
 
       supplierAdressById[supplier.id] = _supplier;
 
-      activeSuppliers.push(supplier.id);
+    
     }
 
     supplier.eventId += 1;
@@ -385,37 +400,15 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     return supplier;
   }
 
-  function supplierUpdateCurrentState(address _supplier) external {
-    _supplierUpdateCurrentState(_supplier);
+  // function supplierUpdateCurrentState(address _supplier) external {
+  //   poolInternal._supplierUpdateCurrentState(_supplier);
+  // }
+
+ function internalUpdates(DataTypes.Supplier memory supplier, DataTypes.PoolV2 memory currentPool) external onlyPoolInternal {
+      poolByTimestamp[currentPool.timestamp] = currentPool;
+      suppliersByAddress[supplier.supplier] = supplier;
   }
 
-  function _supplierUpdateCurrentState(address _supplier) internal {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
-
-    if (supplier.timestamp < block.timestamp) {
-      uint256 supplierBalance = sToken.getSupplierBalance(_supplier);
-
-      uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
-
-      if (supplier.inStream.flow > 0) {
-        uint256 inflow = uint96(supplier.inStream.flow) * (block.timestamp - supplier.timestamp);
-
-        pool.depositFromInFlowRate = pool.depositFromInFlowRate - inflow * PRECISSION;
-        pool.deposit = inflow * PRECISSION + pool.deposit;
-        supplier.deposit = supplier.deposit + inflow * PRECISSION;
-      }
-
-      if (supplier.outStream.flow > 0) {
-        // pool.deposit = yieldSupplier + pool.deposit;
-        // supplier.deposit = supplier.deposit + yieldSupplier;
-      }
-
-      pool.deposit = yieldSupplier + pool.deposit;
-      supplier.deposit = supplier.deposit + yieldSupplier;
-      supplier.timestamp = block.timestamp;
-    }
-  }
 
   function _updateSupplierDeposit(
     address _supplier,
@@ -425,7 +418,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
  
     DataTypes.Supplier storage supplier = _getSupplier(_supplier);
 
-    _supplierUpdateCurrentState(_supplier);
+    poolInternal._supplierUpdateCurrentState(_supplier);
 
     supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
  
@@ -433,157 +426,6 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
      
   }
 
-  function _updateSupplierFlow(
-    address _supplier,
-    int96 inFlow,
-    int96 outFlow,
-    bytes memory _ctx
-  ) internal returns (bytes memory newCtx) {
-    DataTypes.Supplier storage supplier = _getSupplier(_supplier);
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
-    newCtx = _ctx;
-
-    _supplierUpdateCurrentState(_supplier);
-
-    int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
-    int96 newNetFlow = inFlow - outFlow;
-
-    if (currentNetFlow < 0) {
-      /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
-
-      if (newNetFlow >= 0) {
-        pool.outFlowRate = pool.outFlowRate + currentNetFlow;
-
-        pool.inFlowRate = pool.inFlowRate + newNetFlow;
-
-        ///// refactor logic
-        if (newNetFlow == 0) {
-          _cfaLib.deleteFlow(address(this), _supplier, superToken);
-        } else {
-          newCtx = _cfaLib.deleteFlowWithCtx(_ctx, address(this), _supplier, superToken);
-        }
-
-        gelatoTasks.cancelTask(supplier.outStream.cancelWithdrawId);
-        uint256 alreadyStreamed = uint96(supplier.outStream.flow)*(block.timestamp - supplier.outStream.initTime);
-        supplier.deposit = supplier.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
-        pool.deposit = pool.deposit + supplier.outStream.minBalance.mul(PRECISSION)- alreadyStreamed.mul(PRECISSION);
-        pool.outFlowBuffer = pool.outFlowBuffer - supplier.outStream.minBalance;
-        supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
-
-
-      } else {
-        pool.outFlowRate = pool.outFlowRate + currentNetFlow - newNetFlow;
-
-     //   pool.deposit = pool.deposit - supplier.deposit;
-
-        //// creatre timed task
-        _outStreamHasChanged(_supplier, -newNetFlow);
-      }
-    } else {
-      /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW THE SAME
-
-      if (newNetFlow >= 0) {
-        pool.inFlowRate = pool.inFlowRate - currentNetFlow + inFlow;
-      } else {
-        /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW NEGATIVE
-
-        pool.outFlowRate += -newNetFlow;
-        pool.inFlowRate -= currentNetFlow;
-
-        pool.deposit = pool.deposit;
-        if (currentNetFlow > 0) {
-          _cfaLib.deleteFlow(_supplier, address(this), superToken);
-        }
-        if (supplier.inStream.cancelFlowId != bytes32(0)) {
-          cancelTask(supplier.inStream.cancelFlowId);
-        }
-   
-        _outStreamHasChanged(_supplier, -newNetFlow);
-      }
-    }
-
-    supplier.inStream.flow = inFlow;
-    supplier.outStream.flow = outFlow;
-
-  
-  }
-
-  function _createOutStream(
-    address _supplier,
-    uint256 newMinBalance,
-    int96 newOutFlow,
-    uint256 prevoiusMinBalance,
-    uint256 stepAmount,
-    uint256 stepTime
-  ) internal {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
-
-   
-
-    if (newMinBalance > prevoiusMinBalance) {
-
-          _withdrawDispatcher(_supplier, address(this), newMinBalance-prevoiusMinBalance);
-    }
-
-  
-
- 
-    pool.outFlowBuffer = pool.outFlowBuffer + newMinBalance;
-    pool.deposit = pool.deposit - newMinBalance.mul(PRECISSION);
-
-    supplier.deposit = supplier.deposit - newMinBalance.mul(PRECISSION);
-
-    supplier.outStream.minBalance = newMinBalance;
-
-
-    supplier.outStream.stepAmount = stepAmount;
-
-    supplier.outStream.stepTime = stepTime;
-    supplier.outStream.initTime = block.timestamp;
-
-    supplier.outStream.cancelWithdrawId = gelatoTasks.createWithdraStepTask(_supplier, supplier.outStream.stepTime);
-
-  }
-
-  function _outStreamHasChanged(address _supplier, int96 newOutFlow) internal {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
-
-    uint256 userBalance = sToken.balanceOf(_supplier);
-    uint256 stepTime = userBalance.div(uint256(STEPS)).div(uint96(newOutFlow));
-    uint256 stepAmount = (uint96(newOutFlow)) * (stepTime);
-    uint256 minBalance = stepAmount.add((POOL_BUFFER.add(SUPERFLUID_DEPOSIT)).mul(uint96(newOutFlow)));
-
-    if (supplier.outStream.flow == 0) {
-      if (userBalance < minBalance) {
-        revert("No sufficent funds");
-      }
-
-      // poolStrategy.withdraw(minBalance, address(this));
-      _createOutStream(_supplier, minBalance, newOutFlow, 0, stepAmount, stepTime);
-
-      _cfaLib.createFlow(_supplier, superToken, newOutFlow);
- 
-    } else if (supplier.outStream.flow > 0) {
-      if (supplier.outStream.cancelFlowId != bytes32(0)) {
-        cancelTask(supplier.outStream.cancelFlowId);
-      }
-
-      if (userBalance < minBalance) {
-        _cancelFlow(_supplier, userBalance, minBalance);
-      } else if (supplier.outStream.flow != newOutFlow) {
-        gelatoTasks.cancelTask(supplier.outStream.cancelWithdrawId);
-
-        uint256 alreadyStreamed = uint96(supplier.outStream.flow)*(block.timestamp - supplier.outStream.initTime);
-        supplier.deposit = supplier.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
-        pool.deposit = pool.deposit + supplier.outStream.minBalance.mul(PRECISSION)- alreadyStreamed.mul(PRECISSION);
-        pool.outFlowBuffer = pool.outFlowBuffer - supplier.outStream.minBalance;
-        _createOutStream(_supplier, minBalance, newOutFlow, supplier.outStream.minBalance, stepAmount, stepTime);
-        _cfaLib.updateFlow(_supplier, superToken, newOutFlow);
-      }
-    }
-  }
 
   // #endregion
 
@@ -594,7 +436,6 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
    * Pool Update
    *
    *************************************************************************/
-  function poolUpdateCurrentState() external {}
 
   function _poolUpdateCurrentState() internal {
     DataTypes.PoolV2 memory lastPool = getLastPool();
@@ -611,7 +452,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
       poolTimestampById[currentPool.id] = block.timestamp;
     }
 
-    console.log("pool_update");
+
   }
 
   // #endregion POOL UPDATE
@@ -640,7 +481,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
   //   //// check if
 
   //   _poolUpdateCurrentState();
-  //   _supplierUpdateCurrentState(_receiver);
+  //   poolInternal._supplierUpdateCurrentState(_receiver);
 
   //   //// every task will be payed with a transfer, therefore receive(), we have to fund the contract
   //   uint256 fee;
@@ -687,80 +528,13 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
   //   }
   // }
 
-  function _withdrawDispatcher(
-    address _supplier,
-    address _receiver,
-    uint256 withdrawAmount
-  ) internal {
-
-  
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
-
- 
-
-    uint256 poolAvailable = 0;
-    if (superToken.balanceOf(address(this)) > (pool.outFlowBuffer)){
-        poolAvailable = superToken.balanceOf(address(this)) - (pool.outFlowBuffer);
-    } 
-
-    
-
-    if (poolAvailable >= withdrawAmount) {
-      console.log("NOT PUSHED");
-      if (_supplier == _receiver) {
-        IERC20(address(superToken)).transfer(_receiver, withdrawAmount);
-      }
-    } else {
-      console.log("YES PUSHED");
-      uint256 balance = poolStrategy.balanceOf();
-      uint256 fromStrategy = withdrawAmount - poolAvailable;
-      uint256 correction;
-      if (fromStrategy > balance) {
-            correction = fromStrategy-balance;
-            poolStrategy.withdraw(balance, _receiver);
-             pool.yieldSnapshot = pool.yieldSnapshot - balance;
-          if (_supplier == _receiver) {
-              IERC20(address(superToken)).transfer(_receiver, correction);
-            }
-
-      } else {
-          poolStrategy.withdraw(fromStrategy, _receiver);
-            pool.yieldSnapshot = pool.yieldSnapshot - fromStrategy;
-          // if (_supplier == _receiver) {
-          //   IERC20(address(superToken)).transfer(_receiver, poolAvailable);
-          // }
-      }
-
-    
-        
-    }
- 
-  }
-
-  function _cancelFlow(
-    address _receiver,
-    uint256 userBalance,
-    uint256 minBalance
-  ) internal {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
-
-    gelatoTasks.cancelTask(supplier.outStream.cancelWithdrawId);
-
-    pool.outFlowBuffer = pool.outFlowBuffer - minBalance;
-    _withdrawDispatcher(_receiver, _receiver,  userBalance);
-    pool.deposit = pool.deposit - userBalance;
-    pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
-    supplier.deposit = 0;
-    supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
-  }
 
   /// called by Gelato
   function withdrawStep(address _receiver) external onlyOps {
     //// check if
 
     _poolUpdateCurrentState();
-    _supplierUpdateCurrentState(_receiver);
+    poolInternal._supplierUpdateCurrentState(_receiver);
 
     //// every task will be payed with a transfer, therefore receive(), we have to fund the contract
     uint256 fee;
@@ -770,25 +544,29 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
 
     _transfer(fee, feeToken);
 
-    DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.Supplier memory supplier = suppliersByAddress[_receiver];
+    DataTypes.PoolV2 memory pool = poolByTimestamp[block.timestamp];
     uint256 userBalance = sToken.balanceOf(_receiver);
     uint256 minBalance = supplier.outStream.minBalance;
     uint256 stepAmount = (uint96(supplier.outStream.flow)) * (supplier.outStream.stepTime);
 
     ////// user balance goes below min balance, stream will be stopped and all funds will be returned
     if (userBalance < minBalance) {
-      console.log("XXXXXXXXXXXXX 696 XXXXXXXXXXXX");
-      _cancelFlow(_receiver, userBalance, minBalance);
+     
+     (supplier, pool) = poolInternal.cancelFlow(supplier,pool, userBalance, minBalance);
     } else {
 
-      _withdrawDispatcher(_receiver, address(this),  stepAmount);
+       (supplier, pool) = poolInternal.withdrawDispatcher(supplier, pool,address(this),  stepAmount);
 
        pool.deposit = pool.deposit.sub(stepAmount.mul(PRECISSION));
        
       supplier.deposit = supplier.deposit.sub(stepAmount.mul(PRECISSION));
       supplier.outStream.initTime = block.timestamp;
+
     }
+     poolByTimestamp[pool.timestamp] = pool;
+    suppliersByAddress[supplier.supplier] = supplier;
+    
     emit Events.SupplierUpdate(supplier);
     bytes  memory payload = abi.encode(stepAmount);
     emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW_STEP,payload,block.timestamp,msg.sender);
@@ -796,7 +574,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
 
   }
 
-  function cancelTask(bytes32 _taskId) public {
+  function cancelTask(bytes32 _taskId) external onlyPoolInternal {
     IOps(ops).cancelTask(_taskId);
   }
 
@@ -837,6 +615,11 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
 
     modifier onlySuperHost() {
     require(msg.sender == superHost, "Only Host");
+    _;
+  }
+
+    modifier onlyPoolInternal() {
+    require(msg.sender == address(poolInternal), "Only Internla");
     _;
   }
 
@@ -882,7 +665,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
 
       // if (endSeconds > 0) {}
     } else {
-      console.log("REDEEM FLOW");
+ 
     }
 
     return newCtx;
@@ -911,7 +694,6 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
 
 
     } else if (sender == address(this)) {
-      console.log('OUT_STREAM_MANUAL_STOPPED');
     }
 
     return newCtx;
@@ -940,7 +722,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
     emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_UPDATE,payload,block.timestamp,sender);
 
     } else {}
-    console.log("FLOW_UPDATED_FINISH");
+
     return newCtx;
   }
 

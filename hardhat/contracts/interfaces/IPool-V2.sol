@@ -45,4 +45,8 @@ interface IPoolV2 {
 
   function initializeAfterSettings(IResolverSettingsV2 _resolverSettings ) external;
 
+   function cancelTask(bytes32 _taskId) external;
+
+    function internalUpdates(DataTypes.Supplier memory supplier, DataTypes.PoolV2 memory currentPool) external;
+
 }
