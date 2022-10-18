@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
 import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
+import {PoolFactoryV2} from "./PoolFactory-V2.sol";
 import {ISTokenFactoryV2} from './interfaces/ISTokenFactory-V2.sol';
 import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
 
@@ -30,12 +31,21 @@ contract SuperPoolHost {
 
   function createSuperPool(DataTypes.SuperPoolInput memory superPoolInput) external {
     require(superTokenResolverByAddress[address(superPoolInput.superToken)].pool == address(0), "POOL_EXISTS");
-
+    //// INITIALIZE POOL
+    DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;    
+    poolFactoryInitializer = DataTypes.PoolFactoryInitializer({
+      host: host,
+      superToken: superPoolInput.superToken,
+      token: superPoolInput.token,
+      resolverSettings: superPoolInput.settings,
+      owner: msg.sender
+    });
+    
     address poolContract = Clones.clone(superPoolInput.poolFactoryImpl);
 
         //    ERC1967Proxy proxy = new ERC1967Proxy(
         //     superPoolInput.poolFactoryImpl,
-        //     abi.encodeWithSelector(MyTokenUpgradeable(address(0)).initialize.selector, name, symbol, initialSupply, owner)
+        //     abi.encodeWithSelector(PoolFactoryV2(address(0)).initialize.selector, poolFactoryInitializer)
         // );
 
     address sTokenContract = Clones.clone(address(superPoolInput.sTokenImpl));
@@ -54,15 +64,7 @@ contract SuperPoolHost {
     // INITILIZE SETTINGs
 
 
-    //// INITIALIZE POOL
-    DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;    
-    poolFactoryInitializer = DataTypes.PoolFactoryInitializer({
-      host: host,
-      superToken: superPoolInput.superToken,
-      token: superPoolInput.token,
-      resolverSettings: superPoolInput.settings,
-      owner: msg.sender
-    });
+
 
 
 

@@ -121,7 +121,7 @@ contract PoolFactoryV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Re
     cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
     token = poolFactoryInitializer.token;
     owner = poolFactoryInitializer.owner;
-    superHost = msg.owner;
+    superHost = msg.sender;
 
     resolverSettings = IResolverSettingsV2(poolFactoryInitializer.resolverSettings);
     sToken = ISTokenFactoryV2(resolverSettings.getSToken());
