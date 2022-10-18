@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
-import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IPoolV2} from "./interfaces/IPoolFactory-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 import {IPool} from "./aave/IPool.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
@@ -32,7 +32,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   ISuperToken superToken;
   ERC20mintable token;
   bytes32 depositTaksId;
-  IPoolFactoryV2 pool;
+  IPoolV2 pool;
   IPool aavePool;
   IERC20 aToken;
 
@@ -57,7 +57,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     IOps _ops,
     ISuperToken _superToken,
     ERC20mintable _token,
-    IPoolFactoryV2 _pool,
+    IPoolV2 _pool,
     IPool _aavePool,
     IERC20 _aToken,
     ERC20mintable _aaveToken

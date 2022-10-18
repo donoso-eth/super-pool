@@ -24,7 +24,7 @@ import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/app
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
-import {ISTokenFactoryV2} from "./interfaces/ISTokenFactory-V2.sol";
+import {ISTokenV2} from "./interfaces/ISTokenFactory-V2.sol";
 import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 import {IGelatoTasksV2} from "./interfaces/IGelatoTasks-V2.sol";
@@ -47,7 +47,7 @@ import {Events} from "./libraries/Events.sol";
  *      4) New created period Updated
  *
  ****************************************************************************************************/
-contract PoolFactoryV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient {
+contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient {
   // #region pool state
 
   using SafeMath for uint256;
@@ -91,7 +91,7 @@ contract PoolFactoryV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Re
   uint256 public SUPERFLUID_DEPOSIT;
   uint56 public MIN_OUTFLOW_ALLOWED;
 
-  ISTokenFactoryV2 sToken;
+  ISTokenV2 sToken;
   IPoolStrategyV2 poolStrategy;
   IGelatoTasksV2 gelatoTasks;
   IPoolInternalV2 poolInternal;
@@ -124,7 +124,6 @@ contract PoolFactoryV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Re
     superHost = msg.sender;
 
     resolverSettings = IResolverSettingsV2(poolFactoryInitializer.resolverSettings);
-    sToken = ISTokenFactoryV2(resolverSettings.getSToken());
     poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
     gelatoTasks = IGelatoTasksV2(resolverSettings.getGelatoTasks());
     poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
@@ -156,7 +155,11 @@ contract PoolFactoryV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Re
     ///// initializators
   }
 
-function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+  function setToken() external onlySuperHost {
+    sToken = ISTokenV2(resolverSettings.getSToken());
+  }
+
+  function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
   function getPool(uint256 _timestamp) external view returns (DataTypes.PoolV2 memory) {
     return poolByTimestamp[_timestamp];
@@ -179,22 +182,34 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
     return suppliersByAddress[_supplier];
   }
 
-  function updateSupplierDeposit(
-    address _supplier,
-    uint256 inDeposit,
-    uint256 outDeposit
+  function transferSTokens(
+    address _sender,
+    address _receiver,
+    uint256 amount
    ) external onlySToken {
-  //   DataTypes.Supplier memory supplierTo = _getSupplier(_supplier);
+    _supplierUpdateCurrentState(_sender);
+    DataTypes.Supplier  storage sender = _getSupplier(_sender);
+       _supplierUpdateCurrentState(_receiver);
+    DataTypes.Supplier storage receiver = _getSupplier(_sender);
 
-  //   supplierTo.deposit = supplierTo.deposit + (outDeposit * PRECISSION) - (inDeposit * PRECISSION);
+    sender.deposit -= amount;
+    receiver.deposit += amount;
+  
+    bytes  memory payload = abi.encode(_receiver,amount);
+    emit Events.SupplierUpdate(sender);
+    emit Events.SupplierUpdate(receiver);
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.TRANSFER,payload,block.timestamp,msg.sender);
 
   //   poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + (outDeposit * PRECISSION) - (inDeposit * PRECISSION);
-    _updateSupplierDeposit(_supplier, inDeposit, outDeposit);
+    //_updateSupplierDeposit(_supplier, inDeposit, outDeposit);
   }
 
   function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
 
     poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
+
+    bytes  memory payload = abi.encode(amount);
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW,payload,block.timestamp,address(0));
   }
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
@@ -240,6 +255,12 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
 
     ///// suppler config updated && pool
     _updateSupplierDeposit(from, amount, 0);
+
+    DataTypes.Supplier memory supplier = _getSupplier(msg.sender);
+    bytes  memory payload = abi.encode(amount);
+    emit Events.SupplierUpdate(supplier);
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.DEPOSIT,payload,block.timestamp,msg.sender);
+
   }
 
   function redeemDeposit(uint256 redeemAmount) public {
@@ -259,8 +280,7 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
     //poolStrategy.withdraw(redeemAmount, _supplier);
     _withdrawDispatcher(_supplier, _supplier,  redeemAmount);
 
-    // poolByTimestamp[block.timestamp].yieldSnapshot = poolByTimestamp[block.timestamp].yieldSnapshot - redeemAmount;
-
+ 
     if (supplier.outStream.flow > 0) {
       uint256 userBalance = sToken.balanceOf(_supplier);
       if (userBalance < supplier.outStream.minBalance) {
@@ -268,17 +288,18 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
       }
     }
 
+
     emit Events.SupplierUpdate(supplier);
-    console.log("event");
+    bytes  memory payload = abi.encode(redeemAmount);
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW,payload,block.timestamp,msg.sender);
+
   }
 
-  function redeemFlow(int96 _outFlowRate, uint256 _endSeconds) external {
+  function redeemFlow(int96 _outFlowRate) external {
     //// update state supplier
     DataTypes.Supplier storage supplier = suppliersByAddress[msg.sender];
 
-    //require(supplier.outStream.flow == 0, "OUT_STREAM_EXISTS");
-
-    bool currentOutFlow = supplier.outStream.flow > 0 ? true : false;
+    DataTypes.SupplierEvent flowEvent = supplier.outStream.flow > 0 ? DataTypes.SupplierEvent.OUT_STREAM_UPDATE  : DataTypes.SupplierEvent.OUT_STREAM_START ;
 
     uint256 realTimeBalance = sToken.balanceOf(msg.sender);
 
@@ -291,11 +312,11 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
     _updateSupplierFlow(msg.sender, 0, _outFlowRate, placeHolder);
 
 
+    emit Events.SupplierUpdate(supplier);
+    bytes  memory payload = abi.encode(_outFlowRate);
+    emit Events.SupplierEvent(flowEvent,payload,block.timestamp,msg.sender);
 
-    if (_endSeconds > 0) {
-      cancelTask(supplier.outStream.cancelTaskId);
-      supplier.outStream.cancelTaskId = gelatoTasks.createStopStreamTimedTask(msg.sender, _endSeconds - MIN_OUTFLOW_ALLOWED, false, 0);
-    }
+
   }
 
   function redeemFlowStop() external {
@@ -305,7 +326,9 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
 
     _inStreamCallback(msg.sender, 0, 0, "0x");
 
-    //// Advance pool
+    emit Events.SupplierUpdate(supplier);
+    bytes  memory payload = abi.encode('');
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.OUT_STREAM_STOP,payload,block.timestamp,msg.sender);
   }
 
   function closeAccount() external {}
@@ -460,8 +483,8 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
         if (currentNetFlow > 0) {
           _cfaLib.deleteFlow(_supplier, address(this), superToken);
         }
-        if (supplier.inStream.cancelTaskId != bytes32(0)) {
-          cancelTask(supplier.inStream.cancelTaskId);
+        if (supplier.inStream.cancelFlowId != bytes32(0)) {
+          cancelTask(supplier.inStream.cancelFlowId);
         }
    
         _outStreamHasChanged(_supplier, -newNetFlow);
@@ -532,8 +555,8 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
       _cfaLib.createFlow(_supplier, superToken, newOutFlow);
  
     } else if (supplier.outStream.flow > 0) {
-      if (supplier.outStream.cancelTaskId != bytes32(0)) {
-        cancelTask(supplier.outStream.cancelTaskId);
+      if (supplier.outStream.cancelFlowId != bytes32(0)) {
+        cancelTask(supplier.outStream.cancelFlowId);
       }
 
       if (userBalance < minBalance) {
@@ -626,10 +649,10 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
   //       console.log("stopStream");
   //     }
 
-  //     bytes32 taskId = suppliersByAddress[_receiver].outStream.cancelTaskId;
+  //     bytes32 taskId = suppliersByAddress[_receiver].outStream.cancelFlowId;
   //     if (taskId != bytes32(0)) {
   //       cancelTask(taskId);
-  //       suppliersByAddress[_receiver].outStream.cancelTaskId = bytes32(0);
+  //       suppliersByAddress[_receiver].outStream.cancelFlowId = bytes32(0);
   //     }
 
   //     console.log("stopOUTStream");
@@ -645,10 +668,10 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
   //       console.log("stopINStream");
   //     }
 
-  //     bytes32 taskId = suppliersByAddress[_receiver].inStream.cancelTaskId;
+  //     bytes32 taskId = suppliersByAddress[_receiver].inStream.cancelFlowId;
   //     if (taskId != bytes32(0)) {
   //       cancelTask(taskId);
-  //       suppliersByAddress[_receiver].inStream.cancelTaskId = bytes32(0);
+  //       suppliersByAddress[_receiver].inStream.cancelFlowId = bytes32(0);
   //     }
   //   }
   // }
@@ -755,6 +778,11 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
       supplier.deposit = supplier.deposit.sub(stepAmount.mul(PRECISSION));
       supplier.outStream.initTime = block.timestamp;
     }
+    emit Events.SupplierUpdate(supplier);
+    bytes  memory payload = abi.encode(stepAmount);
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW_STEP,payload,block.timestamp,msg.sender);
+
+
   }
 
   function cancelTask(bytes32 _taskId) public {
@@ -796,7 +824,10 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
     _;
   }
 
-
+    modifier onlySuperHost() {
+    require(msg.sender == superHost, "Only Host");
+    _;
+  }
 
     modifier onlyOwner() {
     require(msg.sender == owner, "Only Owner");
@@ -825,14 +856,18 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
     //// If In-Stream we will request a pool update
 
     if (receiver == address(this)) {
+        DataTypes.Supplier storage supplier =  _getSupplier(sender);
       if (decodedContext.userData.length > 0) {
-        DataTypes.Supplier storage supplier = suppliersByAddress[sender];
         uint256 endSeconds = parseLoanData(host.decodeCtx(_ctx).userData);
 
-        supplier.inStream.cancelTaskId = gelatoTasks.createStopStreamTimedTask(sender, endSeconds - MIN_OUTFLOW_ALLOWED, false, 1);
+        supplier.inStream.cancelFlowId = gelatoTasks.createStopStreamTimedTask(sender, endSeconds - MIN_OUTFLOW_ALLOWED, false, 1);
       }
 
       newCtx = _inStreamCallback(sender, inFlowRate, 0, newCtx);
+
+    emit Events.SupplierUpdate(supplier);
+    bytes  memory payload = abi.encode(inFlowRate);
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_START,payload,block.timestamp,sender);
 
       // if (endSeconds > 0) {}
     } else {
@@ -853,10 +888,19 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
   ) external virtual override returns (bytes memory newCtx) {
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
     newCtx = _ctx;
-
+     
     //// If In-Stream we will request a pool update
     if (receiver == address(this)) {
+      DataTypes.Supplier storage supplier = _getSupplier(sender);
       newCtx = _inStreamCallback(sender, 0, 0, newCtx);
+
+    emit Events.SupplierUpdate(supplier);
+    bytes  memory payload = abi.encode('');
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_STOP,payload,block.timestamp,sender);
+
+
+    } else if (sender == address(this)) {
+      console.log('OUT_STREAM_MANUAL_STOPPED');
     }
 
     return newCtx;
@@ -878,7 +922,12 @@ function _authorizeUpgrade(address newImplementation) internal override onlyOwne
 
     //// If In-Stream we will request a pool update
     if (receiver == address(this)) {
+      DataTypes.Supplier storage supplier = _getSupplier(sender);
       newCtx = _inStreamCallback(sender, inFlowRate, 0, newCtx);
+      emit Events.SupplierUpdate(supplier);
+    bytes  memory payload = abi.encode('');
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_UPDATE,payload,block.timestamp,sender);
+
     } else {}
     console.log("FLOW_UPDATED_FINISH");
     return newCtx;

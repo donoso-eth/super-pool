@@ -19,8 +19,8 @@ import HostMetadata from 'src/assets/contracts/super_pool_host_metadata.json';
 import PoolMetadata from 'src/assets/contracts/pool_factory_v2_metadata.json';
 import StokenMetadata from 'src/assets/contracts/s_token_factory_v2_metadata.json';
 import { PoolFactory } from 'src/assets/contracts/interfaces/PoolFactory';
-import { PoolFactoryV2 } from 'src/assets/contracts/interfaces/PoolFactoryV2';
-import { STokenFactoryV2 } from 'src/assets/contracts/interfaces/STokenFactoryV2';
+import { PoolV2 } from 'src/assets/contracts/interfaces/PoolV2';
+import { STokenV2 } from 'src/assets/contracts/interfaces/STokenV2';
 
 @Injectable({
   providedIn: 'root',
@@ -30,7 +30,7 @@ export class DappInjector implements OnDestroy {
   private destroyHooks: Subject<void> = new Subject();
 
   ///// ---------  DAPP STATE INITIALIZATION
-  DAPP_STATE:IDAPP_STATE<PoolFactoryV2, STokenFactoryV2> = {
+  DAPP_STATE:IDAPP_STATE<PoolV2, STokenV2> = {
    
     defaultProvider: null,
     connectedNetwork: null,
@@ -202,7 +202,7 @@ async localWallet(index:number) {
 
     PoolMetadata.address = resolver.pool
 
-    const contract = new AngularContract<PoolFactoryV2>({
+    const contract = new AngularContract<PoolV2>({
      metadata:  PoolMetadata,
       provider: this.DAPP_STATE.defaultProvider!,
       signer: this.DAPP_STATE.signer!,
@@ -212,7 +212,7 @@ async localWallet(index:number) {
 
 
     StokenMetadata.address = resolver.sToken;
-    const contractStoken = new AngularContract<STokenFactoryV2>({
+    const contractStoken = new AngularContract<STokenV2>({
       metadata:   StokenMetadata,
        provider: this.DAPP_STATE.defaultProvider!,
        signer: this.DAPP_STATE.signer!,

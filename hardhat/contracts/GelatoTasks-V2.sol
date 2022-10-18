@@ -6,7 +6,7 @@ import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 import { LibDataTypes} from './gelato/LibDataTypes.sol';
 
-import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IPoolV2} from "./interfaces/IPoolFactory-V2.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 
@@ -15,11 +15,11 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 contract GelatoTasksV2 is Initializable {
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
   address ops;
-  IPoolFactoryV2 pool;
+  IPoolV2 pool;
 
   constructor() {}
 
-  function initialize(address _ops, IPoolFactoryV2 _pool) external initializer {
+  function initialize(address _ops, IPoolV2 _pool) external initializer {
     ops = _ops;
     pool = _pool;
   }
@@ -37,7 +37,7 @@ contract GelatoTasksV2 is Initializable {
     
      bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stopDateInMs), 600);
 
-     bytes memory execData = abi.encodeWithSelector(IPoolFactoryV2.stopstream.selector, address(_supplier), _all, _flowType);
+     bytes memory execData = abi.encodeWithSelector(IPoolV2.stopstream.selector, address(_supplier), _all, _flowType);
 
      LibDataTypes.Module[] memory modules;
      modules[0] =LibDataTypes.Module.TIME;

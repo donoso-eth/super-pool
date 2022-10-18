@@ -70,16 +70,16 @@ export type PoolV2StructOutput = [
   apy: APYStructOutput;
 };
 
-export type StreamStruct = { flow: BigNumberish; cancelTaskId: BytesLike };
+export type StreamStruct = { flow: BigNumberish; cancelFlowId: BytesLike };
 
 export type StreamStructOutput = [BigNumber, string] & {
   flow: BigNumber;
-  cancelTaskId: string;
+  cancelFlowId: string;
 };
 
 export type OutStreamStruct = {
   flow: BigNumberish;
-  cancelTaskId: BytesLike;
+  cancelFlowId: BytesLike;
   stepAmount: BigNumberish;
   stepTime: BigNumberish;
   initTime: BigNumberish;
@@ -97,7 +97,7 @@ export type OutStreamStructOutput = [
   string
 ] & {
   flow: BigNumber;
-  cancelTaskId: string;
+  cancelFlowId: string;
   stepAmount: BigNumber;
   stepTime: BigNumber;
   initTime: BigNumber;
@@ -161,7 +161,7 @@ export type PoolFactoryInitializerStructOutput = [
   resolverSettings: string;
 };
 
-export interface PoolFactoryV2Interface extends utils.Interface {
+export interface PoolV2Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
@@ -475,12 +475,12 @@ export type InitializedEvent = TypedEvent<[number], { version: number }>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
 
-export interface PoolFactoryV2 extends BaseContract {
+export interface PoolV2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: PoolFactoryV2Interface;
+  interface: PoolV2Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

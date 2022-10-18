@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
-import {IPoolFactoryV2} from "./IPoolFactory-V2.sol";
+import {IPoolV2} from "./IPoolFactory-V2.sol";
 
 interface IResolverSettingsV2 {
 

@@ -301,13 +301,13 @@ export const testPeriod = async (
 
   if (user.expected.inFlowId != undefined) {
     try {
-      expect(user.expected.inFlowId ).to.equal(userState.inStream.cancelTaskId);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} INFLOW -TaskId: ${userState.inStream.cancelTaskId?.toString()}`);
+      expect(user.expected.inFlowId ).to.equal(userState.inStream.cancelFlowId);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} INFLOW -TaskId: ${userState.inStream.cancelFlowId?.toString()}`);
     } catch (error) {
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} INFLOW -TaskId:  ${userState.inStream.cancelTaskId.toString()}, expected: ${user.expected.inFlowId.toString()}`
+        `\x1b[30m#${user.name} INFLOW -TaskId:  ${userState.inStream.cancelFlowId.toString()}, expected: ${user.expected.inFlowId.toString()}`
       );
     
     }
@@ -316,7 +316,7 @@ export const testPeriod = async (
 
   
   if (user.expected.nextExecIn != undefined) {
-    let nextExec =  (await contracts.ops?.timedTask(userState.inStream.cancelTaskId))?.nextExec as BigNumber;
+    let nextExec =  (await contracts.ops?.timedTask(userState.inStream.cancelFlowId))?.nextExec as BigNumber;
     
     try {
 
@@ -367,13 +367,13 @@ export const testPeriod = async (
 
   if (user.expected.outAssetsId != undefined) {
     try {
-      expect(user.expected.outAssetsId ).to.equal(userState.outAssets.cancelTaskId);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets-TaskId: ${userState.outAssets.cancelTaskId?.toString()}`);
+      expect(user.expected.outAssetsId ).to.equal(userState.outAssets.cancelFlowId);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} OUT-Assets-TaskId: ${userState.outAssets.cancelFlowId?.toString()}`);
     } catch (error) {
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} OUT-Assets-TaskId:  ${userState.outAssets.cancelTaskId.toString()}, expected: ${user.expected.outAssetsId.toString()}`
+        `\x1b[30m#${user.name} OUT-Assets-TaskId:  ${userState.outAssets.cancelFlowId.toString()}, expected: ${user.expected.outAssetsId.toString()}`
       );
     
     }
@@ -382,7 +382,7 @@ export const testPeriod = async (
 
   
   if (user.expected.nextExecOut != undefined) {
-    let nextExec =  (await contracts.ops?.timedTask(userState.outAssets.cancelTaskId))?.nextExec as BigNumber;
+    let nextExec =  (await contracts.ops?.timedTask(userState.outAssets.cancelFlowId))?.nextExec as BigNumber;
     
     try {
 

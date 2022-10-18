@@ -1,5 +1,5 @@
 import { BigNumber, Contract, logger, utils } from 'ethers';
-import { ERC20, ERC777, IERC20, IERC777, IOps, ISuperfluidToken, ISuperToken, PoolFactoryV2, STokenFactoryV2 } from '../../typechain-types';
+import { ERC20, ERC777, IERC20, IERC777, IOps, ISuperfluidToken, ISuperToken, PoolV2, STokenV2 } from '../../typechain-types';
 
 
 export interface IPOOL {
@@ -94,10 +94,10 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
   export interface ICONTRACTS_TEST  {
     poolAddress: string,
      superTokenContract: ISuperToken, 
-     superPool:PoolFactoryV2,
+     superPool:PoolV2,
      superTokenERC777: IERC777,
      ops?:IOps,
-     sToken: STokenFactoryV2,
+     sToken: STokenV2,
      strategyAddresse: string,
      aaveERC20:IERC20,
      PRECISSION: BigNumber
@@ -105,15 +105,15 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
   
 
     export enum SupplierEvent {
-      DEPOSIT,// uint256
-      WITHDRAW, // uint256
-      TRANSFER,//
-      STREAM_START, //int96
+      DEPOSIT,// (uint256)
+      WITHDRAW, // (uint256)
+      TRANSFER,// (address.uint256)
+      STREAM_START, //(int96)
       STREAM_STOP, //
-      OUT_STREAM_START, //int96
+      OUT_STREAM_START, //(int96)
       OUT_STREAM_STOP, //
-      OUT_STREAM_UPDATE, //
-      PUSH_TO_STRATEGY, //uint256
+      OUT_STREAM_UPDATE, //(int96)
+      PUSH_TO_STRATEGY, //(uint256)
       WITHDRAW_STEP,//
       REBALANCE //
     }

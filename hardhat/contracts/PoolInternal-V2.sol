@@ -8,14 +8,14 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 
 import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
-import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IPoolV2} from "./interfaces/IPoolFactory-V2.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 
 contract PoolInternalV2 is Initializable {
   using SafeMath for uint256;
 
   uint256 poolId;
-  IPoolFactoryV2 pool;
+  IPoolV2 pool;
 
   uint256 public PRECISSION;
 
@@ -25,7 +25,7 @@ contract PoolInternalV2 is Initializable {
   function initialize(IResolverSettingsV2 resolverSettings) external initializer {
     ///initialState
 
-    pool = IPoolFactoryV2(resolverSettings.getPool());
+    pool = IPoolV2(resolverSettings.getPool());
     PRECISSION = resolverSettings.getPrecission();
   }
 

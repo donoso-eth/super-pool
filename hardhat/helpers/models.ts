@@ -8,5 +8,6 @@ export interface INETWORK_CONFIG {
     superToken: string;
     aavePool: string;
     aToken: string;
+    aaveToken:string;
   };
 }

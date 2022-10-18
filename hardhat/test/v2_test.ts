@@ -17,16 +17,16 @@ import {
   ISuperfluidToken__factory,
   ISuperToken,
   ISuperToken__factory,
-  PoolFactoryV2,
-  PoolFactoryV2__factory,
+  PoolV2,
+  PoolV2__factory,
   PoolInternalV2,
   PoolInternalV2__factory,
   PoolStrategyV2,
   PoolStrategyV2__factory,
   ResolverSettingsV2,
   ResolverSettingsV2__factory,
-  STokenFactoryV2,
-  STokenFactoryV2__factory,
+  STokenV2,
+  STokenV2__factory,
   SuperPoolHost,
   SuperPoolHost__factory,
   IERC20,
@@ -53,16 +53,16 @@ import { gelatoPushToAave, gelatoWithdrawStep, getGelatoWithdrawStepId } from '.
 import { BigNumber } from '@ethersproject/bignumber';
 
 let superPoolHost: SuperPoolHost;
-let poolFactory: PoolFactoryV2;
-let sTokenFactory: STokenFactoryV2;
+let poolFactory: PoolV2;
+let sTokenFactory: STokenV2;
 let gelatoTasks: GelatoTasksV2;
 let poolStrategy: PoolStrategyV2;
 let settings: ResolverSettingsV2;
 let poolInternal: PoolInternalV2;
 
-let superPool: PoolFactoryV2;
+let superPool: PoolV2;
 let superPoolAddress: string;
-let sToken: STokenFactoryV2;
+let sToken: STokenV2;
 let sTokenAddress: string;
 
 let superTokenContract: ISuperToken;
@@ -146,9 +146,9 @@ describe('V2 test', function () {
 
     superPoolHost = await new SuperPoolHost__factory(deployer).deploy(network_params.host);
     console.log('Host---> deployed');
-    poolFactory = await new PoolFactoryV2__factory(deployer).deploy();
+    poolFactory = await new PoolV2__factory(deployer).deploy();
     console.log('Pool Factory---> deployed: ');
-    sTokenFactory = await new STokenFactoryV2__factory(deployer).deploy();
+    sTokenFactory = await new STokenV2__factory(deployer).deploy();
     console.log('Token Factotokery---> deployed');
 
     //
@@ -202,10 +202,10 @@ describe('V2 test', function () {
     await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43');
     console.log('Pool Strategy ---> initialized');
 
-    superPool = PoolFactoryV2__factory.connect(superPoolAddress, deployer);
+    superPool = PoolV2__factory.connect(superPoolAddress, deployer);
 
 
-    sToken = STokenFactoryV2__factory.connect(sTokenAddress, deployer);
+    sToken = STokenV2__factory.connect(sTokenAddress, deployer);
 
     let initialPoolEth = hre.ethers.utils.parseEther('10');
 

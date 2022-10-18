@@ -3,11 +3,11 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: PoolFactoryV2
+    name: PoolV2
     network: localhost
     source:
       address: '0xf4F77AB325d7E8B16F29caD99c019accffAFA643'
-      abi: PoolFactoryV2
+      abi: PoolV2
       startBlock: 27976990 
     mapping:
       kind: ethereum/events
@@ -17,11 +17,9 @@ dataSources:
         - Pool
         - Supplier
       abis:
-        - name: PoolFactoryV2
+        - name: PoolV2
           file: ./abis/pool_factory_v2.json
       eventHandlers:
-        - event: Initialized(uint8)
-          handler: handleInitialized
         - event: >-
             PoolUpdate((uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,int96,uint256))
           handler: handlePoolUpdate

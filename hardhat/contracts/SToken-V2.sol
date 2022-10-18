@@ -12,18 +12,19 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 
 
-import {IPoolFactoryV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IPoolV2} from "./interfaces/IPoolFactory-V2.sol";
 import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
 import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 
-contract STokenFactoryV2  is ERC20Upgradeable {
-      using SafeMath for uint256;
-
-  IPoolFactoryV2 pool;
+contract STokenV2  is ERC20Upgradeable {
+  using SafeMath for uint256;
+  address superHost;
+  
+  IPoolV2 pool;
   IPoolInternalV2 poolInternal;
   IPoolStrategyV2 poolStrategy;
-
+  IResolverSettingsV2 resolverSettings;
   uint256 public  PRECISSION;
 
   constructor() {}
@@ -32,13 +33,18 @@ contract STokenFactoryV2  is ERC20Upgradeable {
   /**
    * @notice initializer of the Pool
    */
-  function initialize(IResolverSettingsV2 resolverSettings,string memory _name, string memory _symbol) external initializer {
+  function initialize(IResolverSettingsV2 _resolverSettings,string memory _name, string memory _symbol) external initializer {
     ///initialState
     __ERC20_init(_name,_symbol);
-    pool = IPoolFactoryV2(resolverSettings.getPool());
+    resolverSettings = _resolverSettings;
     poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
     poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
     PRECISSION = resolverSettings.getPrecission();
+    superHost = msg.sender;
+  }
+
+    function setPool() external onlySuperHost {
+      pool = IPoolV2(resolverSettings.getPool());
   }
 
 
@@ -98,10 +104,8 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
     pool.poolUpdateCurrentState();
 
 
-    pool.updateSupplierDeposit(from, 0, amount);
-    console.log('DELETE DEPOSIT');
-    pool.updateSupplierDeposit(to, amount, 0);
- console.log('UPDATE DEPOSIT');
+    pool.transferSTokens(from, to, amount);
+
     emit Transfer(from, to, amount);
 
     _afterTokenTransfer(from, to, amount);
@@ -116,6 +120,13 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
   }
 
   // endregion overriding ERC20
+
+    modifier onlySuperHost() {
+    require(msg.sender == superHost, "Only Host");
+    _;
+  }
+
+
 
   // #region  ============= =============  ERC4626 Interface  ============= ============= //
   /****************************************************************************************************

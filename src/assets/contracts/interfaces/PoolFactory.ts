@@ -57,11 +57,11 @@ export type PoolFactoryInitializerStructOutput = [string, string, string] & {
   ops: string;
 };
 
-export type StreamStruct = { flow: BigNumberish; cancelTaskId: BytesLike };
+export type StreamStruct = { flow: BigNumberish; cancelFlowId: BytesLike };
 
 export type StreamStructOutput = [BigNumber, string] & {
   flow: BigNumber;
-  cancelTaskId: string;
+  cancelFlowId: string;
 };
 
 export interface PoolFactoryInterface extends utils.Interface {

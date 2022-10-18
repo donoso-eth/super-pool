@@ -1,48 +1,67 @@
-type Member @entity {
-  id: ID!
-  memberId: String!
-  member: String!
-  timestamp: BigInt!
-  initTimestamp: BigInt!
-  deposit: BigInt!
-  flow: BigInt!
-  flowGelatoId: String!
-  flowDuration: BigInt!
-  yieldAccrued: BigInt!
-  amountLocked: BigInt!
-  amountLoss: BigInt!
-  currentYield: BigInt!
-  memberSpan: BigInt!
+  enum SupplierEvent {
+   DEPOSIT, 
+      WITHDRAW, 
+      TRANSFER,
+      STREAM_START,
+      STREAM_STOP, //
+      OUT_STREAM_START, 
+      OUT_STREAM_UPDATE, 
+      PUSH_TO_STRATEGY,
+      WITHDRAW_STEP,
+      REBALANCE
+  }
 
+
+type Suppplier @entity {
+  id: ID!
+  supplier: String!
+  timestamp: BigInt!
+  createdTimestamp: BigInt!
+  cumulatedYield: BigInt!
+
+  inFlow: BigInt!
+  inCancelFlowId: String!
+
+  outFlow: BigInt!
+  outCancelFlowId: BigInt!
+  outStepAmount: BigInt!
+  outStepTime: BigInt!
+  outInitTime: BigInt!
+  outMinBalance: BigInt!
+  outCancelWithdrawId: String!
+
+  apySpan: BigInt!
+  apy: BigInt!
 }
 
 type Pool @entity {
   id: ID!
-  poolId: String!
   timestamp: BigInt!
-  totalDeposit: BigInt!
-  totalFlow: BigInt!
-  totalYieldStake: BigInt!
-  depositIndex: BigInt!
-  flowIndex: BigInt!
-  totalStaked: BigInt!
-  totalDelegated: BigInt!
-  percentageLocked: BigInt!
-  totalYieldCredit: BigInt!
-  liquidatedIndex: BigInt!
-  totalLiquidated: BigInt!
-  nrMembers: BigInt!
-  apy: BigInt!
+
+  deposit: BigInt!
+  depositFromInflowRate: BigInt!
+
+  inFlowRate: BigInt!
+  outFlowRate: BigInt!
+
+  yieldTokenIndex: BigInt!
+  yieldInFlowRateIndex: BigInt!
+
+  yieldAccrued: BigInt!
+  yieldSnapshot: BigInt!
+  totalYield: BigInt!
+
+  nrSuppliers: BigInt!
+
   apySpan: BigInt!
+  apy: BigInt!
 }
 
 
-
-type ChartMonth @entity {
+type SuppplierEvent @entity {
   id: ID!
-  month: String!
-  year: String!
-  timestamp: BigInt!
-  balance: BigInt!
-  staked: BigInt!
+  event: SupplierEvent!
+  payload: Bytes!
+  supplier: String!
+  timestamp: bigInt!
 }

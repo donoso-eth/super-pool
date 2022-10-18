@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
 
-interface IPoolFactoryV2 {
+interface IPoolV2 {
   /**
    * @notice initializer of the contract/oracle
    */
@@ -17,11 +17,11 @@ interface IPoolFactoryV2 {
 
   function poolUpdateCurrentState() external;
 
-  function updateSupplierDeposit(
-    address _supplier,
-    uint256 inDeposit,
-    uint256 outDeposit
-  ) external;
+ function transferSTokens(
+    address _sender,
+    address _receiver,
+    uint256 amount
+   ) external;
 
   function supplierUpdateCurrentState(address _supplier) external;
 

@@ -13,7 +13,12 @@ library Events {
 
       event SupplierUpdate(DataTypes.Supplier supplier);
 
+      event SupplierEvent(DataTypes.SupplierEvent supplierEvent, bytes payload, uint256 timestmap, address supplier);
+     
       event PoolUpdate(DataTypes.PoolV2 pool);
+
+
+
 
 
 }

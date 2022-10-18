@@ -21,18 +21,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
 
   const [deployer] = await initEnv(hre);
 
-  await hre.run('verify:verify', {
-    address:'0x0833A82e328C3944b3528E4c202a9F72D931c92f',
-    constructorArguments: [],
-  });
  
-  await hre.run('verify:verify', {
-    address: '0x3795917e216Cf9073f7fB2cd640cD0eef8886BC7',
-    constructorArguments: [],
-  });
-
-
-  throw new Error("");
   
 
   await hre.run('verify:verify', {
@@ -44,9 +33,9 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
 
   let host: SuperPoolHost = SuperPoolHost__factory.connect(superHost.address, deployer);
 
-  let result = await host.getResolverBySuperToken(network_params.superToken);
+  //let result = await host.getResolverBySuperToken(network_params.superToken);
 
-  deployContract = 'poolFactoryV2';
+  deployContract = 'poolV2';
   toDeployContract = contract_config[deployContract];
   const poolFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
@@ -55,7 +44,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
     constructorArguments: [],
   });
 
-  deployContract = 'sTokenFactoryV2';
+  deployContract = 'sTokenV2';
   toDeployContract = contract_config[deployContract];
   const sTokenFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 

@@ -4,7 +4,7 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { ERC20, ERC777, IOps, ISuperfluidToken, PoolFactoryV2, STokenFactoryV2 } from '../../typechain-types';
+import { ERC20, ERC777, IOps, ISuperfluidToken, PoolV2, STokenV2 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V2';
@@ -237,19 +237,19 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
     if (user.expected.inFlowId != undefined) {
       try {
-        expect(user.expected.inFlowId).to.equal(userState.inStream.cancelTaskId);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} INFLOW -TaskId: ${userState.inStream.cancelTaskId?.toString()}`);
+        expect(user.expected.inFlowId).to.equal(userState.inStream.cancelFlowId);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} INFLOW -TaskId: ${userState.inStream.cancelFlowId?.toString()}`);
       } catch (error) {
         console.log(
           '\x1b[31m%s\x1b[0m',
           '    x',
-          `\x1b[30m#${user.name} INFLOW -TaskId:  ${userState.inStream.cancelTaskId.toString()}, expected: ${user.expected.inFlowId.toString()}`
+          `\x1b[30m#${user.name} INFLOW -TaskId:  ${userState.inStream.cancelFlowId.toString()}, expected: ${user.expected.inFlowId.toString()}`
         );
       }
     }
 
     if (user.expected.nextExecIn != undefined) {
-      let nextExec = (await contracts.ops?.timedTask(userState.inStream.cancelTaskId))?.nextExec as BigNumber;
+      let nextExec = (await contracts.ops?.timedTask(userState.inStream.cancelFlowId))?.nextExec as BigNumber;
 
       try {
         //console.log(+timed['nextExec'].toString())
@@ -363,7 +363,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   }
 };
 
-export const getPool = async (superPool: PoolFactoryV2): Promise<any> => {
+export const getPool = async (superPool: PoolV2): Promise<any> => {
   let periodTimestamp = +(await superPool.lastPoolTimestamp()).toString();
   let periodRaw = await superPool.poolByTimestamp(periodTimestamp);
 
@@ -446,7 +446,7 @@ export const printUserResult = async (user: IUSERTEST): Promise<any> => {
   return user;
 };
 
-export const printPeriod = async (superPool: PoolFactoryV2, t0: number): Promise<any> => {
+export const printPeriod = async (superPool: PoolV2, t0: number): Promise<any> => {
   let periodTimestamp = +(await superPool.lastPoolTimestamp()).toString();
   let period = await superPool.poolByTimestamp(periodTimestamp);
   console.log(period.timestamp.toString());
@@ -465,7 +465,7 @@ export const printPeriod = async (superPool: PoolFactoryV2, t0: number): Promise
   return period;
 };
 
-export const printUser = async (superPool: PoolFactoryV2, userAddress: string): Promise<any> => {
+export const printUser = async (superPool: PoolV2, userAddress: string): Promise<any> => {
   let user = await superPool.suppliersByAddress(userAddress);
 
   console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
