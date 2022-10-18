@@ -37,4 +37,6 @@ interface IPoolV2 {
 
   function pushedToStrategy(uint256 amount ) external;
 
+  function setToken() external;
+
 }

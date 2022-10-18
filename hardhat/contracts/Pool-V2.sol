@@ -24,7 +24,7 @@ import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/app
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
-import {ISTokenV2} from "./interfaces/ISTokenFactory-V2.sol";
+import {ISTokenV2} from "./interfaces/ISToken-V2.sol";
 import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 import {IGelatoTasksV2} from "./interfaces/IGelatoTasks-V2.sol";

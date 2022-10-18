@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
-import {IPoolV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IPoolV2} from "./interfaces/IPool-V2.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";

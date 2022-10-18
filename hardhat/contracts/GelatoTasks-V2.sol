@@ -6,7 +6,7 @@ import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 import { LibDataTypes} from './gelato/LibDataTypes.sol';
 
-import {IPoolV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IPoolV2} from "./interfaces/IPool-V2.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 

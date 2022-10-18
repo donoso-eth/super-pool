@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ISTokenV2}  from '../interfaces/ISTokenFactory-V2.sol';
+import {ISTokenV2}  from '../interfaces/ISToken-V2.sol';
 import {IPoolStrategyV2} from '../interfaces/IPoolStrategy-V2.sol';
 import {IGelatoTasksV2} from '../interfaces/IGelatoTasks-V2.sol'; 
 import {IResolverSettingsV2} from '../interfaces/IResolverSettings-V2.sol'; 

@@ -5,6 +5,7 @@ import "hardhat/console.sol";
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 
@@ -12,15 +13,15 @@ import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 
 
-import {IPoolV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IPoolV2} from "./interfaces/IPool-V2.sol";
 import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
 import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 
-contract STokenV2  is ERC20Upgradeable {
+contract STokenV2  is UUPSUpgradeable,ERC20Upgradeable {
   using SafeMath for uint256;
   address superHost;
-  
+  address owner;
   IPoolV2 pool;
   IPoolInternalV2 poolInternal;
   IPoolStrategyV2 poolStrategy;
@@ -33,7 +34,7 @@ contract STokenV2  is ERC20Upgradeable {
   /**
    * @notice initializer of the Pool
    */
-  function initialize(IResolverSettingsV2 _resolverSettings,string memory _name, string memory _symbol) external initializer {
+  function initialize(IResolverSettingsV2 _resolverSettings,string memory _name, string memory _symbol, address _owner) external initializer {
     ///initialState
     __ERC20_init(_name,_symbol);
     resolverSettings = _resolverSettings;
@@ -41,12 +42,13 @@ contract STokenV2  is ERC20Upgradeable {
     poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
     PRECISSION = resolverSettings.getPrecission();
     superHost = msg.sender;
+    owner = _owner;
   }
 
     function setPool() external onlySuperHost {
       pool = IPoolV2(resolverSettings.getPool());
   }
-
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
   // #region  ============= =============  ERC20  ============= ============= //
   /****************************************************************************************************
@@ -126,6 +128,10 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
     _;
   }
 
+  modifier onlyOwner() {
+    require(msg.sender == owner, "Only Owner");
+    _;
+  }
 
 
   // #region  ============= =============  ERC4626 Interface  ============= ============= //

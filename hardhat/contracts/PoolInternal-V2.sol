@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 
 import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
-import {IPoolV2} from "./interfaces/IPoolFactory-V2.sol";
+import {IPoolV2} from "./interfaces/IPool-V2.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 
 contract PoolInternalV2 is Initializable {
