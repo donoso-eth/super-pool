@@ -164,7 +164,8 @@ export interface PoolV2Interface extends utils.Interface {
     "getPool(uint256)": FunctionFragment;
     "getSupplierByAdress(address)": FunctionFragment;
     "host()": FunctionFragment;
-    "initialize(address,address,address,address,address)": FunctionFragment;
+    "initialize(address,address,address,address)": FunctionFragment;
+    "initializeAfterSettings(address)": FunctionFragment;
     "lastPoolTimestamp()": FunctionFragment;
     "ops()": FunctionFragment;
     "parseLoanData(bytes)": FunctionFragment;
@@ -178,7 +179,6 @@ export interface PoolV2Interface extends utils.Interface {
     "redeemDeposit(uint256)": FunctionFragment;
     "redeemFlow(int96)": FunctionFragment;
     "redeemFlowStop()": FunctionFragment;
-    "setToken()": FunctionFragment;
     "supplierId()": FunctionFragment;
     "supplierUpdateCurrentState(address)": FunctionFragment;
     "suppliersByAddress(address)": FunctionFragment;
@@ -254,7 +254,11 @@ export interface PoolV2Interface extends utils.Interface {
   encodeFunctionData(functionFragment: "host", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [string, string, string, string, string]
+    values: [string, string, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initializeAfterSettings",
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "lastPoolTimestamp",
@@ -305,7 +309,6 @@ export interface PoolV2Interface extends utils.Interface {
     functionFragment: "redeemFlowStop",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "setToken", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "supplierId",
     values?: undefined
@@ -398,6 +401,10 @@ export interface PoolV2Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "host", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "initializeAfterSettings",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "lastPoolTimestamp",
     data: BytesLike
   ): Result;
@@ -440,7 +447,6 @@ export interface PoolV2Interface extends utils.Interface {
     functionFragment: "redeemFlowStop",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "setToken", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "supplierId", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supplierUpdateCurrentState",
@@ -627,8 +633,12 @@ export interface PoolV2 extends BaseContract {
       _host: string,
       _superToken: string,
       _token: string,
-      _resolverSettings: string,
       _owner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    initializeAfterSettings(
+      _resolverSettings: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -712,10 +722,6 @@ export interface PoolV2 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     redeemFlowStop(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    setToken(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -899,8 +905,12 @@ export interface PoolV2 extends BaseContract {
     _host: string,
     _superToken: string,
     _token: string,
-    _resolverSettings: string,
     _owner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  initializeAfterSettings(
+    _resolverSettings: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -981,10 +991,6 @@ export interface PoolV2 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   redeemFlowStop(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  setToken(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -1161,8 +1167,12 @@ export interface PoolV2 extends BaseContract {
       _host: string,
       _superToken: string,
       _token: string,
-      _resolverSettings: string,
       _owner: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    initializeAfterSettings(
+      _resolverSettings: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1239,8 +1249,6 @@ export interface PoolV2 extends BaseContract {
     ): Promise<void>;
 
     redeemFlowStop(overrides?: CallOverrides): Promise<void>;
-
-    setToken(overrides?: CallOverrides): Promise<void>;
 
     supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1438,8 +1446,12 @@ export interface PoolV2 extends BaseContract {
       _host: string,
       _superToken: string,
       _token: string,
-      _resolverSettings: string,
       _owner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    initializeAfterSettings(
+      _resolverSettings: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1493,10 +1505,6 @@ export interface PoolV2 extends BaseContract {
     ): Promise<BigNumber>;
 
     redeemFlowStop(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    setToken(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1659,8 +1667,12 @@ export interface PoolV2 extends BaseContract {
       _host: string,
       _superToken: string,
       _token: string,
-      _resolverSettings: string,
       _owner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    initializeAfterSettings(
+      _resolverSettings: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1714,10 +1726,6 @@ export interface PoolV2 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     redeemFlowStop(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setToken(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

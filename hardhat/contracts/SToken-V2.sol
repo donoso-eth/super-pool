@@ -34,19 +34,21 @@ contract STokenV2  is UUPSUpgradeable,ERC20Upgradeable {
   /**
    * @notice initializer of the Pool
    */
-  function initialize(IResolverSettingsV2 _resolverSettings,string memory _name, string memory _symbol, address _owner) external initializer {
+  function initialize(string memory _name, string memory _symbol, address _owner) external initializer {
     ///initialState
     __ERC20_init(_name,_symbol);
-    resolverSettings = _resolverSettings;
-    poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
-    poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
-    PRECISSION = resolverSettings.getPrecission();
+   
+  
     superHost = msg.sender;
     owner = _owner;
   }
 
-    function setPool() external onlySuperHost {
+ function initializeAfterSettings(IResolverSettingsV2 _resolverSettings ) external onlySuperHost {
+   resolverSettings = _resolverSettings;
       pool = IPoolV2(resolverSettings.getPool());
+        poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
+    poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
+    PRECISSION = resolverSettings.getPrecission();
   }
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 

@@ -7,7 +7,7 @@ import {IResolverSettingsV2} from "../interfaces/IResolverSettings-V2.sol";
 
 interface ISTokenV2 {
 
-  function initialize(IResolverSettingsV2 resolverSettings,string memory _name, string memory _symbol)  external;
+  function initialize(string memory _name, string memory _symbol)  external;
 
   function balanceOf(address _supplier) external view returns (uint256 balance);
 
@@ -15,5 +15,5 @@ interface ISTokenV2 {
 
   function balanceOfShares(address _supplier) external view returns (uint256 _shares);
 
-    function setPool() external;
+ function initializeAfterSettings(IResolverSettingsV2 _resolverSettings ) external;
 }

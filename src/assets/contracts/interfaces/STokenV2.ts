@@ -28,10 +28,10 @@ export interface STokenV2Interface extends utils.Interface {
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "getSupplierBalance(address)": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
-    "initialize(address,string,string,address)": FunctionFragment;
+    "initialize(string,string,address)": FunctionFragment;
+    "initializeAfterSettings(address)": FunctionFragment;
     "name()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
-    "setPool()": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
@@ -68,14 +68,17 @@ export interface STokenV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [string, string, string, string]
+    values: [string, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initializeAfterSettings",
+    values: [string]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "proxiableUUID",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "setPool", values?: undefined): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -113,12 +116,15 @@ export interface STokenV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "initializeAfterSettings",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "proxiableUUID",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "setPool", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -251,20 +257,20 @@ export interface STokenV2 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     initialize(
-      _resolverSettings: string,
       _name: string,
       _symbol: string,
       _owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    initializeAfterSettings(
+      _resolverSettings: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     name(overrides?: CallOverrides): Promise<[string]>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
-
-    setPool(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<[string]>;
 
@@ -331,20 +337,20 @@ export interface STokenV2 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   initialize(
-    _resolverSettings: string,
     _name: string,
     _symbol: string,
     _owner: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  initializeAfterSettings(
+    _resolverSettings: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   name(overrides?: CallOverrides): Promise<string>;
 
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
-  setPool(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   symbol(overrides?: CallOverrides): Promise<string>;
 
@@ -411,18 +417,20 @@ export interface STokenV2 extends BaseContract {
     ): Promise<boolean>;
 
     initialize(
-      _resolverSettings: string,
       _name: string,
       _symbol: string,
       _owner: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
+    initializeAfterSettings(
+      _resolverSettings: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     name(overrides?: CallOverrides): Promise<string>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
-
-    setPool(overrides?: CallOverrides): Promise<void>;
 
     symbol(overrides?: CallOverrides): Promise<string>;
 
@@ -534,20 +542,20 @@ export interface STokenV2 extends BaseContract {
     ): Promise<BigNumber>;
 
     initialize(
-      _resolverSettings: string,
       _name: string,
       _symbol: string,
       _owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    initializeAfterSettings(
+      _resolverSettings: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setPool(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     symbol(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -618,20 +626,20 @@ export interface STokenV2 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     initialize(
-      _resolverSettings: string,
       _name: string,
       _symbol: string,
       _owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    initializeAfterSettings(
+      _resolverSettings: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    setPool(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

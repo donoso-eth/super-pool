@@ -44,14 +44,14 @@ contract SuperPoolHost {
        // address poolContract = Clones.clone(superPoolInput.poolFactoryImpl);
          ERC1967Proxy sTokenContract =  new ERC1967Proxy(
             address(superPoolInput.sTokenImpl),
-            abi.encodeCall(STokenV2.initialize, (superPoolInput.settings, "Super Pool Token USDC", "sUSDC", msg.sender))
+            abi.encodeCall(STokenV2.initialize, ( "Super Pool Token USDC", "sUSDC", msg.sender))
         );
 
             console.log('proxy token ok0');
 
            ERC1967Proxy poolContract= new ERC1967Proxy(
             address(superPoolInput.poolFactoryImpl),
-            abi.encodeCall(PoolV2.initialize, (host,superPoolInput.superToken,superPoolInput.token,superPoolInput.settings,msg.sender))
+            abi.encodeCall(PoolV2.initialize, (host,superPoolInput.superToken,superPoolInput.token,msg.sender))
         );
 
      
@@ -71,10 +71,11 @@ contract SuperPoolHost {
         //IPoolV2(poolContract).initialize(poolFactoryInitializer);
 
        // ISTokenV2(address(sTokenContract)).initialize(;
-
         
-        IPoolV2(address(poolContract)).setToken();
-        ISTokenV2(address(sTokenContract)).setPool();
+         ISTokenV2(address(sTokenContract)).initializeAfterSettings(superPoolInput.settings);
+        
+        IPoolV2(address(poolContract)).initializeAfterSettings(superPoolInput.settings);
+       
 
         superTokenResolverByAddress[address(superPoolInput.superToken)].pool = address(poolContract);
         superTokenResolverByAddress[address(superPoolInput.superToken)].sToken = address(sTokenContract);

@@ -2,12 +2,18 @@
 pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
-
+import {IResolverSettingsV2} from "./IResolverSettings-V2.sol";
+import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import  {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 interface IPoolV2 {
   /**
    * @notice initializer of the contract/oracle
    */
-  function initialize(DataTypes.PoolFactoryInitializer calldata poolFactoryInitializer) external;
+ 
+   function initialize( ISuperfluid _host,
+    ISuperToken _superToken,
+    IERC20 _token,
+    address _owner) external;
 
   function stopstream(
     address _receiver,
@@ -37,6 +43,6 @@ interface IPoolV2 {
 
   function pushedToStrategy(uint256 amount ) external;
 
-  function setToken() external;
+  function initializeAfterSettings(IResolverSettingsV2 _resolverSettings ) external;
 
 }
