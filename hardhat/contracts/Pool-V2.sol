@@ -107,43 +107,50 @@ contract PoolV2 is Initializable, UUPSUpgradeable,SuperAppBase, IERC777Recipient
   /**
    * @notice initializer of the Pool
    */
-  function initialize(DataTypes.PoolFactoryInitializer calldata poolFactoryInitializer) external initializer {
+  function initialize( ISuperfluid _host,
+    ISuperToken _superToken,
+    IERC20 _token,
+    IResolverSettingsV2 _resolverSettings,
+    address _owner) external initializer {
     ///initialState
-
+    console.log(116);
     lastPoolTimestamp = block.timestamp;
     poolByTimestamp[block.timestamp] = DataTypes.PoolV2(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
-
+console.log(116);
     poolTimestampById[0] = block.timestamp;
-
+console.log(116);
     //// super app && superfluid
-    host = poolFactoryInitializer.host;
-    superToken = poolFactoryInitializer.superToken;
+    host = _host;
+    superToken = _superToken;
+    console.log(116);
     cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
-    token = poolFactoryInitializer.token;
-    owner = poolFactoryInitializer.owner;
+    token = _token;
+    owner = _owner;
     superHost = msg.sender;
-
-    resolverSettings = IResolverSettingsV2(poolFactoryInitializer.resolverSettings);
+console.log(116);
+    resolverSettings = IResolverSettingsV2(_resolverSettings);
     poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
     gelatoTasks = IGelatoTasksV2(resolverSettings.getGelatoTasks());
     poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
+    console.log(135);
 
     //// gelato
     ops = IOps(resolverSettings.getGelatoOps());
+       console.log(139);
     gelato = ops.gelato();
-
+     console.log(141);
     MAX_INT = 2**256 - 1;
-
+ console.log(142);
     token.approve(address(poolStrategy), MAX_INT);
     superToken.approve(address(poolStrategy), MAX_INT);
-
+  console.log(145);
     STEPS = resolverSettings.getSteps();
     SUPERFLUID_DEPOSIT = resolverSettings.getSuperfluidDeposit();
     POOL_BUFFER = resolverSettings.getPoolBuffer();
     MIN_OUTFLOW_ALLOWED = 3600;
 
     _cfaLib = CFAv1Library.InitData(host, cfa);
-
+    console.log(152);
     //// tokens receie implementation
     IERC1820Registry _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
     bytes32 TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");

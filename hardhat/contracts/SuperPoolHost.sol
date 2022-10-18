@@ -32,26 +32,29 @@ contract SuperPoolHost {
     function createSuperPool(DataTypes.SuperPoolInput memory superPoolInput) external {
         require(superTokenResolverByAddress[address(superPoolInput.superToken)].pool == address(0), "POOL_EXISTS");
         //// INITIALIZE POOL
-        DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;
-        poolFactoryInitializer = DataTypes.PoolFactoryInitializer({
-            host: host,
-            superToken: superPoolInput.superToken,
-            token: superPoolInput.token,
-            resolverSettings: superPoolInput.settings,
-            owner: msg.sender
-        });
+        // DataTypes.PoolFactoryInitializer memory poolFactoryInitializer;
+        // poolFactoryInitializer = DataTypes.PoolFactoryInitializer({
+        //     host: host,
+        //     superToken: superPoolInput.superToken,
+        //     token: superPoolInput.token,
+        //     resolverSettings: superPoolInput.settings,
+        //     owner: msg.sender
+        // });
 
        // address poolContract = Clones.clone(superPoolInput.poolFactoryImpl);
+         ERC1967Proxy sTokenContract =  new ERC1967Proxy(
+            address(superPoolInput.sTokenImpl),
+            abi.encodeCall(STokenV2.initialize, (superPoolInput.settings, "Super Pool Token USDC", "sUSDC", msg.sender))
+        );
+
+            console.log('proxy token ok0');
 
            ERC1967Proxy poolContract= new ERC1967Proxy(
-            superPoolInput.poolFactoryImpl,
-            abi.encodeWithSelector(PoolV2.initialize.selector, poolFactoryInitializer)
+            address(superPoolInput.poolFactoryImpl),
+            abi.encodeCall(PoolV2.initialize, (host,superPoolInput.superToken,superPoolInput.token,superPoolInput.settings,msg.sender))
         );
 
-          ERC1967Proxy sTokenContract =  new ERC1967Proxy(
-            address(superPoolInput.sTokenImpl),
-            abi.encodeWithSelector(STokenV2.initialize.selector, superPoolInput.settings, "Super Pool Token USDC", "sUSDC", msg.sender)
-        );
+     
 
 
        // address sTokenContract = Clones.clone(address(superPoolInput.sTokenImpl));
