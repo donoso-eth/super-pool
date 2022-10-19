@@ -169,7 +169,7 @@ export const applyUserEvent = async (
       break;
 
     case SupplierEvent.OUT_STREAM_UPDATE:
-      console.log('out_streamio');
+      console.log('out_streamio_stop');
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
 

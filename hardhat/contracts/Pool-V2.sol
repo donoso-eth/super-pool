@@ -217,9 +217,12 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
     }
 
     function redeemFlowStop() external {
+      console.log('200 pool');
         poolInternal._redeemFlowStop(msg.sender);
 
         DataTypes.Supplier memory supplier = poolInternal.getSupplier(msg.sender);
+       
+
         emit Events.SupplierUpdate(supplier);
         bytes memory payload = abi.encode("");
         emit Events.SupplierEvent(DataTypes.SupplierEvent.OUT_STREAM_STOP, payload, block.timestamp, msg.sender);
@@ -229,6 +232,18 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
               IERC20(address(superToken)).transfer(receiver, amount);
     }
 
+
+    function lastPoolTimestamp() external view returns(uint256){
+      return poolInternal.getLastTimestmap();
+    }
+
+    function getool(uint256 timestamp) external view returns(DataTypes.PoolV2 memory) {
+      return poolInternal.getPool(timestamp);
+    }
+    
+    function getLastPool() external view returns(DataTypes.PoolV2 memory)  {
+      return poolInternal.getLastPool();
+    }
 
     function closeAccount() external {}
 

@@ -100,6 +100,10 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         pool = poolByTimestamp[lastPoolTimestamp];
     }
 
+    function getLastTimestmap() external view returns (uint256) {
+       return lastPoolTimestamp;
+    }
+
     // ============= ============= POOL UPDATE ============= ============= //
     // #region Pool Update
 
@@ -269,17 +273,24 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         newCtx = _ctx;
         console.log(291);
         _supplierUpdateCurrentState(_supplier);
-        console.log(293);
+        console.log(293,uint96(supplier.outStream.flow));
         int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
         int96 newNetFlow = inFlow - outFlow;
 
+  
         if (currentNetFlow < 0) {
             /// PREVIOUS FLOW NEGATIVE AND CURRENT FLOW POSITIVE
 
             if (newNetFlow >= 0) {
+
+                console.log(286);
+
                 pool.outFlowRate = pool.outFlowRate + currentNetFlow;
 
                 pool.inFlowRate = pool.inFlowRate + newNetFlow;
+
+
+             
 
                 ///// refactor logic
                 if (newNetFlow == 0) {
@@ -423,7 +434,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
             if (fromStrategy > balance) {
                 correction = fromStrategy - balance;
                 poolStrategy.withdraw(balance, _receiver);
-                pool.yieldSnapshot = pool.yieldSnapshot - balance;
+                pool.yieldSnapshot = pool.yieldSnapshot - fromStrategy;
                 if (_supplier == _receiver) {
                     poolContract.transferSuperToken(_receiver, correction);
                 }
@@ -576,11 +587,14 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
     }
 
     function _redeemFlowStop(address _supplier) external onlyPool {
+      console.log('590 pool');
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+
+        console.log(585);
 
         require(supplier.outStream.flow > 0, "OUT_STREAM_NOT_EXISTS");
 
-        _inStreamCallback(msg.sender, 0, 0, "0x");
+        _inStreamCallback(_supplier, 0, 0, "0x");
     }
 
     //// #endregion
