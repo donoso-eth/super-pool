@@ -13,6 +13,7 @@ import {PoolV2} from "./Pool-V2.sol";
 import {ISTokenV2} from "./interfaces/ISToken-V2.sol";
 import {STokenV2} from "./SToken-V2.sol";
 import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
+import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
@@ -66,16 +67,15 @@ contract SuperPoolHost {
 
         host.registerAppByFactory(ISuperApp(address(poolContract)), configWord);
 
-        IResolverSettingsV2(superPoolInput.settings).initialize(superPoolInput.settingsInitializer, address(poolContract), address(sTokenContract));
+        IResolverSettingsV2  resolverSetting =  IResolverSettingsV2(superPoolInput.settings);
+        resolverSetting.initialize(superPoolInput.settingsInitializer, address(poolContract), address(sTokenContract));
 
-        //IPoolV2(poolContract).initialize(poolFactoryInitializer);
 
-       // ISTokenV2(address(sTokenContract)).initialize(;
-        
-         ISTokenV2(address(sTokenContract)).initializeAfterSettings(superPoolInput.settings);
+        ISTokenV2(address(sTokenContract)).initializeAfterSettings(superPoolInput.settings);
         
         IPoolV2(address(poolContract)).initializeAfterSettings(superPoolInput.settings);
-       
+
+        IPoolInternalV2(resolverSetting.getPoolInternal()).initialize(superPoolInput.settings,msg.sender, superPoolInput.superToken);
 
         superTokenResolverByAddress[address(superPoolInput.superToken)].pool = address(poolContract);
         superTokenResolverByAddress[address(superPoolInput.superToken)].sToken = address(sTokenContract);

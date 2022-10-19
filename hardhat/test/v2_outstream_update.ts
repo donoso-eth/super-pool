@@ -124,7 +124,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe.only('V2 test OUTSTREAM ONLY', function () {
+describe('V2 test OUTSTREAM ONLY', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -196,12 +196,12 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
     superPoolAddress = superTokenResolver.pool;
     sTokenAddress = superTokenResolver.sToken;
 
-    await poolInternal.initialize(settings.address);
-    console.log('Pool Internal ---> initialized');
+    // await poolInternal.initialize(settings.address);
+    // console.log('Pool Internal ---> initialized');
 
-    await gelatoTasks.initialize(network_params.ops, superPoolAddress);
+    await gelatoTasks.initialize(network_params.ops, superPoolAddress, poolInternal);
     console.log('Gelato Tasks ---> initialized');
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43');
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43',poolInternal);
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolV2__factory.connect(superPoolAddress, deployer);
@@ -256,6 +256,7 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
       sToken: sToken,
       superTokenERC777,
       aaveERC20,
+      poolInternal,
       strategyAddresse: poolStrategy.address,
       ops: ops,
       PRECISSION,
@@ -274,7 +275,7 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
 
     t0 = +(await superPool.lastPoolTimestamp());
     console.log(t0.toString());
-
+    let iintUser1 = await superTokenContract.balanceOf(user1.address);
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 800 units at t0 ');
 
     erc777 = await IERC777__factory.connect(network_params.superToken, user2);
@@ -316,7 +317,7 @@ describe.only('V2 test OUTSTREAM ONLY', function () {
         expected: {
           id: BigNumber.from(2),
           realTimeBalance: amount,
-          tokenBalance: initialBalance.sub(amount),
+          tokenBalance: iintUser1.sub(amount),
           deposit: amount.mul(PRECISSION),
           outFlow: BigNumber.from(0),
           outStepAmount: BigNumber.from(0),
