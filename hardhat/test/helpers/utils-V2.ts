@@ -446,20 +446,21 @@ export const printUserResult = async (user: IUSERTEST): Promise<any> => {
   return user;
 };
 
-export const printPeriod = async (superPool: PoolV2, t0: number): Promise<any> => {
+export const printPool = async (poolInternal: PoolInternalV2, t0: number): Promise<any> => {
   let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
-  let period = await superPool.poolByTimestamp(periodTimestamp);
+  let period = await poolInternal.getPool(periodTimestamp);
   console.log(period.timestamp.toString());
 
   console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXX   PERIOD    XXXXXXXXXXXXXXXXXXXXX');
-  console.log(`TimeStamp ${+period.timestamp.toString() - t0} `);
+  console.log(`TimeStamp ${+period.timestamp.toString()} `);
   console.log(`In-Flow ${period.inFlowRate.toString()}  units/s`);
   console.log(`Out-Flow ${period.outFlowRate.toString()}  units/s`);
   console.log(`Deposit From InFlow ${period.depositFromInFlowRate.toString()}  units`);
   console.log(`Deposit ${period.deposit.toString()}  units`);
   console.log(`IndexYieldToken: ${period.yieldTokenIndex.toString()}  units`);
   console.log(`IndexYieldInFlowrate: ${period.yieldInFlowRateIndex.toString()}  units`);
-  console.log(`Yield: ${period.yieldAccrued.toString()}  units`);
+  console.log(`Yield accrued: ${period.yieldAccrued.toString()}  units`);
+  console.log(`Yield snapshot: ${period.yieldSnapshot.toString()}  units`);
   console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
   return period;

@@ -40,6 +40,8 @@ interface IPoolInternalV2 {
 
     function getLastPool() external view returns (DataTypes.PoolV2 memory);
 
+     function getLastTimestmap() external view returns (uint256);
+
     function withdrawStep(address _receiver) external;
 
     function pushedToStrategy(uint256 amount) external;

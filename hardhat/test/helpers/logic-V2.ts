@@ -14,13 +14,14 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAc
   let pool: IPOOL_RESULT = Object.assign({}, lastPool);
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
-
+  console.log(17,timestamp.toString())
   pool.poolTotalBalance = pool.poolTotalBalance.add(yieldAccrued);
 
   let depositSeconds = lastPool.deposit.mul(peridodSpan);
+  console.log(21,depositSeconds.toString())
 
   let flowSeconds = lastPool.depositFromInFlowRate.mul(peridodSpan).add(lastPool.inFlowRate.mul(peridodSpan).mul(peridodSpan).mul(PRECISSION).div(2));
-
+  console.log(22,flowSeconds.toString())
   let totalSeconds = depositSeconds.add(flowSeconds);
 
   let inFlowContribution = flowSeconds.mul(PRECISSION);
@@ -29,10 +30,16 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAc
   let indexDeposit = +depositSeconds == 0 ? 0 : depositContribution.mul(yieldAccrued).div(totalSeconds.mul(lastPool.deposit));
   let indexFlow = +flowSeconds == 0 ? 0 : inFlowContribution.mul(yieldAccrued).div(lastPool.inFlowRate.mul(totalSeconds));
 
+  console.log(20, indexDeposit);
+  console.log(34, indexFlow)
+
   pool.depositFromInFlowRate = lastPool.depositFromInFlowRate.add(lastPool.inFlowRate.mul(peridodSpan).mul(PRECISSION));
 
   pool.yieldTokenIndex = lastPool.yieldTokenIndex.add(indexDeposit);
   pool.yieldInFlowRateIndex = lastPool.yieldInFlowRateIndex.add(indexFlow);
+
+  console.log(38,pool.yieldTokenIndex.toString())
+  console.log(39,pool.yieldInFlowRateIndex.toString())
 
   pool.id = lastPool.id.add(BigNumber.from(1));
   pool.timestamp = timestamp;
@@ -88,10 +95,23 @@ export const applyUserEvent = async (
     // }
     delete nonActiveUsers[activeUser.address];
   }
+  let rec;
+  if (code == SupplierEvent.TRANSFER) {
+    result = abiCoder.decode(['address','uint256'], payload);
+     rec = usersPool[result[0]]
+    delete nonActiveUsers[rec.address];
+    [rec, pool] = await updateUser(rec, pool, lastPool, pools, PRECISSION, sf, superToken, deployer, superPoolAddress);
+ 
+
+  }
 
   let users = await updateNonActiveUsers(nonActiveUsers, pool, lastPool, pools, PRECISSION, sf, superToken, deployer, superPoolAddress);
   if (activeUser !== undefined) {
     users[activeUser.address] = activeUser;
+  }
+
+  if (code == SupplierEvent.TRANSFER && rec != undefined){
+      users[rec.address] = rec;
   }
 
   switch (code) {
@@ -118,8 +138,14 @@ export const applyUserEvent = async (
       case SupplierEvent.TRANSFER:
         console.log('transferio');
         result = abiCoder.decode(['address','uint256'], payload);
+
+        users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(result[1].mul(PRECISSION));
+        users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.realTimeBalance.sub(result[1]);
+  
+        // [receiveUser , pool] = await updateUser( users[result[0]], pool, lastPool, pools, PRECISSION, sf, superToken, deployer, superPoolAddress);
+        users[result[0]].expected.deposit =  users[result[0]].expected.deposit.add(result[1].mul(PRECISSION));
+        users[result[0]].expected.realTimeBalance =  users[result[0]].expected.realTimeBalance.add(result[1]);
      
-       // pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
         break;
   
 
@@ -169,7 +195,7 @@ export const applyUserEvent = async (
       break;
 
     case SupplierEvent.OUT_STREAM_UPDATE:
-      console.log('out_streamio');
+      console.log('out_streamio_stop');
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
 

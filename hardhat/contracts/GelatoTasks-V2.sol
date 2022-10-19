@@ -91,7 +91,7 @@ contract GelatoTasksV2 is Initializable {
     moduleData,
     ETH
     );
-console.logBytes32(taskId);
+
 
   }
 

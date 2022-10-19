@@ -281,7 +281,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 800 units at t0 ');
 
-    let iintUser1 = await superTokenContract.balanceOf(user1.address);
+    let iintUser1 = await superTokenContract.balanceOf(user2.address);
 
     erc777 = await IERC777__factory.connect(network_params.superToken, user2);
 
@@ -372,7 +372,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
     timestamp = t1.add(BigNumber.from(2 * ONE_DAY));
     let flowRate = utils.parseEther('100').div(ONE_DAY);
     let outFlowRate = flowRate.div(BigNumber.from(2));
-    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate, 0));
+    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate));
 
 
 
@@ -393,9 +393,9 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     pool.poolTotalBalance =  pool.poolTotalBalance.sub(loanStream.deposit);
 
-    payload = abiCoder.encode(['int96'], [outFlowRate]);
+   let payload = abiCoder.encode(['int96'], [outFlowRate]);
 
-    lastUsersPool = usersPool;
+   let lastUsersPool = usersPool;
   
 
     result = await applyUserEvent(
@@ -416,7 +416,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    let taskId = await getGelatoWithdrawStepId(superPool,gelatoTasks,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
+    let taskId = await getGelatoWithdrawStepId(poolInternal,gelatoTasks,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
     usersPool[user2.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +t1 + 2 * ONE_DAY, result[1], contractsTest, result[0]);
 
@@ -496,7 +496,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
         timestamp = usersPool[user2.address].expected.nextExecOut; //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
     
   
-        await gelatoWithdrawStep(superPool,gelatoTasks,ops,executor,user2.address,+usersPool[user2.address].expected.outStreamCreated ,+usersPool[user2.address].expected.outStepTime);
+        await gelatoWithdrawStep(poolInternal,gelatoTasks,ops,executor,user2.address,+usersPool[user2.address].expected.outStreamCreated ,+usersPool[user2.address].expected.outStepTime);
 
     
         lastPool = Object.assign({}, pool);
