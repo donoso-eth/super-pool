@@ -86,7 +86,7 @@ contract GelatoTasksV2 is Initializable {
 
     
     taskId = IOps(ops).createTask(
-    address(pool),
+    address(poolInternal),
     execData,
     moduleData,
     ETH

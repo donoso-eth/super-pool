@@ -282,6 +282,9 @@ describe.only('V2 test', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 20 units at t0 ');
 
+    let iintUser1 = await superTokenContract.balanceOf(user1.address);
+    console.log(iintUser1.toString());
+
     erc777 = await IERC777__factory.connect(network_params.superToken, user1);
 
     let amount = utils.parseEther('500');
@@ -321,7 +324,7 @@ describe.only('V2 test', function () {
         expected: {
           id: BigNumber.from(1),
           realTimeBalance: amount,
-          tokenBalance: initialBalance.sub(amount),
+          tokenBalance: iintUser1.sub(amount),
           deposit: amount.mul(PRECISSION),
           outFlow: BigNumber.from(0),
           outStepAmount:BigNumber.from(0),
@@ -343,6 +346,9 @@ describe.only('V2 test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tests passed ');
 
     // #endregion ============== FIRST PERIOD ============================= //
+
+
+    
 
     // #region ================= SECOND PERIOD ============================= //
     console.log('\x1b[36m%s\x1b[0m', '#2--- deposit into strategy gelato to aave');
@@ -557,6 +563,10 @@ describe.only('V2 test', function () {
     console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
     // #endregion =================   SIXTH PERIOD ============================= //
 
+
+ 
+      
+
     // #region =================  SEVENTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#7--- User2 streamstop');
@@ -621,18 +631,28 @@ describe.only('V2 test', function () {
     let outFlowRate = flowRate.div(BigNumber.from(2));
     await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate));
 
+    loanStream = await sf.cfaV1.getFlow({
+      superToken: network_params.superToken,
+      sender: superPoolAddress,
+      receiver: user2.address,
+      providerOrSigner: user2,
+    });
+
     yieldPool = await poolInternal.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldSnapshot;
     yieldAccrued = yieldPool.yieldAccrued;
     lastPool = Object.assign({}, pool);
 
+
     pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
 
+    pool.poolTotalBalance = pool.poolTotalBalance.sub(loanStream.deposit); 
+    
     payload = abiCoder.encode(['int96'], [outFlowRate]);
 
     lastUsersPool = usersPool;
-    expedtedPoolBalance = initialBalance.add(amount);
+
 
     result = await applyUserEvent(
       SupplierEvent.OUT_STREAM_START,

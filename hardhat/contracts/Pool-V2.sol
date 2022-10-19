@@ -172,6 +172,8 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
         require(msg.sender == address(superToken), "INVALID_TOKEN");
         require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
+        
+
         poolInternal._tokensReceived(from, amount);
 
         DataTypes.Supplier memory supplier = poolInternal.getSupplier(from);
@@ -316,7 +318,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
 
     receive() external payable {}
 
-    function transfer(uint256 _amount, address _paymentToken) external onlyPoolStrategy {
+    function transfer(uint256 _amount, address _paymentToken) external onlyPoolStrategyOrInternal {
         _transfer(_amount, _paymentToken);
     }
 
@@ -448,6 +450,11 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
 
     function _isSameToken(ISuperToken _superToken) private view returns (bool) {
         return address(_superToken) == address(superToken);
+    }
+
+        modifier onlyPoolStrategyOrInternal() {
+        require(msg.sender == address(poolStrategy) || msg.sender == address(poolInternal)  , "Only Internal or Strategy");
+        _;
     }
 
     modifier onlyPoolStrategy() {

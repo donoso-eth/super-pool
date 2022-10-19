@@ -109,8 +109,9 @@ export const applyUserEvent = async (
       console.log('withdrawio');
       result = abiCoder.decode(['uint256'], payload);
       pool.deposit = pool.deposit.sub(result[0].mul(PRECISSION));
+      pool.poolTotalBalance = pool.poolTotalBalance.sub(result[0]);
       users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(result[0].mul(PRECISSION));
-      users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.realTimeBalance.sub(result[0].mul(PRECISSION));
+      users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.realTimeBalance.sub(result[0]);
       users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(result[0]);
       break;
 

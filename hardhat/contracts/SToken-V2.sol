@@ -78,6 +78,9 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
 
     uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
+    console.log(81, yieldSupplier);
+    console.log(82, uint96(supplier.inStream.flow));
+
       int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
     if (netFlow >= 0) {

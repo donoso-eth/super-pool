@@ -190,12 +190,13 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
 
     function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-
+        console.log(193,supplier.timestamp);
+        console.log(supplierId);
         if (supplier.createdTimestamp == 0) {
             supplier.createdTimestamp = block.timestamp;
             supplier.supplier = _supplier;
             supplier.timestamp = block.timestamp;
-            supplierId++;
+            supplierId = supplierId +1;
             supplier.id = supplierId;
 
             supplierAdressById[supplier.id] = _supplier;
@@ -235,7 +236,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         uint256 inDeposit,
         uint256 outDeposit
     ) internal {
-        DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+        DataTypes.Supplier storage supplier = _getSupplier(_supplier);
 
         _supplierUpdateCurrentState(_supplier);
         
@@ -644,7 +645,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
     }
 
     modifier onlyPool() {
-        require(msg.sender == address(poolContract), "Only Strategy");
+        require(msg.sender == address(poolContract), "Only Pool");
         _;
     }
 
