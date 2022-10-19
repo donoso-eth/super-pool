@@ -237,7 +237,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
       return poolInternal.getLastTimestmap();
     }
 
-    function getool(uint256 timestamp) external view returns(DataTypes.PoolV2 memory) {
+    function getPool(uint256 timestamp) external view returns(DataTypes.PoolV2 memory) {
       return poolInternal.getPool(timestamp);
     }
     

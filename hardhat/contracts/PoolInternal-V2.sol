@@ -604,18 +604,20 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         address _receiver,
         uint256 amount
     ) external onlySToken {
+
+       
         _poolUpdate();
         _supplierUpdateCurrentState(_sender);
         DataTypes.Supplier storage sender = _getSupplier(_sender);
-        // _supplierUpdateCurrentState(_receiver);
-        // DataTypes.Supplier storage receiver = _getSupplier(_sender);
+         _supplierUpdateCurrentState(_receiver);
+         DataTypes.Supplier storage receiver = _getSupplier(_receiver);
 
-        sender.deposit -= amount;
-       // receiver.deposit += amount;
 
-        //   poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + (outDeposit * PRECISSION) - (inDeposit * PRECISSION);
-        //_updateSupplierDeposit(_supplier, inDeposit, outDeposit);
-    }
+
+        sender.deposit = sender.deposit.sub(amount.mul(PRECISSION));
+        receiver.deposit = receiver.deposit.add(amount.mul(PRECISSION));
+
+         }
 
     function withdrawStep(address _receiver) external onlyOps {
         //// check if
