@@ -14,14 +14,13 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAc
   let pool: IPOOL_RESULT = Object.assign({}, lastPool);
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
-  console.log(17,timestamp.toString())
+
   pool.poolTotalBalance = pool.poolTotalBalance.add(yieldAccrued);
 
   let depositSeconds = lastPool.deposit.mul(peridodSpan);
-  console.log(21,depositSeconds.toString())
 
   let flowSeconds = lastPool.depositFromInFlowRate.mul(peridodSpan).add(lastPool.inFlowRate.mul(peridodSpan).mul(peridodSpan).mul(PRECISSION).div(2));
-  console.log(22,flowSeconds.toString())
+
   let totalSeconds = depositSeconds.add(flowSeconds);
 
   let inFlowContribution = flowSeconds.mul(PRECISSION);
@@ -30,16 +29,10 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAc
   let indexDeposit = +depositSeconds == 0 ? 0 : depositContribution.mul(yieldAccrued).div(totalSeconds.mul(lastPool.deposit));
   let indexFlow = +flowSeconds == 0 ? 0 : inFlowContribution.mul(yieldAccrued).div(lastPool.inFlowRate.mul(totalSeconds));
 
-  console.log(20, indexDeposit);
-  console.log(34, indexFlow)
-
   pool.depositFromInFlowRate = lastPool.depositFromInFlowRate.add(lastPool.inFlowRate.mul(peridodSpan).mul(PRECISSION));
 
   pool.yieldTokenIndex = lastPool.yieldTokenIndex.add(indexDeposit);
   pool.yieldInFlowRateIndex = lastPool.yieldInFlowRateIndex.add(indexFlow);
-
-  console.log(38,pool.yieldTokenIndex.toString())
-  console.log(39,pool.yieldInFlowRateIndex.toString())
 
   pool.id = lastPool.id.add(BigNumber.from(1));
   pool.timestamp = timestamp;
@@ -269,6 +262,8 @@ export const applyUserEvent = async (
       if (users[activeUser.address].expected.realTimeBalance.lt(users[activeUser.address].expected.outMinBalance)) {
         pool.outFlowRate = pool.outFlowRate.sub(users[activeUser.address].expected.outFlow);
         pool.deposit = pool.deposit.sub(users[activeUser.address].expected.realTimeBalance.mul(PRECISSION));
+        users[activeUser.address].expected.tokenBalance= users[activeUser.address].expected.tokenBalance.add((users[activeUser.address].expected.realTimeBalance))
+
         pool.outFlowBuffer = pool.outFlowBuffer.sub(users[activeUser.address].expected.outMinBalance);
         users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(users[activeUser.address].expected.realTimeBalance);
         users[activeUser.address].expected.outMinBalance = BigNumber.from(0);
@@ -281,7 +276,7 @@ export const applyUserEvent = async (
         users[activeUser.address].expected.nextExecOut = BigNumber.from(0);
         users[activeUser.address].expected.deposit = BigNumber.from(0);
         users[activeUser.address].expected.realTimeBalance = BigNumber.from(0);
-      } else {
+           } else {
         let amountStep = users[activeUser.address].expected.outFlow.mul(users[activeUser.address].expected.outStepTime);
 
         pool.deposit = pool.deposit.sub(amountStep.mul(PRECISSION));

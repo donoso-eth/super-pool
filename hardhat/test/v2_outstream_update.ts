@@ -124,7 +124,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe.only('V2 test update OUTSTREAM ONLY', function () {
+describe('V2 test update OUTSTREAM ONLY', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -795,7 +795,6 @@ describe.only('V2 test update OUTSTREAM ONLY', function () {
 
     yieldPool = await superPool.getPool(timestamp);
   
-    await printPool(poolInternal,t0)
 
     yieldSnapshot = await yieldPool.yieldSnapshot;
     yieldAccrued = yieldPool.yieldAccrued;

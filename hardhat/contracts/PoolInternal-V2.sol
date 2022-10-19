@@ -423,6 +423,8 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
             poolAvailable = superToken.balanceOf(address(poolContract)) - (pool.outFlowBuffer);
         }
 
+        console.log(426, poolAvailable);
+
         if (poolAvailable >= withdrawAmount) {
             console.log("NOT PUSHED");
             if (_supplier == _receiver) {
@@ -431,12 +433,20 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         } else {
             console.log("YES PUSHED");
             uint256 balance = poolStrategy.balanceOf();
+            console.log(434, balance);
             uint256 fromStrategy = withdrawAmount - poolAvailable;
+            console.log(435, fromStrategy);
             uint256 correction;
             if (fromStrategy > balance) {
                 correction = fromStrategy - balance;
+                console.log(440, correction);
+                 console.log(441, balance);
+                if (balance > 0){
+                      console.log(445, balance);
                 poolStrategy.withdraw(balance, _receiver);
-                pool.yieldSnapshot = pool.yieldSnapshot - fromStrategy;
+                pool.yieldSnapshot = pool.yieldSnapshot - balance;
+                }
+        
                 if (_supplier == _receiver) {
                     poolContract.transferSuperToken(_receiver, correction);
                 }
@@ -444,6 +454,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
                 poolStrategy.withdraw(fromStrategy, _receiver);
                 pool.yieldSnapshot = pool.yieldSnapshot - fromStrategy;
             }
+             console.log("YES PUSHED-2");
         }
     }
 
@@ -640,6 +651,9 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         uint256 userBalance = sToken.balanceOf(_receiver);
         uint256 minBalance = supplier.outStream.minBalance;
         uint256 stepAmount = (uint96(supplier.outStream.flow)) * (supplier.outStream.stepTime);
+
+        console.log(644, userBalance);
+        console.log(645, minBalance);
 
         ////// user balance goes below min balance, stream will be stopped and all funds will be returned
         if (userBalance < minBalance) {

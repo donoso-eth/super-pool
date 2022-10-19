@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -48,7 +48,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
     // #region pool state
 
     using SafeMath for uint256;
-    using Counters for Counters.Counter;
+
 
     address owner;
     address superHost;
@@ -60,7 +60,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
     using CFAv1Library for CFAv1Library.InitData;
     CFAv1Library.InitData internal _cfaLib;
 
-    Counters.Counter public supplierId;
+
 
     IOps public ops;
     address payable public gelato;
