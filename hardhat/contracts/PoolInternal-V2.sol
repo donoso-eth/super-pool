@@ -118,7 +118,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
         uint256 currentYieldSnapshot = poolStrategy.balanceOf();
-        console.log(128);
+        console.log(128, periodSpan);
         if (periodSpan > 0) {
             poolId++;
 
@@ -607,11 +607,11 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         _poolUpdate();
         _supplierUpdateCurrentState(_sender);
         DataTypes.Supplier storage sender = _getSupplier(_sender);
-        _supplierUpdateCurrentState(_receiver);
-        DataTypes.Supplier storage receiver = _getSupplier(_sender);
+        // _supplierUpdateCurrentState(_receiver);
+        // DataTypes.Supplier storage receiver = _getSupplier(_sender);
 
         sender.deposit -= amount;
-        receiver.deposit += amount;
+       // receiver.deposit += amount;
 
         //   poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + (outDeposit * PRECISSION) - (inDeposit * PRECISSION);
         //_updateSupplierDeposit(_supplier, inDeposit, outDeposit);

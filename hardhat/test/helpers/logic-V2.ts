@@ -118,7 +118,7 @@ export const applyUserEvent = async (
       case SupplierEvent.TRANSFER:
         console.log('transferio');
         result = abiCoder.decode(['address','uint256'], payload);
-     
+        users[activeUser.address].expected.deposit.sub(result[1].mul(PRECISSION));
        // pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
         break;
   
