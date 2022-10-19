@@ -23,7 +23,7 @@ export interface PoolStrategyV2Interface extends utils.Interface {
     "balanceOf()": FunctionFragment;
     "checkerDeposit()": FunctionFragment;
     "depositTask()": FunctionFragment;
-    "initialize(address,address,address,address,address,address,address)": FunctionFragment;
+    "initialize(address,address,address,address,address,address,address,address)": FunctionFragment;
     "pushedBalance()": FunctionFragment;
     "withdraw(uint256,address)": FunctionFragment;
     "yieldIndex()": FunctionFragment;
@@ -41,7 +41,7 @@ export interface PoolStrategyV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [string, string, string, string, string, string, string]
+    values: [string, string, string, string, string, string, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "pushedBalance",
@@ -134,6 +134,7 @@ export interface PoolStrategyV2 extends BaseContract {
       _aavePool: string,
       _aToken: string,
       _aaveToken: string,
+      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -168,6 +169,7 @@ export interface PoolStrategyV2 extends BaseContract {
     _aavePool: string,
     _aToken: string,
     _aaveToken: string,
+    _poolInternal: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -200,6 +202,7 @@ export interface PoolStrategyV2 extends BaseContract {
       _aavePool: string,
       _aToken: string,
       _aaveToken: string,
+      _poolInternal: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -238,6 +241,7 @@ export interface PoolStrategyV2 extends BaseContract {
       _aavePool: string,
       _aToken: string,
       _aaveToken: string,
+      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -271,6 +275,7 @@ export interface PoolStrategyV2 extends BaseContract {
       _aavePool: string,
       _aToken: string,
       _aaveToken: string,
+      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

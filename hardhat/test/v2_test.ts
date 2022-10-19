@@ -17,16 +17,14 @@ import {
   ISuperfluidToken__factory,
   ISuperToken,
   ISuperToken__factory,
-  PoolV2,
-  PoolV2__factory,
+
   PoolInternalV2,
   PoolInternalV2__factory,
   PoolStrategyV2,
   PoolStrategyV2__factory,
   ResolverSettingsV2,
   ResolverSettingsV2__factory,
-  STokenV2,
-  STokenV2__factory,
+
   SuperPoolHost,
   SuperPoolHost__factory,
   IERC20,
@@ -51,6 +49,10 @@ import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
 import { gelatoPushToAave, gelatoWithdrawStep, getGelatoWithdrawStepId } from './helpers/gelato-V2';
 
 import { BigNumber } from '@ethersproject/bignumber';
+import { PoolV2 } from '../typechain-types/PoolV2';
+import { STokenV2 } from '../typechain-types/STokenV2';
+import { PoolV2__factory } from '../typechain-types/factories/PoolV2__factory';
+import { STokenV2__factory } from '../typechain-types/factories/STokenV2__factory';
 
 let superPoolHost: SuperPoolHost;
 let poolFactory: PoolV2;
@@ -124,7 +126,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe('V2 test', function () {
+describe.only('V2 test', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -194,12 +196,12 @@ describe('V2 test', function () {
     superPoolAddress = superTokenResolver.pool;
     sTokenAddress = superTokenResolver.sToken;
 
-    await poolInternal.initialize(settings.address);
-    console.log('Gelato Tasks ---> initialized');
+    // await poolInternal.initialize(settings.address);
+    // console.log('Gelato Tasks ---> initialized');
 
-    await gelatoTasks.initialize(network_params.ops, superPoolAddress);
+    await gelatoTasks.initialize(network_params.ops, superPoolAddress, poolInternal.address);
     console.log('Gelato Tasks ---> initialized');
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43');
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43', poolInternal.address);
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolV2__factory.connect(superPoolAddress, deployer);
@@ -237,7 +239,7 @@ describe('V2 test', function () {
 
     //throw new Error("");
 
-    t0 = +(await superPool.lastPoolTimestamp());
+    t0 = +(await poolInternal.lastPoolTimestamp());
 
     await hre.network.provider.request({
       method: 'hardhat_impersonateAccount',
@@ -256,6 +258,7 @@ describe('V2 test', function () {
       superPool: superPool,
       sToken: sToken,
       superTokenERC777,
+      poolInternal,
       aaveERC20,
       strategyAddresse: poolStrategy.address,
       ops:ops,
@@ -274,7 +277,7 @@ describe('V2 test', function () {
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
 
-    t0 = +(await superPool.lastPoolTimestamp());
+    t0 = +(await poolInternal.lastPoolTimestamp());
     console.log(t0.toString());
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 20 units at t0 ');
@@ -285,7 +288,7 @@ describe('V2 test', function () {
 
     await erc777.send(superPoolAddress, amount, '0x');
 
-    let t1 = await superPool.lastPoolTimestamp();
+    let t1 = await poolInternal.lastPoolTimestamp();
 
     let result: [IUSERS_TEST, IPOOL_RESULT];
 
@@ -406,7 +409,7 @@ describe('V2 test', function () {
       providerOrSigner: user2,
     });
 
-    let yieldPool = await superPool.getLastPool();
+    let yieldPool = await poolInternal.getLastPool();
 
     let yieldSnapshot = await yieldPool.yieldSnapshot;
     let yieldAccrued = yieldPool.yieldAccrued;
@@ -442,6 +445,8 @@ describe('V2 test', function () {
 
     // #endregion ================= THIRD PERIOD ============================= //
 
+      
+
     // #region ================= FOURTHPERIOD ============================= //
     console.log('\x1b[36m%s\x1b[0m', '#4--- deposit into strategy gelato to aave');
 
@@ -469,7 +474,7 @@ describe('V2 test', function () {
 
     lastPool = Object.assign({}, pool);
 
-    yieldPool = await superPool.getLastPool();
+    yieldPool = await poolInternal.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldSnapshot;
     yieldAccrued = yieldPool.yieldAccrued;
@@ -516,7 +521,7 @@ describe('V2 test', function () {
     amount = utils.parseEther('150');
     await waitForTx(superPool.connect(user1).redeemDeposit(amount));
 
-    yieldPool = await superPool.getLastPool();
+    yieldPool = await poolInternal.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldSnapshot;
     yieldAccrued = yieldPool.yieldAccrued;
@@ -568,7 +573,7 @@ describe('V2 test', function () {
 
 
 
-    yieldPool = await superPool.getLastPool();
+    yieldPool = await poolInternal.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldSnapshot;
     yieldAccrued = yieldPool.yieldAccrued;
@@ -614,9 +619,9 @@ describe('V2 test', function () {
     timestamp = t1.add(BigNumber.from(7 * ONE_DAY));
 
     let outFlowRate = flowRate.div(BigNumber.from(2));
-    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate, 0));
+    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate));
 
-    yieldPool = await superPool.getLastPool();
+    yieldPool = await poolInternal.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldSnapshot;
     yieldAccrued = yieldPool.yieldAccrued;
@@ -684,7 +689,7 @@ describe('V2 test', function () {
     
         lastPool = Object.assign({}, pool);
     
-        yieldPool = await superPool.getLastPool();
+        yieldPool = await poolInternal.getLastPool();
     
         yieldSnapshot = await yieldPool.yieldSnapshot;
         yieldAccrued = yieldPool.yieldAccrued;

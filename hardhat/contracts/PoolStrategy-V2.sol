@@ -11,10 +11,14 @@ import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
 import {IPoolV2} from "./interfaces/IPool-V2.sol";
+
+import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 import {IPool} from "./aave/IPool.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {LibDataTypes} from "./gelato/LibDataTypes.sol";
+import {DataTypes} from "./libraries/DataTypes.sol";
+import {Events} from "./libraries/Events.sol";
 
 interface ERC20mintable {
 
@@ -33,6 +37,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   ERC20mintable token;
   bytes32 depositTaksId;
   IPoolV2 pool;
+   IPoolInternalV2 poolInternal;
   IPool aavePool;
   IERC20 aToken;
 
@@ -60,12 +65,14 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     IPoolV2 _pool,
     IPool _aavePool,
     IERC20 _aToken,
-    ERC20mintable _aaveToken
+    ERC20mintable _aaveToken,
+    IPoolInternalV2 _poolInternal
   ) external initializer {
     ops = _ops;
     superToken = _superToken;
     token = _token;
     pool = _pool;
+    poolInternal = _poolInternal;
     POOL_BUFFER = 0; //_POOL_BUFFER;
     aavePool = _aavePool;
     aToken = _aToken;
@@ -122,7 +129,9 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   function checkerDeposit() external view returns (bool canExec, bytes memory execPayload) {
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
 
-     uint256 currentPoolBuffer = pool.getLastPool().outFlowBuffer;
+    DataTypes.PoolV2 memory currentPool = poolInternal.getLastPool();
+
+     uint256 currentPoolBuffer = currentPool.outFlowBuffer;
 
      uint256 currentThreshold = currentPoolBuffer.add(0.5 ether);
 
@@ -136,7 +145,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     address feeToken;
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
     console.log(113);
-    uint256 currentPoolBuffer = pool.getLastPool().outFlowBuffer;
+    uint256 currentPoolBuffer = poolInternal.getLastPool().outFlowBuffer;
 
     uint256 currentThreshold = currentPoolBuffer.add(0.5 ether);
 
@@ -154,11 +163,16 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     superToken.downgrade(amountToDeposit);
 
-    pool.pushedToStrategy(uint256(amountToDeposit));
+    poolInternal.pushedToStrategy(uint256(amountToDeposit));
 
     aaveToken.mint( amountToDeposit / (10**12));
 
     aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
+
+
+    bytes memory payload = abi.encode(amountToDeposit);
+    emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW, payload, block.timestamp, address(0));
+ 
  
   }
 

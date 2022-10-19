@@ -255,6 +255,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
       superTokenContract: superTokenContract,
       superPool: superPool,
       sToken: sToken,
+      poolInternal,
       superTokenERC777,
       aaveERC20,
       strategyAddresse: poolStrategy.address,

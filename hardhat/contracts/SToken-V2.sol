@@ -71,7 +71,7 @@ function balanceOf(address _supplier) public view override returns (uint256 bala
 function getSupplierBalance(address _supplier) public view returns (uint256 realtimeBalance) {
 
 
-    DataTypes.Supplier memory supplier = pool.getSupplierByAdress(_supplier);
+    DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
 
 
     uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
@@ -105,10 +105,22 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
     uint256 fromBalance = balanceOf(from);
     require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
 
-    pool.poolUpdateCurrentState();
+  
 
 
-    pool.transferSTokens(from, to, amount);
+    poolInternal.transferSTokens(from, to, amount);
+
+        DataTypes.Supplier memory sender = poolInternal.getSupplier(from);
+     
+        DataTypes.Supplier memory receiver =  poolInternal.getSupplier(to);
+
+     bytes memory payload = abi.encode(to, amount);
+    emit Events.SupplierUpdate(sender);
+        emit Events.SupplierUpdate(receiver);
+        emit Events.SupplierEvent(DataTypes.SupplierEvent.TRANSFER, payload, block.timestamp, from);
+
+
+
 
     emit Transfer(from, to, amount);
 
@@ -116,7 +128,7 @@ function getSupplierBalance(address _supplier) public view returns (uint256 real
   }
 
   function totalSupply() public view override returns (uint256) {
-    DataTypes.PoolV2 memory lastPool = pool.getLastPool();
+    DataTypes.PoolV2 memory lastPool = poolInternal.getLastPool();
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
     uint256 _totalSupply = lastPool.deposit + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
 

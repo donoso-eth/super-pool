@@ -8,7 +8,7 @@ import { LibDataTypes} from './gelato/LibDataTypes.sol';
 
 import {IPoolV2} from "./interfaces/IPool-V2.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
+import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 
 
 
@@ -16,12 +16,13 @@ contract GelatoTasksV2 is Initializable {
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
   address ops;
   IPoolV2 pool;
-
+   IPoolInternalV2 poolInternal;
   constructor() {}
 
-  function initialize(address _ops, IPoolV2 _pool) external initializer {
+  function initialize(address _ops, IPoolV2 _pool , IPoolInternalV2 _poolInternal) external initializer {
     ops = _ops;
     pool = _pool;
+     poolInternal = _poolInternal;
   }
     
   // ============= =============  Gelato functions ============= ============= //
@@ -69,7 +70,7 @@ contract GelatoTasksV2 is Initializable {
      
      bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stepTime), _stepTime);
 
-     bytes memory execData = abi.encodeWithSelector(pool.withdrawStep.selector, _supplier );
+     bytes memory execData = abi.encodeWithSelector(poolInternal.withdrawStep.selector, _supplier );
 
     LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
 
