@@ -49,7 +49,9 @@ contract STokenV2  is UUPSUpgradeable,ERC20Upgradeable {
         poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
     poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
     PRECISSION = resolverSettings.getPrecission();
+    console.log(51,PRECISSION);
   }
+
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
   // #region  ============= =============  ERC20  ============= ============= //

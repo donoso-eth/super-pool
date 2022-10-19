@@ -85,7 +85,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     depositTaksId = createDepositTask();
   }
 
-  function withdraw(uint256 amount, address _supplier) external onlyPool {
+  function withdraw(uint256 amount, address _supplier) external onlyInternal {
     //require(amount < available, "NOT_ENOUGH:BALANCE");
     aavePool.withdraw(address(aaveToken), amount.div(10**12), address(this));
     
@@ -182,8 +182,8 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
   // #endregion  ============= ============= Allocation Strategy  ============= ============= //
 
-  modifier onlyPool() {
-    require(msg.sender == address(pool), "Only Pool Allowed");
+  modifier onlyInternal() {
+    require(msg.sender == address(poolInternal), "Only Internal Allowed");
     _;
   }
 

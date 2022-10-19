@@ -238,7 +238,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
         _supplierUpdateCurrentState(_supplier);
-
+        
         supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
 
         poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;

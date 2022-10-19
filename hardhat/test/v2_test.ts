@@ -652,7 +652,7 @@ describe.only('V2 test', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    let taskId = await getGelatoWithdrawStepId(superPool,gelatoTasks,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
+    let taskId = await getGelatoWithdrawStepId(poolInternal,gelatoTasks,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
     usersPool[user2.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +t1 + 7 * ONE_DAY, result[1], contractsTest, result[0]);
 
@@ -684,7 +684,7 @@ describe.only('V2 test', function () {
         timestamp = usersPool[user2.address].expected.nextExecOut; //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
     
   
-        await gelatoWithdrawStep(superPool,gelatoTasks,ops,executor,user2.address,+usersPool[user2.address].expected.outStreamInit,+usersPool[user2.address].expected.outStepTime);
+        await gelatoWithdrawStep(poolInternal,gelatoTasks,ops,executor,user2.address,+usersPool[user2.address].expected.outStreamInit,+usersPool[user2.address].expected.outStepTime);
 
     
         lastPool = Object.assign({}, pool);

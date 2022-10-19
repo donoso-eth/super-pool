@@ -33,7 +33,7 @@ contract GelatoTasksV2 is Initializable {
     uint256 _stopDateInMs,
     bool _all,
     uint8 _flowType
-  ) external onlyPool returns (bytes32 taskId) {
+  ) external onlyInternal returns (bytes32 taskId) {
     
     
      bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stopDateInMs), 600);
@@ -60,12 +60,12 @@ contract GelatoTasksV2 is Initializable {
   //#endregion
 
 
- function cancelTask (bytes32 taskId) external onlyPool {
+ function cancelTask (bytes32 taskId) external onlyInternal {
   IOps(ops).cancelTask(taskId);
  }
 
   //// Withdrawal step task
-  function createWithdraStepTask(address _supplier, uint256 _stepTime) external onlyPool returns (bytes32 taskId) {
+  function createWithdraStepTask(address _supplier, uint256 _stepTime) external onlyInternal returns (bytes32 taskId) {
     
      
      bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stepTime), _stepTime);
@@ -96,8 +96,8 @@ console.logBytes32(taskId);
   }
 
 
-  modifier onlyPool() {
-    require(msg.sender == address(pool), "Only Pool Allowed");
+  modifier onlyInternal() {
+    require(msg.sender == address(poolInternal), "Only Pool Internal");
     _;
   }
 }
