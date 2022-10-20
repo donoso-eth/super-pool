@@ -21,7 +21,7 @@ export const GET_POOL = `
 
 export const GET_SUPPLIER = `
   query($address: String!){
-      suppliers(supplier:$address) {
+      suppliers(where: { supplier: $address }) {
     
         id:
         supplier

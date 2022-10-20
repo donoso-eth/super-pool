@@ -11,8 +11,8 @@ export function handlePoolUpdate(event: PoolUpdate): void {
   if (pool == null) { 
     pool  = new Pool(id);
     pool.timestamp = poolEvent.timestamp;
-    pool.deposit = pool.deposit;
-    pool.depositFromInflowRate = pool.depositFromInflowRate;
+    pool.deposit = poolEvent.deposit;
+    pool.depositFromInflowRate = poolEvent.depositFromInFlowRate;
     pool.inFlowRate= poolEvent.inFlowRate;
     pool.outFlowRate = poolEvent.outFlowRate;
     pool.yieldTokenIndex = poolEvent.yieldTokenIndex;

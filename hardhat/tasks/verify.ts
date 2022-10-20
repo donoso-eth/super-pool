@@ -24,14 +24,14 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
  
   
 
-  await hre.run('verify:verify', {
-    address: superHost.address,
-    constructorArguments: [network_params.host],
-  });
+  // await hre.run('verify:verify', {
+  //   address: superHost.address,
+  //   constructorArguments: [network_params.host],
+  // });
 
-  console.log('veryfied Host');
+  // console.log('veryfied Host');
 
-  let host: SuperPoolHost = SuperPoolHost__factory.connect(superHost.address, deployer);
+  // let host: SuperPoolHost = SuperPoolHost__factory.connect(superHost.address, deployer);
 
   //let result = await host.getResolverBySuperToken(network_params.superToken);
 
@@ -63,6 +63,15 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   });
 
   
+  deployContract = 'poolStrategyV2';
+  toDeployContract = contract_config[deployContract];
+  const poolStrategy= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
+
+  await hre.run('verify:verify', {
+    address: poolStrategy.address,
+    constructorArguments: [],
+  });
+
   deployContract = 'resolverSettingsV2';
   toDeployContract = contract_config[deployContract];
   const resolverSettings= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
@@ -83,5 +92,15 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
     constructorArguments: [],
   });
 
+
+  // await hre.run('verify:verify', {
+  //   address: '0xEFf7D1F2500ECa73Ff9602C9E2B0071eC6ae0341',
+  //   constructorArguments: [],
+  // });
+
+  // await hre.run('verify:verify', {
+  //   address: '0x7567eDB1cb05784abCf657a3Bac408219b31Ee60',
+  //   constructorArguments: [],
+  // });
 
 });

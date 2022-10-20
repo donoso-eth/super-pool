@@ -1,6 +1,6 @@
 {
     "goerli":{
-        "ops": "0x03E739ff088825f91fa53c35279F632d038FB081", 
+        "ops": "0xc1C6805B857Bef1f412519C4A842522431aFed39", 
         "opsExec":"0x683913B3A32ada4F8100458A3E1675425BdAa7DF",
         "host":"0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9",
         "superToken":"0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a",

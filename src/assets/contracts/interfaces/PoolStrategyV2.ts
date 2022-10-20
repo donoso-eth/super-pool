@@ -22,17 +22,20 @@ export interface PoolStrategyV2Interface extends utils.Interface {
     "ETH()": FunctionFragment;
     "balanceOf()": FunctionFragment;
     "checkerDeposit()": FunctionFragment;
+    "depositTaksId()": FunctionFragment;
     "depositTask()": FunctionFragment;
     "initialize(address,address,address,address,address,address,address,address)": FunctionFragment;
-    "pushedBalance()": FunctionFragment;
     "withdraw(uint256,address)": FunctionFragment;
-    "yieldIndex()": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
   encodeFunctionData(functionFragment: "balanceOf", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "checkerDeposit",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "depositTaksId",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -44,16 +47,8 @@ export interface PoolStrategyV2Interface extends utils.Interface {
     values: [string, string, string, string, string, string, string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "pushedBalance",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "withdraw",
     values: [BigNumberish, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "yieldIndex",
-    values?: undefined
   ): string;
 
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
@@ -63,16 +58,15 @@ export interface PoolStrategyV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "depositTaksId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "depositTask",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "pushedBalance",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "yieldIndex", data: BytesLike): Result;
 
   events: {
     "Initialized(uint8)": EventFragment;
@@ -122,6 +116,8 @@ export interface PoolStrategyV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
+    depositTaksId(overrides?: CallOverrides): Promise<[string]>;
+
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -138,15 +134,11 @@ export interface PoolStrategyV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    pushedBalance(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     withdraw(
       amount: BigNumberish,
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    yieldIndex(overrides?: CallOverrides): Promise<[BigNumber]>;
   };
 
   ETH(overrides?: CallOverrides): Promise<string>;
@@ -156,6 +148,8 @@ export interface PoolStrategyV2 extends BaseContract {
   checkerDeposit(
     overrides?: CallOverrides
   ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
+
+  depositTaksId(overrides?: CallOverrides): Promise<string>;
 
   depositTask(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -173,15 +167,11 @@ export interface PoolStrategyV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  pushedBalance(overrides?: CallOverrides): Promise<BigNumber>;
-
   withdraw(
     amount: BigNumberish,
     _supplier: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
-
-  yieldIndex(overrides?: CallOverrides): Promise<BigNumber>;
 
   callStatic: {
     ETH(overrides?: CallOverrides): Promise<string>;
@@ -191,6 +181,8 @@ export interface PoolStrategyV2 extends BaseContract {
     checkerDeposit(
       overrides?: CallOverrides
     ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
+
+    depositTaksId(overrides?: CallOverrides): Promise<string>;
 
     depositTask(overrides?: CallOverrides): Promise<void>;
 
@@ -206,15 +198,11 @@ export interface PoolStrategyV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    pushedBalance(overrides?: CallOverrides): Promise<BigNumber>;
-
     withdraw(
       amount: BigNumberish,
       _supplier: string,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    yieldIndex(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   filters: {
@@ -229,6 +217,8 @@ export interface PoolStrategyV2 extends BaseContract {
 
     checkerDeposit(overrides?: CallOverrides): Promise<BigNumber>;
 
+    depositTaksId(overrides?: CallOverrides): Promise<BigNumber>;
+
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -245,15 +235,11 @@ export interface PoolStrategyV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    pushedBalance(overrides?: CallOverrides): Promise<BigNumber>;
-
     withdraw(
       amount: BigNumberish,
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
-
-    yieldIndex(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -263,6 +249,8 @@ export interface PoolStrategyV2 extends BaseContract {
 
     checkerDeposit(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    depositTaksId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -279,14 +267,10 @@ export interface PoolStrategyV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    pushedBalance(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     withdraw(
       amount: BigNumberish,
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
-
-    yieldIndex(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

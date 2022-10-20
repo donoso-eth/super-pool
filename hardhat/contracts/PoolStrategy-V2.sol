@@ -35,7 +35,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   IOps ops;
   ISuperToken superToken;
   ERC20mintable token;
-  bytes32 depositTaksId;
+  bytes32 public depositTaksId;
   IPoolV2 pool;
    IPoolInternalV2 poolInternal;
   IPool aavePool;
@@ -47,10 +47,8 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
   uint256 MAX_INT;
 
-  uint256 mockLast;
-  uint256 timestampLast;
-  uint256 public yieldIndex;
-  uint256 public pushedBalance;
+
+
 
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -81,12 +79,11 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     aaveToken.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
-    // superToken.approve(address(this), MAX_INT);
     depositTaksId = createDepositTask();
   }
 
   function withdraw(uint256 amount, address _supplier) external onlyInternal {
-    //require(amount < available, "NOT_ENOUGH:BALANCE");
+
     aavePool.withdraw(address(aaveToken), amount.div(10**12), address(this));
     
     uint256 balanceToken = token.balanceOf(address(this));
@@ -97,11 +94,6 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
 
     superToken.upgrade(amount);
  
-  // uint256 bal =   IERC20(address(superToken)).balanceOf(address(this));
-  // console.log(bal);
-  //   if (bal < amount) {
-  //     amount = bal;
-  //   }
     IERC20(address(superToken)).transfer(_supplier, amount);
        console.log(77);
   }

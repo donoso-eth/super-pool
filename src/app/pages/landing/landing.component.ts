@@ -92,7 +92,7 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
   getPool() {
     this.graphqlService.watchPool().subscribe((val) => {
       if (!!val && !!val.data && !!val.data.pools && val.data.pools.length >0) {
-        let staked = val.data.pools.map((map: any) => map.totalStaked);
+        let staked = val.data.pools.map((map: any) => map.yieldSnapshot/1000000);
 
         console.log(val.data.pools)
 
@@ -117,9 +117,9 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
 
         let currentTimestamp = new Date().getTime() / 1000;
 
-        this.totalYield = +this.currentPool.totalYield;
+        this.totalYield = (+utils.formatEther(BigNumber.from(this.currentPool.totalYield))).toFixed(6);
 
-        this.totalTvl = utils.formatEther(BigNumber.from(this.currentPool.deposit));
+        this.totalTvl = (+utils.formatEther((BigNumber.from(this.currentPool.deposit).add(this.currentPool.depositFromInflowRate)).div(BigNumber.from(1000000)))).toFixed(4);
 
         let value = +this.currentPool.inFlowRate * (new Date().getTime() / 1000 - +this.currentPool.timestamp);
 
@@ -133,7 +133,7 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
           source.pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
             const todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
 
-            let formated = this.global.prepareNumbers(+todayms * +this.currentPool.inFlowRate + +this.currentPool.deposit);
+            let formated = this.global.prepareNumbers(+todayms * +this.currentPool.inFlowRate + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000);
             this.twoDec = formated.twoDec;
             this.fourDec = formated.fourDec;
           });

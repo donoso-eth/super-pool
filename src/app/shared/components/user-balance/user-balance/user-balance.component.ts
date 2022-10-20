@@ -24,6 +24,7 @@ export class UserBalanceComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
 
+
   }
 
   @Input() poolToken!: IPOOL_TOKEN;

@@ -304,7 +304,7 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
   await gelatoTasks.initialize(network_params.ops,resolver.pool,poolInternal.address, {gasLimit:10000000, nonce:nonce+9});
 
 
-  let initialPoolEth = hre.ethers.utils.parseEther('1');
+  let initialPoolEth = hre.ethers.utils.parseEther('0.1');
 
   await deployer.sendTransaction({ to: resolver.pool, value: initialPoolEth,gasLimit:10000000, nonce:nonce+10 });
 

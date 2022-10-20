@@ -3,27 +3,35 @@
     <div  style="margin:unset" class="col-12 call-out">
       <div class="flex align-items-center justify-content-center">
       
-        <div class="flex justify-content-between align-items-center text-center">
-          <i class="pi pi-lock"></i>
-          <span style="margin-left:15px;font-size:30px;text-align: left;color:var(--primary-color);"> TVL</span>
-          <span style="margin-left:15px;font-size: 15px;text-align: left;" class="text-pink-400">
-            <span style="font-size: 30px"> {{ twoDec }}</span>{{ fourDec }}
-          </span>
-        </div>
-        <div class="flex align-items-center justify-content-center">
+   
+
+        <div style="min-width:300px;" class="mr-2 flex align-items-center justify-content-center">
           <i class="pi pi-chart-line"></i>
-          <div class="flex justify-content-between flex-column text-center">
-            <span style="font-size:20px;text-align: left;color:grey;"> YIELD</span>
+          <div class="flex justify-content-center flex-column text-center">
+            <span style="font-size:20px;text-align: left;color:grey;"> TVL</span>
             <div class="text-900 font-medium">
               <span style="font-size: 30px;text-align: left;" class="text-pink-400">
-                {{ formatSmallEther(totalYield)}}$
+                <span style="font-size: 30px"> {{ twoDec }}</span>{{ fourDec }}$
 
               </span>
             </div>
           </div>
         </div>
 
-        <div class="flex align-items-center justify-content-center">
+        <div class="ml-2 flex align-items-center justify-content-center">
+          <i class="pi pi-chart-line"></i>
+          <div class="flex justify-content-between flex-column text-center">
+            <span style="font-size:20px;text-align: left;color:grey;"> YIELD</span>
+            <div class="text-900 font-medium">
+              <span style="font-size: 30px;text-align: left;" class="text-pink-400">
+                {{ totalYield}}$
+
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="false" class="flex align-items-center justify-content-center">
           <i class="pi pi-percentage"></i>
           <div class="flex justify-content-between flex-column text-center">
             <span style="font-size:20px;text-align: left;color:var(--primary-color);"> APY</span>

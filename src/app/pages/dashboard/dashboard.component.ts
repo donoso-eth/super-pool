@@ -82,11 +82,14 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
   }
 
   async withdraw() {
+    console.log(this.depositAmountCtrl.value)
     let amount = utils.parseEther(this.depositAmountCtrl.value.toString());
+    console.log(amount)
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
-    this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'it is ok to need hte money....', header: 'Un momento' } }));
-    // await doSignerTransaction(this.dapp.defaultContract?.instance?.memberWithdraw(amount)!)
-  }
+    this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'it is ok to need the money....', header: 'Un momento' } }));
+     await doSignerTransaction(this.dapp.defaultContract?.instance?.redeemDeposit(amount,{gasLimit:1000000})!)
+    
+    }
 
   async deposit() {
     if (this.depositAmountCtrl.invalid) {
@@ -142,19 +145,20 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
 
           let realbalance = await this.dapp.DAPP_STATE.sTokenContract?.instance.balanceOf(this.dapp.signerAddress!);
 
-          console.log(realbalance);
+       let nowTiem = new Date().getTime();
 
           let querySupplier = val.data.suppliers[0];
 
           this.supplier = querySupplier;
+          console.log(querySupplier);
 
-          let value = +this.supplier.inFlow * (new Date().getTime() / 1000 - +this.supplier.timestamp);
+          let value = +this.supplier.inFlow * (new Date().getTime() - nowTiem)/1000;
 
-          let formated = this.global.prepareNumbers(+this.supplier.deposit + value);
+          let formated = this.global.prepareNumbers(+realbalance! + value);
           this.twoDec = formated.twoDec;
           this.fourDec = formated.fourDec;
 
-          let formattedAva = this.global.prepareNumbers(+this.supplier.deposit + value);
+          let formattedAva = this.global.prepareNumbers(+realbalance! + value);
           this.twoDecAva = formattedAva.twoDec;
           this.fourDecAva = formattedAva.fourDec;
           this.isFlowAvailable = false;
@@ -165,22 +169,21 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
             this.destroyFormatting.next();
             let source = interval(500);
             source.pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
-              const todayms = new Date().getTime() / 1000 - +this.supplier.timestamp;
-
-              let formated = this.global.prepareNumbers(+todayms * +this.supplier.inFlow + +this.supplier.deposit);
+              const todayms = (new Date().getTime()  - nowTiem)/1000;
+         
+              let formated = this.global.prepareNumbers(+todayms * +this.supplier.inFlow + +realbalance!);
+          
               this.twoDec = formated.twoDec;
               this.fourDec = formated.fourDec;
 
-              let formattedAva = this.global.prepareNumbers(+todayms * +this.supplier.inFlow + +this.supplier.deposit);
-              this.twoDecAva = formattedAva.twoDec;
-              this.fourDecAva = formattedAva.fourDec;
+         
             });
           } else {
             this.niceFlow = '0';
           }
           this.store.dispatch(Web3Actions.chainBusy({ status: false }));
         }
-        if (val.data.member == null) {
+        if (val.data.suppliers == null ||val.data.suppliers.length == 0 ) {
           this.supplier = {
        
             id: '0',

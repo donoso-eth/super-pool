@@ -76,20 +76,16 @@ export class GlobalService {
     let poolbalance = await this.supertoken?.balanceOf(
       this.dapp.defaultContract?.address!
     );
-    console.log(poolbalance?.toString());
 
-    // console.log(result[1].availableBalance)
-
-    // console.log(result[1].availableBalance.div(10**6));
-
-    // console.log(await this.supertoken?.decimals())
 
     this.poolToken.superTokenBalance = (+utils.formatEther(
       result[1].availableBalance
     )).toFixed(4);
-    this.poolToken.tokenBalance = result[0].div(10 ** 6).toString();
+    this.poolToken.tokenBalance =  (+utils.formatEther(
+      result[0]
+    )).toFixed(4);
 
-    console.log(this.poolToken.tokenBalance);
+ 
 
 
     await this.getPoolState()
