@@ -94,6 +94,8 @@ library DataTypes {
     uint256 id;
     uint256 timestamp;
         
+    uint256 nrSuppliers; 
+
     // uint256 totalShares;
     uint256 deposit;
     uint256 depositFromInFlowRate;
@@ -113,7 +115,7 @@ library DataTypes {
     APY apy;
 
   }
-
+ 
   enum SupplierEvent {
    DEPOSIT, // (uint256)
       WITHDRAW, // (uint256)
@@ -122,8 +124,8 @@ library DataTypes {
       STREAM_UPDATE, //(int96)
       STREAM_STOP, //
       OUT_STREAM_START, //(int96)
+       OUT_STREAM_UPDATE, //(int96)
       OUT_STREAM_STOP, //
-      OUT_STREAM_UPDATE, //(int96)
       PUSH_TO_STRATEGY, //(uint256)
       WITHDRAW_STEP,//
       REBALANCE //
