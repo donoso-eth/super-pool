@@ -526,8 +526,17 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         _updateSupplierDeposit(from, amount, 0);
     }
 
-    function _redeemDeposit(uint256 redeemAmount, address _supplier) external onlyPool {
+    function _redeemDeposit(uint256 redeemAmount, address _supplier, uint256 balance) external onlyPool {
         DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
+
+        uint256 max_allowed = balance.sub(supplier.outStream.minBalance);
+
+        console.log(534,max_allowed);
+        console.log(535,balance);
+
+        require(balance > max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
+
+      
 
         //// Update pool state "pool Struct" calculating indexes and timestamp
         _poolUpdate();

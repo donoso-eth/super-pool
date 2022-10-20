@@ -124,7 +124,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe('V2 test OUTSTREAM ONLY', function () {
+describe.only('V2 OUTSTREAM Redeem and cancel', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -281,9 +281,9 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 800 units at t0 ');
 
-    let iintUser1 = await superTokenContract.balanceOf(user2.address);
+    let iintUser1 = await superTokenContract.balanceOf(user1.address);
 
-    erc777 = await IERC777__factory.connect(network_params.superToken, user2);
+    erc777 = await IERC777__factory.connect(network_params.superToken, user1);
 
     let amount = utils.parseEther('800');
 
@@ -316,9 +316,9 @@ describe('V2 test OUTSTREAM ONLY', function () {
     pools[+poolExpected1.timestamp] = poolExpected1;
 
     let usersPool: { [key: string]: IUSERTEST } = {
-      [user2.address]: {
-        name: 'User2',
-        address: user2.address,
+      [user1.address]: {
+        name: 'User1',
+        address: user1.address,
         expected: {
           id: BigNumber.from(1),
           realTimeBalance: amount,
@@ -366,20 +366,20 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     // #region ================= THIRD PERIOD ============================= //
 
-    console.log('\x1b[36m%s\x1b[0m', '#3--- User2 reddemFlow');
+    console.log('\x1b[36m%s\x1b[0m', '#3--- User2 redeemFlow');
 
     await setNextBlockTimestamp(hre, +t1 + 2 * ONE_DAY);
     timestamp = t1.add(BigNumber.from(2 * ONE_DAY));
     let flowRate = utils.parseEther('100').div(ONE_DAY);
     let outFlowRate = flowRate.div(BigNumber.from(2));
-    await waitForTx(superPool.connect(user2).redeemFlow(outFlowRate));
+    await waitForTx(superPool.connect(user1).redeemFlow(outFlowRate));
 
 
 
     let yieldPool = await superPool.getLastPool();
 
    let  yieldSnapshot = await yieldPool.yieldSnapshot;
-   console.log(401,yieldSnapshot.toString())
+
     let yieldAccrued = yieldPool.yieldAccrued;
     lastPool = Object.assign({}, pool);
 
@@ -387,8 +387,8 @@ describe('V2 test OUTSTREAM ONLY', function () {
     loanStream = await sf.cfaV1.getFlow({
       superToken: network_params.superToken,
       sender: superPoolAddress,
-      receiver: user2.address,
-      providerOrSigner: user2,
+      receiver: user1.address,
+      providerOrSigner: user1,
     });
 
     pool.poolTotalBalance =  pool.poolTotalBalance.sub(loanStream.deposit);
@@ -400,7 +400,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     result = await applyUserEvent(
       SupplierEvent.OUT_STREAM_START,
-      user2.address,
+      user1.address,
       payload,
       lastUsersPool,
       pool,
@@ -416,27 +416,32 @@ describe('V2 test OUTSTREAM ONLY', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    let taskId = await getGelatoWithdrawStepId(poolInternal,gelatoTasks,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
-    usersPool[user2.address].expected.outStreamId = taskId;
+    let taskId = await getGelatoWithdrawStepId(poolInternal,gelatoTasks,+timestamp,+usersPool[user1.address].expected.outStepTime, user1.address)
+    usersPool[user1.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +t1 + 2 * ONE_DAY, result[1], contractsTest, result[0]);
 
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     // #endregion =================   THIRD PERIOD ============================= //
 
 
-      
-
-
+  
     // #region =================  FOURTH PERIOD ============================= //
 
-    console.log('\x1b[36m%s\x1b[0m', '#4--- User2 provides sends 100 at t0 + 3*  One Day ');
+    console.log('\x1b[36m%s\x1b[0m', '#4--- User2 provide withdraw  more than allowed');
+
+    console.log( usersPool[user1.address].expected.outMinBalance.toString())
+    console.log( usersPool[user1.address].expected.realTimeBalance.toString())
+    
+
 
     await setNextBlockTimestamp(hre, +t1 + 3 * ONE_DAY);
-    await setNextBlockTimestamp(hre, +t1 + 3 * ONE_DAY);
     timestamp = t1.add(BigNumber.from(3 * ONE_DAY));
-    erc777 = await IERC777__factory.connect(network_params.superToken, user2);
-    amount = utils.parseEther('100');
-    await waitForTx(erc777.send(superPoolAddress, amount, '0x'));
+
+    let depositAvailable = usersPool[user1.address].expected.realTimeBalance.sub( usersPool[user1.address].expected.outMinBalance)
+
+    let withdrawAmount = depositAvailable.add(usersPool[user1.address].expected.outMinBalance.div(2))
+
+    await waitForTx( superPool.connect(user1).redeemDeposit(withdrawAmount));
 
    // await waitForTx(superPool.poolUpdateUser(user2.address) )
 
@@ -451,13 +456,13 @@ describe('V2 test OUTSTREAM ONLY', function () {
     yieldAccrued = yieldPool.yieldAccrued;
     pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
 
-    payload = abiCoder.encode(['uint256'], [amount]);
+    payload = abiCoder.encode(['uint256'], [withdrawAmount]);
 
     lastUsersPool = usersPool;
     expedtedPoolBalance = initialBalance.add(amount);
 
     result = await applyUserEvent(
-      SupplierEvent.DEPOSIT,
+      SupplierEvent.WITHDRAW,
       user2.address,
       payload,
       lastUsersPool,
@@ -480,6 +485,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
     // #endregion =================   FOURTH PERIOD ============================= //
 
 
+     throw new Error("");
      
     
       for (let i=0; i<30;i++) {
