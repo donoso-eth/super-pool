@@ -502,7 +502,7 @@ describe.only('V2 Bug withdraw', function () {
        providerOrSigner: user1,
      });
  
-     pool.poolTotalBalance = pool.poolTotalBalance.sub(loanStream.deposit);
+
      payload = abiCoder.encode(['int96'], [outFlowRate]);
  
      lastUsersPool = usersPool;
