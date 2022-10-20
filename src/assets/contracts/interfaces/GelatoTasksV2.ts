@@ -23,7 +23,7 @@ export interface GelatoTasksV2Interface extends utils.Interface {
     "cancelTask(bytes32)": FunctionFragment;
     "createStopStreamTimedTask(address,uint256,bool,uint8)": FunctionFragment;
     "createWithdraStepTask(address,uint256)": FunctionFragment;
-    "initialize(address,address)": FunctionFragment;
+    "initialize(address,address,address)": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
@@ -41,7 +41,7 @@ export interface GelatoTasksV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [string, string]
+    values: [string, string, string]
   ): string;
 
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
@@ -118,6 +118,7 @@ export interface GelatoTasksV2 extends BaseContract {
     initialize(
       _ops: string,
       _pool: string,
+      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
@@ -146,6 +147,7 @@ export interface GelatoTasksV2 extends BaseContract {
   initialize(
     _ops: string,
     _pool: string,
+    _poolInternal: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -171,6 +173,7 @@ export interface GelatoTasksV2 extends BaseContract {
     initialize(
       _ops: string,
       _pool: string,
+      _poolInternal: string,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -205,6 +208,7 @@ export interface GelatoTasksV2 extends BaseContract {
     initialize(
       _ops: string,
       _pool: string,
+      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -234,6 +238,7 @@ export interface GelatoTasksV2 extends BaseContract {
     initialize(
       _ops: string,
       _pool: string,
+      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

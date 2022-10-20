@@ -8,7 +8,7 @@ import { LibDataTypes} from './gelato/LibDataTypes.sol';
 
 import {IPoolV2} from "./interfaces/IPool-V2.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
+import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 
 
 
@@ -16,12 +16,13 @@ contract GelatoTasksV2 is Initializable {
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
   address ops;
   IPoolV2 pool;
-
+   IPoolInternalV2 poolInternal;
   constructor() {}
 
-  function initialize(address _ops, IPoolV2 _pool) external initializer {
+  function initialize(address _ops, IPoolV2 _pool , IPoolInternalV2 _poolInternal) external initializer {
     ops = _ops;
     pool = _pool;
+     poolInternal = _poolInternal;
   }
     
   // ============= =============  Gelato functions ============= ============= //
@@ -32,7 +33,7 @@ contract GelatoTasksV2 is Initializable {
     uint256 _stopDateInMs,
     bool _all,
     uint8 _flowType
-  ) external onlyPool returns (bytes32 taskId) {
+  ) external onlyInternal returns (bytes32 taskId) {
     
     
      bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stopDateInMs), 600);
@@ -59,17 +60,17 @@ contract GelatoTasksV2 is Initializable {
   //#endregion
 
 
- function cancelTask (bytes32 taskId) external onlyPool {
+ function cancelTask (bytes32 taskId) external onlyInternal {
   IOps(ops).cancelTask(taskId);
  }
 
   //// Withdrawal step task
-  function createWithdraStepTask(address _supplier, uint256 _stepTime) external onlyPool returns (bytes32 taskId) {
+  function createWithdraStepTask(address _supplier, uint256 _stepTime) external onlyInternal returns (bytes32 taskId) {
     
      
      bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stepTime), _stepTime);
 
-     bytes memory execData = abi.encodeWithSelector(pool.withdrawStep.selector, _supplier );
+     bytes memory execData = abi.encodeWithSelector(poolInternal.withdrawStep.selector, _supplier );
 
     LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
 
@@ -85,18 +86,18 @@ contract GelatoTasksV2 is Initializable {
 
     
     taskId = IOps(ops).createTask(
-    address(pool),
+    address(poolInternal),
     execData,
     moduleData,
     ETH
     );
-console.logBytes32(taskId);
+
 
   }
 
 
-  modifier onlyPool() {
-    require(msg.sender == address(pool), "Only Pool Allowed");
+  modifier onlyInternal() {
+    require(msg.sender == address(poolInternal), "Only Pool Internal");
     _;
   }
 }

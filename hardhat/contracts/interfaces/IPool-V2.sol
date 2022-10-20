@@ -21,28 +21,23 @@ interface IPoolV2 {
     uint8 _flowType
   ) external;
 
-  function poolUpdateCurrentState() external;
 
- function transferSTokens(
-    address _sender,
-    address _receiver,
-    uint256 amount
-   ) external;
 
-  function supplierUpdateCurrentState(address _supplier) external;
+function sfDeleteFlow(address sender, address receiver) external ;
+ function sfCreateFlow( address receiver, int96 newOutFlow) external;
 
-  function getSupplierByAdress(address _supplier) external view returns (DataTypes.Supplier memory supplier);
-
-  function getLastPool() external view returns (DataTypes.PoolV2 memory);
-
-  function getPool(uint256 _timestamp) external view returns (DataTypes.PoolV2 memory) ;
+  function sfUpdateFlow(address receiver, int96 newOutFlow) external ;
 
   function transfer(uint256 _amount, address _paymentToken) external;
+ function transferSuperToken (address receiver,uint256 amount) external;
 
-  function withdrawStep(address _receiver)  external;
+ function sfDeleteFlowWithCtx(bytes calldata _ctx ,address sender, address receiver) external  returns (bytes memory newCtx);
 
-  function pushedToStrategy(uint256 amount ) external;
 
   function initializeAfterSettings(IResolverSettingsV2 _resolverSettings ) external;
+
+   function cancelTask(bytes32 _taskId) external;
+
+    function internalUpdates(DataTypes.Supplier memory supplier, DataTypes.PoolV2 memory currentPool) external;
 
 }

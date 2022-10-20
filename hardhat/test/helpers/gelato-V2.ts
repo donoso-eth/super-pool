@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { utils } from "ethers";
-import { GelatoTasksV2, IOps, PoolV2, PoolStrategyV2 } from "../../typechain-types";
+import { GelatoTasksV2, IOps, PoolStrategyV2, PoolInternalV2 } from "../../typechain-types";
 
 
 export const gelatoPushToAave = async (poolStrategy: PoolStrategyV2, ops:IOps, executor:SignerWithAddress) => {
@@ -62,9 +62,9 @@ export const getTaskId = (
 };
 
 
-export const getGelatoWithdrawStepId = async (pool: PoolV2,gelatoTask: GelatoTasksV2, timestamp:number, interval:number, user:string) => {
+export const getGelatoWithdrawStepId = async (poolInternal: PoolInternalV2,gelatoTask: GelatoTasksV2, timestamp:number, interval:number, user:string) => {
 
-  let  execSelector =  pool.interface.getSighash("withdrawStep");
+  let  execSelector =  poolInternal.interface.getSighash("withdrawStep");
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
   const timeArgs = utils.defaultAbiCoder.encode(
     ["uint256", "uint256"],
@@ -79,7 +79,7 @@ export const getGelatoWithdrawStepId = async (pool: PoolV2,gelatoTask: GelatoTas
   let taskId = getTaskId(
 
   gelatoTask.address,
-  pool.address,
+  poolInternal.address,
   execSelector,
   moduleData,
   ETH
@@ -89,11 +89,11 @@ export const getGelatoWithdrawStepId = async (pool: PoolV2,gelatoTask: GelatoTas
 }
 
 
-export const gelatoWithdrawStep = async (pool: PoolV2,gelatoTask: GelatoTasksV2, ops:IOps, executor:SignerWithAddress, user:string, timestamp:number, interval:number) => {
+export const gelatoWithdrawStep = async (poolInternal: PoolInternalV2,gelatoTask: GelatoTasksV2, ops:IOps, executor:SignerWithAddress, user:string, timestamp:number, interval:number) => {
     
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
-  const execData =  pool.interface.encodeFunctionData("withdrawStep",[user]);
+  const execData =  poolInternal.interface.encodeFunctionData("withdrawStep",[user]);
   const timeArgs = utils.defaultAbiCoder.encode(
     ["uint256", "uint256"],
     [timestamp + interval, interval]
@@ -105,11 +105,11 @@ export const gelatoWithdrawStep = async (pool: PoolV2,gelatoTask: GelatoTasksV2,
     args: [timeArgs],
   };
 
-  let  execSelector =  pool.interface.getSighash("withdrawStep");
+  let  execSelector =  poolInternal.interface.getSighash("withdrawStep");
   let taskId = getTaskId(
 
     gelatoTask.address,
-    pool.address,
+    poolInternal.address,
     execSelector,
     moduleData,
     ETH
@@ -123,7 +123,7 @@ export const gelatoWithdrawStep = async (pool: PoolV2,gelatoTask: GelatoTasksV2,
     .connect(executor)
     .exec(
       gelatoTask.address,
-      pool.address,
+      poolInternal.address,
       execData,
       moduleData,
       FEE,

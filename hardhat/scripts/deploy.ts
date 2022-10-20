@@ -11,7 +11,7 @@ import config from "../hardhat.config";
 import { join } from "path";
 import { createHardhatAndFundPrivKeysFiles } from "../helpers/localAccounts";
 import * as hre from 'hardhat';
-import { STokenV2__factory, Events__factory,   SuperPoolHost__factory, PoolStrategyV2__factory, GelatoTasksV2__factory, PoolV2__factory, ResolverSettingsV2__factory, PoolInternalV2__factory } from "../typechain-types";
+import { Events__factory , SuperPoolHost__factory, PoolStrategyV2__factory, GelatoTasksV2__factory, ResolverSettingsV2__factory, PoolInternalV2__factory } from "../typechain-types";
 import { SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 
 import { utils } from "ethers";
@@ -21,6 +21,9 @@ import { SuperPoolInputStruct, SupertokenResolverStruct, SupertokenResolverStruc
 import { SuperToken } from "@superfluid-finance/sdk-core";
 import { INETWORK_CONFIG } from "../helpers/models";
 import { ResolverSettingsInitilizerStruct } from "../typechain-types/ResolverSettingsV2";
+import { PoolV2__factory } from "../typechain-types/factories/PoolV2__factory";
+import { STokenV2__factory } from "../typechain-types/factories/STokenV2__factory";
+
 
 
 
@@ -287,7 +290,7 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
 
 
 
-  await poolInternal.initialize(resolverSettings.address,{gasLimit:10000000, nonce:nonce+8});
+  //await poolInternal.initialize(resolverSettings.address,{gasLimit:10000000, nonce:nonce+8});
 
   console.log('Internal initialized');
 
@@ -295,10 +298,10 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
   let aToken = "0x1Ee669290939f8a8864497Af3BC83728715265FF";
 
   console.log('Strategy initialized');
-  await poolStrategy.initialize(network_params.ops,network_params.superToken,network_params.token,resolver.pool,aavePool,aToken,network_params.aaveToken,{gasLimit:10000000, nonce:nonce+9});
+  await poolStrategy.initialize(network_params.ops,network_params.superToken,network_params.token,resolver.pool,aavePool,aToken,network_params.aaveToken,poolInternal.address,{gasLimit:10000000, nonce:nonce+8});
   
   console.log('GelatoTasks initialized');
-  await gelatoTasks.initialize(network_params.ops,resolver.pool,{gasLimit:10000000, nonce:nonce+10});
+  await gelatoTasks.initialize(network_params.ops,resolver.pool,poolInternal.address, {gasLimit:10000000, nonce:nonce+9});
 
 
 

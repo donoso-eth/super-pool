@@ -4,7 +4,7 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { ERC20, ERC777, IOps, ISuperfluidToken, PoolV2, STokenV2 } from '../../typechain-types';
+import { ERC20, ERC777, IOps, ISuperfluidToken, PoolInternalV2, PoolV2, STokenV2 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V2';
@@ -23,7 +23,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   let poolTotalBalance  = (poolBalance.availableBalance.div(10**12)).add(aaveBalance);
 
 
-  let result: IPOOL = await getPool(contracts.superPool);
+  let result: IPOOL = await getPool(contracts.poolInternal);
 
   if (expected.id != undefined) {
     try {
@@ -177,7 +177,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   for (const user of checkUsers ) {
     let userRealtimeBalance = await contracts.sToken.balanceOf(user.address);
     let userTokenBalance = await contracts.superTokenERC777.balanceOf(user.address);
-    let userState = await contracts.superPool.suppliersByAddress(user.address);
+    let userState = await contracts.poolInternal.suppliersByAddress(user.address);
     let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
 
 
@@ -363,9 +363,9 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   }
 };
 
-export const getPool = async (superPool: PoolV2): Promise<any> => {
-  let periodTimestamp = +(await superPool.lastPoolTimestamp()).toString();
-  let periodRaw = await superPool.poolByTimestamp(periodTimestamp);
+export const getPool = async (poolInternal: PoolInternalV2): Promise<any> => {
+  let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
+  let periodRaw = await poolInternal.poolByTimestamp(periodTimestamp);
 
   let pool: IPOOL = {
     id: periodRaw.id,
@@ -446,20 +446,21 @@ export const printUserResult = async (user: IUSERTEST): Promise<any> => {
   return user;
 };
 
-export const printPeriod = async (superPool: PoolV2, t0: number): Promise<any> => {
-  let periodTimestamp = +(await superPool.lastPoolTimestamp()).toString();
-  let period = await superPool.poolByTimestamp(periodTimestamp);
+export const printPool = async (poolInternal: PoolInternalV2, t0: number): Promise<any> => {
+  let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
+  let period = await poolInternal.getPool(periodTimestamp);
   console.log(period.timestamp.toString());
 
   console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXX   PERIOD    XXXXXXXXXXXXXXXXXXXXX');
-  console.log(`TimeStamp ${+period.timestamp.toString() - t0} `);
+  console.log(`TimeStamp ${+period.timestamp.toString()} `);
   console.log(`In-Flow ${period.inFlowRate.toString()}  units/s`);
   console.log(`Out-Flow ${period.outFlowRate.toString()}  units/s`);
   console.log(`Deposit From InFlow ${period.depositFromInFlowRate.toString()}  units`);
   console.log(`Deposit ${period.deposit.toString()}  units`);
   console.log(`IndexYieldToken: ${period.yieldTokenIndex.toString()}  units`);
   console.log(`IndexYieldInFlowrate: ${period.yieldInFlowRateIndex.toString()}  units`);
-  console.log(`Yield: ${period.yieldAccrued.toString()}  units`);
+  console.log(`Yield accrued: ${period.yieldAccrued.toString()}  units`);
+  console.log(`Yield snapshot: ${period.yieldSnapshot.toString()}  units`);
   console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
   return period;

@@ -88,10 +88,23 @@ export const applyUserEvent = async (
     // }
     delete nonActiveUsers[activeUser.address];
   }
+  let rec;
+  if (code == SupplierEvent.TRANSFER) {
+    result = abiCoder.decode(['address','uint256'], payload);
+     rec = usersPool[result[0]]
+    delete nonActiveUsers[rec.address];
+    [rec, pool] = await updateUser(rec, pool, lastPool, pools, PRECISSION, sf, superToken, deployer, superPoolAddress);
+ 
+
+  }
 
   let users = await updateNonActiveUsers(nonActiveUsers, pool, lastPool, pools, PRECISSION, sf, superToken, deployer, superPoolAddress);
   if (activeUser !== undefined) {
     users[activeUser.address] = activeUser;
+  }
+
+  if (code == SupplierEvent.TRANSFER && rec != undefined){
+      users[rec.address] = rec;
   }
 
   switch (code) {
@@ -109,16 +122,23 @@ export const applyUserEvent = async (
       console.log('withdrawio');
       result = abiCoder.decode(['uint256'], payload);
       pool.deposit = pool.deposit.sub(result[0].mul(PRECISSION));
+      pool.poolTotalBalance = pool.poolTotalBalance.sub(result[0]);
       users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(result[0].mul(PRECISSION));
-      users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.realTimeBalance.sub(result[0].mul(PRECISSION));
+      users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.realTimeBalance.sub(result[0]);
       users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(result[0]);
       break;
 
       case SupplierEvent.TRANSFER:
         console.log('transferio');
         result = abiCoder.decode(['address','uint256'], payload);
+
+        users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(result[1].mul(PRECISSION));
+        users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.realTimeBalance.sub(result[1]);
+  
+        // [receiveUser , pool] = await updateUser( users[result[0]], pool, lastPool, pools, PRECISSION, sf, superToken, deployer, superPoolAddress);
+        users[result[0]].expected.deposit =  users[result[0]].expected.deposit.add(result[1].mul(PRECISSION));
+        users[result[0]].expected.realTimeBalance =  users[result[0]].expected.realTimeBalance.add(result[1]);
      
-       // pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
         break;
   
 
@@ -168,7 +188,7 @@ export const applyUserEvent = async (
       break;
 
     case SupplierEvent.OUT_STREAM_UPDATE:
-      console.log('out_streamio');
+      console.log('out_streamio_stop');
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
 
@@ -242,6 +262,8 @@ export const applyUserEvent = async (
       if (users[activeUser.address].expected.realTimeBalance.lt(users[activeUser.address].expected.outMinBalance)) {
         pool.outFlowRate = pool.outFlowRate.sub(users[activeUser.address].expected.outFlow);
         pool.deposit = pool.deposit.sub(users[activeUser.address].expected.realTimeBalance.mul(PRECISSION));
+        users[activeUser.address].expected.tokenBalance= users[activeUser.address].expected.tokenBalance.add((users[activeUser.address].expected.realTimeBalance))
+
         pool.outFlowBuffer = pool.outFlowBuffer.sub(users[activeUser.address].expected.outMinBalance);
         users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(users[activeUser.address].expected.realTimeBalance);
         users[activeUser.address].expected.outMinBalance = BigNumber.from(0);
@@ -254,7 +276,7 @@ export const applyUserEvent = async (
         users[activeUser.address].expected.nextExecOut = BigNumber.from(0);
         users[activeUser.address].expected.deposit = BigNumber.from(0);
         users[activeUser.address].expected.realTimeBalance = BigNumber.from(0);
-      } else {
+           } else {
         let amountStep = users[activeUser.address].expected.outFlow.mul(users[activeUser.address].expected.outStepTime);
 
         pool.deposit = pool.deposit.sub(amountStep.mul(PRECISSION));
