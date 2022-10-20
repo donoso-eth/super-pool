@@ -6,7 +6,7 @@ dataSources:
     name: PoolV2
     network: localhost
     source:
-      address: '0xEE876447761b93f2f122E6a6981f87D1537e3565'
+      address: '0x3144397dB0D1cd3Ea5ec83f6Fb797ef4d20C91f8'
       abi: PoolV2
       startBlock: 7755313 
     mapping:

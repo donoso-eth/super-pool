@@ -1,4 +1,4 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
+// We require the Hardhat Runtime Environment explicitly here. This is opnal
 // but useful for running the script in a standalone fashion through `node <script>`.
 //
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
@@ -304,6 +304,9 @@ copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'i
   await gelatoTasks.initialize(network_params.ops,resolver.pool,poolInternal.address, {gasLimit:10000000, nonce:nonce+9});
 
 
+  let initialPoolEth = hre.ethers.utils.parseEther('1');
+
+  await deployer.sendTransaction({ to: resolver.pool, value: initialPoolEth,gasLimit:10000000, nonce:nonce+10 });
 
  // let superPoolToken= await superPoolHost.poolAdressBySuperToken(SUPERTOKEN1);
 

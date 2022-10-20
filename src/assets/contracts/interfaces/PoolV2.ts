@@ -85,12 +85,15 @@ export interface PoolV2Interface extends utils.Interface {
     "beforeAgreementUpdated(address,address,bytes32,bytes,bytes)": FunctionFragment;
     "cfa()": FunctionFragment;
     "closeAccount()": FunctionFragment;
+    "emitEventSupplier(address)": FunctionFragment;
     "gelato()": FunctionFragment;
     "getLastPool()": FunctionFragment;
     "getPool(uint256)": FunctionFragment;
     "host()": FunctionFragment;
     "initialize(address,address,address,address)": FunctionFragment;
     "initializeAfterSettings(address)": FunctionFragment;
+    "internalEmitEvents(address,uint8,bytes,address)": FunctionFragment;
+    "internalPushToAAVE(uint256)": FunctionFragment;
     "lastPoolTimestamp()": FunctionFragment;
     "ops()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
@@ -139,6 +142,10 @@ export interface PoolV2Interface extends utils.Interface {
     functionFragment: "closeAccount",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "emitEventSupplier",
+    values: [string]
+  ): string;
   encodeFunctionData(functionFragment: "gelato", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getLastPool",
@@ -156,6 +163,14 @@ export interface PoolV2Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "initializeAfterSettings",
     values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "internalEmitEvents",
+    values: [string, BigNumberish, BytesLike, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "internalPushToAAVE",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "lastPoolTimestamp",
@@ -243,6 +258,10 @@ export interface PoolV2Interface extends utils.Interface {
     functionFragment: "closeAccount",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "emitEventSupplier",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "gelato", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getLastPool",
@@ -253,6 +272,14 @@ export interface PoolV2Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "initializeAfterSettings",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "internalEmitEvents",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "internalPushToAAVE",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -429,6 +456,11 @@ export interface PoolV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    emitEventSupplier(
+      _supplier: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     gelato(overrides?: CallOverrides): Promise<[string]>;
 
     getLastPool(overrides?: CallOverrides): Promise<[PoolV2StructOutput]>;
@@ -450,6 +482,19 @@ export interface PoolV2 extends BaseContract {
 
     initializeAfterSettings(
       _resolverSettings: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    internalEmitEvents(
+      _supplier: string,
+      code: BigNumberish,
+      payload: BytesLike,
+      sender: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    internalPushToAAVE(
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -601,6 +646,11 @@ export interface PoolV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  emitEventSupplier(
+    _supplier: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   gelato(overrides?: CallOverrides): Promise<string>;
 
   getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
@@ -622,6 +672,19 @@ export interface PoolV2 extends BaseContract {
 
   initializeAfterSettings(
     _resolverSettings: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  internalEmitEvents(
+    _supplier: string,
+    code: BigNumberish,
+    payload: BytesLike,
+    sender: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  internalPushToAAVE(
+    amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -771,6 +834,11 @@ export interface PoolV2 extends BaseContract {
 
     closeAccount(overrides?: CallOverrides): Promise<void>;
 
+    emitEventSupplier(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     gelato(overrides?: CallOverrides): Promise<string>;
 
     getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
@@ -792,6 +860,19 @@ export interface PoolV2 extends BaseContract {
 
     initializeAfterSettings(
       _resolverSettings: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    internalEmitEvents(
+      _supplier: string,
+      code: BigNumberish,
+      payload: BytesLike,
+      sender: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    internalPushToAAVE(
+      amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -962,6 +1043,11 @@ export interface PoolV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    emitEventSupplier(
+      _supplier: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     gelato(overrides?: CallOverrides): Promise<BigNumber>;
 
     getLastPool(overrides?: CallOverrides): Promise<BigNumber>;
@@ -983,6 +1069,19 @@ export interface PoolV2 extends BaseContract {
 
     initializeAfterSettings(
       _resolverSettings: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    internalEmitEvents(
+      _supplier: string,
+      code: BigNumberish,
+      payload: BytesLike,
+      sender: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    internalPushToAAVE(
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1135,6 +1234,11 @@ export interface PoolV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    emitEventSupplier(
+      _supplier: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     gelato(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getLastPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -1156,6 +1260,19 @@ export interface PoolV2 extends BaseContract {
 
     initializeAfterSettings(
       _resolverSettings: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    internalEmitEvents(
+      _supplier: string,
+      code: BigNumberish,
+      payload: BytesLike,
+      sender: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    internalPushToAAVE(
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

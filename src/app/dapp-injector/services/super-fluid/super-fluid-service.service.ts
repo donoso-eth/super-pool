@@ -17,7 +17,7 @@ export class SuperFluidService {
   async getContracts() {}
 
   async initializeFramework() {
-    console.log(this.dapp.dappConfig.defaultNetwork);
+    console.log(20,this.dapp.dappConfig.defaultNetwork);
     this.sf = await Framework.create({
       chainId:settings[this.dapp.dappConfig.defaultNetwork!].chainId,
       provider: this.dapp.DAPP_STATE.defaultProvider!,
@@ -35,9 +35,8 @@ export class SuperFluidService {
       await this.initializeFramework();
     }
 
-    console.log(this.sf)
     let createFlowOperation = this.sf.cfaV1.createFlow({
-      receiver: streamConfig.receiver,
+      receiver: this.dapp.defaultContract?.address!,
       flowRate: streamConfig.flowRate,
       superToken:streamConfig.superToken,
     });

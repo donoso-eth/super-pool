@@ -1191,6 +1191,36 @@ export class CloseAccountCall__Outputs {
   }
 }
 
+export class EmitEventSupplierCall extends ethereum.Call {
+  get inputs(): EmitEventSupplierCall__Inputs {
+    return new EmitEventSupplierCall__Inputs(this);
+  }
+
+  get outputs(): EmitEventSupplierCall__Outputs {
+    return new EmitEventSupplierCall__Outputs(this);
+  }
+}
+
+export class EmitEventSupplierCall__Inputs {
+  _call: EmitEventSupplierCall;
+
+  constructor(call: EmitEventSupplierCall) {
+    this._call = call;
+  }
+
+  get _supplier(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+}
+
+export class EmitEventSupplierCall__Outputs {
+  _call: EmitEventSupplierCall;
+
+  constructor(call: EmitEventSupplierCall) {
+    this._call = call;
+  }
+}
+
 export class InitializeCall extends ethereum.Call {
   get inputs(): InitializeCall__Inputs {
     return new InitializeCall__Inputs(this);
@@ -1259,6 +1289,78 @@ export class InitializeAfterSettingsCall__Outputs {
   _call: InitializeAfterSettingsCall;
 
   constructor(call: InitializeAfterSettingsCall) {
+    this._call = call;
+  }
+}
+
+export class InternalEmitEventsCall extends ethereum.Call {
+  get inputs(): InternalEmitEventsCall__Inputs {
+    return new InternalEmitEventsCall__Inputs(this);
+  }
+
+  get outputs(): InternalEmitEventsCall__Outputs {
+    return new InternalEmitEventsCall__Outputs(this);
+  }
+}
+
+export class InternalEmitEventsCall__Inputs {
+  _call: InternalEmitEventsCall;
+
+  constructor(call: InternalEmitEventsCall) {
+    this._call = call;
+  }
+
+  get _supplier(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get code(): i32 {
+    return this._call.inputValues[1].value.toI32();
+  }
+
+  get payload(): Bytes {
+    return this._call.inputValues[2].value.toBytes();
+  }
+
+  get sender(): Address {
+    return this._call.inputValues[3].value.toAddress();
+  }
+}
+
+export class InternalEmitEventsCall__Outputs {
+  _call: InternalEmitEventsCall;
+
+  constructor(call: InternalEmitEventsCall) {
+    this._call = call;
+  }
+}
+
+export class InternalPushToAAVECall extends ethereum.Call {
+  get inputs(): InternalPushToAAVECall__Inputs {
+    return new InternalPushToAAVECall__Inputs(this);
+  }
+
+  get outputs(): InternalPushToAAVECall__Outputs {
+    return new InternalPushToAAVECall__Outputs(this);
+  }
+}
+
+export class InternalPushToAAVECall__Inputs {
+  _call: InternalPushToAAVECall;
+
+  constructor(call: InternalPushToAAVECall) {
+    this._call = call;
+  }
+
+  get amount(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class InternalPushToAAVECall__Outputs {
+  _call: InternalPushToAAVECall;
+
+  constructor(call: InternalPushToAAVECall) {
     this._call = call;
   }
 }
