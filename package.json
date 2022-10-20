@@ -21,14 +21,14 @@
     "tinker": "cd hardhat && npx hardhat --tsconfig ./tsconfig.hardhat.json run ./scripts/tinker.ts",
     "publish:subgraph": "cd hardhat && npx hardhat --tsconfig ./tsconfig.hardhat.json run ./scripts/publish.ts",
     "codegen": "cd add-ons/subgraph && graph codegen",
-    "build-graph": "cd subgraph && graph build",
-    "deploy-graph": "cd services/graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ GITHUB_USERNAME/your-contract",
+    "build-graph": "cd add-ons/subgraph && graph build",
+    "deploy-graph": "cd services/graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ donoso-eth/super-pool",
     "run-graph-node": "cd add-ons/graph-node && docker-compose up",
     "remove-graph-node": "cd add-ons/graph-node && docker-compose down",
     "clean-graph-node": "rm -rf add-ons/graph-node/data/",
-    "create-graph-local": "cd add-ons/subgraph && graph create --node http://localhost:8020/ angular-web3/gravatar",
-    "remove-graph-local": "cd add-ons/subgraph && graph remove --node http://localhost:8020/ angular-web3/gravatar",
-    "deploy-graph-local": "cd add-ons/subgraph && graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 angular-web3/gravatar"
+    "create-graph-local": "cd add-ons/subgraph && graph create --node http://localhost:8020/ donoso-eth/super-pool",
+    "remove-graph-local": "cd add-ons/subgraph && graph remove --node http://localhost:8020/ donoso-eth/super-pool",
+    "deploy-graph-local": "cd add-ons/subgraph && graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 donoso-eth/super-pool"
   },
   "private": true,
   "dependencies": {

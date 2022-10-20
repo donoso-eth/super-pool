@@ -74,7 +74,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         ops = IOps(resolverSettings.getGelatoOps());
 
         lastPoolTimestamp = block.timestamp;
-        poolByTimestamp[block.timestamp] = DataTypes.PoolV2(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+        poolByTimestamp[block.timestamp] = DataTypes.PoolV2(0, block.timestamp, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
         poolTimestampById[0] = block.timestamp;
 
@@ -124,11 +124,13 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         if (periodSpan > 0) {
             poolId++;
 
-            DataTypes.PoolV2 memory pool = DataTypes.PoolV2(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+            DataTypes.PoolV2 memory pool = DataTypes.PoolV2(poolId, block.timestamp, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
             pool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
 
             pool.deposit = lastPool.deposit;
+
+            pool.nrSuppliers = supplierId;
 
             pool.yieldSnapshot = currentYieldSnapshot;
 
@@ -204,7 +206,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
             supplier.timestamp = block.timestamp;
             supplierId = supplierId +1;
             supplier.id = supplierId;
-
+            poolByTimestamp[block.timestamp].nrSuppliers++;
             supplierAdressById[supplier.id] = _supplier;
         }
 

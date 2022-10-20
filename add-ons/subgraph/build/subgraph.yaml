@@ -1,0 +1,58 @@
+specVersion: 0.0.2
+schema:
+  file: schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: PoolV2
+    network: localhost
+    source:
+      address: "0xf4F77AB325d7E8B16F29caD99c019accffAFA643"
+      abi: PoolV2
+      startBlock: 27976990
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Pool
+        - Supplier
+        - Event
+      abis:
+        - name: PoolV2
+          file: PoolV2/abis/pool_v2.json
+      eventHandlers:
+        - event: PoolUpdate((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))
+          handler: handlePoolUpdate
+        - event: SupplierUpdate((uint256,address,uint256,uint256,uint256,uint256,uint256,(int96,bytes32),(int96,bytes32,uint256,uint256,uint256,uint256,bytes32),(uint256,uint256)))
+          handler: handleSupplyUpdate
+        - event: SupplierEvent(uint8,bytes,uint256,address)
+          handler: handleSupplierEvent
+      file: PoolV2/PoolV2.wasm
+  - kind: ethereum/contract
+    name: PoolInternalV2
+    network: localhost
+    source:
+      address: "0xf4F77AB325d7E8B16F29caD99c019accffAFA643"
+      abi: PoolV2
+      startBlock: 27976990
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Pool
+        - Supplier
+        - Event
+      abis:
+        - name: PoolInternalV2
+          file: PoolInternalV2/abis/pool_internal_v2.json
+        - name: PoolV2
+          file: PoolInternalV2/abis/pool_v2.json
+      eventHandlers:
+        - event: PoolUpdate((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))
+          handler: handlePoolUpdate
+        - event: SupplierUpdate((uint256,address,uint256,uint256,uint256,uint256,uint256,(int96,bytes32),(int96,bytes32,uint256,uint256,uint256,uint256,bytes32),(uint256,uint256)))
+          handler: handleSupplyUpdate
+        - event: SupplierEvent(uint8,bytes,uint256,address)
+          handler: handleSupplierEvent
+      file: PoolV2/PoolV2.wasm

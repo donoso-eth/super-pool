@@ -22,7 +22,7 @@ export const settings = {
     chainId: 31337,
     subgraph:
       'https://thegraph.com/hosted-service/subgraph/superfluid-finance/protocol-v1-goerli',
-      graphUri:"http://localhost:8000/subgraphs/name/donoso-eth/floowdy",
+      graphUri:"http://localhost:8000/subgraphs/name/donoso-eth/super-pool",
       wallet:'local',
     aavePool:"0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6",
     aToken:"0x1Ee669290939f8a8864497Af3BC83728715265FF",
@@ -38,7 +38,7 @@ export const settings = {
     chainId: 5,
     subgraph:
       'https://thegraph.com/hosted-service/subgraph/superfluid-finance/protocol-v1-goerli',
-      graphUri:"https://api.thegraph.com/subgraphs/name/donoso-eth/floowdy",
+      graphUri:"https://api.thegraph.com/subgraphs/name/donoso-eth/super-pool",
       wallet:'wallet',
       aavePool:"0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6",
       aToken:"0x1Ee669290939f8a8864497Af3BC83728715265FF",

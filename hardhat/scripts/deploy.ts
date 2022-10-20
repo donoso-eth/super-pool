@@ -180,7 +180,7 @@ if (network_params == undefined) {
     //// DEPLOY POOL INTERNAL
     const poolInternal = await new  PoolInternalV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+4})
 
-    toDeployContract = contract_config['gelatoTasksV2'];
+    toDeployContract = contract_config['poolInternalV2'];
    writeFileSync(
      `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
      JSON.stringify({
