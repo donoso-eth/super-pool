@@ -6,7 +6,8 @@ const routes: Routes = [
   { path: 'landing', loadChildren: () => import('./pages/landing/landing.module').then(m => m.LandingModule) },
   { path: 'dashboard', loadChildren: () => import('./pages/dashboard/dashboard.module').then(m => m.DashboardModule) },
   { path: 'start-flow', loadChildren: () => import('./pages/start-flow/start-flow.module').then(m => m.StartFlowModule) },
-  
+  { path: 'redeem-flow', loadChildren: () => import('./pages/redeem-flow/redeem-flow.module').then(m => m.RedeemFlowModule) },
+ 
 ];
 
 @NgModule({

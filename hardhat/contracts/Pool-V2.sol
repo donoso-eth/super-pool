@@ -181,11 +181,17 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
   function redeemDeposit(uint256 redeemAmount) public {
     uint256 balance = sToken.balanceOf(msg.sender);
 
+  console.log('184,redeem deposit');
+  console.log(185, balance);
+
     address _supplier = msg.sender;
 
-    require(balance > redeemAmount, "NOT_ENOUGH_BALANCE");
+    console.log(188,_supplier);
 
-    poolInternal._redeemDeposit(redeemAmount, _supplier);
+    require(balance > redeemAmount, "NOT_ENOUGH_BALANCE");
+    console.log(188,_supplier);
+    console.log(193,address(sToken));
+    poolInternal._redeemDeposit(redeemAmount, _supplier,balance);
 
     DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
 
@@ -244,6 +250,11 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
   function getLastPool() external view returns (DataTypes.PoolV2 memory) {
     return poolInternal.getLastPool();
   }
+
+  function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory) {
+    return poolInternal.getSupplier(_supplier);
+  }
+
 
   function closeAccount() external {}
 

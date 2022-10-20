@@ -467,12 +467,14 @@ export const printPool = async (poolInternal: PoolInternalV2, t0: number): Promi
 };
 
 export const printUser = async (superPool: PoolV2, userAddress: string): Promise<any> => {
-  let user = await superPool.suppliersByAddress(userAddress);
+  let user = await superPool.getSupplier(userAddress);
 
   console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
   console.log(`User ${userAddress.toString()} `);
   console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, `);
   console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s`);
+  console.log(`Out-Flow  cancelID ${user.outStream.cancelWithdrawId.toString()} `);
+  console.log(`Out-Flow Stem Time ${user.outStream.stepTime.toString()} `);
   console.log(`Deposit ${user.deposit.toString()}  units`);
   console.log(`TimeStamp ${user.timestamp.toString()}  units`);
   console.log(`Cumulative Yield: ${user.cumulatedYield.toString()}  units`);

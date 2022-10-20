@@ -9,7 +9,7 @@ interface IPoolInternalV2 {
 
      function initialize(IResolverSettingsV2 _resolverSettings, address _owner, ISuperToken _superToken) external;
 
-    function _redeemDeposit(uint256 redeemAmount, address _supplier) external;
+   function _redeemDeposit(uint256 redeemAmount, address _supplier, uint256 balance)  external;
 
     function _tokensReceived(address from, uint256 amount) external;
 

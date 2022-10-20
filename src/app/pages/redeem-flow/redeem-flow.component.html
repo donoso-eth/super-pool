@@ -1,0 +1,138 @@
+<div class="grid p-fluid justify-content-center">
+  <div [formGroup]="startStreamForm" class="col-8">
+    <div class="card">
+      <div class="col-12">
+        <div style="border-color: transparent" class="card">
+          <h5>
+            <i
+              (click)="back()"
+              style="
+                color: var(--primary-color);
+                font-size: large;
+                cursor: pointer;
+              "
+              class="pi pi-arrow-left"
+            ></i>
+          Get a stream Back!
+          </h5>
+
+          <div style="padding: 20px" class="mt-2 grid p-fluid">
+            <div style="position: relative" class="col-12 md:col-12">
+              <h5>Choose Your Flow Rate</h5>
+
+              <p-inputNumber
+                formControlName="flowRateAmountCtrl"
+                placeholder="Flowrate"
+                mode="decimal"
+                [showButtons]="true"
+                [min]="0"
+              >
+              </p-inputNumber>
+              <p-dropdown
+                [options]="perDurations"
+                formControlName="flowRateTimeCtrl"
+                placeholder="Select Interval"
+              >
+                <ng-template pTemplate="selectedItem">
+                  <span>{{
+                    startStreamForm.controls.flowRateTimeCtrl.value.name
+                  }}</span>
+                </ng-template>
+                <ng-template let-time pTemplate="time">
+                  <span>{{ time.name }}</span>
+                </ng-template>
+              </p-dropdown>
+            </div>
+
+            <div  *ngIf="false" style="position: relative" class="col-12 md:col-6">
+              <h5>Should stop the flow</h5>
+
+              <p-dropdown
+                [options]="stopCondition"
+                formControlName="flowRateConditionCtrl"
+                (onChange)="changeCondition($event)"
+                placeholder="Stop Condition"
+              >
+                <ng-template pTemplate="selectedItem">
+                  <span>{{
+                    startStreamForm.controls.flowRateConditionCtrl.value
+                      .condition
+                  }}</span>
+                </ng-template>
+                <ng-template let-condition pTemplate="condition">
+                  <span>{{ condition.condition }}</span>
+                </ng-template>
+              </p-dropdown>
+
+              <h5
+                *ngIf="
+                  startStreamForm.controls.flowRateConditionCtrl.value.id == 1
+                "
+              >
+                Stop after?
+              </h5>
+
+              <p-dropdown
+                *ngIf="
+                  startStreamForm.controls.flowRateConditionCtrl.value.id == 1
+                "
+                [options]="durations"
+                formControlName="stopDurationCtrl"
+                placeholder="Stop Condition"
+              >
+                <ng-template pTemplate="selectedItem">
+                  <span>{{
+                    startStreamForm.controls.stopDurationCtrl.value.name
+                  }}</span>
+                </ng-template>
+                <ng-template let-duration pTemplate="duration">
+                  <span>{{ duration.name }}</span>
+                </ng-template>
+              </p-dropdown>
+
+              <p-inputNumber
+                *ngIf="
+                  startStreamForm.controls.flowRateConditionCtrl.value.id == 1
+                "
+                formControlName="stopAmountDurationCtrl"
+                placeholder="Time To Stop"
+                mode="decimal"
+                [showButtons]="true"
+                [min]="0"
+              >
+              </p-inputNumber>
+              <h5
+                *ngIf="
+                  startStreamForm.controls.flowRateConditionCtrl.value.id == 2
+                "
+              >
+                Amount to stop after?
+              </h5>
+              <p-inputNumber
+                *ngIf="
+                  startStreamForm.controls.flowRateConditionCtrl.value.id == 2
+                "
+                formControlName="stopAmountCtrl"
+                placeholder="Amount To Stop"
+                mode="decimal"
+                [showButtons]="true"
+                [min]="0"
+              >
+              </p-inputNumber>
+            </div>
+          </div>
+        </div>
+        <button
+          [disabled]="startStreamForm.invalid"
+          pButton
+          pRipple
+          style="margin: auto"
+          (click)="startFlow()"
+          type="button"
+          label="Start"
+          class="p-button-rounded mr-2 mb-2"
+        ></button>
+      </div>
+    </div>
+  </div>
+</div>

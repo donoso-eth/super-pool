@@ -56,4 +56,12 @@ interface IPoolV2 {
   function emitEventSupplier(address _supplier) external;
 
   function internalPushToAAVE(uint256 amount) external;
+
+  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV2 memory);
+
+  function getLastPool() external view returns (DataTypes.PoolV2 memory);
+
+  function getLastTimestmap() external view returns (uint256);
+
+  function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier);
 }

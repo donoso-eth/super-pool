@@ -30,6 +30,7 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
   twoDecAva: string = '00';
   fourDecAva: string = '0000';
   isFlowAvailable = false;
+  isOutFlowAvailable = false;
 
   destroyQueries: Subject<void> = new Subject();
   destroyFormatting: Subject<void> = new Subject();
@@ -53,6 +54,15 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
     public superFluidService: SuperFluidService
   ) {
     super(dapp, store);
+  }
+
+  showRedeemFlow() {
+    this.router.navigateByUrl('redeem-flow');
+  }
+
+  stopRedeemFlow() {
+    
+
   }
 
   showStartFlow() {
@@ -163,9 +173,10 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
           this.fourDecAva = formattedAva.fourDec;
           this.isFlowAvailable = false;
 
-          if (+this.supplier.inFlow > 0) {
+          if (+this.supplier.inFlow > 0 || +this.supplier.outFlow >0) {
             this.niceFlow = ((+this.supplier?.inFlow! * (30 * 24 * 3600)) / 10 ** 18).toFixed(2);
-            this.isFlowAvailable = true;
+            this.isFlowAvailable =  +this.supplier.inFlow > 0 ? true : false;
+            this.isOutFlowAvailable =  +this.supplier.outFlow > 0 ? true : false;
             this.destroyFormatting.next();
             let source = interval(500);
             source.pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {

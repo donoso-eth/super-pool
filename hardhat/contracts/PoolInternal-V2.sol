@@ -529,14 +529,18 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
     }
 
     function _redeemDeposit(uint256 redeemAmount, address _supplier, uint256 balance) external onlyPool {
+       
+       console.log('okdk');
         DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
 
+        console.log(524,balance);
         uint256 max_allowed = balance.sub(supplier.outStream.minBalance);
 
         console.log(534,max_allowed);
         console.log(535,balance);
+    
 
-        require(balance > max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
+        require(redeemAmount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
 
       
 
