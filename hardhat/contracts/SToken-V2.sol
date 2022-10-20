@@ -107,19 +107,8 @@ contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
         uint256 fromBalance = balanceOf(from);
         require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
 
-        console.log(113, from);
-        console.log(114, to);
 
         poolInternal.transferSTokens(from, to, amount);
-
-        DataTypes.Supplier memory sender = poolInternal.getSupplier(from);
-
-        DataTypes.Supplier memory receiver = poolInternal.getSupplier(to);
-
-        bytes memory payload = abi.encode(to, amount);
-        emit Events.SupplierUpdate(sender);
-        emit Events.SupplierUpdate(receiver);
-        emit Events.SupplierEvent(DataTypes.SupplierEvent.TRANSFER, payload, block.timestamp, from);
 
         emit Transfer(from, to, amount);
 

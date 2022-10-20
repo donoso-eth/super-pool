@@ -85,12 +85,7 @@
               "class="text-900 font-medium text-md">
                 
                     <p style="width:150px;margin:unset;color:grey;">Locked:</p> 
-                    <span 
-              
-                      style="color: var(--yellow-500)"
-                    >
-                      {{member?.amountLocked}}$</span
-                    >
+               
                   </div>
                 </div>
       
@@ -100,10 +95,7 @@
               "class="text-900 font-medium text-md">
                 
                     <p style="width:150px;margin:unset;color:grey;">Loss:</p> 
-                    <span 
-                    >
-                    {{member?.amountLoss}}$</span
-                    >
+              
                   </div>
                 </div>
               </div>
@@ -114,16 +106,16 @@
             </div>
           </div>
 
-          <div class="col-12 lg:col-4 xl:col-4">
+          <div  style="position:relative" class="col-12 lg:col-4 xl:col-4">
             <user-balance
               (refreshEvent)="refreshBalance()"
               (mintEvent)="mint()"
               *ngIf="poolToken !== undefined"
               [poolToken]="poolToken"
             ></user-balance>
-            <p-progressSpinner   style="position: relative;
-            left: 158px;
-            top: 50px;" *ngIf="poolToken == undefined"></p-progressSpinner>
+            <!-- style="position: relative;left: 158px; top: 50px;" -->
+            <p-progressSpinner   
+             *ngIf="poolToken == undefined"></p-progressSpinner>
           </div>
 
           <div class="col-12 lg:col-4 xl:col-4">

@@ -19,6 +19,9 @@ type Supplier @entity {
   supplier: String!
   timestamp: BigInt!
   createdTimestamp: BigInt!
+
+  deposit: BigInt!
+
   cumulatedYield: BigInt!
 
   inFlow: BigInt!

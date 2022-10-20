@@ -563,6 +563,8 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         int96 inFlowRate,
         address sender
     ) external onlyPool returns (bytes memory updateCtx) {
+        console.log('doch creating stream!');
+
         DataTypes.Supplier storage supplier = _getSupplier(sender);
         if (decodedContext.userData.length > 0) {
             uint256 endSeconds = parseLoanData(decodedContext.userData);
@@ -579,12 +581,12 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         int96 inFlowRate,
         address sender
     ) external onlyPool returns (bytes memory updatedCtx) {
-        DataTypes.Supplier storage supplier = _getSupplier(sender);
+     
         updatedCtx = _inStreamCallback(sender, inFlowRate, 0, newCtx);
     }
 
     function terminateFlow(bytes calldata newCtx, address sender) external onlyPool returns (bytes memory updateCtx) {
-        DataTypes.Supplier storage supplier = _getSupplier(sender);
+
         updateCtx = _inStreamCallback(sender, 0, 0, newCtx);
     }
 
@@ -604,10 +606,11 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         bytes memory placeHolder = "0x";
 
         _updateSupplierFlow(_supplier, 0, _outFlowRate, placeHolder);
-    }
+    }   
 
     function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
         poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
+        poolContract.internalPushToAAVE(amount);
     }
 
     function _redeemFlowStop(address _supplier) external onlyPool {
@@ -640,6 +643,9 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
 
         sender.deposit = sender.deposit.sub(amount.mul(PRECISSION));
         receiver.deposit = receiver.deposit.add(amount.mul(PRECISSION));
+        bytes memory payload = abi.encode(_sender, amount);
+        poolContract.internalEmitEvents(_sender, DataTypes.SupplierEvent.TRANSFER, payload, _sender);
+        poolContract.emitEventSupplier(_receiver);
 
          }
 
@@ -678,9 +684,8 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
             supplier.deposit = supplier.deposit.sub(stepAmount.mul(PRECISSION));
             supplier.outStream.initTime = block.timestamp;
         }
-        emit Events.SupplierUpdate(supplier);
         bytes memory payload = abi.encode(stepAmount);
-        emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW_STEP, payload, block.timestamp, _receiver);
+        poolContract.internalEmitEvents(_receiver,DataTypes.SupplierEvent.WITHDRAW_STEP, payload,_receiver);
     }
 
     function cancelTask(bytes32 _taskId) public {

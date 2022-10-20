@@ -38,7 +38,7 @@ export function handleSupplierUpdate(event: SupplierUpdate): void {
     supplier.createdTimestamp = event.params.supplier.createdTimestamp;
     supplier.cumulatedYield = BigInt.fromI32(0);
   }
-
+  supplier.deposit = event.params.supplier.deposit;
   supplier.timestamp  = event.params.supplier.timestamp;
   supplier.inFlow = event.params.supplier.inStream.flow;
   supplier.inCancelFlowId = event.params.supplier.inStream.cancelFlowId.toHexString();

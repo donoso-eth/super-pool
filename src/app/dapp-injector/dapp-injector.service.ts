@@ -16,9 +16,9 @@ import { Subject, takeUntil } from 'rxjs';
 import { SuperPool} from 'src/assets/contracts/interfaces/SuperPool';
 import { AngularContract } from './classes';
 import HostMetadata from 'src/assets/contracts/super_pool_host_metadata.json';
-import PoolMetadata from 'src/assets/contracts/pool_factory_v2_metadata.json';
-import StokenMetadata from 'src/assets/contracts/s_token_factory_v2_metadata.json';
-import { PoolFactory } from 'src/assets/contracts/interfaces/PoolFactory';
+import PoolMetadata from 'src/assets/contracts/pool_v2_metadata.json';
+import StokenMetadata from 'src/assets/contracts/s_token_v2_metadata.json';
+
 import { PoolV2 } from 'src/assets/contracts/interfaces/PoolV2';
 import { STokenV2 } from 'src/assets/contracts/interfaces/STokenV2';
 
@@ -200,6 +200,8 @@ async localWallet(index:number) {
     let hostContract = new Contract(HostMetadata.address, HostMetadata.abi,this.DAPP_STATE.signer!) ;
     let resolver = await hostContract.getResolverBySuperToken(settings.goerli.supertoken);
 
+    console.log(resolver);
+
     PoolMetadata.address = resolver.pool
 
     const contract = new AngularContract<PoolV2>({
@@ -212,6 +214,7 @@ async localWallet(index:number) {
 
 
     StokenMetadata.address = resolver.sToken;
+    console.log(resolver.sToken)
     const contractStoken = new AngularContract<STokenV2>({
       metadata:   StokenMetadata,
        provider: this.DAPP_STATE.defaultProvider!,
@@ -221,7 +224,7 @@ async localWallet(index:number) {
      await contractStoken.init()
  
     this.DAPP_STATE.defaultContract = contract;
-
+     this.DAPP_STATE.sTokenContract = contractStoken;
 
 
 

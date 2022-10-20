@@ -272,6 +272,11 @@
         "internalType": "address",
         "name": "_supplier",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "balance",
+        "type": "uint256"
       }
     ],
     "name": "_redeemDeposit",

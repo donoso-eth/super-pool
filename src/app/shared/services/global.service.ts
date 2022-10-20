@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DappInjector, Web3Actions, } from 'angular-web3';
+import { DappInjector, settings, Web3Actions, } from 'angular-web3';
 import { constants, Contract, ethers, Signer, utils } from 'ethers';
 import { doSignerTransaction } from 'src/app/dapp-injector/classes/transactor';
 import {
@@ -21,13 +21,13 @@ export class GlobalService {
   supertoken?: ISuperToken;
   public poolState!: IPOOL_STATE;
   public poolToken: IPOOL_TOKEN = {
-    name: 'USDC',
-    superTokenName: 'USDCx',
+    name: 'fUSDC',
+    superTokenName: 'fUSDCx',
     id: 1,
     image: 'usdc',
-    superToken: '0xbCE2198f789f3AC1Af76D3835BEe8A61830aAd34',
+    superToken: settings.localhost.supertoken,
     superTokenBalance: '0',
-    token: '0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43',
+    token: settings.localhost.token,
     tokenBalance: '0',
   };
 
@@ -116,10 +116,10 @@ export class GlobalService {
     // let balance = await this.erc20?.balanceOf(this.dapp.defaultContract?.address);
 
     //  console.log(balance.toString());
-    let amount = 1000000 * 10 ** 6;
-    let amountSuper = 1000 * 10 ** 18;
+
+    const value = utils.parseEther('1000').toString();
     await doSignerTransaction(
-      (this.erc20 as Contract).connect(this.dapp.signer!)['mint(uint256)'](amount)
+      (this.erc20 as Contract).connect(this.dapp.signer!)['mint(address,uint256)'](this.dapp.signerAddress,value)
     );
     this.store.dispatch(Web3Actions.chainBusyWithMessage({message: {body:'Approving the supertoken contract', header:'Un momento'}}))
 
@@ -131,7 +131,7 @@ export class GlobalService {
     );
     this.store.dispatch(Web3Actions.chainBusyWithMessage({message: {body:'Upgrading the usdc tokens to supertokens', header:'Un momento más'}}))
 
-    const value = utils.parseEther('1000000').toString();
+   
     await doSignerTransaction((this.supertoken as ISuperToken).connect(this.dapp.signer!).upgrade(value));
 
     // console.log(this.dapp.defaultContract?.address)

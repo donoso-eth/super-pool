@@ -1330,6 +1330,10 @@ export class _redeemDepositCall__Inputs {
   get _supplier(): Address {
     return this._call.inputValues[1].value.toAddress();
   }
+
+  get balance(): BigInt {
+    return this._call.inputValues[2].value.toBigInt();
+  }
 }
 
 export class _redeemDepositCall__Outputs {

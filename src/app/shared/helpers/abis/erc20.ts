@@ -6,6 +6,13 @@ export const abi_ERC20 = [
     stateMutability: 'nonpayable',
     type: 'function',
   },
+  {
+    inputs: [{ internalType: 'address', name: 'account', type: 'address' },{ internalType: 'uint256', name: 'amount', type: 'uint256' }],
+    name: 'mint',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
     {
       anonymous: false,
       inputs: [

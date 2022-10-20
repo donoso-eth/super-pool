@@ -47,7 +47,7 @@ export class DappBaseComponent implements OnDestroy, AfterViewInit {
       .pipe(takeUntil(this.destroyHooks))
       .subscribe(async (value) => {
         this.blockchain_status = value;
-        console.log(value);
+      
       });
 
     //////  CHAIN START LOADING
@@ -109,7 +109,7 @@ export class DappBaseComponent implements OnDestroy, AfterViewInit {
       .select(web3Selectors.busyNetworkWithMessage)
       .pipe(takeUntil(this.destroyHooks))
       .subscribe((payload:{header:string, body:string}) => {
-        console.log(payload)
+      
         this.is_busy_message = payload;
       });
   }

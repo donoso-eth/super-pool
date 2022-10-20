@@ -170,9 +170,6 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
 
 
-    bytes memory payload = abi.encode(amountToDeposit);
-    emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW, payload, block.timestamp, address(0));
- 
  
   }
 

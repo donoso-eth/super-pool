@@ -25,7 +25,7 @@
     "deploy-graph": "cd services/graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ donoso-eth/super-pool",
     "run-graph-node": "cd add-ons/graph-node && docker-compose up",
     "remove-graph-node": "cd add-ons/graph-node && docker-compose down",
-    "clean-graph-node": "rm -rf add-ons/graph-node/data/",
+    "clean-graph-node": "rimraf add-ons/graph-node/data/",
     "create-graph-local": "cd add-ons/subgraph && graph create --node http://localhost:8020/ donoso-eth/super-pool",
     "remove-graph-local": "cd add-ons/subgraph && graph remove --node http://localhost:8020/ donoso-eth/super-pool",
     "deploy-graph-local": "cd add-ons/subgraph && graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 donoso-eth/super-pool"

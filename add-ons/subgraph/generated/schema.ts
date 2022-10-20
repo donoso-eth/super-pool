@@ -20,6 +20,7 @@ export class Supplier extends Entity {
     this.set("supplier", Value.fromString(""));
     this.set("timestamp", Value.fromBigInt(BigInt.zero()));
     this.set("createdTimestamp", Value.fromBigInt(BigInt.zero()));
+    this.set("deposit", Value.fromBigInt(BigInt.zero()));
     this.set("cumulatedYield", Value.fromBigInt(BigInt.zero()));
     this.set("inFlow", Value.fromBigInt(BigInt.zero()));
     this.set("inCancelFlowId", Value.fromString(""));
@@ -85,6 +86,15 @@ export class Supplier extends Entity {
 
   set createdTimestamp(value: BigInt) {
     this.set("createdTimestamp", Value.fromBigInt(value));
+  }
+
+  get deposit(): BigInt {
+    let value = this.get("deposit");
+    return value!.toBigInt();
+  }
+
+  set deposit(value: BigInt) {
+    this.set("deposit", Value.fromBigInt(value));
   }
 
   get cumulatedYield(): BigInt {

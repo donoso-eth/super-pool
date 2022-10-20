@@ -196,7 +196,7 @@ export interface PoolInternalV2Interface extends utils.Interface {
     "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))": FunctionFragment;
     "_calculateYieldSupplier(address)": FunctionFragment;
     "_poolUpdate()": FunctionFragment;
-    "_redeemDeposit(uint256,address)": FunctionFragment;
+    "_redeemDeposit(uint256,address,uint256)": FunctionFragment;
     "_redeemFlow(int96,address)": FunctionFragment;
     "_redeemFlowStop(address)": FunctionFragment;
     "_tokensReceived(address,uint256)": FunctionFragment;
@@ -255,7 +255,7 @@ export interface PoolInternalV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "_redeemDeposit",
-    values: [BigNumberish, string]
+    values: [BigNumberish, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "_redeemFlow",
@@ -551,6 +551,7 @@ export interface PoolInternalV2 extends BaseContract {
     _redeemDeposit(
       redeemAmount: BigNumberish,
       _supplier: string,
+      balance: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -770,6 +771,7 @@ export interface PoolInternalV2 extends BaseContract {
   _redeemDeposit(
     redeemAmount: BigNumberish,
     _supplier: string,
+    balance: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -982,6 +984,7 @@ export interface PoolInternalV2 extends BaseContract {
     _redeemDeposit(
       redeemAmount: BigNumberish,
       _supplier: string,
+      balance: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1211,6 +1214,7 @@ export interface PoolInternalV2 extends BaseContract {
     _redeemDeposit(
       redeemAmount: BigNumberish,
       _supplier: string,
+      balance: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1372,6 +1376,7 @@ export interface PoolInternalV2 extends BaseContract {
     _redeemDeposit(
       redeemAmount: BigNumberish,
       _supplier: string,
+      balance: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
