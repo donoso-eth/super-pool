@@ -61,8 +61,11 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
     this.router.navigateByUrl('redeem-flow');
   }
 
-  stopRedeemFlow() {
-    
+  async stopRedeemFlow() {
+    this.store.dispatch(Web3Actions.chainBusy({ status: true }));
+    this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'stopping your Receiving flow', header: 'Un momento' } }));
+ 
+    await (doSignerTransaction(this.dapp.defaultContract?.instance.redeemFlowStop({gasLimit:1000000})!))
 
   }
 
@@ -93,9 +96,9 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
   }
 
   async withdraw() {
-    console.log(this.depositAmountCtrl.value)
+  
     let amount = utils.parseEther(this.depositAmountCtrl.value.toString());
-    console.log(amount)
+
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'it is ok to need the money....', header: 'Un momento' } }));
      await doSignerTransaction(this.dapp.defaultContract?.instance?.redeemDeposit(amount,{gasLimit:1000000})!)
@@ -152,9 +155,11 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
         console.log(val);
 
         if (!!val && !!val.data && !!val.data.suppliers && val.data.suppliers.length > 0) {
-          console.log(160);
+
 
           let realbalance = await this.dapp.DAPP_STATE.sTokenContract?.instance.balanceOf(this.dapp.signerAddress!);
+
+  
 
        let nowTiem = new Date().getTime();
 
@@ -168,13 +173,13 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
           let formated = this.global.prepareNumbers(+realbalance! + value);
           this.twoDec = formated.twoDec;
           this.fourDec = formated.fourDec;
+    
 
-          let formattedAva = this.global.prepareNumbers(+realbalance! + value);
-          this.twoDecAva = formattedAva.twoDec;
-          this.fourDecAva = formattedAva.fourDec;
           this.isFlowAvailable = false;
 
           if (+this.supplier.inFlow > 0 || +this.supplier.outFlow >0) {
+        
+
             if (+this.supplier.inFlow >0){
             this.niceFlow = ((+this.supplier?.inFlow! * (30 * 24 * 3600)) / 10 ** 18).toFixed(2);
             this.niceOutFlow = "0.00";
@@ -206,12 +211,12 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
           } else {
             this.niceFlow = '0.00';
             this.niceOutFlow = '0.00';
-            this.twoDec = '0.00';
-            this.fourDec = '0000';
+       
           }
           this.store.dispatch(Web3Actions.chainBusy({ status: false }));
         }
         if (val.data.suppliers == null ||val.data.suppliers.length == 0 ) {
+ 
           this.supplier = {
        
             id: '0',
@@ -239,6 +244,8 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
           };
           this.twoDec = '0.00';
           this.fourDec = '0000';
+          this.niceFlow = '0.00';
+          this.niceOutFlow = '0.00';
           this.store.dispatch(Web3Actions.chainBusy({ status: false }));
         }
       });

@@ -181,16 +181,13 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
   function redeemDeposit(uint256 redeemAmount) public {
     uint256 balance = sToken.balanceOf(msg.sender);
 
-  console.log('184,redeem deposit');
-  console.log(185, balance);
 
     address _supplier = msg.sender;
 
-    console.log(188,_supplier);
+
 
     require(balance > redeemAmount, "NOT_ENOUGH_BALANCE");
-    console.log(188,_supplier);
-    console.log(193,address(sToken));
+
     poolInternal._redeemDeposit(redeemAmount, _supplier,balance);
 
     DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
@@ -223,7 +220,7 @@ contract PoolV2 is Initializable, UUPSUpgradeable, SuperAppBase, IERC777Recipien
   }
 
   function redeemFlowStop() external {
-    console.log("200 pool");
+   
     poolInternal._redeemFlowStop(msg.sender);
 
     DataTypes.Supplier memory supplier = poolInternal.getSupplier(msg.sender);
@@ -382,17 +379,16 @@ function emitEvents(address _supplier,DataTypes.SupplierEvent code, bytes memory
 
   // #endregion Gelato functions
 
-  function sfCreateFlow(address receiver, int96 newOutFlow) external {
-    console.log(receiver);
-    console.log(uint96(newOutFlow));
+  function sfCreateFlow(address receiver, int96 newOutFlow) external onlyInternal {
+
     _cfaLib.createFlow(receiver, superToken, newOutFlow);
   }
 
-  function sfUpdateFlow(address receiver, int96 newOutFlow) external {
+  function sfUpdateFlow(address receiver, int96 newOutFlow) external onlyInternal {
     _cfaLib.updateFlow(receiver, superToken, newOutFlow);
   }
 
-  function sfDeleteFlow(address sender, address receiver) external {
+  function sfDeleteFlow(address sender, address receiver) external onlyInternal {
     _cfaLib.deleteFlow(sender, receiver, superToken);
   }
 
@@ -416,7 +412,7 @@ function emitEvents(address _supplier,DataTypes.SupplierEvent code, bytes memory
   ) external override onlyExpected(_superToken, _agreementClass) onlyHost returns (bytes memory newCtx) {
     newCtx = _ctx;
 
-    console.log(361, "CRATE FLOW");
+  
 
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
 
@@ -464,6 +460,7 @@ function emitEvents(address _supplier,DataTypes.SupplierEvent code, bytes memory
       emit Events.PoolUpdate(pool);
     } else if (sender == address(this)) {
       console.log("OUT_STREAM_MANUAL_STOPPED");
+      
     }
 
     return newCtx;

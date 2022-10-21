@@ -120,7 +120,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
         uint256 currentYieldSnapshot = poolStrategy.balanceOf();
-        console.log(128, periodSpan);
+     
         if (periodSpan > 0) {
             poolId++;
 
@@ -137,19 +137,19 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
             pool.yieldAccrued = pool.yieldSnapshot - lastPool.yieldSnapshot;
 
             pool.totalYield = lastPool.totalYield + pool.yieldAccrued;
-            console.log(143);
+         
             pool.apy.span = lastPool.apy.span + periodSpan;
             uint256 periodApy;
 
             periodApy = lastPool.deposit == 0 ? 0 : pool.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodSpan).div(lastPool.deposit);
 
             pool.apy.apy = ((periodSpan.mul(periodApy)).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(pool.apy.span);
-            console.log(150);
+    
             (pool.yieldTokenIndex, pool.yieldInFlowRateIndex) = _calculateIndexes(pool.yieldAccrued, lastPool);
 
             pool.yieldTokenIndex = pool.yieldTokenIndex + lastPool.yieldTokenIndex;
             pool.yieldInFlowRateIndex = pool.yieldInFlowRateIndex + lastPool.yieldInFlowRateIndex;
-            console.log(155);
+       
             pool.inFlowRate = lastPool.inFlowRate;
             pool.outFlowRate = lastPool.outFlowRate;
             pool.outFlowBuffer = lastPool.outFlowBuffer;
@@ -198,8 +198,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
 
     function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-        console.log(193,supplier.timestamp);
-        console.log(supplierId);
+    
         if (supplier.createdTimestamp == 0) {
             supplier.createdTimestamp = block.timestamp;
             supplier.supplier = _supplier;
@@ -261,9 +260,9 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
     ) internal returns (bytes memory newCtx) {
         newCtx = _ctx;
         _poolUpdate();
-        console.log(176);
+     
         newCtx = _updateSupplierFlow(from, inFlow, 0, _ctx);
-        console.log(278);
+     
     }
 
     function _updateSupplierFlow(
@@ -275,9 +274,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
         DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
         newCtx = _ctx;
-        console.log(291);
         _supplierUpdateCurrentState(_supplier);
-        console.log(293,uint96(supplier.outStream.flow));
         int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
         int96 newNetFlow = inFlow - outFlow;
 
@@ -287,7 +284,6 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
 
             if (newNetFlow >= 0) {
 
-                console.log(286);
 
                 pool.outFlowRate = pool.outFlowRate + currentNetFlow;
 
@@ -320,7 +316,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         } else {
             /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW THE SAME
 
-            console.log(330);
+       
 
             if (newNetFlow >= 0) {
                 pool.inFlowRate = pool.inFlowRate - currentNetFlow + inFlow;
@@ -425,7 +421,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
             poolAvailable = superToken.balanceOf(address(poolContract)) - (pool.outFlowBuffer);
         }
 
-        console.log(426, poolAvailable);
+    
 
         if (poolAvailable >= withdrawAmount) {
             console.log("NOT PUSHED");
@@ -436,16 +432,15 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         } else {
             console.log("YES PUSHED");
             uint256 balance = poolStrategy.balanceOf();
-            console.log(434, balance);
+   
             uint256 fromStrategy = withdrawAmount - poolAvailable;
-            console.log(435, fromStrategy);
+        
             uint256 correction;
             if (fromStrategy > balance) {
                 correction = fromStrategy - balance;
-                console.log(440, correction);
-                 console.log(441, balance);
+         
                 if (balance > 0){
-                      console.log(445, balance);
+          
                 poolStrategy.withdraw(balance, _receiver);
                 pool.yieldSnapshot = pool.yieldSnapshot - balance;
                 }
@@ -530,15 +525,13 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
     }
 
     function _redeemDeposit(uint256 redeemAmount, address _supplier, uint256 balance) external onlyPool {
-       
-       console.log('okdk');
+   
         DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
 
-        console.log(524,balance);
+    
         uint256 max_allowed = balance.sub(supplier.outStream.minBalance);
 
-        console.log(534,max_allowed);
-        console.log(535,balance);
+  
     
 
         require(redeemAmount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
@@ -578,7 +571,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         }
 
         updateCtx = _inStreamCallback(sender, inFlowRate, 0, newCtx);
-        console.log(579);
+       
     }
 
     function updateFlow(
@@ -602,11 +595,10 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
 
         require(realTimeBalance > 0, "NO_BALANCE");
 
-        console.log(602);
-
+    
         _poolUpdate();
 
-        console.log(607);
+   
 
         bytes memory placeHolder = "0x";
 
@@ -619,10 +611,10 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
     }
 
     function _redeemFlowStop(address _supplier) external onlyPool {
-      console.log('590 pool');
+
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
 
-        console.log(585);
+    
 
         require(supplier.outStream.flow > 0, "OUT_STREAM_NOT_EXISTS");
 
@@ -674,12 +666,11 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         uint256 minBalance = supplier.outStream.minBalance;
         uint256 stepAmount = (uint96(supplier.outStream.flow)) * (supplier.outStream.stepTime);
 
-        console.log(644, userBalance);
-        console.log(645, minBalance);
+       
 
         ////// user balance goes below min balance, stream will be stopped and all funds will be returned
         if (userBalance < minBalance) {
-            console.log("XXXXXXXXXXXXX 696 XXXXXXXXXXXX");
+      
             _cancelFlow(_receiver, userBalance, minBalance);
         } else {
             _withdrawDispatcher(_receiver, address(poolContract), stepAmount);

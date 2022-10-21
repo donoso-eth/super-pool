@@ -95,7 +95,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     superToken.upgrade(amount);
  
     IERC20(address(superToken)).transfer(_supplier, amount);
-       console.log(77);
+    
   }
 
   /// execute
@@ -136,7 +136,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     uint256 fee;
     address feeToken;
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
-    console.log(113);
+ 
     uint256 currentPoolBuffer = poolInternal.getLastPool().outFlowBuffer;
 
     uint256 currentThreshold = currentPoolBuffer.add(0.5 ether);

@@ -119,11 +119,13 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
 
         this.totalYield = (+utils.formatEther(BigNumber.from(this.currentPool.totalYield))).toFixed(6);
 
-        this.totalTvl = (+utils.formatEther((BigNumber.from(this.currentPool.deposit).add(this.currentPool.depositFromInflowRate)).div(BigNumber.from(1000000)))).toFixed(4);
-
+   
         let value = +this.currentPool.inFlowRate * (new Date().getTime() / 1000 - +this.currentPool.timestamp);
-
-        let formated = this.global.prepareNumbers(+this.currentPool.deposit + value);
+        let todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
+        let ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000)
+      
+        console.log(ttvl)
+        let formated = this.global.prepareNumbers(ttvl);
         this.twoDec = formated.twoDec;
         this.fourDec = formated.fourDec;
 
@@ -133,8 +135,8 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
           let source = interval(500);
        
           source.pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
-          const todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
-           let ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000)
+           todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
+            ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000)
       
             let formated = this.global.prepareNumbers(ttvl);
             this.twoDec = formated.twoDec;

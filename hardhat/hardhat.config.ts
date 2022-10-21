@@ -32,7 +32,7 @@ const mainnetGwei = 21;
 
 
 let defaultNetwork = 'localhost';
-//defaultNetwork = 'goerli';
+defaultNetwork = 'goerli';
 
 const config: HardhatUserConfig = {
   solidity: {
