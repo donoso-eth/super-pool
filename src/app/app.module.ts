@@ -24,7 +24,7 @@ import { GraphQlModule } from './dapp-injector/services/graph-ql/graph-ql.module
 import { HttpClientModule } from '@angular/common/http';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-const network = 'goerli';
+const network = 'localhost';
 
 @NgModule({
   declarations: [

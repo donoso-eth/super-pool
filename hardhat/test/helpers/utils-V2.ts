@@ -331,7 +331,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       }
     }
 
-    if (user.expected.nextExecOut != undefined) {
+    if (user.expected.nextExecOut != undefined && user.expected.nextExecOut != BigNumber.from(0) ) {
       let nextExec = (await contracts.ops?.timedTask(userState.outStream.cancelWithdrawId))?.nextExec as BigNumber;
 
       try {
@@ -465,7 +465,7 @@ export const printPool = async (poolInternal: PoolInternalV2, t0: number): Promi
 
   return period;
 };
-
+ 
 export const printUser = async (superPool: PoolV2, userAddress: string): Promise<any> => {
   let user = await superPool.getSupplier(userAddress);
 

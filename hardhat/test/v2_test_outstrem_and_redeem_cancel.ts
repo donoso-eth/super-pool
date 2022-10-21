@@ -34,7 +34,7 @@ import {
 } from '../typechain-types';
 
 import { constants, utils } from 'ethers';
-import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent, printPeriod, printPoolResult, printUser, testPeriod } from './helpers/utils-V2';
+import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent,  printPoolResult, printUser, testPeriod } from './helpers/utils-V2';
 import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core';
 
 import { ResolverSettingsInitilizerStruct, SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
@@ -124,7 +124,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe('V2 OUTSTREAM Redeem and cancel', function () {
+describe.only('V2 OUTSTREAM Redeem and cancel', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -441,68 +441,66 @@ describe('V2 OUTSTREAM Redeem and cancel', function () {
 
     let withdrawAmount = depositAvailable.add(usersPool[user1.address].expected.outMinBalance.div(2))
 
-    await waitForTx( superPool.connect(user1).redeemDeposit(withdrawAmount));
+    await  expect(waitForTx( superPool.connect(user1).redeemDeposit(withdrawAmount))).to.be.revertedWith('NOT_ENOUGH_BALANCE:WITH_OUTFLOW');
 
    // await waitForTx(superPool.poolUpdateUser(user2.address) )
 
-    lastPool = Object.assign({}, pool);
+    // lastPool = Object.assign({}, pool);
 
-    yieldPool = await superPool.getLastPool();
+    // yieldPool = await superPool.getLastPool();
 
 
   
 
-    yieldSnapshot = await yieldPool.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldAccrued;
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    // yieldSnapshot = await yieldPool.yieldSnapshot;
+    // yieldAccrued = yieldPool.yieldAccrued;
+    // pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
 
-    payload = abiCoder.encode(['uint256'], [withdrawAmount]);
+    // payload = abiCoder.encode(['uint256'], [withdrawAmount]);
 
-    lastUsersPool = usersPool;
-    expedtedPoolBalance = initialBalance.add(amount);
+    // lastUsersPool = usersPool;
+    // expedtedPoolBalance = initialBalance.add(amount);
 
-    result = await applyUserEvent(
-      SupplierEvent.WITHDRAW,
-      user2.address,
-      payload,
-      lastUsersPool,
-      pool,
-      lastPool,
-      pools,
-      PRECISSION,
-      sf,
-      network_params.superToken,
-      deployer,
-      superPoolAddress
-    );
+    // result = await applyUserEvent(
+    //   SupplierEvent.WITHDRAW,
+    //   user2.address,
+    //   payload,
+    //   lastUsersPool,
+    //   pool,
+    //   lastPool,
+    //   pools,
+    //   PRECISSION,
+    //   sf,
+    //   network_params.superToken,
+    //   deployer,
+    //   superPoolAddress
+    // );
 
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
+    // pools[+timestamp] = result[1];
+    // usersPool = result[0];
 
-    await testPeriod(BigNumber.from(t0), +t1 + 3 * ONE_DAY, result[1], contractsTest, result[0]);
+    // await testPeriod(BigNumber.from(t0), +t1 + 3 * ONE_DAY, result[1], contractsTest, result[0]);
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
     // #endregion =================   FOURTH PERIOD ============================= //
 
 
-     throw new Error("");
-     
     
       for (let i=0; i<30;i++) {
-        if (usersPool[user2.address].expected.outStreamId == "0x0000000000000000000000000000000000000000000000000000000000000000"){
+        if (usersPool[user1.address].expected.outStreamId == "0x0000000000000000000000000000000000000000000000000000000000000000"){
           return
         }
 
         // #region ================= 5th  PERIOD ============================= //
         console.log('\x1b[36m%s\x1b[0m', `#${5+ i }--- gelto withdfraw ${i+1} step`);
 
-        let incrementTime =  +usersPool[user2.address].expected.nextExecOut;
+        let incrementTime =  +usersPool[user1.address].expected.nextExecOut;
 
         await setNextBlockTimestamp(hre,  incrementTime);
-        timestamp = usersPool[user2.address].expected.nextExecOut; //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
+        timestamp = usersPool[user1.address].expected.nextExecOut; //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user1.address].expected.nextExecOut));
     
   
-        await gelatoWithdrawStep(poolInternal,gelatoTasks,ops,executor,user2.address,+usersPool[user2.address].expected.outStreamCreated ,+usersPool[user2.address].expected.outStepTime);
+        await gelatoWithdrawStep(poolInternal,gelatoTasks,ops,executor,user1.address,+usersPool[user1.address].expected.outStreamCreated ,+usersPool[user1.address].expected.outStepTime);
 
     
         lastPool = Object.assign({}, pool);
@@ -524,7 +522,7 @@ describe('V2 OUTSTREAM Redeem and cancel', function () {
      
         result = await applyUserEvent(
           SupplierEvent.WITHDRAW_STEP,
-          user2.address,
+          user1.address,
           payload,
           lastUsersPool,
           pool,

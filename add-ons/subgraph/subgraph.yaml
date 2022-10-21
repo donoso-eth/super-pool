@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: PoolV2
-    network: goerli
+    network: localhost
     source:
-      address: '0xbfE02e675E9957B075aef30aD6113c6f8C11407B'
+      address: '0x01709413Da150044674E1D1bcb9832cf08d7C890'
       abi: PoolV2
-      startBlock: 7802347 
+      startBlock: 7755313
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5

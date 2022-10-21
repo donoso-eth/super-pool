@@ -175,6 +175,15 @@ export const applyUserEvent = async (
         .mul(result[0])
         .add(stepAmount);
 
+      if ( users[activeUser.address].expected.inFlow > BigNumber.from(0)){
+        pool.inFlowRate = pool.inFlowRate.sub(users[activeUser.address].expected.inFlow);
+        users[activeUser.address].expected.inFlow = BigNumber.from(0);
+        users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(users[activeUser.address].expected.inFlowDeposit);
+        users[activeUser.address].expected.inFlowDeposit = BigNumber.from(0);
+      }
+
+
+
       users[activeUser.address].expected.outMinBalance = minimalBalance;
       users[activeUser.address].expected.outStepAmount = stepAmount;
       users[activeUser.address].expected.outStepTime = stepTime;
@@ -260,15 +269,17 @@ export const applyUserEvent = async (
 
     case SupplierEvent.WITHDRAW_STEP:
       console.log('STEPIO');
-      // pool.deposit = pool.deposit.sub(users[activeUser.address].expected.outStepAmount.mul(PRECISSION));
+      let userRealTimeBalance = users[activeUser.address].expected.realTimeBalance;
+      if (userRealTimeBalance.lt(users[activeUser.address].expected.outMinBalance)) {
+        let amountStep = users[activeUser.address].expected.outFlow.mul(users[activeUser.address].expected.outStepTime);
 
-      if (users[activeUser.address].expected.realTimeBalance.lt(users[activeUser.address].expected.outMinBalance)) {
+       
         pool.outFlowRate = pool.outFlowRate.sub(users[activeUser.address].expected.outFlow);
-        pool.deposit = pool.deposit.sub(users[activeUser.address].expected.realTimeBalance.mul(PRECISSION));
-        users[activeUser.address].expected.tokenBalance= users[activeUser.address].expected.tokenBalance.add((users[activeUser.address].expected.realTimeBalance))
-
+        //pool.deposit = pool.deposit.sub(userRealTimeBalance.mul(PRECISSION));
+        //pool.poolTotalBalance =  pool.poolTotalBalance.sub(userRealTimeBalance);
+     
+        users[activeUser.address].expected.tokenBalance= users[activeUser.address].expected.tokenBalance.add((userRealTimeBalance))
         pool.outFlowBuffer = pool.outFlowBuffer.sub(users[activeUser.address].expected.outMinBalance);
-        users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(users[activeUser.address].expected.realTimeBalance);
         users[activeUser.address].expected.outMinBalance = BigNumber.from(0);
         users[activeUser.address].expected.outStepAmount = BigNumber.from(0);
         users[activeUser.address].expected.outFlow = BigNumber.from(0);
@@ -279,7 +290,9 @@ export const applyUserEvent = async (
         users[activeUser.address].expected.nextExecOut = BigNumber.from(0);
         users[activeUser.address].expected.deposit = BigNumber.from(0);
         users[activeUser.address].expected.realTimeBalance = BigNumber.from(0);
-           } else {
+           } 
+           
+        else {
         let amountStep = users[activeUser.address].expected.outFlow.mul(users[activeUser.address].expected.outStepTime);
 
         pool.deposit = pool.deposit.sub(amountStep.mul(PRECISSION));

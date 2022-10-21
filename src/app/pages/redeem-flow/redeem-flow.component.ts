@@ -98,11 +98,11 @@ export class RedeemFlowComponent  extends DappBaseComponent implements OnInit {
 
     }
 
-    await doSignerTransaction(this.dapp.defaultContract!.instance.redeemFlow(flowRate,{gasLimit:100000}))
+    await doSignerTransaction(this.dapp.defaultContract!.instance.redeemFlow(flowRate,{gasLimit:10000000}))
 
 
-    this.store.dispatch(Web3Actions.chainBusy({ status: false}));
-   // this.back()
+    //this.store.dispatch(Web3Actions.chainBusy({ status: false}));
+   this.back()
 
   }
 

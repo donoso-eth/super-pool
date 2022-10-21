@@ -127,13 +127,16 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
         this.twoDec = formated.twoDec;
         this.fourDec = formated.fourDec;
 
-        if (+this.currentPool.inFlowRate > 0) {
+        if (+this.currentPool.inFlowRate > 0 || +this.currentPool.outFlowRate ) {
           this.destroyFormatting.next();
+          let initTime = new Date().getTime() / 1000;
           let source = interval(500);
+       
           source.pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
-            const todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
-
-            let formated = this.global.prepareNumbers(+todayms * +this.currentPool.inFlowRate + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000);
+          const todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
+           let ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000)
+      
+            let formated = this.global.prepareNumbers(ttvl);
             this.twoDec = formated.twoDec;
             this.fourDec = formated.fourDec;
           });

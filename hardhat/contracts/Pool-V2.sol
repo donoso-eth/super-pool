@@ -383,6 +383,8 @@ function emitEvents(address _supplier,DataTypes.SupplierEvent code, bytes memory
   // #endregion Gelato functions
 
   function sfCreateFlow(address receiver, int96 newOutFlow) external {
+    console.log(receiver);
+    console.log(uint96(newOutFlow));
     _cfaLib.createFlow(receiver, superToken, newOutFlow);
   }
 
@@ -491,8 +493,10 @@ function emitEvents(address _supplier,DataTypes.SupplierEvent code, bytes memory
       emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_UPDATE, payload, block.timestamp, sender);
       DataTypes.PoolV2 memory pool = poolInternal.getLastPool();
       emit Events.PoolUpdate(pool);
-    } else {}
-    console.log("FLOW_UPDATED_FINISH");
+    } else {
+            console.log("FLOW_UPDATED_SELF");
+    }
+
     return newCtx;
   }
 

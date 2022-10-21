@@ -571,6 +571,138 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_supplier",
+        "type": "address"
+      }
+    ],
+    "name": "getSupplier",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "supplier",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "cumulatedYield",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deposit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "createdTimestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "eventId",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "int96",
+                "name": "flow",
+                "type": "int96"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "cancelFlowId",
+                "type": "bytes32"
+              }
+            ],
+            "internalType": "struct DataTypes.Stream",
+            "name": "inStream",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "int96",
+                "name": "flow",
+                "type": "int96"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "cancelFlowId",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "uint256",
+                "name": "stepAmount",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "stepTime",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "initTime",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "minBalance",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "cancelWithdrawId",
+                "type": "bytes32"
+              }
+            ],
+            "internalType": "struct DataTypes.OutStream",
+            "name": "outStream",
+            "type": "tuple"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "span",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "apy",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct DataTypes.APY",
+            "name": "apy",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct DataTypes.Supplier",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "host",
     "outputs": [

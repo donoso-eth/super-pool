@@ -76,9 +76,10 @@ if (network_params == undefined) {
   
 }
 
-
+  console.log(deployer.address)
 
   let nonce = await deployer.getTransactionCount();
+  console.log(nonce);
   //
   //// DEPLOY POOLFACTORY
   const poolFactoryImpl = await new PoolV2__factory(deployer).deploy({gasLimit:10000000, nonce})

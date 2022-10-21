@@ -105,7 +105,18 @@ contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
         _beforeTokenTransfer(from, to, amount);
 
         uint256 fromBalance = balanceOf(from);
-        require(fromBalance >= amount, "ERC20: transfer amount exceeds balance");
+        require(fromBalance >= amount, "NOT_ENOUGH_BALANCE");
+
+
+        DataTypes.Supplier memory supplier = poolInternal.getSupplier(from);
+
+
+        uint256 max_allowed = fromBalance.sub(supplier.outStream.minBalance);
+
+
+        require(amount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
+
+      
 
 
         poolInternal.transferSTokens(from, to, amount);

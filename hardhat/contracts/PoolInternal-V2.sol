@@ -430,6 +430,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         if (poolAvailable >= withdrawAmount) {
             console.log("NOT PUSHED");
             if (_supplier == _receiver) {
+                
                 poolContract.transferSuperToken(_receiver, withdrawAmount);
             }
         } else {

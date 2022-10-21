@@ -74,6 +74,78 @@ export type PoolV2StructOutput = [
   apy: APYStructOutput;
 };
 
+export type StreamStruct = { flow: BigNumberish; cancelFlowId: BytesLike };
+
+export type StreamStructOutput = [BigNumber, string] & {
+  flow: BigNumber;
+  cancelFlowId: string;
+};
+
+export type OutStreamStruct = {
+  flow: BigNumberish;
+  cancelFlowId: BytesLike;
+  stepAmount: BigNumberish;
+  stepTime: BigNumberish;
+  initTime: BigNumberish;
+  minBalance: BigNumberish;
+  cancelWithdrawId: BytesLike;
+};
+
+export type OutStreamStructOutput = [
+  BigNumber,
+  string,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  string
+] & {
+  flow: BigNumber;
+  cancelFlowId: string;
+  stepAmount: BigNumber;
+  stepTime: BigNumber;
+  initTime: BigNumber;
+  minBalance: BigNumber;
+  cancelWithdrawId: string;
+};
+
+export type SupplierStruct = {
+  id: BigNumberish;
+  supplier: string;
+  cumulatedYield: BigNumberish;
+  deposit: BigNumberish;
+  timestamp: BigNumberish;
+  createdTimestamp: BigNumberish;
+  eventId: BigNumberish;
+  inStream: StreamStruct;
+  outStream: OutStreamStruct;
+  apy: APYStruct;
+};
+
+export type SupplierStructOutput = [
+  BigNumber,
+  string,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  StreamStructOutput,
+  OutStreamStructOutput,
+  APYStructOutput
+] & {
+  id: BigNumber;
+  supplier: string;
+  cumulatedYield: BigNumber;
+  deposit: BigNumber;
+  timestamp: BigNumber;
+  createdTimestamp: BigNumber;
+  eventId: BigNumber;
+  inStream: StreamStructOutput;
+  outStream: OutStreamStructOutput;
+  apy: APYStructOutput;
+};
+
 export interface PoolV2Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
@@ -89,6 +161,7 @@ export interface PoolV2Interface extends utils.Interface {
     "gelato()": FunctionFragment;
     "getLastPool()": FunctionFragment;
     "getPool(uint256)": FunctionFragment;
+    "getSupplier(address)": FunctionFragment;
     "host()": FunctionFragment;
     "initialize(address,address,address,address)": FunctionFragment;
     "initializeAfterSettings(address)": FunctionFragment;
@@ -155,6 +228,7 @@ export interface PoolV2Interface extends utils.Interface {
     functionFragment: "getPool",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "getSupplier", values: [string]): string;
   encodeFunctionData(functionFragment: "host", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "initialize",
@@ -268,6 +342,10 @@ export interface PoolV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getPool", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getSupplier",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "host", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
@@ -470,6 +548,11 @@ export interface PoolV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[PoolV2StructOutput]>;
 
+    getSupplier(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<[SupplierStructOutput]>;
+
     host(overrides?: CallOverrides): Promise<[string]>;
 
     initialize(
@@ -660,6 +743,11 @@ export interface PoolV2 extends BaseContract {
     overrides?: CallOverrides
   ): Promise<PoolV2StructOutput>;
 
+  getSupplier(
+    _supplier: string,
+    overrides?: CallOverrides
+  ): Promise<SupplierStructOutput>;
+
   host(overrides?: CallOverrides): Promise<string>;
 
   initialize(
@@ -847,6 +935,11 @@ export interface PoolV2 extends BaseContract {
       timestamp: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PoolV2StructOutput>;
+
+    getSupplier(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<SupplierStructOutput>;
 
     host(overrides?: CallOverrides): Promise<string>;
 
@@ -1057,6 +1150,11 @@ export interface PoolV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getSupplier(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     host(overrides?: CallOverrides): Promise<BigNumber>;
 
     initialize(
@@ -1245,6 +1343,11 @@ export interface PoolV2 extends BaseContract {
 
     getPool(
       timestamp: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getSupplier(
+      _supplier: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
