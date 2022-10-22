@@ -9,7 +9,6 @@ import {
   CallOverrides,
   ContractTransaction,
   Overrides,
-  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -159,7 +158,9 @@ export interface PoolV2Interface extends utils.Interface {
     "closeAccount()": FunctionFragment;
     "emitEventSupplier(address)": FunctionFragment;
     "gelato()": FunctionFragment;
+    "getCodeAddress()": FunctionFragment;
     "getLastPool()": FunctionFragment;
+    "getLastTimestmap()": FunctionFragment;
     "getPool(uint256)": FunctionFragment;
     "getSupplier(address)": FunctionFragment;
     "host()": FunctionFragment;
@@ -167,7 +168,6 @@ export interface PoolV2Interface extends utils.Interface {
     "initializeAfterSettings(address)": FunctionFragment;
     "internalEmitEvents(address,uint8,bytes,address)": FunctionFragment;
     "internalPushToAAVE(uint256)": FunctionFragment;
-    "lastPoolTimestamp()": FunctionFragment;
     "ops()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
     "redeemDeposit(uint256)": FunctionFragment;
@@ -180,9 +180,7 @@ export interface PoolV2Interface extends utils.Interface {
     "tokensReceived(address,address,address,uint256,bytes,bytes)": FunctionFragment;
     "transfer(uint256,address)": FunctionFragment;
     "transferSuperToken(address,uint256)": FunctionFragment;
-    "upgradeTo(address)": FunctionFragment;
-    "upgradeToAndCall(address,bytes)": FunctionFragment;
-    "withdraw()": FunctionFragment;
+    "updateCode(address)": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
@@ -221,7 +219,15 @@ export interface PoolV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "gelato", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "getCodeAddress",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getLastPool",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getLastTimestmap",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -245,10 +251,6 @@ export interface PoolV2Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "internalPushToAAVE",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "lastPoolTimestamp",
-    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "ops", values?: undefined): string;
   encodeFunctionData(
@@ -295,12 +297,7 @@ export interface PoolV2Interface extends utils.Interface {
     functionFragment: "transferSuperToken",
     values: [string, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "upgradeTo", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "upgradeToAndCall",
-    values: [string, BytesLike]
-  ): string;
-  encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
+  encodeFunctionData(functionFragment: "updateCode", values: [string]): string;
 
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
   decodeFunctionResult(
@@ -338,7 +335,15 @@ export interface PoolV2Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "gelato", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "getCodeAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getLastPool",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getLastTimestmap",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getPool", data: BytesLike): Result;
@@ -358,10 +363,6 @@ export interface PoolV2Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "internalPushToAAVE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "lastPoolTimestamp",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "ops", data: BytesLike): Result;
@@ -403,44 +404,27 @@ export interface PoolV2Interface extends utils.Interface {
     functionFragment: "transferSuperToken",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "upgradeToAndCall",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "updateCode", data: BytesLike): Result;
 
   events: {
-    "AdminChanged(address,address)": EventFragment;
-    "BeaconUpgraded(address)": EventFragment;
+    "CodeUpdated(bytes32,address)": EventFragment;
     "Initialized(uint8)": EventFragment;
-    "Upgraded(address)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "CodeUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
-export type AdminChangedEvent = TypedEvent<
+export type CodeUpdatedEvent = TypedEvent<
   [string, string],
-  { previousAdmin: string; newAdmin: string }
+  { uuid: string; codeAddress: string }
 >;
 
-export type AdminChangedEventFilter = TypedEventFilter<AdminChangedEvent>;
-
-export type BeaconUpgradedEvent = TypedEvent<[string], { beacon: string }>;
-
-export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
+export type CodeUpdatedEventFilter = TypedEventFilter<CodeUpdatedEvent>;
 
 export type InitializedEvent = TypedEvent<[number], { version: number }>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
-
-export type UpgradedEvent = TypedEvent<[string], { implementation: string }>;
-
-export type UpgradedEventFilter = TypedEventFilter<UpgradedEvent>;
 
 export interface PoolV2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -541,7 +525,13 @@ export interface PoolV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<[string]>;
 
+    getCodeAddress(
+      overrides?: CallOverrides
+    ): Promise<[string] & { codeAddress: string }>;
+
     getLastPool(overrides?: CallOverrides): Promise<[PoolV2StructOutput]>;
+
+    getLastTimestmap(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getPool(
       timestamp: BigNumberish,
@@ -580,8 +570,6 @@ export interface PoolV2 extends BaseContract {
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
-
-    lastPoolTimestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     ops(overrides?: CallOverrides): Promise<[string]>;
 
@@ -648,18 +636,8 @@ export interface PoolV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    upgradeTo(
-      newImplementation: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: string,
-      data: BytesLike,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    withdraw(
+    updateCode(
+      newAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
@@ -736,7 +714,11 @@ export interface PoolV2 extends BaseContract {
 
   gelato(overrides?: CallOverrides): Promise<string>;
 
+  getCodeAddress(overrides?: CallOverrides): Promise<string>;
+
   getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
+
+  getLastTimestmap(overrides?: CallOverrides): Promise<BigNumber>;
 
   getPool(
     timestamp: BigNumberish,
@@ -775,8 +757,6 @@ export interface PoolV2 extends BaseContract {
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
-
-  lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
   ops(overrides?: CallOverrides): Promise<string>;
 
@@ -843,18 +823,8 @@ export interface PoolV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  upgradeTo(
-    newImplementation: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeToAndCall(
-    newImplementation: string,
-    data: BytesLike,
-    overrides?: PayableOverrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  withdraw(
+  updateCode(
+    newAddress: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -929,7 +899,11 @@ export interface PoolV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<string>;
 
+    getCodeAddress(overrides?: CallOverrides): Promise<string>;
+
     getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
+
+    getLastTimestmap(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPool(
       timestamp: BigNumberish,
@@ -968,8 +942,6 @@ export interface PoolV2 extends BaseContract {
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     ops(overrides?: CallOverrides): Promise<string>;
 
@@ -1034,40 +1006,18 @@ export interface PoolV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    upgradeTo(
-      newImplementation: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeToAndCall(
-      newImplementation: string,
-      data: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    withdraw(overrides?: CallOverrides): Promise<boolean>;
+    updateCode(newAddress: string, overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {
-    "AdminChanged(address,address)"(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-    AdminChanged(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-
-    "BeaconUpgraded(address)"(
-      beacon?: string | null
-    ): BeaconUpgradedEventFilter;
-    BeaconUpgraded(beacon?: string | null): BeaconUpgradedEventFilter;
+    "CodeUpdated(bytes32,address)"(
+      uuid?: null,
+      codeAddress?: null
+    ): CodeUpdatedEventFilter;
+    CodeUpdated(uuid?: null, codeAddress?: null): CodeUpdatedEventFilter;
 
     "Initialized(uint8)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
-
-    "Upgraded(address)"(implementation?: string | null): UpgradedEventFilter;
-    Upgraded(implementation?: string | null): UpgradedEventFilter;
   };
 
   estimateGas: {
@@ -1143,7 +1093,11 @@ export interface PoolV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getCodeAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
     getLastPool(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getLastTimestmap(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPool(
       timestamp: BigNumberish,
@@ -1182,8 +1136,6 @@ export interface PoolV2 extends BaseContract {
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
-
-    lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     ops(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1250,18 +1202,8 @@ export interface PoolV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    upgradeTo(
-      newImplementation: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    upgradeToAndCall(
-      newImplementation: string,
-      data: BytesLike,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    withdraw(
+    updateCode(
+      newAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -1339,7 +1281,11 @@ export interface PoolV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    getCodeAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     getLastPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getLastTimestmap(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getPool(
       timestamp: BigNumberish,
@@ -1378,8 +1324,6 @@ export interface PoolV2 extends BaseContract {
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
-
-    lastPoolTimestamp(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     ops(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1446,18 +1390,8 @@ export interface PoolV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    upgradeTo(
-      newImplementation: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: string,
-      data: BytesLike,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    withdraw(
+    updateCode(
+      newAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

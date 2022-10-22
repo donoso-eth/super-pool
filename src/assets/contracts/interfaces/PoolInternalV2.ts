@@ -9,7 +9,6 @@ import {
   CallOverrides,
   ContractTransaction,
   Overrides,
-  PayableOverrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -72,46 +71,6 @@ export type PoolV2StructOutput = [
   yieldSnapshot: BigNumber;
   totalYield: BigNumber;
   apy: APYStructOutput;
-};
-
-export type ContextStruct = {
-  appCallbackLevel: BigNumberish;
-  callType: BigNumberish;
-  timestamp: BigNumberish;
-  msgSender: string;
-  agreementSelector: BytesLike;
-  userData: BytesLike;
-  appCreditGranted: BigNumberish;
-  appCreditWantedDeprecated: BigNumberish;
-  appCreditUsed: BigNumberish;
-  appAddress: string;
-  appCreditToken: string;
-};
-
-export type ContextStructOutput = [
-  number,
-  number,
-  BigNumber,
-  string,
-  string,
-  string,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  string,
-  string
-] & {
-  appCallbackLevel: number;
-  callType: number;
-  timestamp: BigNumber;
-  msgSender: string;
-  agreementSelector: string;
-  userData: string;
-  appCreditGranted: BigNumber;
-  appCreditWantedDeprecated: BigNumber;
-  appCreditUsed: BigNumber;
-  appAddress: string;
-  appCreditToken: string;
 };
 
 export type StreamStruct = { flow: BigNumberish; cancelFlowId: BytesLike };
@@ -201,7 +160,7 @@ export interface PoolInternalV2Interface extends utils.Interface {
     "_redeemFlowStop(address)": FunctionFragment;
     "_tokensReceived(address,uint256)": FunctionFragment;
     "cancelTask(bytes32)": FunctionFragment;
-    "createFlow(bytes,(uint8,uint8,uint256,address,bytes4,bytes,uint256,uint256,int256,address,address),int96,address)": FunctionFragment;
+    "getCodeAddress()": FunctionFragment;
     "getLastPool()": FunctionFragment;
     "getLastTimestmap()": FunctionFragment;
     "getPool(uint256)": FunctionFragment;
@@ -209,18 +168,15 @@ export interface PoolInternalV2Interface extends utils.Interface {
     "initialize(address,address,address)": FunctionFragment;
     "lastPoolTimestamp()": FunctionFragment;
     "ops()": FunctionFragment;
-    "parseLoanData(bytes)": FunctionFragment;
     "poolByTimestamp(uint256)": FunctionFragment;
     "poolTimestampById(uint256)": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
     "pushedToStrategy(uint256)": FunctionFragment;
     "suppliersByAddress(address)": FunctionFragment;
-    "terminateFlow(bytes,address)": FunctionFragment;
     "totalYieldEarnedSupplier(address,uint256)": FunctionFragment;
     "transferSTokens(address,address,uint256)": FunctionFragment;
-    "updateFlow(bytes,int96,address)": FunctionFragment;
-    "upgradeTo(address)": FunctionFragment;
-    "upgradeToAndCall(address,bytes)": FunctionFragment;
+    "updateCode(address)": FunctionFragment;
+    "updateStreamRecord(bytes,int96,address)": FunctionFragment;
     "withdrawStep(address)": FunctionFragment;
   };
 
@@ -274,8 +230,8 @@ export interface PoolInternalV2Interface extends utils.Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "createFlow",
-    values: [BytesLike, ContextStruct, BigNumberish, string]
+    functionFragment: "getCodeAddress",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "getLastPool",
@@ -300,10 +256,6 @@ export interface PoolInternalV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "ops", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "parseLoanData",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "poolByTimestamp",
     values: [BigNumberish]
   ): string;
@@ -324,10 +276,6 @@ export interface PoolInternalV2Interface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "terminateFlow",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "totalYieldEarnedSupplier",
     values: [string, BigNumberish]
   ): string;
@@ -335,14 +283,10 @@ export interface PoolInternalV2Interface extends utils.Interface {
     functionFragment: "transferSTokens",
     values: [string, string, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "updateCode", values: [string]): string;
   encodeFunctionData(
-    functionFragment: "updateFlow",
+    functionFragment: "updateStreamRecord",
     values: [BytesLike, BigNumberish, string]
-  ): string;
-  encodeFunctionData(functionFragment: "upgradeTo", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "upgradeToAndCall",
-    values: [string, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawStep",
@@ -392,7 +336,10 @@ export interface PoolInternalV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "cancelTask", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "createFlow", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getCodeAddress",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getLastPool",
     data: BytesLike
@@ -412,10 +359,6 @@ export interface PoolInternalV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "ops", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "parseLoanData",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "poolByTimestamp",
     data: BytesLike
@@ -437,10 +380,6 @@ export interface PoolInternalV2Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "terminateFlow",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "totalYieldEarnedSupplier",
     data: BytesLike
   ): Result;
@@ -448,10 +387,9 @@ export interface PoolInternalV2Interface extends utils.Interface {
     functionFragment: "transferSTokens",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "updateFlow", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "upgradeTo", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "updateCode", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "upgradeToAndCall",
+    functionFragment: "updateStreamRecord",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -460,36 +398,24 @@ export interface PoolInternalV2Interface extends utils.Interface {
   ): Result;
 
   events: {
-    "AdminChanged(address,address)": EventFragment;
-    "BeaconUpgraded(address)": EventFragment;
+    "CodeUpdated(bytes32,address)": EventFragment;
     "Initialized(uint8)": EventFragment;
-    "Upgraded(address)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "CodeUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
-export type AdminChangedEvent = TypedEvent<
+export type CodeUpdatedEvent = TypedEvent<
   [string, string],
-  { previousAdmin: string; newAdmin: string }
+  { uuid: string; codeAddress: string }
 >;
 
-export type AdminChangedEventFilter = TypedEventFilter<AdminChangedEvent>;
-
-export type BeaconUpgradedEvent = TypedEvent<[string], { beacon: string }>;
-
-export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
+export type CodeUpdatedEventFilter = TypedEventFilter<CodeUpdatedEvent>;
 
 export type InitializedEvent = TypedEvent<[number], { version: number }>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
-
-export type UpgradedEvent = TypedEvent<[string], { implementation: string }>;
-
-export type UpgradedEventFilter = TypedEventFilter<UpgradedEvent>;
 
 export interface PoolInternalV2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -577,13 +503,9 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    createFlow(
-      newCtx: BytesLike,
-      decodedContext: ContextStruct,
-      inFlowRate: BigNumberish,
-      sender: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    getCodeAddress(
+      overrides?: CallOverrides
+    ): Promise<[string] & { codeAddress: string }>;
 
     getLastPool(
       overrides?: CallOverrides
@@ -611,11 +533,6 @@ export interface PoolInternalV2 extends BaseContract {
     lastPoolTimestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     ops(overrides?: CallOverrides): Promise<[string]>;
-
-    parseLoanData(
-      data: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { endSeconds: BigNumber }>;
 
     poolByTimestamp(
       arg0: BigNumberish,
@@ -695,12 +612,6 @@ export interface PoolInternalV2 extends BaseContract {
       }
     >;
 
-    terminateFlow(
-      newCtx: BytesLike,
-      sender: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     totalYieldEarnedSupplier(
       _supplier: string,
       currentYieldSnapshot: BigNumberish,
@@ -714,22 +625,16 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    updateFlow(
+    updateCode(
+      newAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    updateStreamRecord(
       newCtx: BytesLike,
       inFlowRate: BigNumberish,
       sender: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeTo(
-      newImplementation: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: string,
-      data: BytesLike,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     withdrawStep(
@@ -797,13 +702,7 @@ export interface PoolInternalV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  createFlow(
-    newCtx: BytesLike,
-    decodedContext: ContextStruct,
-    inFlowRate: BigNumberish,
-    sender: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
   getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
 
@@ -829,8 +728,6 @@ export interface PoolInternalV2 extends BaseContract {
   lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
   ops(overrides?: CallOverrides): Promise<string>;
-
-  parseLoanData(data: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
   poolByTimestamp(
     arg0: BigNumberish,
@@ -910,12 +807,6 @@ export interface PoolInternalV2 extends BaseContract {
     }
   >;
 
-  terminateFlow(
-    newCtx: BytesLike,
-    sender: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   totalYieldEarnedSupplier(
     _supplier: string,
     currentYieldSnapshot: BigNumberish,
@@ -929,22 +820,16 @@ export interface PoolInternalV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  updateFlow(
+  updateCode(
+    newAddress: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  updateStreamRecord(
     newCtx: BytesLike,
     inFlowRate: BigNumberish,
     sender: string,
     overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeTo(
-    newImplementation: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  upgradeToAndCall(
-    newImplementation: string,
-    data: BytesLike,
-    overrides?: PayableOverrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   withdrawStep(
@@ -1007,13 +892,7 @@ export interface PoolInternalV2 extends BaseContract {
 
     cancelTask(_taskId: BytesLike, overrides?: CallOverrides): Promise<void>;
 
-    createFlow(
-      newCtx: BytesLike,
-      decodedContext: ContextStruct,
-      inFlowRate: BigNumberish,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
+    getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
     getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
 
@@ -1039,11 +918,6 @@ export interface PoolInternalV2 extends BaseContract {
     lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     ops(overrides?: CallOverrides): Promise<string>;
-
-    parseLoanData(
-      data: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     poolByTimestamp(
       arg0: BigNumberish,
@@ -1123,12 +997,6 @@ export interface PoolInternalV2 extends BaseContract {
       }
     >;
 
-    terminateFlow(
-      newCtx: BytesLike,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
     totalYieldEarnedSupplier(
       _supplier: string,
       currentYieldSnapshot: BigNumberish,
@@ -1142,47 +1010,27 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    updateFlow(
+    updateCode(newAddress: string, overrides?: CallOverrides): Promise<void>;
+
+    updateStreamRecord(
       newCtx: BytesLike,
       inFlowRate: BigNumberish,
       sender: string,
       overrides?: CallOverrides
     ): Promise<string>;
 
-    upgradeTo(
-      newImplementation: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upgradeToAndCall(
-      newImplementation: string,
-      data: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     withdrawStep(_receiver: string, overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {
-    "AdminChanged(address,address)"(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-    AdminChanged(
-      previousAdmin?: null,
-      newAdmin?: null
-    ): AdminChangedEventFilter;
-
-    "BeaconUpgraded(address)"(
-      beacon?: string | null
-    ): BeaconUpgradedEventFilter;
-    BeaconUpgraded(beacon?: string | null): BeaconUpgradedEventFilter;
+    "CodeUpdated(bytes32,address)"(
+      uuid?: null,
+      codeAddress?: null
+    ): CodeUpdatedEventFilter;
+    CodeUpdated(uuid?: null, codeAddress?: null): CodeUpdatedEventFilter;
 
     "Initialized(uint8)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
-
-    "Upgraded(address)"(implementation?: string | null): UpgradedEventFilter;
-    Upgraded(implementation?: string | null): UpgradedEventFilter;
   };
 
   estimateGas: {
@@ -1240,13 +1088,7 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    createFlow(
-      newCtx: BytesLike,
-      decodedContext: ContextStruct,
-      inFlowRate: BigNumberish,
-      sender: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+    getCodeAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
     getLastPool(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1273,11 +1115,6 @@ export interface PoolInternalV2 extends BaseContract {
 
     ops(overrides?: CallOverrides): Promise<BigNumber>;
 
-    parseLoanData(
-      data: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
@@ -1300,12 +1137,6 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    terminateFlow(
-      newCtx: BytesLike,
-      sender: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     totalYieldEarnedSupplier(
       _supplier: string,
       currentYieldSnapshot: BigNumberish,
@@ -1319,22 +1150,16 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    updateFlow(
+    updateCode(
+      newAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    updateStreamRecord(
       newCtx: BytesLike,
       inFlowRate: BigNumberish,
       sender: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    upgradeTo(
-      newImplementation: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    upgradeToAndCall(
-      newImplementation: string,
-      data: BytesLike,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     withdrawStep(
@@ -1402,13 +1227,7 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    createFlow(
-      newCtx: BytesLike,
-      decodedContext: ContextStruct,
-      inFlowRate: BigNumberish,
-      sender: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+    getCodeAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getLastPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1435,11 +1254,6 @@ export interface PoolInternalV2 extends BaseContract {
 
     ops(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    parseLoanData(
-      data: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     poolByTimestamp(
       arg0: BigNumberish,
       overrides?: CallOverrides
@@ -1462,12 +1276,6 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    terminateFlow(
-      newCtx: BytesLike,
-      sender: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
     totalYieldEarnedSupplier(
       _supplier: string,
       currentYieldSnapshot: BigNumberish,
@@ -1481,22 +1289,16 @@ export interface PoolInternalV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    updateFlow(
+    updateCode(
+      newAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    updateStreamRecord(
       newCtx: BytesLike,
       inFlowRate: BigNumberish,
       sender: string,
       overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeTo(
-      newImplementation: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    upgradeToAndCall(
-      newImplementation: string,
-      data: BytesLike,
-      overrides?: PayableOverrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     withdrawStep(

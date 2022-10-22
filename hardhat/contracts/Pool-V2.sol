@@ -6,7 +6,6 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
@@ -22,12 +21,15 @@ import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/app
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
+import { UUPSProxiable } from "./upgradability/UUPSProxiable.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+
 import {IPoolV2} from "./interfaces/IPool-V2.sol";
 import {ISTokenV2} from "./interfaces/ISToken-V2.sol";
 import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
-import {IGelatoTasksV2} from "./interfaces/IGelatoTasks-V2.sol";
-import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
+
 
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
@@ -49,7 +51,7 @@ import {Events} from "./libraries/Events.sol";
  *      4) Pool Internal Contract:New created pool updated
  *
  ****************************************************************************************************/
-contract PoolV2 is Initializable, SuperAppBase, IERC777Recipient, IPoolV2 {
+contract PoolV2 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient, IPoolV2 {
   // #region pool state
 
   using SafeMath for uint256;
@@ -74,9 +76,7 @@ contract PoolV2 is Initializable, SuperAppBase, IERC777Recipient, IPoolV2 {
 
   ISTokenV2 sToken;
   IPoolStrategyV2 poolStrategy;
-  IGelatoTasksV2 gelatoTasks;
   IPoolInternalV2 poolInternal;
-  IResolverSettingsV2 resolverSettings;
 
   IERC20 token;
 
@@ -85,6 +85,21 @@ contract PoolV2 is Initializable, SuperAppBase, IERC777Recipient, IPoolV2 {
   //// ERC4626 EVents
   constructor() {}
 
+      function proxiableUUID()
+        public view override
+        returns (bytes32)
+    {
+        return keccak256("org.super-pool.pool.v2");
+    }
+
+    function updateCode(address newAddress)
+        external override
+    {
+        require(msg.sender == owner, "only owner can update code");
+        return _updateCodeAddress(newAddress);
+    }
+
+
   /**
    * @notice initializer of the Pool
    */
@@ -92,6 +107,10 @@ contract PoolV2 is Initializable, SuperAppBase, IERC777Recipient, IPoolV2 {
     ISuperfluid _host,
     ISuperToken _superToken,
     IERC20 _token,
+    IPoolInternalV2 _poolInternal,
+    ISTokenV2 _sToken,
+    IPoolStrategyV2, _poolStrategy,
+    IOps ops,
     address _owner
   ) external override initializer {
     ///initialState
@@ -116,17 +135,12 @@ contract PoolV2 is Initializable, SuperAppBase, IERC777Recipient, IPoolV2 {
     _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
 
     ///// initializators
-  }
 
-  function initializeAfterSettings(IResolverSettingsV2 _resolverSettings) external override onlySuperHost {
-    resolverSettings = IResolverSettingsV2(_resolverSettings);
-    sToken = ISTokenV2(resolverSettings.getSToken());
+    sToken = ISTokenV2(_sToken);
+    poolStrategy = IPoolStrategyV2(_poolStrategy);
+    poolInternal = IPoolInternalV2(_poolInternal);
 
-    poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
-    gelatoTasks = IGelatoTasksV2(resolverSettings.getGelatoTasks());
-    poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
-
-    ops = IOps(resolverSettings.getGelatoOps());
+    ops = IOps(_ops);
 
     gelato = ops.gelato();
 
@@ -483,5 +497,49 @@ function internalEmitEvents(address _supplier,DataTypes.SupplierEvent code, byte
     _;
   }
 
+
+ receive() external payable {
+        console.log("----- receive:", msg.value);
+    }
   // endregion
+
+
+  // ============= =============  PARAMETERS ONLY OWNER  ============= ============= //
+  // #region ONLY OWNER
+
+  function getPrecission() external view returns (uint256) {
+    return PRECISSION;
+  }
+
+  function setPrecission(uint256 _precission) external onlyOwner {
+    PRECISSION = _precission;
+  }
+
+  function getPoolBuffer() external view returns (uint256) {
+    return POOL_BUFFER;
+  }
+
+  function setPoolBuffer(uint256 _poolBuffer) external onlyOwner {
+    POOL_BUFFER = _poolBuffer;
+  }
+
+  function setSuperfluidDeposit(uint256 _superfluidDeposit) external onlyOwner {
+    SUPERFLUID_DEPOSIT = _superfluidDeposit;
+  }
+
+  function getSuperfluidDeposit() external view returns (uint256) {
+    return SUPERFLUID_DEPOSIT;
+  }
+
+  function setSteps(uint8 _steps) external onlyOwner {
+    require(_steps <= 20, 'MAX_20_STEPS');
+    STEPS = _steps;
+  }
+
+  function getSteps() external view returns (uint8) {
+    return STEPS;
+  }
+
+
+  
 }

@@ -237,7 +237,7 @@ describe.only('V2 OUTSTREAM Redeem and cancel', function () {
 
     //throw new Error("");
 
-    t0 = +(await superPool.lastPoolTimestamp());
+    t0 = +(await superPool.getLastTimestmap());
 
     await hre.network.provider.request({
       method: 'hardhat_impersonateAccount',
@@ -276,7 +276,7 @@ describe.only('V2 OUTSTREAM Redeem and cancel', function () {
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
 
-    t0 = +(await superPool.lastPoolTimestamp());
+    t0 = +(await superPool.getLastTimestmap());
     console.log(t0.toString());
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 800 units at t0 ');
@@ -289,7 +289,7 @@ describe.only('V2 OUTSTREAM Redeem and cancel', function () {
 
     await erc777.send(superPoolAddress, amount, '0x');
 
-    let t1 = await superPool.lastPoolTimestamp();
+    let t1 = await superPool.getLastTimestmap();
 
     let result: [IUSERS_TEST, IPOOL_RESULT];
 

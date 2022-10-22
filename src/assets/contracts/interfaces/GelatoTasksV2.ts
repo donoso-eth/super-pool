@@ -21,7 +21,6 @@ export interface GelatoTasksV2Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
     "cancelTask(bytes32)": FunctionFragment;
-    "createStopStreamTimedTask(address,uint256,bool,uint8)": FunctionFragment;
     "createWithdraStepTask(address,uint256)": FunctionFragment;
     "initialize(address,address,address)": FunctionFragment;
   };
@@ -30,10 +29,6 @@ export interface GelatoTasksV2Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "cancelTask",
     values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "createStopStreamTimedTask",
-    values: [string, BigNumberish, boolean, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "createWithdraStepTask",
@@ -46,10 +41,6 @@ export interface GelatoTasksV2Interface extends utils.Interface {
 
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "cancelTask", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "createStopStreamTimedTask",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "createWithdraStepTask",
     data: BytesLike
@@ -101,14 +92,6 @@ export interface GelatoTasksV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    createStopStreamTimedTask(
-      _supplier: string,
-      _stopDateInMs: BigNumberish,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     createWithdraStepTask(
       _supplier: string,
       _stepTime: BigNumberish,
@@ -130,14 +113,6 @@ export interface GelatoTasksV2 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  createStopStreamTimedTask(
-    _supplier: string,
-    _stopDateInMs: BigNumberish,
-    _all: boolean,
-    _flowType: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   createWithdraStepTask(
     _supplier: string,
     _stepTime: BigNumberish,
@@ -155,14 +130,6 @@ export interface GelatoTasksV2 extends BaseContract {
     ETH(overrides?: CallOverrides): Promise<string>;
 
     cancelTask(taskId: BytesLike, overrides?: CallOverrides): Promise<void>;
-
-    createStopStreamTimedTask(
-      _supplier: string,
-      _stopDateInMs: BigNumberish,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
 
     createWithdraStepTask(
       _supplier: string,
@@ -191,14 +158,6 @@ export interface GelatoTasksV2 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    createStopStreamTimedTask(
-      _supplier: string,
-      _stopDateInMs: BigNumberish,
-      _all: boolean,
-      _flowType: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     createWithdraStepTask(
       _supplier: string,
       _stepTime: BigNumberish,
@@ -218,14 +177,6 @@ export interface GelatoTasksV2 extends BaseContract {
 
     cancelTask(
       taskId: BytesLike,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    createStopStreamTimedTask(
-      _supplier: string,
-      _stopDateInMs: BigNumberish,
-      _all: boolean,
-      _flowType: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

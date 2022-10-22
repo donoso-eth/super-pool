@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
-import {IResolverSettingsV2} from "./IResolverSettings-V2.sol";
 import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -19,12 +18,7 @@ interface IPoolV2 {
     address _owner
   ) external;
 
-  /**
-   * @notice only called by the host/factory contract
-   *         We slpit the initialization in two parts when the calll contract adresses are known
-   */
-  function initializeAfterSettings(IResolverSettingsV2 _resolverSettings)
-    external;
+
 
   // #region ===================== SUpplier interaction Pool Events  ===========================
 
@@ -100,4 +94,22 @@ interface IPoolV2 {
     view
     returns (DataTypes.Supplier memory supplier);
      function transfer(uint256 _amount, address _paymentToken) external;
+
+     
+  function getPrecission() external view returns (uint256);
+
+  function setPrecission(uint256 _precission) external;
+
+  function getPoolBuffer() external view returns (uint256);
+
+  function setPoolBuffer(uint256 _poolBuffer) external ;
+
+  function setSuperfluidDeposit(uint256 _superfluidDeposit) external;
+
+  function getSuperfluidDeposit() external view returns (uint256);
+  
+
+  function setSteps(uint8 _steps) external;
+
+  function getSteps() external view returns (uint8);
 }

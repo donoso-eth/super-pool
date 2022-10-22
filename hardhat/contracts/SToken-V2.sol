@@ -6,181 +6,168 @@ import "hardhat/console.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+//import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 
 import {IPoolV2} from "./interfaces/IPool-V2.sol";
-import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
 import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
 
 contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
-    using SafeMath for uint256;
-    address superHost;
-    address owner;
-    IPoolV2 pool;
-    IPoolInternalV2 poolInternal;
-    IPoolStrategyV2 poolStrategy;
-    IResolverSettingsV2 resolverSettings;
-    uint256 public PRECISSION;
+  using SafeMath for uint256;
+  address superHost;
+  address owner;
+  IPoolV2 pool;
+  IPoolInternalV2 poolInternal;
+  IPoolStrategyV2 poolStrategy;
+  uint256 public PRECISSION;
 
-    constructor() {}
+  constructor() {}
 
-    /**
-     * @notice initializer of the Pool
-     */
-    function initialize(
-        string memory _name,
-        string memory _symbol,
-        address _owner
-    ) external initializer {
-        ///initialState
-        __ERC20_init(_name, _symbol);
+  /**
+   * @notice initializer of the Pool
+   */
+  function initialize(
+    string memory _name,
+    string memory _symbol,
+    IPoolInternalV2 _poolInternal,
+    IPoolV2 _pool,
+    IPoolStrategyV2,
+    _poolStrategy,
+    address _owner
+  ) external initializer {
+    ///initialState
+    __ERC20_init(_name, _symbol);
 
-        superHost = msg.sender;
-        owner = _owner;
+    superHost = msg.sender;
+    owner = _owner;
+
+    poolStrategy = IPoolStrategyV2(_poolStrategy);
+    poolInternal = IPoolInternalV2(_poolInternal);
+    poolContract = IPoolInternalV2(_pool);
+
+    PRECISSION = poolContract.getPrecission;
+  }
+
+  function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+  // #region  ============= =============  ERC20  ============= ============= //
+  /****************************************************************************************************
+   * @notice ERC20 overrides
+   *
+   * ---- balanceOf
+   * ---- _transfer
+   * ---- totalSupply()
+   *
+   ****************************************************************************************************/
+
+  function balanceOf(address _supplier) public view override returns (uint256 balance) {
+    balance = getSupplierBalance(_supplier).div(PRECISSION);
+  }
+
+  function getSupplierBalance(address _supplier) public view returns (uint256 realtimeBalance) {
+    DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
+
+    uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
+
+    console.log(81, yieldSupplier);
+    console.log(82, uint96(supplier.inStream.flow));
+
+    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+
+    if (netFlow >= 0) {
+      realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+    } else {
+      realtimeBalance = yieldSupplier + supplier.outStream.minBalance.mul(PRECISSION) + (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime) * PRECISSION;
     }
+    //+ supplier.outStream.stepAmount.mul(PRECISSION)
+    console.log(83, realtimeBalance);
+  }
 
-    function initializeAfterSettings(IResolverSettingsV2 _resolverSettings) external onlySuperHost {
-        resolverSettings = _resolverSettings;
-        pool = IPoolV2(resolverSettings.getPool());
-        poolStrategy = IPoolStrategyV2(resolverSettings.getPoolStrategy());
-        poolInternal = IPoolInternalV2(resolverSettings.getPoolInternal());
-        PRECISSION = resolverSettings.getPrecission();
-        console.log(51, PRECISSION);
-    }
+  function _transfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal virtual override {
+    require(from != address(0), "ERC20: transfer from the zero address");
+    require(to != address(0), "ERC20: transfer to the zero address");
+    console.log(922222);
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    _beforeTokenTransfer(from, to, amount);
 
-    // #region  ============= =============  ERC20  ============= ============= //
-    /****************************************************************************************************
-     * @notice ERC20 overrides
-     *
-     * ---- balanceOf
-     * ---- _transfer
-     * ---- totalSupply()
-     *
-     ****************************************************************************************************/
+    uint256 fromBalance = balanceOf(from);
+    require(fromBalance >= amount, "NOT_ENOUGH_BALANCE");
 
-    function balanceOf(address _supplier) public view override returns (uint256 balance) {
-        balance = getSupplierBalance(_supplier).div(PRECISSION);
-    }
+    DataTypes.Supplier memory supplier = poolInternal.getSupplier(from);
 
-    function getSupplierBalance(address _supplier) public view returns (uint256 realtimeBalance) {
-        DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
+    uint256 max_allowed = fromBalance.sub(supplier.outStream.minBalance);
 
-        uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
+    require(amount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
 
-        console.log(81, yieldSupplier);
-        console.log(82, uint96(supplier.inStream.flow));
+    poolInternal.transferSTokens(from, to, amount);
 
-        int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+    emit Transfer(from, to, amount);
 
-        if (netFlow >= 0) {
-            realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
-        } else {
-            realtimeBalance =
-                yieldSupplier +
-                supplier.outStream.minBalance.mul(PRECISSION) +
-                (supplier.deposit) -
-                uint96(supplier.outStream.flow) *
-                (block.timestamp - supplier.outStream.initTime) *
-                PRECISSION;
-        }
-        //+ supplier.outStream.stepAmount.mul(PRECISSION)
-        console.log(83, realtimeBalance);
-    }
+    _afterTokenTransfer(from, to, amount);
+  }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {
-        require(from != address(0), "ERC20: transfer from the zero address");
-        require(to != address(0), "ERC20: transfer to the zero address");
-        console.log(922222);
+  function totalSupply() public view override returns (uint256) {
+    DataTypes.PoolV2 memory lastPool = poolInternal.getLastPool();
+    uint256 periodSpan = block.timestamp - lastPool.timestamp;
+    uint256 _totalSupply = lastPool.deposit + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
 
-        _beforeTokenTransfer(from, to, amount);
+    return _totalSupply;
+  }
 
-        uint256 fromBalance = balanceOf(from);
-        require(fromBalance >= amount, "NOT_ENOUGH_BALANCE");
+  // endregion overriding ERC20
 
+  modifier onlySuperHost() {
+    require(msg.sender == superHost, "Only Host");
+    _;
+  }
 
-        DataTypes.Supplier memory supplier = poolInternal.getSupplier(from);
+  modifier onlyOwner() {
+    require(msg.sender == owner, "Only Owner");
+    _;
+  }
 
+  // #region  ============= =============  ERC4626 Interface  ============= ============= //
+  /****************************************************************************************************
+   * @notice ERC20 & ERC4626 & interface skstructure (tbd if is needed)
+   *
+   * ---- NOT YET READY
+   *
+   *
+   *
+   ****************************************************************************************************/
 
-        uint256 max_allowed = fromBalance.sub(supplier.outStream.minBalance);
+  // function deposit(uint256 assets, address receiver) external override returns (uint256 shares) {
+  //   ERC20(address(superToken)).transferFrom(msg.sender, address(this), assets);
+  //   _deposit(msg.sender, receiver, assets);
+  //   shares = assets;
+  // }
 
+  // function asset() external view override returns (address assetTokenAddress) {
+  //   assetTokenAddress = address(this);
+  // }
 
-        require(amount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
+  // function totalAssets() external view override returns (uint256 totalManagedAssets) {
+  //   totalManagedAssets = ISuperToken(superToken).balanceOf(address(this));
+  // }
 
-      
+  // function convertToShares(uint256 assets) external pure override returns (uint256 shares) {
+  //   shares = assets;
+  // }
 
+  // function convertToAssets(uint256 shares) external pure override returns (uint256 assets) {
+  //   assets = shares;
+  // }
 
-        poolInternal.transferSTokens(from, to, amount);
+  // function maxDeposit(address receiver) external pure override returns (uint256 maxAssets) {
+  //   maxAssets = type(uint256).max;
+  // }
 
-        emit Transfer(from, to, amount);
-
-        _afterTokenTransfer(from, to, amount);
-    }
-
-    function totalSupply() public view override returns (uint256) {
-        DataTypes.PoolV2 memory lastPool = poolInternal.getLastPool();
-        uint256 periodSpan = block.timestamp - lastPool.timestamp;
-        uint256 _totalSupply = lastPool.deposit + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
-
-        return _totalSupply;
-    }
-
-    // endregion overriding ERC20
-
-    modifier onlySuperHost() {
-        require(msg.sender == superHost, "Only Host");
-        _;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only Owner");
-        _;
-    }
-
-    // #region  ============= =============  ERC4626 Interface  ============= ============= //
-    /****************************************************************************************************
-     * @notice ERC20 & ERC4626 & interface skstructure (tbd if is needed)
-     *
-     * ---- NOT YET READY
-     *
-     *
-     *
-     ****************************************************************************************************/
-
-    // function deposit(uint256 assets, address receiver) external override returns (uint256 shares) {
-    //   ERC20(address(superToken)).transferFrom(msg.sender, address(this), assets);
-    //   _deposit(msg.sender, receiver, assets);
-    //   shares = assets;
-    // }
-
-    // function asset() external view override returns (address assetTokenAddress) {
-    //   assetTokenAddress = address(this);
-    // }
-
-    // function totalAssets() external view override returns (uint256 totalManagedAssets) {
-    //   totalManagedAssets = ISuperToken(superToken).balanceOf(address(this));
-    // }
-
-    // function convertToShares(uint256 assets) external pure override returns (uint256 shares) {
-    //   shares = assets;
-    // }
-
-    // function convertToAssets(uint256 shares) external pure override returns (uint256 assets) {
-    //   assets = shares;
-    // }
-
-    // function maxDeposit(address receiver) external pure override returns (uint256 maxAssets) {
-    //   maxAssets = type(uint256).max;
-    // }
-
-    // #endregion ERC4626 Interface
+  // #endregion ERC4626 Interface
 }

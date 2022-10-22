@@ -7,12 +7,12 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { UUPSProxy } from "./upgradability/UUPSProxy.sol";
 
 import {IPoolV2} from "./interfaces/IPool-V2.sol";
 import {PoolV2} from "./Pool-V2.sol";
 import {ISTokenV2} from "./interfaces/ISToken-V2.sol";
 import {STokenV2} from "./SToken-V2.sol";
-import {IResolverSettingsV2} from "./interfaces/IResolverSettings-V2.sol";
 import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";
@@ -43,22 +43,30 @@ contract SuperPoolHost {
         // });
 
        // address poolContract = Clones.clone(superPoolInput.poolFactoryImpl);
-         ERC1967Proxy sTokenContract =  new ERC1967Proxy(
-            address(superPoolInput.sTokenImpl),
-            abi.encodeCall(STokenV2.initialize, ( "Super Pool Token USDC", "sUSDC", msg.sender))
-        );
+        UUPSProxy sTokenContract = new UUPSProxy();
+        sTokenContract.initializeProxy(address(superPoolInput.sTokenImpl));
+      
+      
+        ISTokenV2(address(sTokenContract)).initialize ( "Super Pool Token USDC", "sUSDC", msg.sender);
+        
+        
+        UUPSProxy poolContract = new UUPSProxy();
+        poolContract.initializeProxy( address(superPoolInput.poolFactoryImpl));
 
-            console.log('proxy token ok0');
+        IPoolV2(address(poolContract)).initialize(host,superPoolInput.superToken,superPoolInput.token,msg.sender);
+        //  ERC1967Proxy sTokenContract =  new ERC1967Proxy(
+        //     address(superPoolInput.sTokenImpl),
+        //     abi.encodeCall(STokenV2.initialize,)
+        // );
 
-           ERC1967Proxy poolContract= new ERC1967Proxy(
-            address(superPoolInput.poolFactoryImpl),
-            abi.encodeCall(PoolV2.initialize, (host,superPoolInput.superToken,superPoolInput.token,msg.sender))
-        );
+        //     console.log('proxy token ok0');
+
+        //    ERC1967Proxy poolContract= new ERC1967Proxy(
+        //     address(superPoolInput.poolFactoryImpl),
+         //   abi.encodeCall(PoolV2.initialize, (host,superPoolInput.superToken,superPoolInput.token,msg.sender))
+       // );
 
      
-
-
-       // address sTokenContract = Clones.clone(address(superPoolInput.sTokenImpl));
 
         uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL |
             SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP |
@@ -67,15 +75,13 @@ contract SuperPoolHost {
 
         host.registerAppByFactory(ISuperApp(address(poolContract)), configWord);
 
-        IResolverSettingsV2  resolverSetting =  IResolverSettingsV2(superPoolInput.settings);
-        resolverSetting.initialize(superPoolInput.settingsInitializer, address(poolContract), address(sTokenContract));
-
+       
 
         ISTokenV2(address(sTokenContract)).initializeAfterSettings(superPoolInput.settings);
         
         IPoolV2(address(poolContract)).initializeAfterSettings(superPoolInput.settings);
 
-        IPoolInternalV2(resolverSetting.getPoolInternal()).initialize(superPoolInput.settings,msg.sender, superPoolInput.superToken);
+     //   IPoolInternalV2(resolverSetting.getPoolInternal()).initialize(superPoolInput.settings,msg.sender, superPoolInput.superToken);
 
         superTokenResolverByAddress[address(superPoolInput.superToken)].pool = address(poolContract);
         superTokenResolverByAddress[address(superPoolInput.superToken)].sToken = address(sTokenContract);
