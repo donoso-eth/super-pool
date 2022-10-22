@@ -20,7 +20,10 @@ import {IPoolV1} from "./interfaces/IPool-V1.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 
-contract PoolInternalV1 is UUPSProxiable {
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+
+contract PoolInternalV1 is Initializable,UUPSProxiable {
   using SafeMath for uint256;
 
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;

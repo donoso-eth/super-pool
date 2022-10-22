@@ -21,8 +21,8 @@ import {IOps} from "./gelato/IOps.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
-
-contract SuperPoolFactory is UUPSProxiable {
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+contract SuperPoolFactory is Initializable, UUPSProxiable {
     using Counters for Counters.Counter;
     Counters.Counter public _pcrTokensIssued;
 
@@ -81,7 +81,10 @@ contract SuperPoolFactory is UUPSProxiable {
 
         /////// Initializer Pool
         DataTypes.PoolInitializer memory poolInit;
-        poolInit = DataTypes.PoolInitializer({host: host, superToken: poolInput.superToken, token: token, poolInternal: IPoolInternalV1(address(poolInternalProxy)), sToken: ISTokenV1(address(sTokenProxy)), poolStrategy: poolInput.poolStrategy, ops: ops, owner: owner});
+        poolInit = DataTypes.PoolInitializer({
+                 name: string(abi.encodePacked("Super Pool ", tokenName)),
+            symbol: string(abi.encodePacked("sp ", symbol)),
+            host: host, superToken: poolInput.superToken, token: token, poolInternal: IPoolInternalV1(address(poolInternalProxy)), sToken: ISTokenV1(address(sTokenProxy)), poolStrategy: poolInput.poolStrategy, ops: ops, owner: owner});
 
         IPoolV1(address(poolProxy)).initialize(poolInit);
 
@@ -93,18 +96,18 @@ contract SuperPoolFactory is UUPSProxiable {
         internalInit = DataTypes.PoolInternalInitializer({superToken: poolInput.superToken, pool: IPoolV1(address(poolProxy)), sToken: ISTokenV1(address(sTokenProxy)), poolStrategy: poolInput.poolStrategy, ops: ops, owner: owner});
         IPoolInternalV1(address(poolInternalProxy)).initialize(internalInit);
 
-        // Initializer SToken
-        DataTypes.STokenInitializer memory tokenInit;
-        tokenInit = DataTypes.STokenInitializer({
-            name: string(abi.encodePacked("Super Pool ", tokenName)),
-            symbol: string(abi.encodePacked("sp ", symbol)),
-            pool: IPoolV1(address(poolProxy)),
-            poolInternal: IPoolInternalV1(address(poolInternalProxy)),
-            poolStrategy: poolInput.poolStrategy,
-            owner: owner
-        });
+        // // Initializer SToken
+        // DataTypes.STokenInitializer memory tokenInit;
+        // tokenInit = DataTypes.STokenInitializer({
+        //     name: string(abi.encodePacked("Super Pool ", tokenName)),
+        //     symbol: string(abi.encodePacked("sp ", symbol)),
+        //     pool: IPoolV1(address(poolProxy)),
+        //     poolInternal: IPoolInternalV1(address(poolInternalProxy)),
+        //     poolStrategy: poolInput.poolStrategy,
+        //     owner: owner
+        // });
 
-        ISTokenV1(address(sTokenProxy)).initialize(tokenInit);
+        // ISTokenV1(address(sTokenProxy)).initialize(tokenInit);
 
         // superTokenResolverByAddress[address(poolInput.superToken)].pool = address(poolContract);
         // superTokenResolverByAddress[address(poolInput.superToken)].sToken = address(sTokenContract);

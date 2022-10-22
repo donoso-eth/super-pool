@@ -30,6 +30,8 @@ library DataTypes {
     }
 
     struct PoolInitializer {
+        string name;
+        string symbol;
         ISuperfluid host;
         ISuperToken superToken;
         IERC20 token;
@@ -41,7 +43,7 @@ library DataTypes {
     }
 
     struct STokenInitializer {
-        string name;
+            string name;
         string symbol;
         IPoolInternalV1 poolInternal;
         IPoolV1 pool;

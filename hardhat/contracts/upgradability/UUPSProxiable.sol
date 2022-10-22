@@ -2,12 +2,12 @@
 pragma solidity 0.8.17;
 
 import { UUPSUtils } from "./UUPSUtils.sol";
-import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
 
 /**
  * @title UUPS (Universal Upgradeable Proxy Standard) Proxiable contract.
  */
-abstract contract UUPSProxiable is Initializable {
+abstract contract UUPSProxiable {
 
     /**
      * @dev Get current implementation code address.

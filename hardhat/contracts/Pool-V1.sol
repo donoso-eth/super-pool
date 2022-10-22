@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
 
 import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
@@ -51,7 +52,7 @@ import {Events} from "./libraries/Events.sol";
  *      4) Pool Internal Contract:New created pool updated
  *
  ****************************************************************************************************/
-contract PoolV1 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient, IPoolV1 {
+contract PoolV1 is  UUPSProxiable, ERC20Upgradeable, SuperAppBase,  IERC777Recipient, IPoolV1 {
   // #region pool state
 
   using SafeMath for uint256;
@@ -112,7 +113,7 @@ contract PoolV1 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient,
    */
   function initialize( DataTypes.PoolInitializer memory poolInit) external initializer {
     ///initialState
-
+    __ERC20_init(poolInit.name, poolInit.symbol);
     //// super app && superfluid
     host = poolInit.host;
     superToken = poolInit.superToken;
@@ -537,6 +538,73 @@ function internalEmitEvents(address _supplier,DataTypes.SupplierEvent code, byte
   function getSteps() external view returns (uint8) {
     return STEPS;
   }
+
+  // #region  ============= =============  ERC20  ============= ============= //
+  /****************************************************************************************************
+   * @notice ERC20 overrides
+   *
+   * ---- balanceOf
+   * ---- _transfer
+   * ---- totalSupply()
+   *
+   ****************************************************************************************************/
+
+  function balanceOf(address _supplier) public view override returns (uint256 balance) {
+    balance = getSupplierBalance(_supplier).div(PRECISSION);
+  }
+
+  function getSupplierBalance(address _supplier) public view returns (uint256 realtimeBalance) {
+    DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
+
+    uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
+
+
+    int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+
+    if (netFlow >= 0) {
+      realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
+    } else {
+      realtimeBalance = yieldSupplier + supplier.outStream.minBalance.mul(PRECISSION) + (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime) * PRECISSION;
+    }
+
+  }
+
+  function _transfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal virtual override {
+    require(from != address(0), "ERC20: transfer from the zero address");
+    require(to != address(0), "ERC20: transfer to the zero address");
+
+
+    _beforeTokenTransfer(from, to, amount);
+
+    uint256 fromBalance = balanceOf(from);
+    require(fromBalance >= amount, "NOT_ENOUGH_BALANCE");
+
+    DataTypes.Supplier memory supplier = poolInternal.getSupplier(from);
+
+    uint256 max_allowed = fromBalance.sub(supplier.outStream.minBalance);
+
+    require(amount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
+
+    poolInternal.transferSTokens(from, to, amount);
+
+    emit Transfer(from, to, amount);
+
+    _afterTokenTransfer(from, to, amount);
+  }
+
+  function totalSupply() public view override returns (uint256) {
+    DataTypes.PoolV1 memory lastPool = poolInternal.getLastPool();
+    uint256 periodSpan = block.timestamp - lastPool.timestamp;
+    uint256 _totalSupply = lastPool.deposit + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
+
+    return _totalSupply;
+  }
+
+  // endregion overriding ERC20
 
 
   

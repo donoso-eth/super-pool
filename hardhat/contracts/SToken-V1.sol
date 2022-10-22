@@ -15,7 +15,9 @@ import {IPoolV1} from "./interfaces/IPool-V1.sol";
 import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
 import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 
-contract STokenV1 is UUPSUpgradeable, ERC20Upgradeable {
+import { UUPSProxiable } from "./upgradability/UUPSProxiable.sol";
+
+contract STokenV1 is UUPSProxiable , ERC20Upgradeable {
   using SafeMath for uint256;
   address superHost;
   address owner;
@@ -29,7 +31,7 @@ contract STokenV1 is UUPSUpgradeable, ERC20Upgradeable {
   /**
    * @notice initializer of the Pool
    */
-  function initialize( DataTypes.STokenInitializer memory tokenInit) external initializer {
+  function initialize( DataTypes.STokenInitializer memory tokenInit) external  initializer {
     ///initialState
     __ERC20_init(tokenInit.name, tokenInit.symbol);
 
@@ -43,7 +45,19 @@ contract STokenV1 is UUPSUpgradeable, ERC20Upgradeable {
     PRECISSION = pool.getPrecission();
   }
 
-  function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+      function proxiableUUID()
+        public pure override
+        returns (bytes32)
+    {
+        return keccak256("org.super-pool.pool.v2");
+    }
+
+    function updateCode(address newAddress)
+        external override
+    {
+        require(msg.sender == owner, "only owner can update code");
+        return _updateCodeAddress(newAddress);
+    }
 
   // #region  ============= =============  ERC20  ============= ============= //
   /****************************************************************************************************
