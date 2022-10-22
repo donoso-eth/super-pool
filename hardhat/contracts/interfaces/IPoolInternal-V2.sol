@@ -15,20 +15,12 @@ interface IPoolInternalV2 {
 
     function _redeemFlow(int96 _outFlowRate, address _supplier) external;
 
-    function createFlow(
-        bytes memory newCtx,
-        ISuperfluid.Context memory decodedContext,
-        int96 inFlowRate,
-        address sender
-    ) external returns (bytes memory updatedCtx);
 
-    function updateFlow(
+    function updateStreamRecord(
         bytes memory newCtx,
         int96 inFlowRate,
         address sender
     ) external returns (bytes memory updatedCtx);
-
-    function terminateFlow(bytes calldata newCtx, address sender) external returns (bytes memory updatedCtx);
 
     function _redeemFlowStop(address _supplier) external;
 

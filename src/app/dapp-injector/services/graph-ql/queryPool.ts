@@ -1,7 +1,7 @@
 
 export const GET_POOL = `
     {
-      pools(first: 10, orderBy: id, orderDirection: desc) {
+      pools(first: 10, orderBy: timestamp, orderDirection: desc) {
         id
         inFlowRate
         outFlowRate

@@ -25,40 +25,6 @@ contract GelatoTasksV2 is Initializable {
      poolInternal = _poolInternal;
   }
     
-  // ============= =============  Gelato functions ============= ============= //
-  // #region Gelato functions
-
-  function createStopStreamTimedTask(
-    address _supplier,
-    uint256 _stopDateInMs,
-    bool _all,
-    uint8 _flowType
-  ) external onlyInternal returns (bytes32 taskId) {
-    
-    
-     bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stopDateInMs), 600);
-
-     bytes memory execData = abi.encodeWithSelector(IPoolV2.stopstream.selector, address(_supplier), _all, _flowType);
-
-     LibDataTypes.Module[] memory modules;
-     modules[0] =LibDataTypes.Module.TIME;
-
-    bytes[] memory args;
-    args[0] =  timeArgs;
-
-    LibDataTypes.ModuleData  memory moduleData =LibDataTypes.ModuleData( modules, args);
-  
-    taskId = IOps(ops).createTask(
-    address(pool),
-    execData,
-    moduleData,
-    ETH
-    );
-  }
-
-
-  //#endregion
-
 
  function cancelTask (bytes32 taskId) external onlyInternal {
   IOps(ops).cancelTask(taskId);

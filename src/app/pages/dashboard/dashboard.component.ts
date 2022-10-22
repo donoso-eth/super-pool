@@ -99,6 +99,7 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
   
     let amount = utils.parseEther(this.depositAmountCtrl.value.toString());
 
+
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'it is ok to need the money....', header: 'Un momento' } }));
      await doSignerTransaction(this.dapp.defaultContract?.instance?.redeemDeposit(amount,{gasLimit:1000000})!)

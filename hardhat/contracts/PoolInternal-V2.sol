@@ -243,27 +243,18 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         uint256 inDeposit,
         uint256 outDeposit
     ) internal {
-        DataTypes.Supplier storage supplier = _getSupplier(_supplier);
 
-        _supplierUpdateCurrentState(_supplier);
-        
+         _poolUpdate();
+
+         _supplierUpdateCurrentState(_supplier);
+
+        DataTypes.Supplier storage supplier = _getSupplier(_supplier);
+       
         supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
 
         poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
     }
 
-    function _inStreamCallback(
-        address from,
-        int96 inFlow,
-        int96 outFlow,
-        bytes memory _ctx
-    ) internal returns (bytes memory newCtx) {
-        newCtx = _ctx;
-        _poolUpdate();
-     
-        newCtx = _updateSupplierFlow(from, inFlow, 0, _ctx);
-     
-    }
 
     function _updateSupplierFlow(
         address _supplier,
@@ -271,10 +262,15 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         int96 outFlow,
         bytes memory _ctx
     ) internal returns (bytes memory newCtx) {
-        DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-        DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+
         newCtx = _ctx;
+        _poolUpdate();
+     
         _supplierUpdateCurrentState(_supplier);
+
+        DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+        DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];  
+
         int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
         int96 newNetFlow = inFlow - outFlow;
 
@@ -288,9 +284,6 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
                 pool.outFlowRate = pool.outFlowRate + currentNetFlow;
 
                 pool.inFlowRate = pool.inFlowRate + newNetFlow;
-
-
-             
 
                 ///// refactor logic
                 if (newNetFlow == 0) {
@@ -395,7 +388,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
             }
 
             if (userBalance < minBalance) {
-                _cancelFlow(_supplier, userBalance, minBalance);
+                _cancelOutstreamFlow(_supplier, userBalance, minBalance);
             } else if (supplier.outStream.flow != newOutFlow) {
                 gelatoTasks.cancelTask(supplier.outStream.cancelWithdrawId);
 
@@ -420,8 +413,6 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         if (superToken.balanceOf(address(poolContract)) > (pool.outFlowBuffer)) {
             poolAvailable = superToken.balanceOf(address(poolContract)) - (pool.outFlowBuffer);
         }
-
-    
 
         if (poolAvailable >= withdrawAmount) {
             console.log("NOT PUSHED");
@@ -456,7 +447,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         }
     }
 
-    function _cancelFlow(
+    function _cancelOutstreamFlow(
         address _receiver,
         uint256 userBalance,
         uint256 minBalance
@@ -518,28 +509,12 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
     // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
 
     function _tokensReceived(address from, uint256 amount) external onlyPool {
-        _poolUpdate();
-
+   
         ///// suppler config updated && pool
         _updateSupplierDeposit(from, amount, 0);
     }
 
     function _redeemDeposit(uint256 redeemAmount, address _supplier, uint256 balance) external onlyPool {
-   
-        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
-
-    
-        uint256 max_allowed = balance.sub(supplier.outStream.minBalance);
-
-  
-    
-
-        require(redeemAmount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
-
-      
-
-        //// Update pool state "pool Struct" calculating indexes and timestamp
-        _poolUpdate();
 
         ///// suppler config updated && pool
         _updateSupplierDeposit(_supplier, 0, redeemAmount);
@@ -547,46 +522,19 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         //poolStrategy.withdraw(redeemAmount, _supplier);
         _withdrawDispatcher(_supplier, _supplier, redeemAmount);
 
-        if (supplier.outStream.flow > 0) {
-            uint256 userBalance = sToken.balanceOf(_supplier);
-            if (userBalance < supplier.outStream.minBalance) {
-                _cancelFlow(_supplier, userBalance, supplier.outStream.minBalance);
-            }
-        }
+
     }
 
-    function createFlow(
+    function updateStreamRecord(
         bytes memory newCtx,
-        ISuperfluid.Context memory decodedContext,
         int96 inFlowRate,
         address sender
     ) external onlyPool returns (bytes memory updateCtx) {
-        console.log('doch creating stream!');
-
-        DataTypes.Supplier storage supplier = _getSupplier(sender);
-        if (decodedContext.userData.length > 0) {
-            uint256 endSeconds = parseLoanData(decodedContext.userData);
-
-            supplier.inStream.cancelFlowId = gelatoTasks.createStopStreamTimedTask(sender, endSeconds - MIN_OUTFLOW_ALLOWED, false, 1);
-        }
-
-        updateCtx = _inStreamCallback(sender, inFlowRate, 0, newCtx);
+      
+        updateCtx = _updateSupplierFlow(sender, inFlowRate, 0, newCtx);
        
     }
 
-    function updateFlow(
-        bytes memory newCtx,
-        int96 inFlowRate,
-        address sender
-    ) external onlyPool returns (bytes memory updatedCtx) {
-     
-        updatedCtx = _inStreamCallback(sender, inFlowRate, 0, newCtx);
-    }
-
-    function terminateFlow(bytes calldata newCtx, address sender) external onlyPool returns (bytes memory updateCtx) {
-
-        updateCtx = _inStreamCallback(sender, 0, 0, newCtx);
-    }
 
     function _redeemFlow(int96 _outFlowRate, address _supplier) external onlyPool {
         //// update state supplier
@@ -596,10 +544,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         require(realTimeBalance > 0, "NO_BALANCE");
 
     
-        _poolUpdate();
-
-   
-
+    
         bytes memory placeHolder = "0x";
 
         _updateSupplierFlow(_supplier, 0, _outFlowRate, placeHolder);
@@ -612,13 +557,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
 
     function _redeemFlowStop(address _supplier) external onlyPool {
 
-        DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-
-    
-
-        require(supplier.outStream.flow > 0, "OUT_STREAM_NOT_EXISTS");
-
-        _inStreamCallback(_supplier, 0, 0, "0x");
+        _updateSupplierFlow(_supplier, 0, 0, "0x");
     }
 
     //// #endregion
@@ -671,7 +610,7 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         ////// user balance goes below min balance, stream will be stopped and all funds will be returned
         if (userBalance < minBalance) {
       
-            _cancelFlow(_receiver, userBalance, minBalance);
+            _cancelOutstreamFlow(_receiver, userBalance, minBalance);
         } else {
             _withdrawDispatcher(_receiver, address(poolContract), stepAmount);
 
@@ -713,10 +652,5 @@ contract PoolInternalV2 is Initializable, UUPSUpgradeable {
         _;
     }
 
-    /**************************************************************************
-     * INTERNAL HELPERS
-     *************************************************************************/
-    function parseLoanData(bytes memory data) public pure returns (uint256 endSeconds) {
-        endSeconds = abi.decode(data, (uint256));
-    }
+
 }

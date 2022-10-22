@@ -25,7 +25,8 @@
                       <p-inputNumber
                         [formControl]="depositAmountCtrl"
                         placeholder="Amount"
-                        mode="decimal"
+                  
+                        mode="decimal" 
                         [showButtons]="true"
                         [min]="0"
                       >
@@ -114,7 +115,9 @@
                       <p-inputNumber
                         [formControl]="depositAmountCtrl"
                         placeholder="Amount"
+                
                         mode="decimal"
+                         [minFractionDigits]="0"
                         [showButtons]="true"
                         [min]="0"
                       >
