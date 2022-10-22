@@ -11,7 +11,7 @@ import config from "../hardhat.config";
 import { join } from "path";
 import { createHardhatAndFundPrivKeysFiles } from "../helpers/localAccounts";
 import * as hre from 'hardhat';
-import { Events__factory , SuperPoolHost__factory, PoolStrategyV2__factory, GelatoTasksV2__factory, ResolverSettingsV2__factory, PoolInternalV2__factory } from "../typechain-types";
+import { Events__factory , SuperPoolHost__factory, PoolStrategyV1__factory, GelatoTasksV1__factory, ResolverSettingsV1__factory, PoolInternalV1__factory } from "../typechain-types";
 import { SignerWithAddress} from "@nomiclabs/hardhat-ethers/signers";
 
 import { utils } from "ethers";
@@ -20,9 +20,9 @@ import { initEnv } from "../helpers/utils";
 import { SuperPoolInputStruct, SupertokenResolverStruct, SupertokenResolverStructOutput } from "../typechain-types/SuperPoolHost";
 import { SuperToken } from "@superfluid-finance/sdk-core";
 import { INETWORK_CONFIG } from "../helpers/models";
-import { ResolverSettingsInitilizerStruct } from "../typechain-types/ResolverSettingsV2";
-import { PoolV2__factory } from "../typechain-types/factories/PoolV2__factory";
-import { STokenV2__factory } from "../typechain-types/factories/STokenV2__factory";
+import { ResolverSettingsInitilizerStruct } from "../typechain-types/ResolverSettingsV1";
+import { PoolV1__factory } from "../typechain-types/factories/PoolV1__factory";
+import { STokenV1__factory } from "../typechain-types/factories/STokenV1__factory";
 
 
 
@@ -82,13 +82,13 @@ if (network_params == undefined) {
   console.log(nonce);
   //
   //// DEPLOY POOLFACTORY
-  const poolFactoryImpl = await new PoolV2__factory(deployer).deploy({gasLimit:10000000, nonce})
+  const poolFactoryImpl = await new PoolV1__factory(deployer).deploy({gasLimit:10000000, nonce})
 
-  let toDeployContract = contract_config['poolV2'];
+  let toDeployContract = contract_config['poolV1'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
-      abi:  PoolV2__factory.abi.concat(eventAbi),
+      abi:  PoolV1__factory.abi.concat(eventAbi),
       name: toDeployContract.name,
       address: poolFactoryImpl.address,
       network: network,
@@ -97,7 +97,7 @@ if (network_params == undefined) {
 
   writeFileSync(
     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-    JSON.stringify(PoolV2__factory.abi.concat(eventAbi))
+    JSON.stringify(PoolV1__factory.abi.concat(eventAbi))
   );
 
   console.log(toDeployContract.name + ' Contract Deployed to:', poolFactoryImpl.address);
@@ -109,13 +109,13 @@ if (network_params == undefined) {
 
 
   //// DEPLOY SToken
-  const sTokenFactoryImpl = await new  STokenV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+1})
+  const sTokenFactoryImpl = await new  STokenV1__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+1})
 
-   toDeployContract = contract_config['sTokenV2'];
+   toDeployContract = contract_config['sTokenV1'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
-      abi:  STokenV2__factory.abi,
+      abi:  STokenV1__factory.abi,
       name: toDeployContract.name,
       address: sTokenFactoryImpl.address,
       network: network,
@@ -125,7 +125,7 @@ if (network_params == undefined) {
 
   writeFileSync(
     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-    JSON.stringify(STokenV2__factory.abi)
+    JSON.stringify(STokenV1__factory.abi)
   );
   console.log(toDeployContract.name + ' Contract Deployed to:', sTokenFactoryImpl.address);
   ///// copy Interfaces and create Metadata address/abi to assets folder
@@ -133,13 +133,13 @@ if (network_params == undefined) {
 
 
   //// DEPLOY PoolStrategy
-  const poolStrategy = await new  PoolStrategyV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+2})
+  const poolStrategy = await new  PoolStrategyV1__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+2})
 
-   toDeployContract = contract_config['poolStrategyV2'];
+   toDeployContract = contract_config['poolStrategyV1'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
-      abi:  PoolStrategyV2__factory.abi,
+      abi:  PoolStrategyV1__factory.abi,
       name: toDeployContract.name,
       address: poolStrategy.address,
       network: network,
@@ -148,7 +148,7 @@ if (network_params == undefined) {
 
   writeFileSync(
     `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-    JSON.stringify(PoolStrategyV2__factory.abi)
+    JSON.stringify(PoolStrategyV1__factory.abi)
   );
   console.log(toDeployContract.name + ' Contract Deployed to:', poolStrategy.address);
   ///// copy Interfaces and create Metadata address/abi to assets folder
@@ -156,13 +156,13 @@ if (network_params == undefined) {
 
 
     //// DEPLOY Gelato Resolver
-    const gelatoTasks = await new  GelatoTasksV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+3})
+    const gelatoTasks = await new  GelatoTasksV1__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+3})
 
-    toDeployContract = contract_config['gelatoTasksV2'];
+    toDeployContract = contract_config['gelatoTasksV1'];
    writeFileSync(
      `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
      JSON.stringify({
-       abi:  GelatoTasksV2__factory.abi,
+       abi:  GelatoTasksV1__factory.abi,
        name: toDeployContract.name,
        address: gelatoTasks.address,
        network: network,
@@ -171,7 +171,7 @@ if (network_params == undefined) {
  
    writeFileSync(
      `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-     JSON.stringify( GelatoTasksV2__factory.abi)
+     JSON.stringify( GelatoTasksV1__factory.abi)
    );
    console.log(toDeployContract.name + ' Contract Deployed to:', gelatoTasks.address);
    ///// copy Interfaces and create Metadata address/abi to assets folder
@@ -179,13 +179,13 @@ if (network_params == undefined) {
  
    
     //// DEPLOY POOL INTERNAL
-    const poolInternal = await new  PoolInternalV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+4})
+    const poolInternal = await new  PoolInternalV1__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+4})
 
-    toDeployContract = contract_config['poolInternalV2'];
+    toDeployContract = contract_config['poolInternalV1'];
    writeFileSync(
      `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
      JSON.stringify({
-       abi:  PoolInternalV2__factory.abi,
+       abi:  PoolInternalV1__factory.abi,
        name: toDeployContract.name,
        address: poolInternal.address,
        network: network,
@@ -194,7 +194,7 @@ if (network_params == undefined) {
  
    writeFileSync(
      `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-     JSON.stringify(PoolInternalV2__factory.abi)
+     JSON.stringify(PoolInternalV1__factory.abi)
    );
    console.log(toDeployContract.name + ' Contract Deployed to:',  poolInternal.address);
    ///// copy Interfaces and create Metadata address/abi to assets folder
@@ -204,9 +204,9 @@ if (network_params == undefined) {
 
  
  //// DEPLOY Settings
- const resolverSettings = await new ResolverSettingsV2__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+5})
+ const resolverSettings = await new ResolverSettingsV1__factory(deployer).deploy({gasLimit:10000000, nonce:nonce+5})
 
- toDeployContract = contract_config['resolverSettingsV2'];
+ toDeployContract = contract_config['resolverSettingsV1'];
 writeFileSync(
   `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
   JSON.stringify({
@@ -219,7 +219,7 @@ writeFileSync(
 
 writeFileSync(
   `../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`,
-  JSON.stringify(ResolverSettingsV2__factory.abi.concat(eventAbi))
+  JSON.stringify(ResolverSettingsV1__factory.abi.concat(eventAbi))
 );
 
 console.log(toDeployContract.name + ' Contract Deployed to:',resolverSettings.address);

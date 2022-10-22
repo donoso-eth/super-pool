@@ -24,7 +24,7 @@ export type APYStructOutput = [BigNumber, BigNumber] & {
   apy: BigNumber;
 };
 
-export type PoolV2Struct = {
+export type PoolV1Struct = {
   id: BigNumberish;
   timestamp: BigNumberish;
   nrSuppliers: BigNumberish;
@@ -41,7 +41,7 @@ export type PoolV2Struct = {
   apy: APYStruct;
 };
 
-export type PoolV2StructOutput = [
+export type PoolV1StructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
@@ -145,7 +145,7 @@ export type SupplierStructOutput = [
   apy: APYStructOutput;
 };
 
-export interface PoolInternalV2Interface extends utils.Interface {
+export interface PoolInternalV1Interface extends utils.Interface {
   functions: {
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
     "POOL_BUFFER()": FunctionFragment;
@@ -199,7 +199,7 @@ export interface PoolInternalV2Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "_calculateIndexes",
-    values: [BigNumberish, PoolV2Struct]
+    values: [BigNumberish, PoolV1Struct]
   ): string;
   encodeFunctionData(
     functionFragment: "_calculateYieldSupplier",
@@ -417,12 +417,12 @@ export type InitializedEvent = TypedEvent<[number], { version: number }>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
 
-export interface PoolInternalV2 extends BaseContract {
+export interface PoolInternalV1 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: PoolInternalV2Interface;
+  interface: PoolInternalV1Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -456,7 +456,7 @@ export interface PoolInternalV2 extends BaseContract {
 
     _calculateIndexes(
       yieldPeriod: BigNumberish,
-      lastPool: PoolV2Struct,
+      lastPool: PoolV1Struct,
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber] & {
@@ -509,14 +509,14 @@ export interface PoolInternalV2 extends BaseContract {
 
     getLastPool(
       overrides?: CallOverrides
-    ): Promise<[PoolV2StructOutput] & { pool: PoolV2StructOutput }>;
+    ): Promise<[PoolV1StructOutput] & { pool: PoolV1StructOutput }>;
 
     getLastTimestmap(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getPool(
       timestamp: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<[PoolV2StructOutput] & { pool: PoolV2StructOutput }>;
+    ): Promise<[PoolV1StructOutput] & { pool: PoolV1StructOutput }>;
 
     getSupplier(
       _supplier: string,
@@ -655,7 +655,7 @@ export interface PoolInternalV2 extends BaseContract {
 
   _calculateIndexes(
     yieldPeriod: BigNumberish,
-    lastPool: PoolV2Struct,
+    lastPool: PoolV1Struct,
     overrides?: CallOverrides
   ): Promise<
     [BigNumber, BigNumber] & {
@@ -704,14 +704,14 @@ export interface PoolInternalV2 extends BaseContract {
 
   getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
-  getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
+  getLastPool(overrides?: CallOverrides): Promise<PoolV1StructOutput>;
 
   getLastTimestmap(overrides?: CallOverrides): Promise<BigNumber>;
 
   getPool(
     timestamp: BigNumberish,
     overrides?: CallOverrides
-  ): Promise<PoolV2StructOutput>;
+  ): Promise<PoolV1StructOutput>;
 
   getSupplier(
     _supplier: string,
@@ -850,7 +850,7 @@ export interface PoolInternalV2 extends BaseContract {
 
     _calculateIndexes(
       yieldPeriod: BigNumberish,
-      lastPool: PoolV2Struct,
+      lastPool: PoolV1Struct,
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber] & {
@@ -894,14 +894,14 @@ export interface PoolInternalV2 extends BaseContract {
 
     getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
-    getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
+    getLastPool(overrides?: CallOverrides): Promise<PoolV1StructOutput>;
 
     getLastTimestmap(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPool(
       timestamp: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<PoolV2StructOutput>;
+    ): Promise<PoolV1StructOutput>;
 
     getSupplier(
       _supplier: string,
@@ -1046,7 +1046,7 @@ export interface PoolInternalV2 extends BaseContract {
 
     _calculateIndexes(
       yieldPeriod: BigNumberish,
-      lastPool: PoolV2Struct,
+      lastPool: PoolV1Struct,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1185,7 +1185,7 @@ export interface PoolInternalV2 extends BaseContract {
 
     _calculateIndexes(
       yieldPeriod: BigNumberish,
-      lastPool: PoolV2Struct,
+      lastPool: PoolV1Struct,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

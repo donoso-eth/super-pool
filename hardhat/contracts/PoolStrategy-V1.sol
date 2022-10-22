@@ -10,10 +10,10 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 
-import {IPoolV2} from "./interfaces/IPool-V2.sol";
+import {IPoolV1} from "./interfaces/IPool-V1.sol";
 
-import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
-import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
+import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
+import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 import {IPool} from "./aave/IPool.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {LibDataTypes} from "./gelato/LibDataTypes.sol";
@@ -29,15 +29,15 @@ interface ERC20mintable {
 }
 
 
-contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
+contract PoolStrategyV1 is Initializable, IPoolStrategyV1 {
   using SafeMath for uint256;
 
   IOps ops;
   ISuperToken superToken;
   ERC20mintable token;
   bytes32 public depositTaksId;
-  IPoolV2 pool;
-   IPoolInternalV2 poolInternal;
+  IPoolV1 pool;
+   IPoolInternalV1 poolInternal;
   IPool aavePool;
   IERC20 aToken;
 
@@ -60,11 +60,11 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
     IOps _ops,
     ISuperToken _superToken,
     ERC20mintable _token,
-    IPoolV2 _pool,
+    IPoolV1 _pool,
     IPool _aavePool,
     IERC20 _aToken,
     ERC20mintable _aaveToken,
-    IPoolInternalV2 _poolInternal
+    IPoolInternalV1 _poolInternal
   ) external initializer {
     ops = _ops;
     superToken = _superToken;
@@ -121,7 +121,7 @@ contract PoolStrategyV2 is Initializable, IPoolStrategyV2 {
   function checkerDeposit() external view returns (bool canExec, bytes memory execPayload) {
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
 
-    DataTypes.PoolV2 memory currentPool = poolInternal.getLastPool();
+    DataTypes.PoolV1 memory currentPool = poolInternal.getLastPool();
 
      uint256 currentPoolBuffer = currentPool.outFlowBuffer;
 

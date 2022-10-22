@@ -19,8 +19,8 @@ import HostMetadata from 'src/assets/contracts/super_pool_host_metadata.json';
 import PoolMetadata from 'src/assets/contracts/pool_v2_metadata.json';
 import StokenMetadata from 'src/assets/contracts/s_token_v2_metadata.json';
 
-import { PoolV2 } from 'src/assets/contracts/interfaces/PoolV2';
-import { STokenV2 } from 'src/assets/contracts/interfaces/STokenV2';
+import { PoolV1 } from 'src/assets/contracts/interfaces/PoolV1';
+import { STokenV1 } from 'src/assets/contracts/interfaces/STokenV1';
 
 @Injectable({
   providedIn: 'root',
@@ -30,7 +30,7 @@ export class DappInjector implements OnDestroy {
   private destroyHooks: Subject<void> = new Subject();
 
   ///// ---------  DAPP STATE INITIALIZATION
-  DAPP_STATE:IDAPP_STATE<PoolV2, STokenV2> = {
+  DAPP_STATE:IDAPP_STATE<PoolV1, STokenV1> = {
    
     defaultProvider: null,
     connectedNetwork: null,
@@ -214,7 +214,7 @@ export class DappInjector implements OnDestroy {
 
     PoolMetadata.address = resolver.pool
 
-    const contract = new AngularContract<PoolV2>({
+    const contract = new AngularContract<PoolV1>({
      metadata:  PoolMetadata,
       provider: this.DAPP_STATE.defaultProvider!,
       signer: this.DAPP_STATE.signer!,
@@ -225,7 +225,7 @@ export class DappInjector implements OnDestroy {
 
     StokenMetadata.address = resolver.sToken;
     console.log(resolver.sToken)
-    const contractStoken = new AngularContract<STokenV2>({
+    const contractStoken = new AngularContract<STokenV1>({
       metadata:   StokenMetadata,
        provider: this.DAPP_STATE.defaultProvider!,
        signer: this.DAPP_STATE.signer!,

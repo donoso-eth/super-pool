@@ -17,7 +17,7 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface PoolStrategyV2Interface extends utils.Interface {
+export interface PoolStrategyV1Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
     "balanceOf()": FunctionFragment;
@@ -79,12 +79,12 @@ export type InitializedEvent = TypedEvent<[number], { version: number }>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
 
-export interface PoolStrategyV2 extends BaseContract {
+export interface PoolStrategyV1 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: PoolStrategyV2Interface;
+  interface: PoolStrategyV1Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

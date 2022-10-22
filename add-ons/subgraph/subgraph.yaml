@@ -3,11 +3,11 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: PoolV2
+    name: PoolV1
     network: goerli
     source:
       address: '0x1727D678ECC61D8E583F6741c476f81608b83ab4'
-      abi: PoolV2
+      abi: PoolV1
       startBlock: 7808844
     mapping:
       kind: ethereum/events
@@ -18,7 +18,7 @@ dataSources:
         - Supplier
         - Event
       abis:
-        - name: PoolV2
+        - name: PoolV1
           file: ./abis/pool_v2.json
       eventHandlers: 
         - event: >-

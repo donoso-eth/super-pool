@@ -1,9 +1,9 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { utils } from "ethers";
-import { GelatoTasksV2, IOps, PoolStrategyV2, PoolInternalV2 } from "../../typechain-types";
+import { GelatoTasksV1, IOps, PoolStrategyV1, PoolInternalV1 } from "../../typechain-types";
 
 
-export const gelatoPushToAave = async (poolStrategy: PoolStrategyV2, ops:IOps, executor:SignerWithAddress) => {
+export const gelatoPushToAave = async (poolStrategy: PoolStrategyV1, ops:IOps, executor:SignerWithAddress) => {
     
     const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
@@ -62,7 +62,7 @@ export const getTaskId = (
 };
 
 
-export const getGelatoWithdrawStepId = async (poolInternal: PoolInternalV2,gelatoTask: GelatoTasksV2, timestamp:number, interval:number, user:string) => {
+export const getGelatoWithdrawStepId = async (poolInternal: PoolInternalV1,gelatoTask: GelatoTasksV1, timestamp:number, interval:number, user:string) => {
 
   let  execSelector =  poolInternal.interface.getSighash("withdrawStep");
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
@@ -89,7 +89,7 @@ export const getGelatoWithdrawStepId = async (poolInternal: PoolInternalV2,gelat
 }
 
 
-export const gelatoWithdrawStep = async (poolInternal: PoolInternalV2,gelatoTask: GelatoTasksV2, ops:IOps, executor:SignerWithAddress, user:string, timestamp:number, interval:number) => {
+export const gelatoWithdrawStep = async (poolInternal: PoolInternalV1,gelatoTask: GelatoTasksV1, ops:IOps, executor:SignerWithAddress, user:string, timestamp:number, interval:number) => {
     
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 

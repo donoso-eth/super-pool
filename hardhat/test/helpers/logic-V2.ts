@@ -6,9 +6,9 @@ import { BigNumber, constants, Contract, utils } from 'ethers';
 
 import { waitForTx } from '../../helpers/utils';
 import { ERC20, ISuperToken, ISuperfluidToken } from '../../typechain-types';
-import { getGelatoWithdrawStepId } from './gelato-V2';
-import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './models-V2';
-import { printPoolResult, printUserResult } from './utils-V2';
+import { getGelatoWithdrawStepId } from './gelato-V1';
+import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './models-V1';
+import { printPoolResult, printUserResult } from './utils-V1';
 
 export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAccrued: BigNumber, yieldSnapshot: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
   let pool: IPOOL_RESULT = Object.assign({}, lastPool);

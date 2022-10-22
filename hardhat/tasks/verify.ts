@@ -35,7 +35,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
 
   //let result = await host.getResolverBySuperToken(network_params.superToken);
 
-  deployContract = 'poolV2';
+  deployContract = 'poolV1';
   toDeployContract = contract_config[deployContract];
   const poolFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
@@ -44,7 +44,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
     constructorArguments: [],
   });
 
-  deployContract = 'sTokenV2';
+  deployContract = 'sTokenV1';
   toDeployContract = contract_config[deployContract];
   const sTokenFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
@@ -53,7 +53,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
     constructorArguments: [],
   });
 
-  deployContract = 'gelatoTasksV2';
+  deployContract = 'gelatoTasksV1';
   toDeployContract = contract_config[deployContract];
   const gelatoTasks= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
@@ -63,7 +63,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   });
 
   
-  deployContract = 'poolStrategyV2';
+  deployContract = 'poolStrategyV1';
   toDeployContract = contract_config[deployContract];
   const poolStrategy= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
@@ -72,7 +72,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
     constructorArguments: [],
   });
 
-  deployContract = 'resolverSettingsV2';
+  deployContract = 'resolverSettingsV1';
   toDeployContract = contract_config[deployContract];
   const resolverSettings= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
@@ -83,7 +83,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
 
 
   
-  deployContract = 'poolInternalV2';
+  deployContract = 'poolInternalV1';
   toDeployContract = contract_config[deployContract];
   const poolInternal= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 

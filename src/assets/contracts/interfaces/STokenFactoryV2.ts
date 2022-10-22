@@ -17,7 +17,7 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface STokenV2Interface extends utils.Interface {
+export interface STokenV1Interface extends utils.Interface {
   functions: {
     "PRECISSION()": FunctionFragment;
     "allowance(address,address)": FunctionFragment;
@@ -139,12 +139,12 @@ export type TransferEvent = TypedEvent<
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
 
-export interface STokenV2 extends BaseContract {
+export interface STokenV1 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: STokenV2Interface;
+  interface: STokenV1Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

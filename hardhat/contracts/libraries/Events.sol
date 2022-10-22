@@ -15,7 +15,7 @@ library Events {
 
       event SupplierEvent(DataTypes.SupplierEvent supplierEvent, bytes payload, uint256 timestmap, address supplier);
      
-      event PoolUpdate(DataTypes.PoolV2 pool);
+      event PoolUpdate(DataTypes.PoolV1 pool);
 
 
 

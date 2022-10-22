@@ -316,7 +316,7 @@ export class SupplierUpdateSupplierApyStruct extends ethereum.Tuple {
   }
 }
 
-export class PoolV2__getLastPoolResultValue0Struct extends ethereum.Tuple {
+export class PoolV1__getLastPoolResultValue0Struct extends ethereum.Tuple {
   get id(): BigInt {
     return this[0].toBigInt();
   }
@@ -369,14 +369,14 @@ export class PoolV2__getLastPoolResultValue0Struct extends ethereum.Tuple {
     return this[12].toBigInt();
   }
 
-  get apy(): PoolV2__getLastPoolResultValue0ApyStruct {
-    return changetype<PoolV2__getLastPoolResultValue0ApyStruct>(
+  get apy(): PoolV1__getLastPoolResultValue0ApyStruct {
+    return changetype<PoolV1__getLastPoolResultValue0ApyStruct>(
       this[13].toTuple()
     );
   }
 }
 
-export class PoolV2__getLastPoolResultValue0ApyStruct extends ethereum.Tuple {
+export class PoolV1__getLastPoolResultValue0ApyStruct extends ethereum.Tuple {
   get span(): BigInt {
     return this[0].toBigInt();
   }
@@ -386,7 +386,7 @@ export class PoolV2__getLastPoolResultValue0ApyStruct extends ethereum.Tuple {
   }
 }
 
-export class PoolV2__getPoolResultValue0Struct extends ethereum.Tuple {
+export class PoolV1__getPoolResultValue0Struct extends ethereum.Tuple {
   get id(): BigInt {
     return this[0].toBigInt();
   }
@@ -439,12 +439,12 @@ export class PoolV2__getPoolResultValue0Struct extends ethereum.Tuple {
     return this[12].toBigInt();
   }
 
-  get apy(): PoolV2__getPoolResultValue0ApyStruct {
-    return changetype<PoolV2__getPoolResultValue0ApyStruct>(this[13].toTuple());
+  get apy(): PoolV1__getPoolResultValue0ApyStruct {
+    return changetype<PoolV1__getPoolResultValue0ApyStruct>(this[13].toTuple());
   }
 }
 
-export class PoolV2__getPoolResultValue0ApyStruct extends ethereum.Tuple {
+export class PoolV1__getPoolResultValue0ApyStruct extends ethereum.Tuple {
   get span(): BigInt {
     return this[0].toBigInt();
   }
@@ -454,9 +454,9 @@ export class PoolV2__getPoolResultValue0ApyStruct extends ethereum.Tuple {
   }
 }
 
-export class PoolV2 extends ethereum.SmartContract {
-  static bind(address: Address): PoolV2 {
-    return new PoolV2("PoolV2", address);
+export class PoolV1 extends ethereum.SmartContract {
+  static bind(address: Address): PoolV1 {
+    return new PoolV1("PoolV1", address);
   }
 
   ETH(): Address {
@@ -798,20 +798,20 @@ export class PoolV2 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
-  getLastPool(): PoolV2__getLastPoolResultValue0Struct {
+  getLastPool(): PoolV1__getLastPoolResultValue0Struct {
     let result = super.call(
       "getLastPool",
       "getLastPool():((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))",
       []
     );
 
-    return changetype<PoolV2__getLastPoolResultValue0Struct>(
+    return changetype<PoolV1__getLastPoolResultValue0Struct>(
       result[0].toTuple()
     );
   }
 
   try_getLastPool(): ethereum.CallResult<
-    PoolV2__getLastPoolResultValue0Struct
+    PoolV1__getLastPoolResultValue0Struct
   > {
     let result = super.tryCall(
       "getLastPool",
@@ -823,23 +823,23 @@ export class PoolV2 extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      changetype<PoolV2__getLastPoolResultValue0Struct>(value[0].toTuple())
+      changetype<PoolV1__getLastPoolResultValue0Struct>(value[0].toTuple())
     );
   }
 
-  getPool(timestamp: BigInt): PoolV2__getPoolResultValue0Struct {
+  getPool(timestamp: BigInt): PoolV1__getPoolResultValue0Struct {
     let result = super.call(
       "getPool",
       "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))",
       [ethereum.Value.fromUnsignedBigInt(timestamp)]
     );
 
-    return changetype<PoolV2__getPoolResultValue0Struct>(result[0].toTuple());
+    return changetype<PoolV1__getPoolResultValue0Struct>(result[0].toTuple());
   }
 
   try_getPool(
     timestamp: BigInt
-  ): ethereum.CallResult<PoolV2__getPoolResultValue0Struct> {
+  ): ethereum.CallResult<PoolV1__getPoolResultValue0Struct> {
     let result = super.tryCall(
       "getPool",
       "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))",
@@ -850,7 +850,7 @@ export class PoolV2 extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      changetype<PoolV2__getPoolResultValue0Struct>(value[0].toTuple())
+      changetype<PoolV1__getPoolResultValue0Struct>(value[0].toTuple())
     );
   }
 

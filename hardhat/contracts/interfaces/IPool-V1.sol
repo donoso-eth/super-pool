@@ -5,19 +5,13 @@ import {DataTypes} from "../libraries/DataTypes.sol";
 import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-interface IPoolV2 {
+interface IPoolV1 {
   // ====================== Called only once by deployment ===========================
 
   /**
    * @notice initializer when deployment the contract
    */
-  function initialize(
-    ISuperfluid _host,
-    ISuperToken _superToken,
-    IERC20 _token,
-    address _owner
-  ) external;
-
+  function initialize( DataTypes.PoolInitializer memory poolInit) external;
 
 
   // #region ===================== SUpplier interaction Pool Events  ===========================
@@ -83,9 +77,9 @@ interface IPoolV2 {
   function getPool(uint256 timestamp)
     external
     view
-    returns (DataTypes.PoolV2 memory);
+    returns (DataTypes.PoolV1 memory);
 
-  function getLastPool() external view returns (DataTypes.PoolV2 memory);
+  function getLastPool() external view returns (DataTypes.PoolV1 memory);
 
   function getLastTimestmap() external view returns (uint256);
 

@@ -17,7 +17,7 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
-export interface ResolverSettingsV2Interface extends utils.Interface {
+export interface ResolverSettingsV1Interface extends utils.Interface {
   functions: {
     "DEPOSIT_TRIGGER_AMOUNT()": FunctionFragment;
     "DEPOSIT_TRIGGER_TIME()": FunctionFragment;
@@ -143,12 +143,12 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
-export interface ResolverSettingsV2 extends BaseContract {
+export interface ResolverSettingsV1 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: ResolverSettingsV2Interface;
+  interface: ResolverSettingsV1Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

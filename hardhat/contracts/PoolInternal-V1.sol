@@ -11,16 +11,16 @@ import {ISuperToken, ISuperfluid} from "@superfluid-finance/ethereum-contracts/c
 import {IOps} from "./gelato/IOps.sol";
 import { LibDataTypes} from './gelato/LibDataTypes.sol';
 
-import {ISTokenV2} from "./interfaces/ISToken-V2.sol";
-import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
+import {ISTokenV1} from "./interfaces/ISToken-V1.sol";
+import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 
-import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
-import {IPoolV2} from "./interfaces/IPool-V2.sol";
+import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
+import {IPoolV1} from "./interfaces/IPool-V1.sol";
 
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 
-contract PoolInternalV2 is UUPSProxiable {
+contract PoolInternalV1 is UUPSProxiable {
   using SafeMath for uint256;
 
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -30,9 +30,9 @@ contract PoolInternalV2 is UUPSProxiable {
   uint256 poolId;
   uint256 supplierId;
 
-  IPoolV2 poolContract;
-  ISTokenV2 sToken;
-  IPoolStrategyV2 poolStrategy;
+  IPoolV1 poolContract;
+  ISTokenV1 sToken;
+  IPoolStrategyV1 poolStrategy;
 
 
 
@@ -42,7 +42,7 @@ contract PoolInternalV2 is UUPSProxiable {
 
   mapping(uint256 => address) supplierAdressById;
 
-  mapping(uint256 => DataTypes.PoolV2) public poolByTimestamp;
+  mapping(uint256 => DataTypes.PoolV1) public poolByTimestamp;
 
   mapping(uint256 => uint256) public poolTimestampById;
 
@@ -68,37 +68,31 @@ contract PoolInternalV2 is UUPSProxiable {
   /**
    * @notice initializer of the Pool
    */
-  function initialize(
-    address _owner,
-    ISuperToken _superToken,
-    IPoolV2 _pool,
-    ISTokenV2 _sToken,
-    IPoolStrategyV2, _poolStrategy,
-    IOps ops
-  ) external initializer {
+  function initialize( DataTypes.PoolInternalInitializer memory  internalInit ) external initializer {
     ///initialState
 
-    owner = _owner;
-   
-    sToken = ISTokenV2(_sToken);
-    poolStrategy = IPoolStrategyV2(_poolStrategy);
-    poolContract = IPoolInternalV2(_pool);
+    owner = internalInit.owner;
+     superToken = internalInit.superToken;
 
-    ops = IOps(_ops);
+    sToken = internalInit.sToken;
+    poolStrategy = internalInit.poolStrategy;
+    poolContract = internalInit.pool;
+
+    ops = internalInit.ops;
 
     lastPoolTimestamp = block.timestamp;
-    poolByTimestamp[block.timestamp] = DataTypes.PoolV2(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+    poolByTimestamp[block.timestamp] = DataTypes.PoolV1(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
     poolTimestampById[0] = block.timestamp;
 
-    PRECISSION = poolContract.getPrecission;
+    PRECISSION = poolContract.getPrecission();
 
     STEPS = poolContract.getSteps();
     SUPERFLUID_DEPOSIT = poolContract.getSuperfluidDeposit();
     POOL_BUFFER = poolContract.getPoolBuffer();
     MIN_OUTFLOW_ALLOWED = 3600;
 
-    superToken = _superToken;
+   
   }
 
 
@@ -106,11 +100,11 @@ contract PoolInternalV2 is UUPSProxiable {
     supplier = suppliersByAddress[_supplier];
   }
 
-  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV2 memory pool) {
+  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory pool) {
     pool = poolByTimestamp[timestamp];
   }
 
-  function getLastPool() external view returns (DataTypes.PoolV2 memory pool) {
+  function getLastPool() external view returns (DataTypes.PoolV1 memory pool) {
     pool = poolByTimestamp[lastPoolTimestamp];
   }
 
@@ -127,7 +121,7 @@ contract PoolInternalV2 is UUPSProxiable {
    *************************************************************************/
 
   function _poolUpdate() public {
-    DataTypes.PoolV2 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+    DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
@@ -136,7 +130,7 @@ contract PoolInternalV2 is UUPSProxiable {
     if (periodSpan > 0) {
       poolId++;
 
-      DataTypes.PoolV2 memory pool = DataTypes.PoolV2(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+      DataTypes.PoolV1 memory pool = DataTypes.PoolV1(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
 
       pool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
 
@@ -178,8 +172,8 @@ contract PoolInternalV2 is UUPSProxiable {
     console.log("pool_update");
   }
 
-  function _calculateIndexes(uint256 yieldPeriod, DataTypes.PoolV2 memory lastPool) public view returns (uint256 periodYieldTokenIndex, uint256 periodYieldInFlowRateIndex) {
-    //DataTypes.PoolV2 memory lastPool = lastPool;
+  function _calculateIndexes(uint256 yieldPeriod, DataTypes.PoolV1 memory lastPool) public view returns (uint256 periodYieldTokenIndex, uint256 periodYieldInFlowRateIndex) {
+    //DataTypes.PoolV1 memory lastPool = lastPool;
 
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
@@ -226,7 +220,7 @@ contract PoolInternalV2 is UUPSProxiable {
 
   function _supplierUpdateCurrentState(address _supplier) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
     if (supplier.timestamp < block.timestamp) {
       uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
@@ -278,7 +272,7 @@ contract PoolInternalV2 is UUPSProxiable {
     _supplierUpdateCurrentState(_supplier);
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
     int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
     int96 newNetFlow = inFlow - outFlow;
@@ -348,7 +342,7 @@ contract PoolInternalV2 is UUPSProxiable {
     uint256 stepTime
   ) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
     if (newMinBalance > prevoiusMinBalance) {
       _withdrawDispatcher(_supplier, address(poolContract), newMinBalance - prevoiusMinBalance);
@@ -371,7 +365,7 @@ contract PoolInternalV2 is UUPSProxiable {
 
   function _outStreamHasChanged(address _supplier, int96 newOutFlow) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
     uint256 userBalance = sToken.balanceOf(_supplier);
     uint256 stepTime = userBalance.div(uint256(STEPS)).div(uint96(newOutFlow));
@@ -411,7 +405,7 @@ contract PoolInternalV2 is UUPSProxiable {
     address _receiver,
     uint256 withdrawAmount
   ) internal {
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
     uint256 poolAvailable = 0;
     if (superToken.balanceOf(address(poolContract)) > (pool.outFlowBuffer)) {
@@ -455,7 +449,7 @@ contract PoolInternalV2 is UUPSProxiable {
     uint256 minBalance
   ) internal {
     DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
     _cancelTask(supplier.outStream.cancelWithdrawId);
 
@@ -472,8 +466,8 @@ contract PoolInternalV2 is UUPSProxiable {
 
     uint256 lastTimestamp = supplier.timestamp;
 
-    DataTypes.PoolV2 memory lastPool = poolByTimestamp[lastPoolTimestamp];
-    DataTypes.PoolV2 memory lastSupplierPool = poolByTimestamp[supplier.timestamp];
+    DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+    DataTypes.PoolV1 memory lastSupplierPool = poolByTimestamp[supplier.timestamp];
 
     ///// Yield from deposit
 
@@ -491,7 +485,7 @@ contract PoolInternalV2 is UUPSProxiable {
   // #endregion
   function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) public view returns (uint256 yieldSupplier) {
     uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
-    DataTypes.PoolV2 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+    DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
     uint256 yieldAccruedSincelastPool = 0;
     if (currentYieldSnapshot > lastPool.yieldSnapshot) {
@@ -591,7 +585,7 @@ contract PoolInternalV2 is UUPSProxiable {
     poolContract.transfer(fee, feeToken);
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
-    DataTypes.PoolV2 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
     uint256 userBalance = sToken.balanceOf(_receiver);
     uint256 minBalance = supplier.outStream.minBalance;
     uint256 stepAmount = (uint96(supplier.outStream.flow)) * (supplier.outStream.stepTime);

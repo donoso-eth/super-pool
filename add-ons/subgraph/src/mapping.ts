@@ -1,6 +1,6 @@
 
 import { Pool, Supplier,Event } from '../generated/schema';
-import { PoolUpdate, SupplierEvent, SupplierUpdate} from '../generated/PoolV2/PoolV2'
+import { PoolUpdate, SupplierEvent, SupplierUpdate} from '../generated/PoolV1/PoolV1'
 import { BigInt } from '@graphprotocol/graph-ts';
 
 export function handlePoolUpdate(event: PoolUpdate): void {

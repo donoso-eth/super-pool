@@ -188,7 +188,7 @@ export const abi_SuperToken =  [
           "type": "bytes"
         }
       ],
-      "name": "AgreementLiquidatedV2",
+      "name": "AgreementLiquidatedV1",
       "type": "event"
     },
     {
@@ -516,7 +516,7 @@ export const abi_SuperToken =  [
           "type": "int256"
         }
       ],
-      "name": "makeLiquidationPayoutsV2",
+      "name": "makeLiquidationPayoutsV1",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

@@ -4,19 +4,11 @@ pragma solidity ^0.8.0;
 import {DataTypes} from "../libraries/DataTypes.sol";
 import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 
-import {IPoolV2} from "./interfaces/IPool-V2.sol";
+import {IPoolV1} from "./IPool-V1.sol";
 
 
-interface IPoolInternalV2 {
-  function initialize(
-    address _owner,
-    ISuperToken _superToken,
-    IPoolV2 _pool,
-    ISTokenV2 _sToken,
-    IPoolStrategyV2,
-    _poolStrategy,
-    IOps ops
-  ) external;
+interface IPoolInternalV1 {
+  function initialize(DataTypes.PoolInternalInitializer memory) external;
 
   function _redeemDeposit(
     uint256 redeemAmount,
@@ -40,9 +32,9 @@ interface IPoolInternalV2 {
 
   function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier);
 
-  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV2 memory);
+  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory);
 
-  function getLastPool() external view returns (DataTypes.PoolV2 memory);
+  function getLastPool() external view returns (DataTypes.PoolV1 memory);
 
   function getLastTimestmap() external view returns (uint256);
 

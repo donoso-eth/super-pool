@@ -24,7 +24,7 @@ export type APYStructOutput = [BigNumber, BigNumber] & {
   apy: BigNumber;
 };
 
-export type PoolV2Struct = {
+export type PoolV1Struct = {
   id: BigNumberish;
   timestamp: BigNumberish;
   deposit: BigNumberish;
@@ -40,7 +40,7 @@ export type PoolV2Struct = {
   apy: APYStruct;
 };
 
-export type PoolV2StructOutput = [
+export type PoolV1StructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
@@ -161,7 +161,7 @@ export type PoolFactoryInitializerStructOutput = [
   resolverSettings: string;
 };
 
-export interface PoolV2Interface extends utils.Interface {
+export interface PoolV1Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
@@ -475,12 +475,12 @@ export type InitializedEvent = TypedEvent<[number], { version: number }>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
 
-export interface PoolV2 extends BaseContract {
+export interface PoolV1 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: PoolV2Interface;
+  interface: PoolV1Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -582,12 +582,12 @@ export interface PoolV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<[string]>;
 
-    getLastPool(overrides?: CallOverrides): Promise<[PoolV2StructOutput]>;
+    getLastPool(overrides?: CallOverrides): Promise<[PoolV1StructOutput]>;
 
     getPool(
       _timestamp: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<[PoolV2StructOutput]>;
+    ): Promise<[PoolV1StructOutput]>;
 
     getSupplierByAdress(
       _supplier: string,
@@ -834,12 +834,12 @@ export interface PoolV2 extends BaseContract {
 
   gelato(overrides?: CallOverrides): Promise<string>;
 
-  getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
+  getLastPool(overrides?: CallOverrides): Promise<PoolV1StructOutput>;
 
   getPool(
     _timestamp: BigNumberish,
     overrides?: CallOverrides
-  ): Promise<PoolV2StructOutput>;
+  ): Promise<PoolV1StructOutput>;
 
   getSupplierByAdress(
     _supplier: string,
@@ -1076,12 +1076,12 @@ export interface PoolV2 extends BaseContract {
 
     gelato(overrides?: CallOverrides): Promise<string>;
 
-    getLastPool(overrides?: CallOverrides): Promise<PoolV2StructOutput>;
+    getLastPool(overrides?: CallOverrides): Promise<PoolV1StructOutput>;
 
     getPool(
       _timestamp: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<PoolV2StructOutput>;
+    ): Promise<PoolV1StructOutput>;
 
     getSupplierByAdress(
       _supplier: string,

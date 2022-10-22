@@ -459,7 +459,7 @@
             "type": "tuple"
           }
         ],
-        "internalType": "struct DataTypes.PoolV2",
+        "internalType": "struct DataTypes.PoolV1",
         "name": "",
         "type": "tuple"
       }
@@ -562,7 +562,7 @@
             "type": "tuple"
           }
         ],
-        "internalType": "struct DataTypes.PoolV2",
+        "internalType": "struct DataTypes.PoolV1",
         "name": "",
         "type": "tuple"
       }
@@ -746,7 +746,7 @@
   {
     "inputs": [
       {
-        "internalType": "contract IResolverSettingsV2",
+        "internalType": "contract IResolverSettingsV1",
         "name": "_resolverSettings",
         "type": "address"
       }
@@ -1163,7 +1163,7 @@
           }
         ],
         "indexed": false,
-        "internalType": "struct DataTypes.PoolV2",
+        "internalType": "struct DataTypes.PoolV1",
         "name": "pool",
         "type": "tuple"
       }

@@ -3,7 +3,7 @@ import { task } from 'hardhat/config';
 import { getTimestamp, initEnv, setNextBlockTimestamp, waitForTx } from '../helpers/utils';
 import { join } from 'path';
 import { constants, utils } from 'ethers';
-import { IOps__factory, PoolStrategyV2__factory, STokenV2__factory } from '../typechain-types';
+import { IOps__factory, PoolStrategyV1__factory, STokenV1__factory } from '../typechain-types';
 import { INETWORK_CONFIG } from '../helpers/models';
 
 let ONE_DAY = 24 * 3600 * 30;
@@ -27,7 +27,7 @@ task('push_aave', 'push_aave').setAction(async ({}, hre) => {
   
   let network_params = networks_config['goerli'];
 
-  const toDeployContract = contract_config['poolStrategyV2'];
+  const toDeployContract = contract_config['poolStrategyV1'];
   if (toDeployContract == undefined) {
     console.error('Your contract is not yet configured');
     console.error(
@@ -54,7 +54,7 @@ task('push_aave', 'push_aave').setAction(async ({}, hre) => {
 
   let   ops = IOps__factory.connect(network_params.ops, deployer);
 
-  let poolStrategy = PoolStrategyV2__factory.connect(metadata.address, deployer);
+  let poolStrategy = PoolStrategyV1__factory.connect(metadata.address, deployer);
 
   const resolverData =  poolStrategy.interface.encodeFunctionData("checkerDeposit");
   const resolverArgs = utils.defaultAbiCoder.encode(

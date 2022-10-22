@@ -2,16 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
-import {IPoolV2 } from './IPool-V2.sol'; 
+import {IPoolV1 } from './IPool-V1.sol'; 
 
 
-interface ISTokenV2 {
+interface ISTokenV1 {
 
-    function initialize(
-        string memory _name,
-        string memory _symbol,
-        address _owner
-    ) external;
+function initialize(DataTypes.STokenInitializer memory) external;
 
   function balanceOf(address _supplier) external view returns (uint256 balance);
 

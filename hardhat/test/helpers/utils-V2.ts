@@ -4,10 +4,10 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { ERC20, ERC777, IOps, ISuperfluidToken, PoolInternalV2, PoolV2, STokenV2 } from '../../typechain-types';
+import { ERC20, ERC777, IOps, ISuperfluidToken, PoolInternalV1, PoolV1, STokenV1 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V2';
+import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V1';
 
 export const fromBnToNumber = (x: BigNumber) => {
   return +x.toString();
@@ -363,7 +363,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   }
 };
 
-export const getPool = async (poolInternal: PoolInternalV2): Promise<any> => {
+export const getPool = async (poolInternal: PoolInternalV1): Promise<any> => {
   let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
   let periodRaw = await poolInternal.poolByTimestamp(periodTimestamp);
 
@@ -446,7 +446,7 @@ export const printUserResult = async (user: IUSERTEST): Promise<any> => {
   return user;
 };
 
-export const printPool = async (poolInternal: PoolInternalV2, t0: number): Promise<any> => {
+export const printPool = async (poolInternal: PoolInternalV1, t0: number): Promise<any> => {
   let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
   let period = await poolInternal.getPool(periodTimestamp);
   console.log(period.timestamp.toString());
@@ -466,7 +466,7 @@ export const printPool = async (poolInternal: PoolInternalV2, t0: number): Promi
   return period;
 };
  
-export const printUser = async (superPool: PoolV2, userAddress: string): Promise<any> => {
+export const printUser = async (superPool: PoolV1, userAddress: string): Promise<any> => {
   let user = await superPool.getSupplier(userAddress);
 
   console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');

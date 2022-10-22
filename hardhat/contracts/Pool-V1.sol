@@ -25,10 +25,10 @@ import { UUPSProxiable } from "./upgradability/UUPSProxiable.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 
-import {IPoolV2} from "./interfaces/IPool-V2.sol";
-import {ISTokenV2} from "./interfaces/ISToken-V2.sol";
-import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
-import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
+import {IPoolV1} from "./interfaces/IPool-V1.sol";
+import {ISTokenV1} from "./interfaces/ISToken-V1.sol";
+import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
+import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 
 
 import {DataTypes} from "./libraries/DataTypes.sol";
@@ -51,13 +51,13 @@ import {Events} from "./libraries/Events.sol";
  *      4) Pool Internal Contract:New created pool updated
  *
  ****************************************************************************************************/
-contract PoolV2 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient, IPoolV2 {
+contract PoolV1 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient, IPoolV1 {
   // #region pool state
 
   using SafeMath for uint256;
 
   address owner;
-  address superHost;
+  address poolFactory;
 
   ISuperfluid public host; // host
   IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
@@ -72,21 +72,28 @@ contract PoolV2 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient,
 
   uint256 MAX_INT;
 
-  uint256 PRECISSION;
+    //// PARAMS
+  uint256 public PRECISSION;
 
-  ISTokenV2 sToken;
-  IPoolStrategyV2 poolStrategy;
-  IPoolInternalV2 poolInternal;
+  uint8 public STEPS; // proportinal decrease deposit
+  uint256 public SUPERFLUID_DEPOSIT;
+  uint256 public POOL_BUFFER; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
+  uint256 public MIN_OUTFLOW_ALLOWED; // 1 hour minimum flow == Buffer
+
+  uint256 public DEPOSIT_TRIGGER_AMOUNT;
+  uint256 public DEPOSIT_TRIGGER_TIME;
+
+  ISTokenV1 sToken;
+  IPoolStrategyV1 poolStrategy;
+  IPoolInternalV1 poolInternal;
 
   IERC20 token;
 
   // #endregion pool state
 
-  //// ERC4626 EVents
-  constructor() {}
 
       function proxiableUUID()
-        public view override
+        public pure override
         returns (bytes32)
     {
         return keccak256("org.super-pool.pool.v2");
@@ -103,26 +110,17 @@ contract PoolV2 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient,
   /**
    * @notice initializer of the Pool
    */
-  function initialize(
-    ISuperfluid _host,
-    ISuperToken _superToken,
-    IERC20 _token,
-    IPoolInternalV2 _poolInternal,
-    ISTokenV2 _sToken,
-    IPoolStrategyV2, _poolStrategy,
-    IOps ops,
-    address _owner
-  ) external override initializer {
+  function initialize( DataTypes.PoolInitializer memory poolInit) external initializer {
     ///initialState
 
     //// super app && superfluid
-    host = _host;
-    superToken = _superToken;
+    host = poolInit.host;
+    superToken = poolInit.superToken;
 
     cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
-    token = _token;
-    owner = _owner;
-    superHost = msg.sender;
+    token = poolInit.token;
+    owner = poolInit.owner;
+    poolFactory = msg.sender;
 
     MAX_INT = 2**256 - 1;
 
@@ -136,11 +134,11 @@ contract PoolV2 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient,
 
     ///// initializators
 
-    sToken = ISTokenV2(_sToken);
-    poolStrategy = IPoolStrategyV2(_poolStrategy);
-    poolInternal = IPoolInternalV2(_poolInternal);
+    sToken = ISTokenV1(poolInit.sToken);
+    poolStrategy = IPoolStrategyV1(poolInit.poolStrategy);
+    poolInternal = IPoolInternalV1(poolInit.poolInternal);
 
-    ops = IOps(_ops);
+    ops = IOps(poolInit.ops);
 
     gelato = ops.gelato();
 
@@ -180,7 +178,7 @@ contract PoolV2 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient,
     uint256 amount,
     bytes calldata userData,
     bytes calldata operatorData
-  ) external override(IERC777Recipient, IPoolV2) {
+  ) external override(IERC777Recipient, IPoolV1) {
     require(msg.sender == address(superToken), "INVALID_TOKEN");
     require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
@@ -274,11 +272,11 @@ contract PoolV2 is  Initializable,SuperAppBase, UUPSProxiable, IERC777Recipient,
     return poolInternal.getLastTimestmap();
   }
 
-  function getPool(uint256 timestamp) external view override returns (DataTypes.PoolV2 memory) {
+  function getPool(uint256 timestamp) external view override returns (DataTypes.PoolV1 memory) {
     return poolInternal.getPool(timestamp);
   }
 
-  function getLastPool() external view override returns (DataTypes.PoolV2 memory) {
+  function getLastPool() external view override returns (DataTypes.PoolV1 memory) {
     return poolInternal.getLastPool();
   }
 
@@ -438,7 +436,7 @@ function internalEmitEvents(address _supplier,DataTypes.SupplierEvent code, byte
   function emitEvents(address _supplier) internal {
     DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
     emit Events.SupplierUpdate(supplier);
-    DataTypes.PoolV2 memory pool = poolInternal.getLastPool();
+    DataTypes.PoolV1 memory pool = poolInternal.getLastPool();
     emit Events.PoolUpdate(pool);
   }
 
@@ -482,8 +480,8 @@ function internalEmitEvents(address _supplier,DataTypes.SupplierEvent code, byte
     _;
   }
 
-  modifier onlySuperHost() {
-    require(msg.sender == superHost, "Only Host");
+  modifier onlypoolFactory() {
+    require(msg.sender == poolFactory, "Only Host");
     _;
   }
 

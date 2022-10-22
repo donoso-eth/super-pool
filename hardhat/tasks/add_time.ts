@@ -3,7 +3,7 @@ import { task } from 'hardhat/config';
 import { getTimestamp, initEnv, setNextBlockTimestamp, waitForTx } from '../helpers/utils';
 import { join } from 'path';
 import { constants } from 'ethers';
-import { STokenV2__factory } from '../typechain-types';
+import { STokenV1__factory } from '../typechain-types';
 
 let ONE_DAY = 24 * 3600 * 30;
 

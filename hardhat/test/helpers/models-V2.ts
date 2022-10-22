@@ -1,5 +1,5 @@
 import { BigNumber, Contract, logger, utils } from 'ethers';
-import { ERC20, ERC777, IERC20, IERC777, IOps, ISuperfluidToken, ISuperToken, PoolInternalV2, PoolV2, STokenV2 } from '../../typechain-types';
+import { ERC20, ERC777, IERC20, IERC777, IOps, ISuperfluidToken, ISuperToken, PoolInternalV1, PoolV1, STokenV1 } from '../../typechain-types';
 
 
 export interface IPOOL {
@@ -94,11 +94,11 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
   export interface ICONTRACTS_TEST  {
     poolAddress: string,
      superTokenContract: ISuperToken, 
-     superPool:PoolV2,
-     poolInternal: PoolInternalV2,
+     superPool:PoolV1,
+     poolInternal: PoolInternalV1,
      superTokenERC777: IERC777,
      ops?:IOps,
-     sToken: STokenV2,
+     sToken: STokenV1,
      strategyAddresse: string,
      aaveERC20:IERC20,
      PRECISSION: BigNumber

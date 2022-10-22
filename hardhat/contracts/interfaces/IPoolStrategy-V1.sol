@@ -2,18 +2,18 @@
 pragma solidity ^0.8.0;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
-import {IPoolV2} from "./IPool-V2.sol";
+import {IPoolV1} from "./IPool-V1.sol";
 
-interface IPoolStrategyV2 {
+interface IPoolStrategyV1 {
 
   //   function initialize(
   //   IOps _ops,
   //   ISuperToken _superToken,
   //   ERC20mintable _token,
-  //   IPoolV2 _pool,
+  //   IPoolV1 _pool,
   //   IPool _aavePool,
   //   IERC20 _aToken,
-  //   IPoolInternalV2 _poolInternal,
+  //   IPoolInternalV1 _poolInternal,
   //   ERC20mintable _aaveToken
   // ) external;
   

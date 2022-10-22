@@ -11,17 +11,17 @@ import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 
-import {IPoolV2} from "./interfaces/IPool-V2.sol";
-import {IPoolInternalV2} from "./interfaces/IPoolInternal-V2.sol";
-import {IPoolStrategyV2} from "./interfaces/IPoolStrategy-V2.sol";
+import {IPoolV1} from "./interfaces/IPool-V1.sol";
+import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
+import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 
-contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
+contract STokenV1 is UUPSUpgradeable, ERC20Upgradeable {
   using SafeMath for uint256;
   address superHost;
   address owner;
-  IPoolV2 pool;
-  IPoolInternalV2 poolInternal;
-  IPoolStrategyV2 poolStrategy;
+  IPoolV1 pool;
+  IPoolInternalV1 poolInternal;
+  IPoolStrategyV1 poolStrategy;
   uint256 public PRECISSION;
 
   constructor() {}
@@ -29,26 +29,18 @@ contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
   /**
    * @notice initializer of the Pool
    */
-  function initialize(
-    string memory _name,
-    string memory _symbol,
-    IPoolInternalV2 _poolInternal,
-    IPoolV2 _pool,
-    IPoolStrategyV2,
-    _poolStrategy,
-    address _owner
-  ) external initializer {
+  function initialize( DataTypes.STokenInitializer memory tokenInit) external initializer {
     ///initialState
-    __ERC20_init(_name, _symbol);
+    __ERC20_init(tokenInit.name, tokenInit.symbol);
 
     superHost = msg.sender;
-    owner = _owner;
+    owner = tokenInit.owner;
 
-    poolStrategy = IPoolStrategyV2(_poolStrategy);
-    poolInternal = IPoolInternalV2(_poolInternal);
-    poolContract = IPoolInternalV2(_pool);
+    poolStrategy = tokenInit.poolStrategy;
+    poolInternal = tokenInit.poolInternal;
+    pool = tokenInit.pool;
 
-    PRECISSION = poolContract.getPrecission;
+    PRECISSION = pool.getPrecission();
   }
 
   function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -72,8 +64,6 @@ contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
 
     uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
-    console.log(81, yieldSupplier);
-    console.log(82, uint96(supplier.inStream.flow));
 
     int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
 
@@ -82,8 +72,7 @@ contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
     } else {
       realtimeBalance = yieldSupplier + supplier.outStream.minBalance.mul(PRECISSION) + (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime) * PRECISSION;
     }
-    //+ supplier.outStream.stepAmount.mul(PRECISSION)
-    console.log(83, realtimeBalance);
+
   }
 
   function _transfer(
@@ -93,7 +82,7 @@ contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
   ) internal virtual override {
     require(from != address(0), "ERC20: transfer from the zero address");
     require(to != address(0), "ERC20: transfer to the zero address");
-    console.log(922222);
+
 
     _beforeTokenTransfer(from, to, amount);
 
@@ -114,7 +103,7 @@ contract STokenV2 is UUPSUpgradeable, ERC20Upgradeable {
   }
 
   function totalSupply() public view override returns (uint256) {
-    DataTypes.PoolV2 memory lastPool = poolInternal.getLastPool();
+    DataTypes.PoolV1 memory lastPool = poolInternal.getLastPool();
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
     uint256 _totalSupply = lastPool.deposit + uint96(lastPool.inFlowRate) * periodSpan - uint96(lastPool.outFlowRate) * periodSpan;
 

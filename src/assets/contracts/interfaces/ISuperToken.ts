@@ -42,7 +42,7 @@ export interface ISuperTokenInterface extends utils.Interface {
     "isAccountSolvent(address,uint256)": FunctionFragment;
     "isAccountSolventNow(address)": FunctionFragment;
     "isOperatorFor(address,address)": FunctionFragment;
-    "makeLiquidationPayoutsV2(bytes32,bytes,address,bool,address,uint256,int256)": FunctionFragment;
+    "makeLiquidationPayoutsV1(bytes32,bytes,address,bool,address,uint256,int256)": FunctionFragment;
     "name()": FunctionFragment;
     "operationApprove(address,address,uint256)": FunctionFragment;
     "operationDowngrade(address,uint256)": FunctionFragment;
@@ -155,7 +155,7 @@ export interface ISuperTokenInterface extends utils.Interface {
     values: [string, string]
   ): string;
   encodeFunctionData(
-    functionFragment: "makeLiquidationPayoutsV2",
+    functionFragment: "makeLiquidationPayoutsV1",
     values: [
       BytesLike,
       BytesLike,
@@ -331,7 +331,7 @@ export interface ISuperTokenInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "makeLiquidationPayoutsV2",
+    functionFragment: "makeLiquidationPayoutsV1",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
@@ -419,7 +419,7 @@ export interface ISuperTokenInterface extends utils.Interface {
     "AgreementCreated(address,bytes32,bytes32[])": EventFragment;
     "AgreementLiquidated(address,bytes32,address,address,uint256)": EventFragment;
     "AgreementLiquidatedBy(address,address,bytes32,address,address,uint256,uint256)": EventFragment;
-    "AgreementLiquidatedV2(address,bytes32,address,address,address,uint256,int256,bytes)": EventFragment;
+    "AgreementLiquidatedV1(address,bytes32,address,address,address,uint256,int256,bytes)": EventFragment;
     "AgreementStateUpdated(address,address,uint256)": EventFragment;
     "AgreementTerminated(address,bytes32)": EventFragment;
     "AgreementUpdated(address,bytes32,bytes32[])": EventFragment;
@@ -438,7 +438,7 @@ export interface ISuperTokenInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "AgreementCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AgreementLiquidated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AgreementLiquidatedBy"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AgreementLiquidatedV2"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "AgreementLiquidatedV1"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AgreementStateUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AgreementTerminated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AgreementUpdated"): EventFragment;
@@ -492,7 +492,7 @@ export type AgreementLiquidatedByEvent = TypedEvent<
 export type AgreementLiquidatedByEventFilter =
   TypedEventFilter<AgreementLiquidatedByEvent>;
 
-export type AgreementLiquidatedV2Event = TypedEvent<
+export type AgreementLiquidatedV1Event = TypedEvent<
   [string, string, string, string, string, BigNumber, BigNumber, string],
   {
     agreementClass: string;
@@ -506,8 +506,8 @@ export type AgreementLiquidatedV2Event = TypedEvent<
   }
 >;
 
-export type AgreementLiquidatedV2EventFilter =
-  TypedEventFilter<AgreementLiquidatedV2Event>;
+export type AgreementLiquidatedV1EventFilter =
+  TypedEventFilter<AgreementLiquidatedV1Event>;
 
 export type AgreementStateUpdatedEvent = TypedEvent<
   [string, string, BigNumber],
@@ -769,7 +769,7 @@ export interface ISuperToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    makeLiquidationPayoutsV2(
+    makeLiquidationPayoutsV1(
       id: BytesLike,
       liquidationTypeData: BytesLike,
       liquidatorAccount: string,
@@ -1065,7 +1065,7 @@ export interface ISuperToken extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  makeLiquidationPayoutsV2(
+  makeLiquidationPayoutsV1(
     id: BytesLike,
     liquidationTypeData: BytesLike,
     liquidatorAccount: string,
@@ -1358,7 +1358,7 @@ export interface ISuperToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    makeLiquidationPayoutsV2(
+    makeLiquidationPayoutsV1(
       id: BytesLike,
       liquidationTypeData: BytesLike,
       liquidatorAccount: string,
@@ -1577,7 +1577,7 @@ export interface ISuperToken extends BaseContract {
       bailoutAmount?: null
     ): AgreementLiquidatedByEventFilter;
 
-    "AgreementLiquidatedV2(address,bytes32,address,address,address,uint256,int256,bytes)"(
+    "AgreementLiquidatedV1(address,bytes32,address,address,address,uint256,int256,bytes)"(
       agreementClass?: string | null,
       id?: null,
       liquidatorAccount?: string | null,
@@ -1586,8 +1586,8 @@ export interface ISuperToken extends BaseContract {
       rewardAmount?: null,
       targetAccountBalanceDelta?: null,
       liquidationTypeData?: null
-    ): AgreementLiquidatedV2EventFilter;
-    AgreementLiquidatedV2(
+    ): AgreementLiquidatedV1EventFilter;
+    AgreementLiquidatedV1(
       agreementClass?: string | null,
       id?: null,
       liquidatorAccount?: string | null,
@@ -1596,7 +1596,7 @@ export interface ISuperToken extends BaseContract {
       rewardAmount?: null,
       targetAccountBalanceDelta?: null,
       liquidationTypeData?: null
-    ): AgreementLiquidatedV2EventFilter;
+    ): AgreementLiquidatedV1EventFilter;
 
     "AgreementStateUpdated(address,address,uint256)"(
       agreementClass?: string | null,
@@ -1859,7 +1859,7 @@ export interface ISuperToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    makeLiquidationPayoutsV2(
+    makeLiquidationPayoutsV1(
       id: BytesLike,
       liquidationTypeData: BytesLike,
       liquidatorAccount: string,
@@ -2148,7 +2148,7 @@ export interface ISuperToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    makeLiquidationPayoutsV2(
+    makeLiquidationPayoutsV1(
       id: BytesLike,
       liquidationTypeData: BytesLike,
       liquidatorAccount: string,

@@ -9,24 +9,24 @@ import {
   IERC777,
   IERC777__factory,
   Events__factory,
-  GelatoTasksV2,
-  GelatoTasksV2__factory,
+  GelatoTasksV1,
+  GelatoTasksV1__factory,
   IOps,
   IOps__factory,
   ISuperfluidToken,
   ISuperfluidToken__factory,
   ISuperToken,
   ISuperToken__factory,
-  PoolV2,
-  PoolV2__factory,
-  PoolInternalV2,
-  PoolInternalV2__factory,
-  PoolStrategyV2,
-  PoolStrategyV2__factory,
-  ResolverSettingsV2,
-  ResolverSettingsV2__factory,
-  STokenV2,
-  STokenV2__factory,
+  PoolV1,
+  PoolV1__factory,
+  PoolInternalV1,
+  PoolInternalV1__factory,
+  PoolStrategyV1,
+  PoolStrategyV1__factory,
+  ResolverSettingsV1,
+  ResolverSettingsV1__factory,
+  STokenV1,
+  STokenV1__factory,
   SuperPoolHost,
   SuperPoolHost__factory,
   IERC20,
@@ -34,7 +34,7 @@ import {
 } from '../typechain-types';
 
 import { constants, utils } from 'ethers';
-import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent, printPeriod, printPoolResult, printUser, testPeriod } from './helpers/utils-V2';
+import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent, printPeriod, printPoolResult, printUser, testPeriod } from './helpers/utils-V1';
 import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core';
 
 import { ResolverSettingsInitilizerStruct, SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
@@ -44,25 +44,25 @@ import { ethers } from 'hardhat';
 import { readFileSync } from 'fs-extra';
 import { INETWORK_CONFIG } from 'hardhat/helpers/models';
 import { join } from 'path';
-import { applyUserEvent, faucet, updatePool } from './helpers/logic-V2';
-import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V2';
+import { applyUserEvent, faucet, updatePool } from './helpers/logic-V1';
+import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V1';
 
 import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
-import { gelatoPushToAave, gelatoWithdrawStep, getGelatoWithdrawStepId } from './helpers/gelato-V2';
+import { gelatoPushToAave, gelatoWithdrawStep, getGelatoWithdrawStepId } from './helpers/gelato-V1';
 
 import { BigNumber } from '@ethersproject/bignumber';
 
 let superPoolHost: SuperPoolHost;
-let poolFactory: PoolV2;
-let sTokenFactory: STokenV2;
-let gelatoTasks: GelatoTasksV2;
-let poolStrategy: PoolStrategyV2;
-let settings: ResolverSettingsV2;
-let poolInternal: PoolInternalV2;
+let poolFactory: PoolV1;
+let sTokenFactory: STokenV1;
+let gelatoTasks: GelatoTasksV1;
+let poolStrategy: PoolStrategyV1;
+let settings: ResolverSettingsV1;
+let poolInternal: PoolInternalV1;
 
-let superPool: PoolV2;
+let superPool: PoolV1;
 let superPoolAddress: string;
-let sToken: STokenV2;
+let sToken: STokenV1;
 let sTokenAddress: string;
 
 let superTokenContract: ISuperToken;
@@ -124,7 +124,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe('V2 test OUTSTREAM ONLY', function () {
+describe('V1 test OUTSTREAM ONLY', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -146,22 +146,22 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     superPoolHost = await new SuperPoolHost__factory(deployer).deploy(network_params.host);
     console.log('Host---> deployed');
-    poolFactory = await new PoolV2__factory(deployer).deploy();
+    poolFactory = await new PoolV1__factory(deployer).deploy();
     console.log('Pool Factory---> deployed: ');
-    sTokenFactory = await new STokenV2__factory(deployer).deploy();
+    sTokenFactory = await new STokenV1__factory(deployer).deploy();
     console.log('Token Factotokery---> deployed');
 
     //
-    gelatoTasks = await new GelatoTasksV2__factory(deployer).deploy();
+    gelatoTasks = await new GelatoTasksV1__factory(deployer).deploy();
     console.log('Gelato Resolver---> deployed');
 
-    poolStrategy = await new PoolStrategyV2__factory(deployer).deploy();
+    poolStrategy = await new PoolStrategyV1__factory(deployer).deploy();
     console.log('Pool Strategy---> deployed');
 
-    settings = await new ResolverSettingsV2__factory(deployer).deploy();
+    settings = await new ResolverSettingsV1__factory(deployer).deploy();
     console.log('Settings ---> deployed');
 
-    poolInternal = await new PoolInternalV2__factory(deployer).deploy();
+    poolInternal = await new PoolInternalV1__factory(deployer).deploy();
     console.log('PoolInternal ---> deployed');
 
     eventsLib = await new Events__factory(deployer).deploy();
@@ -203,10 +203,10 @@ describe('V2 test OUTSTREAM ONLY', function () {
     await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43', poolInternal.address);
     console.log('Pool Strategy ---> initialized');
 
-    superPool = PoolV2__factory.connect(superPoolAddress, deployer);
+    superPool = PoolV1__factory.connect(superPoolAddress, deployer);
 
 
-    sToken = STokenV2__factory.connect(sTokenAddress, deployer);
+    sToken = STokenV1__factory.connect(sTokenAddress, deployer);
 
     let initialPoolEth = hre.ethers.utils.parseEther('10');
 
