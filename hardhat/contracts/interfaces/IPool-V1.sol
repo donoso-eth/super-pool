@@ -106,4 +106,9 @@ interface IPoolV1 {
   function setSteps(uint8 _steps) external;
 
   function getSteps() external view returns (uint8);
+
+
+    function balanceOf(address _supplier) external view returns (uint256 balance);
+
+  function getSupplierBalance(address _supplier) external view returns (uint256 realtimeBalance);
 }

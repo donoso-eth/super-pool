@@ -27,7 +27,6 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 
 
 import {IPoolV1} from "./interfaces/IPool-V1.sol";
-import {ISTokenV1} from "./interfaces/ISToken-V1.sol";
 import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
 import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 
@@ -84,7 +83,7 @@ contract PoolV1 is  UUPSProxiable, ERC20Upgradeable, SuperAppBase,  IERC777Recip
   uint256 public DEPOSIT_TRIGGER_AMOUNT;
   uint256 public DEPOSIT_TRIGGER_TIME;
 
-  ISTokenV1 sToken;
+
   IPoolStrategyV1 poolStrategy;
   IPoolInternalV1 poolInternal;
 
@@ -135,7 +134,7 @@ contract PoolV1 is  UUPSProxiable, ERC20Upgradeable, SuperAppBase,  IERC777Recip
 
     ///// initializators
 
-    sToken = ISTokenV1(poolInit.sToken);
+   
     poolStrategy = IPoolStrategyV1(poolInit.poolStrategy);
     poolInternal = IPoolInternalV1(poolInit.poolInternal);
 
@@ -197,7 +196,7 @@ contract PoolV1 is  UUPSProxiable, ERC20Upgradeable, SuperAppBase,  IERC777Recip
    * @param redeemAmount amount to be reddemed
    */
   function redeemDeposit(uint256 redeemAmount) external override {
-    uint256 balance = sToken.balanceOf(msg.sender);
+    uint256 balance = balanceOf(msg.sender);
 
     address _supplier = msg.sender;
 
@@ -227,7 +226,7 @@ contract PoolV1 is  UUPSProxiable, ERC20Upgradeable, SuperAppBase,  IERC777Recip
   
     address _supplier = msg.sender;
 
-    uint256 realTimeBalance = sToken.balanceOf(_supplier);
+    uint256 realTimeBalance = balanceOf(_supplier);
 
     /// 
     require(realTimeBalance > 0, "NO_BALANCE");
@@ -549,7 +548,7 @@ function internalEmitEvents(address _supplier,DataTypes.SupplierEvent code, byte
    *
    ****************************************************************************************************/
 
-  function balanceOf(address _supplier) public view override returns (uint256 balance) {
+  function balanceOf(address _supplier) public view override(ERC20Upgradeable, IPoolV1)  returns (uint256 balance) {
     balance = getSupplierBalance(_supplier).div(PRECISSION);
   }
 

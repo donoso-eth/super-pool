@@ -13,8 +13,6 @@ import {UUPSProxiable} from "./upgradability/UUPSProxiable.sol";
 
 import {IPoolV1} from "./interfaces/IPool-V1.sol";
 import {PoolV1} from "./Pool-V1.sol";
-import {ISTokenV1} from "./interfaces/ISToken-V1.sol";
-import {STokenV1} from "./SToken-V1.sol";
 import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
 
 import {IOps} from "./gelato/IOps.sol";
@@ -22,104 +20,97 @@ import {IOps} from "./gelato/IOps.sol";
 import {DataTypes} from "./libraries/DataTypes.sol";
 import {Events} from "./libraries/Events.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
+
 contract SuperPoolFactory is Initializable, UUPSProxiable {
-    using Counters for Counters.Counter;
-    Counters.Counter public _pcrTokensIssued;
+  using Counters for Counters.Counter;
+  Counters.Counter public _pcrTokensIssued;
 
-    ISuperfluid host;
+  ISuperfluid host;
 
-    IOps ops;
+  IOps ops;
 
-    address owner;
+  address owner;
 
-    address strategyImpl;
-    address poolImpl;
-    address poolInternalImpl;
-    address sTokenImpl;
-    mapping(address => DataTypes.SupertokenResolver) public superTokenResolverByAddress;
 
-    /**
-     * @notice initializer of the Pool
-     */
-    function initialize(DataTypes.SuperPoolFactoryInitializer memory factoryInitializer) external  initializer {
-        host = host;
-        strategyImpl = strategyImpl;
-        poolImpl = poolImpl;
-        poolInternalImpl = poolInternalImpl;
-        sTokenImpl = sTokenImpl;
-    }
+  address poolImpl;
+  address poolInternalImpl;
 
-    function proxiableUUID() public view override returns (bytes32) {
-        return keccak256("org.super-pool.pool-factory.v2");
-    }
+ // mapping(address => DataTypes.SupertokenResolver) public superTokenResolverByAddress;
 
-    function updateCode(address newAddress) external override {
-        require(msg.sender == owner, "only owner can update code");
-        return _updateCodeAddress(newAddress);
-    }
+  /**
+   * @notice initializer of the Pool
+   */
+  function initialize(DataTypes.SuperPoolFactoryInitializer memory factoryInitializer) external initializer {
+    host = factoryInitializer.host;
+    poolImpl = factoryInitializer.poolImpl;
+    poolInternalImpl = factoryInitializer.poolInternalImpl;
+  }
 
-    function createSuperPool(DataTypes.CreatePoolInput memory poolInput) external {
-        require(superTokenResolverByAddress[address(poolInput.superToken)].pool == address(0), "POOL_EXISTS");
+  function proxiableUUID() public view override returns (bytes32) {
+    return keccak256("org.super-pool.pool-factory.v2");
+  }
 
-        owner = msg.sender;
+  function updateCode(address newAddress) external override {
+    require(msg.sender == owner, "only owner can update code");
+    return _updateCodeAddress(newAddress);
+  }
 
-        ISuperToken superToken = poolInput.superToken;
-        ERC20 token = ERC20(superToken.getUnderlyingToken());
-        string memory tokenName = token.name();
-        string memory symbol = token.symbol();
+  function createSuperPool(DataTypes.CreatePoolInput memory poolInput) external {
+    //require(superTokenResolverByAddress[address(poolInput.superToken)].pool == address(0), "POOL_EXISTS");
 
-        /// Create Proxy Contracts
+    owner = msg.sender;
 
-        UUPSProxy poolProxy = new UUPSProxy();
-        poolProxy.initializeProxy(poolImpl);
+    ISuperToken superToken = poolInput.superToken;
+    ERC20 token = ERC20(superToken.getUnderlyingToken());
+    string memory tokenName = token.name();
+    string memory symbol = token.symbol();
 
-        UUPSProxy sTokenProxy = new UUPSProxy();
-        sTokenProxy.initializeProxy(sTokenImpl);
+    /// Create Proxy Contracts
 
-        UUPSProxy poolInternalProxy = new UUPSProxy();
-        poolInternalProxy.initializeProxy(sTokenImpl);
+    UUPSProxy poolProxy = new UUPSProxy();
+    poolProxy.initializeProxy(poolImpl);
 
-        /////// Initializer Pool
-        DataTypes.PoolInitializer memory poolInit;
-        poolInit = DataTypes.PoolInitializer({
-                 name: string(abi.encodePacked("Super Pool ", tokenName)),
-            symbol: string(abi.encodePacked("sp ", symbol)),
-            host: host, superToken: poolInput.superToken, token: token, poolInternal: IPoolInternalV1(address(poolInternalProxy)), sToken: ISTokenV1(address(sTokenProxy)), poolStrategy: poolInput.poolStrategy, ops: ops, owner: owner});
+    UUPSProxy poolInternalProxy = new UUPSProxy();
+    poolInternalProxy.initializeProxy(poolInternalImpl);
 
-        IPoolV1(address(poolProxy)).initialize(poolInit);
+    /////// Initializer Pool
+    DataTypes.PoolInitializer memory poolInit;
+    poolInit = DataTypes.PoolInitializer({
+      name: string(abi.encodePacked("Super Pool ", tokenName)),
+      symbol: string(abi.encodePacked("sp ", symbol)),
+      host: host,
+      superToken: poolInput.superToken,
+      token: token,
+      poolInternal: IPoolInternalV1(address(poolInternalProxy)),
+      poolStrategy: poolInput.poolStrategy,
+      ops: ops,
+      owner: owner
+    });
 
-        uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL | SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
-        host.registerAppByFactory(ISuperApp(address(poolProxy)), configWord);
+    IPoolV1(address(poolProxy)).initialize(poolInit);
 
-        //Initializer PoolInternal
-        DataTypes.PoolInternalInitializer memory internalInit;
-        internalInit = DataTypes.PoolInternalInitializer({superToken: poolInput.superToken, pool: IPoolV1(address(poolProxy)), sToken: ISTokenV1(address(sTokenProxy)), poolStrategy: poolInput.poolStrategy, ops: ops, owner: owner});
-        IPoolInternalV1(address(poolInternalProxy)).initialize(internalInit);
+    uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL | SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
+    host.registerAppByFactory(ISuperApp(address(poolProxy)), configWord);
 
-        // // Initializer SToken
-        // DataTypes.STokenInitializer memory tokenInit;
-        // tokenInit = DataTypes.STokenInitializer({
-        //     name: string(abi.encodePacked("Super Pool ", tokenName)),
-        //     symbol: string(abi.encodePacked("sp ", symbol)),
-        //     pool: IPoolV1(address(poolProxy)),
-        //     poolInternal: IPoolInternalV1(address(poolInternalProxy)),
-        //     poolStrategy: poolInput.poolStrategy,
-        //     owner: owner
-        // });
+    //Initializer PoolInternal
+    DataTypes.PoolInternalInitializer memory internalInit;
+    internalInit = DataTypes.PoolInternalInitializer({superToken: poolInput.superToken, pool: IPoolV1(address(poolProxy)), poolStrategy: poolInput.poolStrategy, ops: ops, owner: owner});
+    IPoolInternalV1(address(poolInternalProxy)).initialize(internalInit);
 
-        // ISTokenV1(address(sTokenProxy)).initialize(tokenInit);
+    // ISTokenV1(address(sTokenProxy)).initialize(tokenInit);
 
-        // superTokenResolverByAddress[address(poolInput.superToken)].pool = address(poolContract);
-        // superTokenResolverByAddress[address(poolInput.superToken)].sToken = address(sTokenContract);
-    }
+    // superTokenResolverByAddress[address(poolInput.superToken)].pool = address(poolContract);
+    // superTokenResolverByAddress[address(poolInput.superToken)].sToken = address(sTokenContract);
+  }
 
-    // ============= View Functions ============= ============= =============  //
+  // ============= View Functions ============= ============= =============  //
 
-    function getResolverBySuperToken(address superToken) external view returns (DataTypes.SupertokenResolver memory resolver) {
-        resolver = superTokenResolverByAddress[address(superToken)];
-    }
+  // function getResolverBySuperToken(address superToken) external view returns (DataTypes.SupertokenResolver memory resolver) {
+  //   resolver = superTokenResolverByAddress[address(superToken)];
+  // }
 
-    // #region ViewFunctions
+  // #region ViewFunctions
 
-    // #endregion View Functions
+  // #endregion View Functions
 }

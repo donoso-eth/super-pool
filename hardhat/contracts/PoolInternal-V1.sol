@@ -11,7 +11,7 @@ import {ISuperToken, ISuperfluid} from "@superfluid-finance/ethereum-contracts/c
 import {IOps} from "./gelato/IOps.sol";
 import { LibDataTypes} from './gelato/LibDataTypes.sol';
 
-import {ISTokenV1} from "./interfaces/ISToken-V1.sol";
+
 import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 
 import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
@@ -34,7 +34,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable {
   uint256 supplierId;
 
   IPoolV1 poolContract;
-  ISTokenV1 sToken;
+
   IPoolStrategyV1 poolStrategy;
 
 
@@ -75,9 +75,8 @@ contract PoolInternalV1 is Initializable,UUPSProxiable {
     ///initialState
 
     owner = internalInit.owner;
-     superToken = internalInit.superToken;
+    superToken = internalInit.superToken;
 
-    sToken = internalInit.sToken;
     poolStrategy = internalInit.poolStrategy;
     poolContract = internalInit.pool;
 
@@ -370,7 +369,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable {
     DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
     DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
-    uint256 userBalance = sToken.balanceOf(_supplier);
+    uint256 userBalance = poolContract.balanceOf(_supplier);
     uint256 stepTime = userBalance.div(uint256(STEPS)).div(uint96(newOutFlow));
     uint256 stepAmount = (uint96(newOutFlow)) * (stepTime);
     uint256 minBalance = stepAmount.add((POOL_BUFFER.add(SUPERFLUID_DEPOSIT)).mul(uint96(newOutFlow)));
@@ -535,7 +534,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable {
   function _redeemFlow(int96 _outFlowRate, address _supplier) external onlyPool {
     //// update state supplier
 
-    uint256 realTimeBalance = sToken.balanceOf(_supplier);
+    uint256 realTimeBalance = poolContract.balanceOf(_supplier);
 
     require(realTimeBalance > 0, "NO_BALANCE");
 
@@ -559,7 +558,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable {
     address _sender,
     address _receiver,
     uint256 amount
-  ) external onlySToken {
+  ) external onlyPool {
     _poolUpdate();
     _supplierUpdateCurrentState(_sender);
     DataTypes.Supplier storage sender = _getSupplier(_sender);
@@ -589,7 +588,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable {
 
     DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
     DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
-    uint256 userBalance = sToken.balanceOf(_receiver);
+    uint256 userBalance = poolContract.balanceOf(_receiver);
     uint256 minBalance = supplier.outStream.minBalance;
     uint256 stepAmount = (uint96(supplier.outStream.flow)) * (supplier.outStream.stepTime);
 
@@ -622,10 +621,6 @@ contract PoolInternalV1 is Initializable,UUPSProxiable {
     _;
   }
 
-  modifier onlySToken() {
-    require(msg.sender == address(sToken), "Only Superpool Token");
-    _;
-  }
 
   modifier onlyOps() {
     require(msg.sender == address(ops), "OpsReady: onlyOps");
