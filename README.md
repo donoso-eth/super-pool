@@ -1,8 +1,5 @@
 # Super Pool
 
-**Table of Contents**
-
----
 
 ## Description
 
@@ -18,11 +15,13 @@ Users can redeem at any moment their “spTokens” and get them converted to su
 
 In the same way, a user can redeem a flow of  “spTokens” in this case, the user will receive a flow of supeTokens .Although the flow is constant, the Defi withdrawal will follow a “down-stairs” pattern to ensure the pool does not run out of funds while maintaining the maximum deposit into the Defi protocol
 
+---
+
 ## Contract Structure
 
 Contracts can be found at: [contracts](https://github.com/donoso-eth/super-pool/tree/master/hardhat/contracts)
 
-**Super Pool Factory**
+###  Super Pool Factory
 
 The contract is responsible for creating the pools, it creates proxies of the pool and pool internal implementation and initializes them. 
 
@@ -48,6 +47,8 @@ The pool Strategy contract must implement a very simple interface with two funct
 - Withdraw from the strategy: withdraw()
 
 The strategy decides when to push tokens and is responsible for accruing yield.
+
+---
 
 ## Data Objects
 
@@ -113,6 +114,8 @@ struct Stream {
         bytes32 cancelWithdrawId; //withdraw task id by Gelato
     }
 ```
+
+---
 
 ## Rough short view roadmap
 
