@@ -26,6 +26,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
     address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
+    address poolFactory;
     address owner;
 
     uint256 poolId;
@@ -55,21 +56,12 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     uint56 public MIN_OUTFLOW_ALLOWED;
     IOps public ops;
 
-    function proxiableUUID() public view override returns (bytes32) {
-        return keccak256("org.super-pool.pool-internal.v2");
-    }
-
-    function updateCode(address newAddress) external override {
-        require(msg.sender == owner, "only owner can update code");
-        return _updateCodeAddress(newAddress);
-    }
-
     /**
      * @notice initializer of the Pool
      */
     function initialize(DataTypes.PoolInternalInitializer memory internalInit) external initializer {
         ///initialState
-
+        poolFactory = msg.sender;
         owner = internalInit.owner;
         superToken = internalInit.superToken;
 
@@ -91,6 +83,12 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         MIN_OUTFLOW_ALLOWED = 3600;
     }
 
+    // #region  ============= =============  Pool Events (supplier interaction) API ============= ============= //
+
+    // #endregion  ============= =============  Pool Events (supplier interaction) API ============= ============= //
+
+    // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
+
     function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier) {
         supplier = suppliersByAddress[_supplier];
     }
@@ -106,6 +104,8 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     function getLastTimestamp() external view returns (uint256) {
         return lastPoolTimestamp;
     }
+
+    // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
     // ============= ============= POOL UPDATE ============= ============= //
     // #region Pool Update
@@ -237,7 +237,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             supplier.deposit = supplier.deposit + yieldSupplier;
             supplier.timestamp = block.timestamp;
         }
-        console.log('supplier_updte');
+        console.log("supplier_updte");
     }
 
     function _updateSupplierDeposit(
@@ -510,23 +510,14 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         address _supplier,
         uint256 balance
     ) external onlyPool {
-        ///// suppler config updated && pool
+  
         _updateSupplierDeposit(_supplier, 0, redeemAmount);
 
-        //poolStrategy.withdraw(redeemAmount, _supplier);
         _withdrawDispatcher(_supplier, _supplier, redeemAmount);
     }
 
-    function updateStreamRecord(
-        bytes memory newCtx,
-        int96 inFlowRate,
-        address sender
-    ) external onlyPool returns (bytes memory updateCtx) {
-        updateCtx = _updateSupplierFlow(sender, inFlowRate, 0, newCtx);
-    }
 
     function _redeemFlow(int96 _outFlowRate, address _supplier) external onlyPool {
-        //// update state supplier
 
         uint256 realTimeBalance = poolContract.balanceOf(_supplier);
 
@@ -537,16 +528,29 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         _updateSupplierFlow(_supplier, 0, _outFlowRate, placeHolder);
     }
 
-    function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
-        poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
-        poolContract.internalPushToAAVE(amount);
-    }
-
     function _redeemFlowStop(address _supplier) external onlyPool {
         _updateSupplierFlow(_supplier, 0, 0, "0x");
     }
 
-    //// #endregion
+    function _closeAccount() external onlyPool {
+
+    }
+
+    function updateStreamRecord(
+        bytes memory newCtx,
+        int96 inFlowRate,
+        address sender
+    ) external onlyPool returns (bytes memory updateCtx) {
+        updateCtx = _updateSupplierFlow(sender, inFlowRate, 0, newCtx);
+    }
+
+  // #endregion User Interaction PoolEvents
+
+        function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
+        poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
+        poolContract.internalPushToAAVE(amount);
+    }
+
 
     function transferSTokens(
         address _sender,
@@ -561,10 +565,9 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         sender.deposit = sender.deposit.sub(amount.mul(PRECISSION));
         receiver.deposit = receiver.deposit.add(amount.mul(PRECISSION));
-        bytes memory payload = abi.encode(_sender, amount);
-        poolContract.internalEmitEvents(_sender, DataTypes.SupplierEvent.TRANSFER, payload, _sender);
-        poolContract.emitEventSupplier(_receiver);
     }
+
+    ///# region 
 
     function withdrawStep(address _receiver) external onlyOps {
         //// check if
@@ -597,32 +600,12 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             supplier.deposit = supplier.deposit.sub(stepAmount.mul(PRECISSION));
             supplier.outStream.initTime = block.timestamp;
         }
-        bytes memory payload = abi.encode(stepAmount);
-        poolContract.internalEmitEvents(_receiver, DataTypes.SupplierEvent.WITHDRAW_STEP, payload, _receiver);
+
+        poolContract.internalWithDrawStep(_receiver, stepAmount);
     }
 
     function cancelTask(bytes32 _taskId) public {
         IOps(ops).cancelTask(_taskId);
-    }
-
-    modifier onlyPool() {
-        require(msg.sender == address(poolContract), "Only Pool");
-        _;
-    }
-
-    modifier onlyPoolStrategy() {
-        require(msg.sender == address(poolStrategy), "Only Strategy");
-        _;
-    }
-
-    modifier onlyOps() {
-        require(msg.sender == address(ops), "OpsReady: onlyOps");
-        _;
-    }
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only Owner");
-        _;
     }
 
     function _cancelTask(bytes32 taskId) internal {
@@ -647,4 +630,46 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         taskId = IOps(ops).createTask(address(this), execData, moduleData, ETH);
     }
+
+    // #region  ==================  Upgradeable settings  ==================
+
+    function proxiableUUID() public view override returns (bytes32) {
+        return keccak256("org.super-pool.pool-internal.v2");
+    }
+
+    function updateCode(address newAddress) external override onlyOwnerOrPoolFactory {
+        require(msg.sender == owner, "only owner can update code");
+        return _updateCodeAddress(newAddress);
+    }
+
+    // #endregion  ==================  Upgradeable settings  ==================
+
+    // #region =========== =============  Modifiers ============= ============= //
+
+    modifier onlyPool() {
+        require(msg.sender == address(poolContract), "Only Pool");
+        _;
+    }
+
+    modifier onlyPoolStrategy() {
+        require(msg.sender == address(poolStrategy), "Only Strategy");
+        _;
+    }
+
+    modifier onlyOps() {
+        require(msg.sender == address(ops), "OpsReady: onlyOps");
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only Owner");
+        _;
+    }
+
+    modifier onlyOwnerOrPoolFactory() {
+        require(msg.sender == poolFactory || msg.sender == owner, "Only Host");
+        _;
+    }
+
+    // #endregion =========== =============  Modifiers ============= ============= //
 }
