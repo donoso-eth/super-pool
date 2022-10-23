@@ -158,7 +158,7 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
         if (!!val && !!val.data && !!val.data.suppliers && val.data.suppliers.length > 0) {
 
 
-          let realbalance = await this.dapp.DAPP_STATE.sTokenContract?.instance.balanceOf(this.dapp.signerAddress!);
+          let realbalance = await this.dapp.DAPP_STATE.defaultContract?.instance.balanceOf(this.dapp.signerAddress!);
 
   
 

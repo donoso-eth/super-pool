@@ -36,7 +36,7 @@ interface IPoolInternalV1 {
 
   function getLastPool() external view returns (DataTypes.PoolV1 memory);
 
-  function getLastTimestmap() external view returns (uint256);
+  function getLastTimestamp() external view returns (uint256);
 
   function withdrawStep(address _receiver) external;
 

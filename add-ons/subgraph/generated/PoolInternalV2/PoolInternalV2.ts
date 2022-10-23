@@ -873,20 +873,20 @@ export class PoolInternalV1 extends ethereum.SmartContract {
     );
   }
 
-  getLastTimestmap(): BigInt {
+  getLastTimestamp(): BigInt {
     let result = super.call(
-      "getLastTimestmap",
-      "getLastTimestmap():(uint256)",
+      "getLastTimestamp",
+      "getLastTimestamp():(uint256)",
       []
     );
 
     return result[0].toBigInt();
   }
 
-  try_getLastTimestmap(): ethereum.CallResult<BigInt> {
+  try_getLastTimestamp(): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
-      "getLastTimestmap",
-      "getLastTimestmap():(uint256)",
+      "getLastTimestamp",
+      "getLastTimestamp():(uint256)",
       []
     );
     if (result.reverted) {

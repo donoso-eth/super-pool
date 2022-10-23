@@ -145,8 +145,31 @@ export type SupplierStructOutput = [
   apy: APYStructOutput;
 };
 
+export type PoolInternalInitializerStruct = {
+  superToken: string;
+  pool: string;
+  poolStrategy: string;
+  ops: string;
+  owner: string;
+};
+
+export type PoolInternalInitializerStructOutput = [
+  string,
+  string,
+  string,
+  string,
+  string
+] & {
+  superToken: string;
+  pool: string;
+  poolStrategy: string;
+  ops: string;
+  owner: string;
+};
+
 export interface PoolInternalV1Interface extends utils.Interface {
   functions: {
+    "ETH()": FunctionFragment;
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
     "POOL_BUFFER()": FunctionFragment;
     "PRECISSION()": FunctionFragment;
@@ -165,7 +188,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     "getLastTimestamp()": FunctionFragment;
     "getPool(uint256)": FunctionFragment;
     "getSupplier(address)": FunctionFragment;
-    "initialize(address,address,address)": FunctionFragment;
+    "initialize((address,address,address,address,address))": FunctionFragment;
     "lastPoolTimestamp()": FunctionFragment;
     "ops()": FunctionFragment;
     "poolByTimestamp(uint256)": FunctionFragment;
@@ -180,6 +203,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     "withdrawStep(address)": FunctionFragment;
   };
 
+  encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "MIN_OUTFLOW_ALLOWED",
     values?: undefined
@@ -248,7 +272,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
   encodeFunctionData(functionFragment: "getSupplier", values: [string]): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [string, string, string]
+    values: [PoolInternalInitializerStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "lastPoolTimestamp",
@@ -293,6 +317,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     values: [string]
   ): string;
 
+  decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "MIN_OUTFLOW_ALLOWED",
     data: BytesLike
@@ -444,6 +469,8 @@ export interface PoolInternalV1 extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    ETH(overrides?: CallOverrides): Promise<[string]>;
+
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     POOL_BUFFER(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -524,9 +551,7 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<[SupplierStructOutput] & { supplier: SupplierStructOutput }>;
 
     initialize(
-      _resolverSettings: string,
-      _owner: string,
-      _superToken: string,
+      internalInit: PoolInternalInitializerStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -643,6 +668,8 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
+  ETH(overrides?: CallOverrides): Promise<string>;
+
   MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
   POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
@@ -719,9 +746,7 @@ export interface PoolInternalV1 extends BaseContract {
   ): Promise<SupplierStructOutput>;
 
   initialize(
-    _resolverSettings: string,
-    _owner: string,
-    _superToken: string,
+    internalInit: PoolInternalInitializerStruct,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -838,6 +863,8 @@ export interface PoolInternalV1 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    ETH(overrides?: CallOverrides): Promise<string>;
+
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
@@ -909,9 +936,7 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<SupplierStructOutput>;
 
     initialize(
-      _resolverSettings: string,
-      _owner: string,
-      _superToken: string,
+      internalInit: PoolInternalInitializerStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1034,6 +1059,8 @@ export interface PoolInternalV1 extends BaseContract {
   };
 
   estimateGas: {
+    ETH(overrides?: CallOverrides): Promise<BigNumber>;
+
     MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
 
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1105,9 +1132,7 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<BigNumber>;
 
     initialize(
-      _resolverSettings: string,
-      _owner: string,
-      _superToken: string,
+      internalInit: PoolInternalInitializerStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1169,6 +1194,8 @@ export interface PoolInternalV1 extends BaseContract {
   };
 
   populateTransaction: {
+    ETH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     MIN_OUTFLOW_ALLOWED(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1244,9 +1271,7 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     initialize(
-      _resolverSettings: string,
-      _owner: string,
-      _superToken: string,
+      internalInit: PoolInternalInitializerStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

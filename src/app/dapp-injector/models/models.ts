@@ -9,7 +9,7 @@ export interface IDAPP_CONFIG {
   wallet: string,
 }
 
-export interface IDAPP_STATE<T extends Contract,U extends Contract> {
+export interface IDAPP_STATE<T extends Contract> {
   
   defaultProvider:providers.JsonRpcProvider | null;
   connectedNetwork:string | null
@@ -18,7 +18,6 @@ export interface IDAPP_STATE<T extends Contract,U extends Contract> {
   signerAddress:string | null,
 
   defaultContract: AngularContract<T>| null,
-  sTokenContract: AngularContract<U>| null,
   viewContract :Contract | null,
 }
 

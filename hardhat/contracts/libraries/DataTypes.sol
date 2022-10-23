@@ -50,6 +50,12 @@ library DataTypes {
     }
 
  
+    struct PoolRecord {
+      address pool;
+      address poolInternal;
+    }
+
+
     struct Stream {
         int96 flow;
         bytes32 cancelFlowId;

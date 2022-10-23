@@ -17,9 +17,9 @@ task('misc', 'miscellaneaous').setAction(async ({}, hre) => {
   const  [deployer, user1, user2, user3, user4, user5, user6,]= await initEnv(hre); console.log(user1.address);
 
 
-  let sTokenContract = STokenV1__factory.connect("0x90E908A5613B9Ddd45Af0D37ADdEb11d48Bb6E11", deployer);
+  let defaultContract = STokenV1__factory.connect("0x90E908A5613B9Ddd45Af0D37ADdEb11d48Bb6E11", deployer);
 
-  let bal = await sTokenContract.balanceOf(deployer.address);
+  let bal = await defaultContract.balanceOf(deployer.address);
 
   console.log(deployer.address);
 

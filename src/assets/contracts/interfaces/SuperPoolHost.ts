@@ -67,7 +67,7 @@ export type SupertokenResolverStructOutput = [string, string] & {
   sToken: string;
 };
 
-export interface SuperPoolHostInterface extends utils.Interface {
+export interface SuperPoolFactoryInterface extends utils.Interface {
   functions: {
     "_pcrTokensIssued()": FunctionFragment;
     "createSuperPool((address,address,address,address,address,(address,address,address,address)))": FunctionFragment;
@@ -112,12 +112,12 @@ export interface SuperPoolHostInterface extends utils.Interface {
   events: {};
 }
 
-export interface SuperPoolHost extends BaseContract {
+export interface SuperPoolFactory extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: SuperPoolHostInterface;
+  interface: SuperPoolFactoryInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

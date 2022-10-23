@@ -3,7 +3,7 @@ import { task } from 'hardhat/config';
 import { initEnv } from '../helpers/utils';
 import { join } from 'path';
 import { INETWORK_CONFIG } from '../helpers/models';
-import { SuperPoolHost, SuperPoolHost__factory } from '../typechain-types';
+import { SuperPoolFactory, SuperPoolFactory__factory } from '../typechain-types';
 
 const contract_path_relative = '../src/assets/contracts/';
 const processDir = process.cwd();
@@ -15,7 +15,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 let network_params = networks_config['goerli'];
 
 task('verify-contract', 'verify').setAction(async ({}, hre) => {
-  let deployContract = 'superPoolHost';
+  let deployContract = 'superPoolFactory';
   let toDeployContract = contract_config[deployContract];
   const superHost = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
@@ -31,7 +31,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
 
   // console.log('veryfied Host');
 
-  // let host: SuperPoolHost = SuperPoolHost__factory.connect(superHost.address, deployer);
+  // let host: SuperPoolFactory = SuperPoolFactory__factory.connect(superHost.address, deployer);
 
   //let result = await host.getResolverBySuperToken(network_params.superToken);
 

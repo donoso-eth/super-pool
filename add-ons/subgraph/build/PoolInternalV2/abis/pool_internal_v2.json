@@ -536,7 +536,7 @@
   },
   {
     "inputs": [],
-    "name": "getLastTimestmap",
+    "name": "getLastTimestamp",
     "outputs": [
       {
         "internalType": "uint256",

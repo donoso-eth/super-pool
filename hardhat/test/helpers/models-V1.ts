@@ -98,7 +98,6 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
      poolInternal: PoolInternalV1,
      superTokenERC777: IERC777,
      ops?:IOps,
-     sToken: STokenV1,
      strategyAddresse: string,
      aaveERC20:IERC20,
      PRECISSION: BigNumber

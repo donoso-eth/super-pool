@@ -4,7 +4,7 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { ERC20, ERC777, IOps, ISuperfluidToken, PoolInternalV1, PoolV1, STokenV1 } from '../../typechain-types';
+import { ERC20, IOps, ISuperfluidToken, PoolInternalV1, PoolV1,  } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V1';
@@ -175,7 +175,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   // #endregion POOL
   let checkUsers = Object.keys(users).map(key=> users[key]).sort((a,b)=> +a.expected.id.sub(b.expected.id))
   for (const user of checkUsers ) {
-    let userRealtimeBalance = await contracts.sToken.balanceOf(user.address);
+    let userRealtimeBalance = await contracts.superPool.balanceOf(user.address);
     let userTokenBalance = await contracts.superTokenERC777.balanceOf(user.address);
     let userState = await contracts.poolInternal.suppliersByAddress(user.address);
     let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));

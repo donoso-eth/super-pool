@@ -138,12 +138,25 @@ contract PoolV1 is  UUPSProxiable, ERC20Upgradeable, SuperAppBase,  IERC777Recip
     poolStrategy = IPoolStrategyV1(poolInit.poolStrategy);
     poolInternal = IPoolInternalV1(poolInit.poolInternal);
 
-    ops = IOps(poolInit.ops);
+    ops = poolInit.ops;
 
     gelato = ops.gelato();
 
     token.approve(address(poolStrategy), MAX_INT);
     superToken.approve(address(poolStrategy), MAX_INT);
+
+
+    PRECISSION = 1_000_000;
+    MIN_OUTFLOW_ALLOWED = 3600; // 1 hour minimum flow == Buffer
+
+    STEPS = 10;
+    POOL_BUFFER = 3600; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
+    SUPERFLUID_DEPOSIT = 4 * 3600;
+
+    DEPOSIT_TRIGGER_AMOUNT = 0;
+    DEPOSIT_TRIGGER_TIME = 3600;
+
+
   }
 
   // function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
@@ -268,8 +281,8 @@ contract PoolV1 is  UUPSProxiable, ERC20Upgradeable, SuperAppBase,  IERC777Recip
     IERC20(address(superToken)).transfer(receiver, amount);
   }
 
-  function getLastTimestmap() external view override returns (uint256) {
-    return poolInternal.getLastTimestmap();
+  function getLastTimestamp() external view override returns (uint256) {
+    return poolInternal.getLastTimestamp();
   }
 
   function getPool(uint256 timestamp) external view override returns (DataTypes.PoolV1 memory) {

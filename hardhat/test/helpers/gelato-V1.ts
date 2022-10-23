@@ -1,6 +1,9 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { utils } from "ethers";
-import { GelatoTasksV1, IOps, PoolStrategyV1, PoolInternalV1 } from "../../typechain-types";
+import { PoolInternalV1 } from "../../typechain-types/PoolInternalV1";
+import { PoolStrategyV1 } from "../../typechain-types/PoolStrategyV1";
+import { PoolV1 } from "../../typechain-types/PoolV1";
+import { IOps } from "../../typechain-types";
 
 
 export const gelatoPushToAave = async (poolStrategy: PoolStrategyV1, ops:IOps, executor:SignerWithAddress) => {
@@ -62,7 +65,7 @@ export const getTaskId = (
 };
 
 
-export const getGelatoWithdrawStepId = async (poolInternal: PoolInternalV1,gelatoTask: GelatoTasksV1, timestamp:number, interval:number, user:string) => {
+export const getGelatoWithdrawStepId = async (superPool: PoolV1, poolInternal: PoolInternalV1, timestamp:number, interval:number, user:string) => {
 
   let  execSelector =  poolInternal.interface.getSighash("withdrawStep");
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
@@ -77,8 +80,7 @@ export const getGelatoWithdrawStepId = async (poolInternal: PoolInternalV1,gelat
   };
 
   let taskId = getTaskId(
-
-  gelatoTask.address,
+  poolInternal.address,
   poolInternal.address,
   execSelector,
   moduleData,
@@ -89,7 +91,7 @@ export const getGelatoWithdrawStepId = async (poolInternal: PoolInternalV1,gelat
 }
 
 
-export const gelatoWithdrawStep = async (poolInternal: PoolInternalV1,gelatoTask: GelatoTasksV1, ops:IOps, executor:SignerWithAddress, user:string, timestamp:number, interval:number) => {
+export const gelatoWithdrawStep = async (superPool:PoolV1, poolInternal: PoolInternalV1, ops:IOps, executor:SignerWithAddress, user:string, timestamp:number, interval:number) => {
     
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
@@ -108,7 +110,7 @@ export const gelatoWithdrawStep = async (poolInternal: PoolInternalV1,gelatoTask
   let  execSelector =  poolInternal.interface.getSighash("withdrawStep");
   let taskId = getTaskId(
 
-    gelatoTask.address,
+    poolInternal.address,
     poolInternal.address,
     execSelector,
     moduleData,
@@ -122,7 +124,7 @@ export const gelatoWithdrawStep = async (poolInternal: PoolInternalV1,gelatoTask
   await ops
     .connect(executor)
     .exec(
-      gelatoTask.address,
+      superPool.address,
       poolInternal.address,
       execData,
       moduleData,

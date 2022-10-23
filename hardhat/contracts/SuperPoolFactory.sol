@@ -36,18 +36,21 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
   address poolImpl;
   address poolInternalImpl;
 
- // mapping(address => DataTypes.SupertokenResolver) public superTokenResolverByAddress;
+//  mapping(address =>   mapping (uint256 => address)) Poolb;
+
+ mapping(address => mapping (address => DataTypes.PoolRecord))  public poolbySuperTokenStrategy;
 
   /**
    * @notice initializer of the Pool
    */
   function initialize(DataTypes.SuperPoolFactoryInitializer memory factoryInitializer) external initializer {
     host = factoryInitializer.host;
+    ops = factoryInitializer.ops;
     poolImpl = factoryInitializer.poolImpl;
     poolInternalImpl = factoryInitializer.poolInternalImpl;
   }
 
-  function proxiableUUID() public view override returns (bytes32) {
+  function proxiableUUID() public pure override returns (bytes32) {
     return keccak256("org.super-pool.pool-factory.v2");
   }
 
@@ -57,7 +60,7 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
   }
 
   function createSuperPool(DataTypes.CreatePoolInput memory poolInput) external {
-    //require(superTokenResolverByAddress[address(poolInput.superToken)].pool == address(0), "POOL_EXISTS");
+    require( poolbySuperTokenStrategy[address(poolInput.superToken)][address(poolInput.poolStrategy)].pool == address(0), "POOL_EXISTS");
 
     owner = msg.sender;
 
@@ -98,17 +101,15 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     internalInit = DataTypes.PoolInternalInitializer({superToken: poolInput.superToken, pool: IPoolV1(address(poolProxy)), poolStrategy: poolInput.poolStrategy, ops: ops, owner: owner});
     IPoolInternalV1(address(poolInternalProxy)).initialize(internalInit);
 
-    // ISTokenV1(address(sTokenProxy)).initialize(tokenInit);
-
-    // superTokenResolverByAddress[address(poolInput.superToken)].pool = address(poolContract);
-    // superTokenResolverByAddress[address(poolInput.superToken)].sToken = address(sTokenContract);
+    poolbySuperTokenStrategy[address(poolInput.superToken)][address(poolInput.poolStrategy)].pool = address(poolProxy);
+    poolbySuperTokenStrategy[address(poolInput.superToken)][address(poolInput.poolStrategy)].poolInternal = address(poolInternalProxy);
   }
 
   // ============= View Functions ============= ============= =============  //
 
-  // function getResolverBySuperToken(address superToken) external view returns (DataTypes.SupertokenResolver memory resolver) {
-  //   resolver = superTokenResolverByAddress[address(superToken)];
-  // }
+  function getRecordBySuperTokenAddress(address _superToken, address _poolStrategy) external view returns (DataTypes.PoolRecord memory poolRecord) {
+    poolRecord = poolbySuperTokenStrategy[_superToken][_poolStrategy];
+  }
 
   // #region ViewFunctions
 
