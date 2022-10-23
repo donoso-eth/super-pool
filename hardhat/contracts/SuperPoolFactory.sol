@@ -47,6 +47,7 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     host = factoryInitializer.host;
     ops = factoryInitializer.ops;
     poolImpl = factoryInitializer.poolImpl;
+    console.log(50,poolImpl, address(this));
     poolInternalImpl = factoryInitializer.poolInternalImpl;
   }
 
@@ -72,6 +73,7 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     /// Create Proxy Contracts
 
     UUPSProxy poolProxy = new UUPSProxy();
+    console.log(75,poolImpl);
     poolProxy.initializeProxy(poolImpl);
 
     UUPSProxy poolInternalProxy = new UUPSProxy();
@@ -103,6 +105,9 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
 
     poolbySuperTokenStrategy[address(poolInput.superToken)][address(poolInput.poolStrategy)].pool = address(poolProxy);
     poolbySuperTokenStrategy[address(poolInput.superToken)][address(poolInput.poolStrategy)].poolInternal = address(poolInternalProxy);
+
+    console.log(107,address(poolProxy));
+
   }
 
   // ============= View Functions ============= ============= =============  //

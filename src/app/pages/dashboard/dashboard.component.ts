@@ -65,7 +65,7 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'stopping your Receiving flow', header: 'Un momento' } }));
  
-    await (doSignerTransaction(this.dapp.defaultContract?.instance.redeemFlowStop({gasLimit:1000000})!))
+    await (doSignerTransaction(this.dapp.defaultContract?.instance.redeemFlowStop({gasLimit:2000000})!))
 
   }
 
@@ -102,7 +102,7 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
 
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'it is ok to need the money....', header: 'Un momento' } }));
-     await doSignerTransaction(this.dapp.defaultContract?.instance?.redeemDeposit(amount,{gasLimit:1000000})!)
+     await doSignerTransaction(this.dapp.defaultContract?.instance?.redeemDeposit(amount,{gasLimit:2000000})!)
     
     }
 

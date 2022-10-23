@@ -97,8 +97,11 @@ export class RedeemFlowComponent  extends DappBaseComponent implements OnInit {
     let  duration = ((this.startStreamForm.controls.stopDurationCtrl.value.factor * this.startStreamForm.controls.stopAmountDurationCtrl.value * 10 ** 18)/ +flowRate).toFixed(0);;
 
     }
-
-    await doSignerTransaction(this.dapp.defaultContract!.instance.redeemFlow(flowRate,{gasLimit:10000000}))
+    const gasLimit =  this.dapp.defaultContract!.instance.estimateGas.redeemFlow(flowRate);
+    console.log(gasLimit);
+   // throw new Error("");
+    
+    await doSignerTransaction(this.dapp.defaultContract!.instance.redeemFlow(flowRate,{gasLimit:20000000}))
 
 
     //this.store.dispatch(Web3Actions.chainBusy({ status: false}));
