@@ -26,6 +26,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
     address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
+    address poolFactory;
     address owner;
 
     uint256 poolId;
@@ -55,21 +56,12 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     uint56 public MIN_OUTFLOW_ALLOWED;
     IOps public ops;
 
-    function proxiableUUID() public view override returns (bytes32) {
-        return keccak256("org.super-pool.pool-internal.v2");
-    }
-
-    function updateCode(address newAddress) external override {
-        require(msg.sender == owner, "only owner can update code");
-        return _updateCodeAddress(newAddress);
-    }
-
     /**
      * @notice initializer of the Pool
      */
     function initialize(DataTypes.PoolInternalInitializer memory internalInit) external initializer {
         ///initialState
-
+        poolFactory = msg.sender;
         owner = internalInit.owner;
         superToken = internalInit.superToken;
 
@@ -91,6 +83,50 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         MIN_OUTFLOW_ALLOWED = 3600;
     }
 
+    // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
+
+    function _tokensReceived(address from, uint256 amount) external onlyPool {
+        ///// suppler config updated && pool
+        _updateSupplierDeposit(from, amount, 0);
+    }
+    function _redeemDeposit(
+        uint256 redeemAmount,
+        address _supplier
+        
+    ) external onlyPool {
+        _updateSupplierDeposit(_supplier, 0, redeemAmount);
+
+        _withdrawDispatcher(_supplier, _supplier, redeemAmount);
+    }
+
+    function _redeemFlow(int96 _outFlowRate, address _supplier) external onlyPool {
+        uint256 realTimeBalance = poolContract.balanceOf(_supplier);
+
+        require(realTimeBalance > 0, "NO_BALANCE");
+
+        bytes memory placeHolder = "0x";
+
+        _updateSupplierFlow(_supplier, 0, _outFlowRate, placeHolder);
+    }
+
+    function _redeemFlowStop(address _supplier) external onlyPool {
+        _updateSupplierFlow(_supplier, 0, 0, "0x");
+    }
+
+    function _closeAccount() external onlyPool {}
+
+    function updateStreamRecord(
+        bytes memory newCtx,
+        int96 inFlowRate,
+        address sender
+    ) external onlyPool returns (bytes memory updateCtx) {
+        updateCtx = _updateSupplierFlow(sender, inFlowRate, 0, newCtx);
+    }
+
+    // #endregion User Interaction PoolEvents
+
+    // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
+
     function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier) {
         supplier = suppliersByAddress[_supplier];
     }
@@ -107,14 +143,38 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         return lastPoolTimestamp;
     }
 
-    // ============= ============= POOL UPDATE ============= ============= //
-    // #region Pool Update
+    function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) public view returns (uint256 yieldSupplier) {
+        uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
+        DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+
+        uint256 yieldAccruedSincelastPool = 0;
+        if (currentYieldSnapshot > lastPool.yieldSnapshot) {
+            yieldAccruedSincelastPool = currentYieldSnapshot - lastPool.yieldSnapshot;
+        }
+
+        (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex) = _calculateIndexes(yieldAccruedSincelastPool, lastPool);
+
+        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
+
+        uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.div(PRECISSION);
+        uint256 yieldInFlow = uint96(supplier.inStream.flow) * yieldInFlowRateIndex;
+
+        yieldSupplier = yieldTilllastPool + yieldDeposit + yieldInFlow;
+    }
+
+    function getVersion() external pure returns(uint256) {
+        return 1.0;
+    }
+
+    // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
+
+    // #region Pool Update ============= POOL UPDATE ============= ============= //
+
 
     /**************************************************************************
      * Pool Update
      *
      *************************************************************************/
-
     function _poolUpdate() public {
         DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
@@ -139,6 +199,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
             pool.totalYield = lastPool.totalYield + pool.yieldAccrued;
 
+           /// apy to be refined
             pool.apy.span = lastPool.apy.span + periodSpan;
             uint256 periodApy;
 
@@ -168,7 +229,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     }
 
     function _calculateIndexes(uint256 yieldPeriod, DataTypes.PoolV1 memory lastPool) public view returns (uint256 periodYieldTokenIndex, uint256 periodYieldInFlowRateIndex) {
-        //DataTypes.PoolV1 memory lastPool = lastPool;
+   
 
         uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
@@ -177,7 +238,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow;
 
-        /// we ultiply by PRECISSION for 5 decimals precision
+        /// we ultiply by PRECISSION 
 
         if (totalAreaPeriod == 0 || yieldPeriod == 0) {
             periodYieldTokenIndex = 0;
@@ -195,7 +256,8 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     }
 
     // #endregion POOL UPDATE
-    // #region  ============= =============  Internal Supplier Functions ============= ============= //
+
+    // #region  ============= =============  Internal Supplier Update ============= ============= //
 
     function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
@@ -212,7 +274,46 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         return supplier;
     }
+    
+    /**
+     * @notice Calculate the yield earned by the suplier 
+     * @param _supplier supplier's address
+     * @return yieldSupplier uint256 yield erarnd
+     *
+     * @dev  it calculates the yield between the last pool update and the last supplier interaction
+     *       it uses two indexes (per deosit and flow), the yield is (timespan)(diff index's)
+     */
+    function _calculateYieldSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
+        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
 
+
+        DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+        DataTypes.PoolV1 memory supplierPool = poolByTimestamp[supplier.timestamp];
+
+        ///// Yield from deposit
+
+        uint256 yieldFromDeposit = (supplier.deposit * (lastPool.yieldTokenIndex - supplierPool.yieldTokenIndex)).div(PRECISSION);
+        uint256 yieldFromFlow = 0;
+
+        yieldSupplier = yieldFromDeposit;
+        if (supplier.inStream.flow > 0) {
+            ///// Yield from flow
+          yieldFromFlow = uint96(supplier.inStream.flow) * (lastPool.yieldInFlowRateIndex - supplierPool.yieldInFlowRateIndex);
+
+          
+        }
+          yieldSupplier = yieldSupplier + yieldFromFlow;
+
+    }
+
+    /**
+     * @notice Update the supplier to the current state (happens after interaction)
+     * @param _supplier supplier's address
+     *
+     * @dev  it calculates the yield, adds the inflow inbetween if any and update the values
+     *       when outflow (receiving flow) there is no update on the deposit as is diccounted
+     *       
+     */
     function _supplierUpdateCurrentState(address _supplier) internal {
         DataTypes.Supplier storage supplier = _getSupplier(_supplier);
         DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
@@ -228,18 +329,23 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 supplier.deposit = supplier.deposit + inflow * PRECISSION;
             }
 
-            if (supplier.outStream.flow > 0) {
-                // pool.deposit = yieldSupplier + pool.deposit;
-                // supplier.deposit = supplier.deposit + yieldSupplier;
-            }
-
             pool.deposit = yieldSupplier + pool.deposit;
             supplier.deposit = supplier.deposit + yieldSupplier;
             supplier.timestamp = block.timestamp;
         }
-        console.log('supplier_updte');
+        console.log("supplier_updte");
     }
 
+    /**
+     * @notice Update fo the pool when a supplier deposit via erc777 send i¡or withdraw via redeemDeposit()
+     *
+     * @param _supplier supplier's address
+     * @param inDeposit supplier's depositing amount or
+     * @param outDeposit supplier's withdrawal amount
+     *
+     * @dev  it update the pool, update the suppleir record and apply the changes to the pool
+     *       
+     */
     function _updateSupplierDeposit(
         address _supplier,
         uint256 inDeposit,
@@ -256,6 +362,31 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
     }
 
+     /**
+     * @notice Update fo the pool when an stream event happened
+     *
+     * @param _supplier supplier's address
+     * @param inFlow supplier's new Inflow
+     * @param outFlow supplier's new Outflow
+     * @param _ctx of the super app callback
+     *
+     * @dev  this method acts upon the changes in the streams:
+     *       1) user send a stream ----> create the stream record nad update pool
+     *       2) user update sending stream ----> update the stream record in the pool
+     *       3) user stop sending stream ----> update the stream record
+     *       4) user redeem flow (receiving stream):
+     *              a) create stream record (_outstreamhaschanged() and creatOutStream())
+     *              b) ensure Supertokens are available to cover the step in the pool, if not _withdrawDispatcher()
+     *                 will withdraw tokens from the strategy pool (in example is aave)
+     *              c) create the Gelato task that will transfer after every step to ensure enough supertokens are available
+     *              d) create the Superfluid stream from the superpool to the user
+     *       5) user updates a receiving flow:
+     *              a) update the stream record ---> if with the new flowrate there is no mminimal balance, 
+     *                 the stream will be stopped and the funds returned
+     *              b,c,d) as case 4
+     *       6) user stops redeeming flow --> update record and stop the superfluid stream
+     *       
+     */
     function _updateSupplierFlow(
         address _supplier,
         int96 inFlow,
@@ -329,10 +460,70 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         supplier.outStream.flow = outFlow;
     }
 
+    // #endregion
+
+    // #region  ============= =============  Internal Stream Functions ============= ============= //
+
+     /**
+     * @notice internal call from updteSupplierFlow() when a redeemflow has been started or updated
+     *
+     * @param _supplier supplier's address
+     * @param newOutFlow supplier's new Outflow
+     *
+     * @dev  if the outflow does not exist, will be created, if does, will be updted
+     */
+    function _outStreamHasChanged(address _supplier, int96 newOutFlow) internal {
+        DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+        DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
+
+        uint256 userBalance = poolContract.balanceOf(_supplier);
+        uint256 stepTime = userBalance.div(uint256(STEPS)).div(uint96(newOutFlow));
+        uint256 stepAmount = (uint96(newOutFlow)) * (stepTime);
+        uint256 minBalance = stepAmount.add((POOL_BUFFER.add(SUPERFLUID_DEPOSIT)).mul(uint96(newOutFlow)));
+
+        if (supplier.outStream.flow == 0) {
+            if (userBalance < minBalance) {
+                revert("No sufficent funds");
+            }
+            _createOutStream(_supplier, minBalance, 0, stepAmount, stepTime);
+            poolContract.sfCreateFlow(_supplier, newOutFlow);
+
+        } else if (supplier.outStream.flow > 0) {
+            if (supplier.outStream.cancelFlowId != bytes32(0)) {
+                cancelTask(supplier.outStream.cancelFlowId);
+            }
+
+            if (userBalance < minBalance) {
+                _cancelOutstreamFlow(_supplier, userBalance, minBalance);
+            } else if (supplier.outStream.flow != newOutFlow) {
+                _cancelTask(supplier.outStream.cancelWithdrawId);
+
+                uint256 alreadyStreamed = uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime);
+                supplier.deposit = supplier.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
+                pool.deposit = pool.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
+                pool.outFlowBuffer = pool.outFlowBuffer - supplier.outStream.minBalance;
+                _createOutStream(_supplier, minBalance, supplier.outStream.minBalance, stepAmount, stepTime);
+                poolContract.sfUpdateFlow(_supplier, newOutFlow);
+            }
+        }
+    }
+
+
+     /**
+     * @notice internal call from updteSupplierFlow() when a redeemflow has been started or updated
+     *
+     * @param _supplier supplier's address
+     * @param newMinBalance  new minimal balance 
+     * @param prevoiusMinBalance in case a flow existed, the previous minbalance has to be rebalanced
+     * @param stepAmount the amount to transfer in each step to ensure enough balance of supertokens
+     * @param stepTime time to next step
+     *
+     * @dev  the record is created, worth notifying that if the new minBalaance is greated 
+     *       the _withdrawDispatcher() will be called
+     */
     function _createOutStream(
         address _supplier,
         uint256 newMinBalance,
-        int96 newOutFlow,
         uint256 prevoiusMinBalance,
         uint256 stepAmount,
         uint256 stepTime
@@ -359,43 +550,48 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         supplier.outStream.cancelWithdrawId = _createWithdraStepTask(_supplier, supplier.outStream.stepTime);
     }
 
-    function _outStreamHasChanged(address _supplier, int96 newOutFlow) internal {
+     /**
+     * @notice internal call from updteSupplierFlow() when a redeemflow has been started or updated
+     *
+     * @param _supplier supplier's address
+     * @param minBalance  new minimal balance 
+     * @param userBalance  user current balance
+     *
+     * @dev  the outstream will be cancel when the withdrawset gelato task is in the last step
+     *       or when the redeem flow has been updated and there is no wnough minimal balance
+     */
+    function _cancelOutstreamFlow(
+        address _supplier,
+        uint256 userBalance,
+        uint256 minBalance
+    ) internal {
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
         DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
-        uint256 userBalance = poolContract.balanceOf(_supplier);
-        uint256 stepTime = userBalance.div(uint256(STEPS)).div(uint96(newOutFlow));
-        uint256 stepAmount = (uint96(newOutFlow)) * (stepTime);
-        uint256 minBalance = stepAmount.add((POOL_BUFFER.add(SUPERFLUID_DEPOSIT)).mul(uint96(newOutFlow)));
+        _cancelTask(supplier.outStream.cancelWithdrawId);
 
-        if (supplier.outStream.flow == 0) {
-            if (userBalance < minBalance) {
-                revert("No sufficent funds");
-            }
-
-            // poolStrategy.withdraw(minBalance, address(this));
-            _createOutStream(_supplier, minBalance, newOutFlow, 0, stepAmount, stepTime);
-            poolContract.sfCreateFlow(_supplier, newOutFlow);
-        } else if (supplier.outStream.flow > 0) {
-            if (supplier.outStream.cancelFlowId != bytes32(0)) {
-                cancelTask(supplier.outStream.cancelFlowId);
-            }
-
-            if (userBalance < minBalance) {
-                _cancelOutstreamFlow(_supplier, userBalance, minBalance);
-            } else if (supplier.outStream.flow != newOutFlow) {
-                _cancelTask(supplier.outStream.cancelWithdrawId);
-
-                uint256 alreadyStreamed = uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime);
-                supplier.deposit = supplier.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
-                pool.deposit = pool.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
-                pool.outFlowBuffer = pool.outFlowBuffer - supplier.outStream.minBalance;
-                _createOutStream(_supplier, minBalance, newOutFlow, supplier.outStream.minBalance, stepAmount, stepTime);
-                poolContract.sfUpdateFlow(_supplier, newOutFlow);
-            }
-        }
+        pool.outFlowBuffer = pool.outFlowBuffer - minBalance;
+        _withdrawDispatcher(_supplier, _supplier, userBalance);
+        pool.deposit = pool.deposit - userBalance;
+        pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
+        supplier.deposit = 0;
+        supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
     }
 
+    // #endregion  ============= =============  Internal Stream Functions ============= ============= //
+
+    /**
+     * @notice internal withdrawal dispatcher when tokens movments are required, 
+     * can be to a supplier or from the pool strategy to the superpol
+     *
+     * @param _supplier supplier's address
+     * @param _receiver the reciever addrss (can be the pool contract or the suppleir)
+     * @param withdrawAmount  amount to withdraw
+     *
+     * @dev  if (_suppleir == _reciever) means the tokens must e transfered to the supplier
+     *       else if (_supplier != _receiver) the tokens are transferred to the superpool to ensure the out flows
+     *       
+     */
     function _withdrawDispatcher(
         address _supplier,
         address _receiver,
@@ -403,17 +599,23 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     ) internal {
         DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
+        //// calculate if any remaining balance of supertokens is inthe pool (push to strategy not yet ran)
         uint256 poolAvailable = 0;
         if (superToken.balanceOf(address(poolContract)) > (pool.outFlowBuffer)) {
             poolAvailable = superToken.balanceOf(address(poolContract)) - (pool.outFlowBuffer);
         }
 
+        //// if enough in the pool is available then not go to the pool strategy
         if (poolAvailable >= withdrawAmount) {
+            //// if the withdrawal is to supplier then we must transfer
             console.log("NOT PUSHED");
             if (_supplier == _receiver) {
                 poolContract.transferSuperToken(_receiver, withdrawAmount);
             }
+            //// in the case the withdraw receiver is the pool, we don0t have to do anything as there is enoguh balance
+
         } else {
+            //// not enough balance then we must withdraw from gtrategy
             console.log("YES PUSHED");
             uint256 balance = poolStrategy.balanceOf();
 
@@ -435,119 +637,25 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 poolStrategy.withdraw(fromStrategy, _receiver);
                 pool.yieldSnapshot = pool.yieldSnapshot - fromStrategy;
             }
-            console.log("YES PUSHED-2");
+  
         }
     }
 
-    function _cancelOutstreamFlow(
-        address _receiver,
-        uint256 userBalance,
-        uint256 minBalance
-    ) internal {
-        DataTypes.Supplier storage supplier = suppliersByAddress[_receiver];
-        DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
-
-        _cancelTask(supplier.outStream.cancelWithdrawId);
-
-        pool.outFlowBuffer = pool.outFlowBuffer - minBalance;
-        _withdrawDispatcher(_receiver, _receiver, userBalance);
-        pool.deposit = pool.deposit - userBalance;
-        pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
-        supplier.deposit = 0;
-        supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
-    }
-
-    function _calculateYieldSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
-        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
-
-        uint256 lastTimestamp = supplier.timestamp;
-
-        DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
-        DataTypes.PoolV1 memory lastSupplierPool = poolByTimestamp[supplier.timestamp];
-
-        ///// Yield from deposit
-
-        uint256 yieldFromDeposit = (supplier.deposit * (lastPool.yieldTokenIndex - lastSupplierPool.yieldTokenIndex)).div(PRECISSION);
-
-        yieldSupplier = yieldFromDeposit;
-        if (supplier.inStream.flow > 0) {
-            ///// Yield from flow
-            uint256 yieldFromFlow = uint96(supplier.inStream.flow) * (lastPool.yieldInFlowRateIndex - lastSupplierPool.yieldInFlowRateIndex);
-
-            yieldSupplier = yieldSupplier + yieldFromFlow;
-        }
-    }
-
-    // #endregion
-    function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) public view returns (uint256 yieldSupplier) {
-        uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
-        DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
-
-        uint256 yieldAccruedSincelastPool = 0;
-        if (currentYieldSnapshot > lastPool.yieldSnapshot) {
-            yieldAccruedSincelastPool = currentYieldSnapshot - lastPool.yieldSnapshot;
-        }
-
-        (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex) = _calculateIndexes(yieldAccruedSincelastPool, lastPool);
-
-        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
-
-        uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.div(PRECISSION);
-        uint256 yieldInFlow = uint96(supplier.inStream.flow) * yieldInFlowRateIndex;
-
-        yieldSupplier = yieldTilllastPool + yieldDeposit + yieldInFlow;
-    }
-
-    // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
-
-    function _tokensReceived(address from, uint256 amount) external onlyPool {
-        ///// suppler config updated && pool
-        _updateSupplierDeposit(from, amount, 0);
-    }
-
-    function _redeemDeposit(
-        uint256 redeemAmount,
-        address _supplier,
-        uint256 balance
-    ) external onlyPool {
-        ///// suppler config updated && pool
-        _updateSupplierDeposit(_supplier, 0, redeemAmount);
-
-        //poolStrategy.withdraw(redeemAmount, _supplier);
-        _withdrawDispatcher(_supplier, _supplier, redeemAmount);
-    }
-
-    function updateStreamRecord(
-        bytes memory newCtx,
-        int96 inFlowRate,
-        address sender
-    ) external onlyPool returns (bytes memory updateCtx) {
-        updateCtx = _updateSupplierFlow(sender, inFlowRate, 0, newCtx);
-    }
-
-    function _redeemFlow(int96 _outFlowRate, address _supplier) external onlyPool {
-        //// update state supplier
-
-        uint256 realTimeBalance = poolContract.balanceOf(_supplier);
-
-        require(realTimeBalance > 0, "NO_BALANCE");
-
-        bytes memory placeHolder = "0x";
-
-        _updateSupplierFlow(_supplier, 0, _outFlowRate, placeHolder);
-    }
-
+     /**
+     * @notice notified by the poolstrategy that a push hapened
+     *
+     * @param amount  amount pushed
+     *
+     * @dev after the strategy pushed tokens, the yield snspashot has to be updated to ensure the 
+     *      yield accrued will be accurated
+     *       
+     */
     function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
         poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
         poolContract.internalPushToAAVE(amount);
     }
 
-    function _redeemFlowStop(address _supplier) external onlyPool {
-        _updateSupplierFlow(_supplier, 0, 0, "0x");
-    }
-
-    //// #endregion
-
+    // #region  ============= =============  ERC20  ============= ============= //
     function transferSTokens(
         address _sender,
         address _receiver,
@@ -561,10 +669,11 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         sender.deposit = sender.deposit.sub(amount.mul(PRECISSION));
         receiver.deposit = receiver.deposit.add(amount.mul(PRECISSION));
-        bytes memory payload = abi.encode(_sender, amount);
-        poolContract.internalEmitEvents(_sender, DataTypes.SupplierEvent.TRANSFER, payload, _sender);
-        poolContract.emitEventSupplier(_receiver);
     }
+
+    // #endregion  ============= =============  ERC20  ============= ============= //
+
+    // #region ====================  Gelato Withdraw Step Task  ====================
 
     function withdrawStep(address _receiver) external onlyOps {
         //// check if
@@ -597,13 +706,52 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             supplier.deposit = supplier.deposit.sub(stepAmount.mul(PRECISSION));
             supplier.outStream.initTime = block.timestamp;
         }
-        bytes memory payload = abi.encode(stepAmount);
-        poolContract.internalEmitEvents(_receiver, DataTypes.SupplierEvent.WITHDRAW_STEP, payload, _receiver);
+
+        poolContract.internalWithDrawStep(_receiver, stepAmount);
     }
 
     function cancelTask(bytes32 _taskId) public {
         IOps(ops).cancelTask(_taskId);
     }
+
+    function _cancelTask(bytes32 taskId) internal {
+        IOps(ops).cancelTask(taskId);
+    }
+
+    function _createWithdraStepTask(address _supplier, uint256 _stepTime) internal returns (bytes32 taskId) {
+        bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stepTime), _stepTime);
+
+        bytes memory execData = abi.encodeWithSelector(this.withdrawStep.selector, _supplier);
+
+        LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
+
+        modules[0] = LibDataTypes.Module.TIME;
+
+        bytes[] memory args = new bytes[](1);
+
+        args[0] = timeArgs;
+
+        LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
+
+        taskId = IOps(ops).createTask(address(this), execData, moduleData, ETH);
+    }
+
+    // #endregion ====================  Gelato Withdra step  ====================
+
+    // #region  ==================  Upgradeable settings  ==================
+
+    function proxiableUUID() public pure override returns (bytes32) {
+        return keccak256("org.super-pool.pool-internal.v2");
+    }
+
+    function updateCode(address newAddress) external override onlyOwnerOrPoolFactory {
+        require(msg.sender == owner, "only owner can update code");
+        return _updateCodeAddress(newAddress);
+    }
+
+    // #endregion  ==================  Upgradeable settings  ==================
+
+    // #region =========== =============  Modifiers ============= ============= //
 
     modifier onlyPool() {
         require(msg.sender == address(poolContract), "Only Pool");
@@ -625,26 +773,10 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         _;
     }
 
-    function _cancelTask(bytes32 taskId) internal {
-        IOps(ops).cancelTask(taskId);
+    modifier onlyOwnerOrPoolFactory() {
+        require(msg.sender == poolFactory || msg.sender == owner, "Only Host");
+        _;
     }
 
-    //// Withdrawal step task
-    function _createWithdraStepTask(address _supplier, uint256 _stepTime) internal returns (bytes32 taskId) {
-        bytes memory timeArgs = abi.encode(uint128(block.timestamp + _stepTime), _stepTime);
-
-        bytes memory execData = abi.encodeWithSelector(this.withdrawStep.selector, _supplier);
-
-        LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
-
-        modules[0] = LibDataTypes.Module.TIME;
-
-        bytes[] memory args = new bytes[](1);
-
-        args[0] = timeArgs;
-
-        LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
-
-        taskId = IOps(ops).createTask(address(this), execData, moduleData, ETH);
-    }
+    // #endregion =========== =============  Modifiers ============= ============= //
 }

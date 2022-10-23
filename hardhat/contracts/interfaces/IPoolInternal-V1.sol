@@ -6,45 +6,57 @@ import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/c
 
 import {IPoolV1} from "./IPool-V1.sol";
 
-
 interface IPoolInternalV1 {
-  function initialize(DataTypes.PoolInternalInitializer memory) external;
+    function initialize(DataTypes.PoolInternalInitializer memory) external;
 
-  function _redeemDeposit(
-    uint256 redeemAmount,
-    address _supplier,
-    uint256 balance
-  ) external;
+    // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
 
-  function _tokensReceived(address from, uint256 amount) external;
+    function _tokensReceived(address from, uint256 amount) external;
 
-  function _redeemFlow(int96 _outFlowRate, address _supplier) external;
+    function _redeemDeposit(
+        uint256 redeemAmount,
+        address _supplier
+    ) external;
 
-  function updateStreamRecord(
-    bytes memory newCtx,
-    int96 inFlowRate,
-    address sender
-  ) external returns (bytes memory updatedCtx);
+    function _redeemFlow(int96 _outFlowRate, address _supplier) external;
 
-  function _redeemFlowStop(address _supplier) external;
+    function _redeemFlowStop(address _supplier) external;
 
-  function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) external view returns (uint256 yieldSupplier);
+    function updateStreamRecord(
+        bytes memory newCtx,
+        int96 inFlowRate,
+        address sender
+    ) external returns (bytes memory updatedCtx);
 
-  function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier);
+     // #endregion User Interaction PoolEvents
 
-  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory);
+ 
+      // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
-  function getLastPool() external view returns (DataTypes.PoolV1 memory);
 
-  function getLastTimestamp() external view returns (uint256);
+    function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) external view returns (uint256 yieldSupplier);
 
-  function withdrawStep(address _receiver) external;
+    function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier);
 
-  function pushedToStrategy(uint256 amount) external;
+    function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory);
 
-  function transferSTokens(
-    address _sender,
-    address _receiver,
-    uint256 amount
-  ) external;
+    function getLastPool() external view returns (DataTypes.PoolV1 memory);
+
+    function getLastTimestamp() external view returns (uint256);
+
+    function getVersion() external pure returns(uint256);
+
+
+    // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
+
+
+    function withdrawStep(address _receiver) external;
+
+    function pushedToStrategy(uint256 amount) external;
+
+    function transferSTokens(
+        address _sender,
+        address _receiver,
+        uint256 amount
+    ) external;
 }
