@@ -117,7 +117,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe.only('V1 OutStream Update', function () {
+describe('V1 OutStream Update', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -406,7 +406,7 @@ describe.only('V1 OutStream Update', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    let taskId = await getGelatoWithdrawStepId(poolInternal, gelatoTasks, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+    let taskId = await getGelatoWithdrawStepId(superPool,poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
     usersPool[user1.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +t1 + 2 * ONE_DAY, result[1], contractsTest, result[0]);
 
@@ -471,8 +471,10 @@ describe.only('V1 OutStream Update', function () {
     timestamp = usersPool[user1.address].expected.nextExecOut; //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
 
     await gelatoWithdrawStep(
+      superPool,
       poolInternal,
-      gelatoTasks,
+   
+      
       ops,
       executor,
       user1.address,
@@ -570,7 +572,7 @@ describe.only('V1 OutStream Update', function () {
 
     pools[+timestamp] = result[1];
     usersPool = result[0];
-    taskId = await getGelatoWithdrawStepId(poolInternal, gelatoTasks, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+    taskId = await getGelatoWithdrawStepId(superPool,poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
     usersPool[user1.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +incrementTime + ONE_DAY, result[1], contractsTest, result[0]);
 
@@ -625,7 +627,7 @@ describe.only('V1 OutStream Update', function () {
 
     pools[+timestamp] = result[1];
     usersPool = result[0];
-    taskId = await getGelatoWithdrawStepId(poolInternal, gelatoTasks, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+    taskId = await getGelatoWithdrawStepId(superPool,poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
     usersPool[user1.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
 
@@ -774,7 +776,7 @@ describe.only('V1 OutStream Update', function () {
 
 
     let transferAmount = utils.parseEther('75');
-     await sToken.connect(user2).transfer(user1.address, transferAmount);
+     await superPool.connect(user2).transfer(user1.address, transferAmount);
 
       
 

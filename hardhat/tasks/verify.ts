@@ -44,24 +44,6 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
     constructorArguments: [],
   });
 
-  deployContract = 'sTokenV1';
-  toDeployContract = contract_config[deployContract];
-  const sTokenFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
-
-  await hre.run('verify:verify', {
-    address: sTokenFactory.address,
-    constructorArguments: [],
-  });
-
-  deployContract = 'gelatoTasksV1';
-  toDeployContract = contract_config[deployContract];
-  const gelatoTasks= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
-
-  await hre.run('verify:verify', {
-    address: gelatoTasks.address,
-    constructorArguments: [],
-  });
-
   
   deployContract = 'poolStrategyV1';
   toDeployContract = contract_config[deployContract];
@@ -69,15 +51,6 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
 
   await hre.run('verify:verify', {
     address: poolStrategy.address,
-    constructorArguments: [],
-  });
-
-  deployContract = 'resolverSettingsV1';
-  toDeployContract = contract_config[deployContract];
-  const resolverSettings= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
-
-  await hre.run('verify:verify', {
-    address:resolverSettings.address,
     constructorArguments: [],
   });
 

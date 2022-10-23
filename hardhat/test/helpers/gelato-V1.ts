@@ -124,7 +124,7 @@ export const gelatoWithdrawStep = async (superPool:PoolV1, poolInternal: PoolInt
   await ops
     .connect(executor)
     .exec(
-      superPool.address,
+      poolInternal.address,
       poolInternal.address,
       execData,
       moduleData,

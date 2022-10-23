@@ -117,7 +117,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe.only('V1 Only Transfer', function () {
+describe('V1 Only Transfer', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -414,7 +414,7 @@ describe.only('V1 Only Transfer', function () {
     timestamp = timestamp.add(BigNumber.from(ONE_DAY));
     await setNextBlockTimestamp(hre, +timestamp);
     let transferAmount = utils.parseEther('400');
-    await waitForTx(sToken.connect(user2).transfer(user1.address, transferAmount));
+    await waitForTx(superPool.connect(user2).transfer(user1.address, transferAmount));
 
     yieldPool = await superPool.getLastPool();
 
