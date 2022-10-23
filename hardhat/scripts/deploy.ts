@@ -11,19 +11,17 @@ import config from '../hardhat.config';
 import { join } from 'path';
 import { createHardhatAndFundPrivKeysFiles } from '../helpers/localAccounts';
 import * as hre from 'hardhat';
-import { Events__factory, PoolStrategyV1__factory,  PoolInternalV1__factory, SuperPoolFactory__factory } from '../typechain-types';
+import { Events__factory, PoolStrategyV1__factory,  PoolInternalV1__factory, SuperPoolFactory__factory, UUPSProxy__factory, UUPSProxy } from '../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { utils } from 'ethers';
 
 import { initEnv, waitForTx } from '../helpers/utils';
-import { SuperPoolInputStruct, SupertokenResolverStruct, SupertokenResolverStructOutput } from '../typechain-types/SuperPoolFactory';
-import { SuperToken } from '@superfluid-finance/sdk-core';
 import { INETWORK_CONFIG } from '../helpers/models';
 import { PoolV1__factory } from '../typechain-types/factories/PoolV1__factory';
-import { PoolFactoryInitializerStruct } from 'src/assets/contracts/interfaces/PoolFactory';
 import { CreatePoolInputStruct, SuperPoolFactory, SuperPoolFactoryInitializerStruct } from '../typechain-types/SuperPoolFactory';
-import { PoolInternalV1__poolByTimestampResult } from 'add-ons/subgraph/generated/PoolInternalV2/PoolInternalV2';
+import { getContractFactory } from '@nomiclabs/hardhat-ethers/types';
+import { Contract } from 'ethers';
+import { Console } from 'console';
 
 
 interface ICONTRACT_DEPLOY {
@@ -71,9 +69,11 @@ async function main() {
 
   let nonce = await deployer.getTransactionCount();
   console.log(nonce);
+
   //
   //// DEPLOY POOLFACTORY
-  const poolImpl = await new PoolV1__factory(deployer).deploy({ gasLimit: 10000000, nonce });
+  const poolImpl = await new PoolV1__factory(deployer).deploy({ gasLimit: 10000000, nonce:nonce });
+  nonce = nonce +1;
 
   let toDeployContract = contract_config['poolV1'];
   writeFileSync(
@@ -94,7 +94,9 @@ async function main() {
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
   //// DEPLOY PoolStrategy
-  const poolStrategy = await new PoolStrategyV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce + 1 });
+  const poolStrategy = await new PoolStrategyV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce});
+  nonce = nonce +1;
+
 
   toDeployContract = contract_config['poolStrategyV1'];
   writeFileSync(
@@ -113,8 +115,8 @@ async function main() {
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
   //// DEPLOY POOL INTERNAL
-  const poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce + 2 });
-
+  const poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce });
+  nonce = nonce +1;
   toDeployContract = contract_config['poolInternalV1'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
@@ -134,6 +136,11 @@ async function main() {
   ///// copy Interfaces and create Metadata address/abi to assets folder
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
+
+    
+  let superPoolFactoryImpl:SuperPoolFactory = await new SuperPoolFactory__factory(deployer).deploy( { gasLimit: 10000000, nonce: nonce});
+  nonce = nonce +1;
+
   //// DEPLOY SuperPoolFactory
   let factoryInit: SuperPoolFactoryInitializerStruct = {
     host:network_params.host,
@@ -143,10 +150,22 @@ async function main() {
 
   }
 
+  let proxySuperPoolFactory:any = await new UUPSProxy__factory(deployer).deploy({gasLimit:10000000, nonce: nonce});
+  nonce = nonce +1;
+  console.log(153);
+  proxySuperPoolFactory.initializeProxy(superPoolFactoryImpl.address,{gasLimit:10000000, nonce: nonce});
+  nonce = nonce +1;
+  console.log(157);
+  let superPoolFactory = SuperPoolFactory__factory.connect(proxySuperPoolFactory.address,deployer);
 
-  const superPoolFactory:SuperPoolFactory = await new SuperPoolFactory__factory(deployer).deploy( { gasLimit: 10000000, nonce: nonce + 3 });
 
-  await waitForTx(superPoolFactory.initialize(factoryInit,{gasLimit:10000000, nonce: nonce + 4 }))
+  //proxySuperPoolFactory['initializeProxy'](superPoolFactoryImpl);
+
+
+
+  await waitForTx(superPoolFactory.initialize(factoryInit,{gasLimit:10000000, nonce: nonce}))
+  nonce = nonce +1;
+  console.log(165);
 
   toDeployContract = contract_config['superPoolFactory'];
   writeFileSync(
@@ -154,14 +173,14 @@ async function main() {
     JSON.stringify({
       abi: SuperPoolFactory__factory.abi.concat(eventAbi),
       name: toDeployContract.name,
-      address: superPoolFactory.address,
+      address: proxySuperPoolFactory.address,
       network: network,
     })
   );
 
   writeFileSync(`../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`, JSON.stringify(SuperPoolFactory__factory.abi.concat(eventAbi)));
 
-  console.log(toDeployContract.name + ' Contract Deployed to:', superPoolFactory.address);
+  console.log(toDeployContract.name + ' Contract Deployed to:', proxySuperPoolFactory.address);
 
   ///// copy Interfaces and create Metadata address/abi to assets folder
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
@@ -176,7 +195,8 @@ let poolRecord = await superPoolFactory.getRecordBySuperTokenAddress(network_par
  let poolProxyAddress = poolRecord.pool;
  let poolInternalProxyAddress = poolRecord.poolInternal;
 
-  let tx = await  superPoolFactory.createSuperPool(createPool, { gasLimit: 10000000, nonce: nonce + 5 });
+  let tx = await  superPoolFactory.createSuperPool(createPool, { gasLimit: 10000000, nonce: nonce + 2});
+  nonce = nonce +2;
   await tx.wait();
 
  // let resolver: SupertokenResolverStructOutput = await superPoolFactory..getResolverBySuperToken(network_params.superToken);
@@ -187,12 +207,12 @@ let poolRecord = await superPoolFactory.getRecordBySuperTokenAddress(network_par
   let aToken = '0x1Ee669290939f8a8864497Af3BC83728715265FF';
 
 
-  await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token,poolProxyAddress , aavePool, aToken, network_params.aaveToken, poolInternalProxyAddress, { gasLimit: 10000000, nonce: nonce + 6 });
-
+  await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token,poolProxyAddress , aavePool, aToken, network_params.aaveToken, poolInternalProxyAddress, { gasLimit: 10000000, nonce: nonce});
+  nonce = nonce +1;
   let initialPoolEth = hre.ethers.utils.parseEther('0.1');
 
-  await deployer.sendTransaction({ to: poolProxyAddress , value: initialPoolEth, gasLimit: 10000000, nonce: nonce + 7 });
-
+  await deployer.sendTransaction({ to: poolProxyAddress , value: initialPoolEth, gasLimit: 10000000, nonce: nonce});
+  nonce = nonce +1;
   // let superPoolToken= await superPoolFactory.poolAdressBySuperToken(SUPERTOKEN1);
 
 
