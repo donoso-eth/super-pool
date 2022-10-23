@@ -101,6 +101,9 @@ interface IPoolV1 {
 
     function getSuperfluidDeposit() external view returns (uint256);
 
+    function getVersion() external pure returns(uint256);
+
+
     // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
     // #region  ============= =============  Internal && Pool Internal Functions   ============= ============= //

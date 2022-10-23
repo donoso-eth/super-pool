@@ -192,7 +192,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
         require(redeemAmount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
 
-        poolInternal._redeemDeposit(redeemAmount, _supplier, balance);
+        poolInternal._redeemDeposit(redeemAmount, _supplier);
 
         emitEvents(_supplier);
 
@@ -472,6 +472,11 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
     function getPoolBuffer() external view returns (uint256) {
         return POOL_BUFFER;
+    }
+
+
+    function getVersion() external pure returns(uint256) {
+        return 1.0;
     }
 
     // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //

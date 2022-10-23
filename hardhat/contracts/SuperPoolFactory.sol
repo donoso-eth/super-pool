@@ -111,6 +111,9 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     poolRecord = poolbySuperTokenStrategy[_superToken][_poolStrategy];
   }
 
+  function getVersion() external pure returns(uint256) {
+        return 1.0;
+  }
   // #region ViewFunctions
 
   // #endregion View Functions
