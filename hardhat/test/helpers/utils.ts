@@ -287,15 +287,15 @@ export const testPeriod = async (
 
   if (user.expected.inFlow != undefined) {
     try {
-      expect(user.expected.inFlow).to.equal(userState.inStream.flow);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} IN-FLOW: ${userState.inStream.flow?.toString()} units/s`);
+      expect(user.expected.inFlow).to.equal(userState.inStream);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} IN-FLOW: ${userState.inStream?.toString()} units/s`);
     } catch (error) {
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} IN-FLOW:  ${userState.inStream.flow.toString()},  ${user.expected.inFlow.toString()} expected: units/s`
+        `\x1b[30m#${user.name} IN-FLOW:  ${userState.inStream.toString()},  ${user.expected.inFlow.toString()} expected: units/s`
       );
-      console.log(+user.expected.inFlow.toString()-+userState.inStream.flow.toString())
+      console.log(+user.expected.inFlow.toString()-+userState.inStream.toString())
     }
   }
 
@@ -671,7 +671,7 @@ export const printUser = async (superTokenPool: PoolFactoryV1, userAddress: stri
 
   console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
   console.log(`User ${userAddress.toString()} `);
-  console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, `);
+  console.log(`In-Flow  ${user.inStream.toString()} units/s, `);
   console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s`);
   console.log(`Deposit ${user.deposit.amount.toString()}  units`);
   console.log(`TimeStamp ${user.timestamp.toString()}  units`);

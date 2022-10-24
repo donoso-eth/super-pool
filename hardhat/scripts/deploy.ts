@@ -90,6 +90,9 @@ async function main() {
 
   console.log(toDeployContract.name + ' Contract Deployed to:', poolImpl.address);
 
+throw new Error("");
+
+
   ///// copy Interfaces and create Metadata address/abi to assets folder
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 

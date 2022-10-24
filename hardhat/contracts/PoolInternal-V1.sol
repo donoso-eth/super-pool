@@ -157,7 +157,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
 
         uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.div(PRECISSION);
-        uint256 yieldInFlow = uint96(supplier.inStream.flow) * yieldInFlowRateIndex;
+        uint256 yieldInFlow = uint96(supplier.inStream) * yieldInFlowRateIndex;
 
         yieldSupplier = yieldTilllastPool + yieldDeposit + yieldInFlow;
     }
@@ -296,9 +296,9 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         uint256 yieldFromFlow = 0;
 
         yieldSupplier = yieldFromDeposit;
-        if (supplier.inStream.flow > 0) {
+        if (supplier.inStream > 0) {
             ///// Yield from flow
-          yieldFromFlow = uint96(supplier.inStream.flow) * (lastPool.yieldInFlowRateIndex - supplierPool.yieldInFlowRateIndex);
+          yieldFromFlow = uint96(supplier.inStream) * (lastPool.yieldInFlowRateIndex - supplierPool.yieldInFlowRateIndex);
 
           
         }
@@ -321,8 +321,8 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         if (supplier.timestamp < block.timestamp) {
             uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
-            if (supplier.inStream.flow > 0) {
-                uint256 inflow = uint96(supplier.inStream.flow) * (block.timestamp - supplier.timestamp);
+            if (supplier.inStream > 0) {
+                uint256 inflow = uint96(supplier.inStream) * (block.timestamp - supplier.timestamp);
 
                 pool.depositFromInFlowRate = pool.depositFromInFlowRate - inflow * PRECISSION;
                 pool.deposit = inflow * PRECISSION + pool.deposit;
@@ -401,7 +401,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
         DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
-        int96 currentNetFlow = supplier.inStream.flow - supplier.outStream.flow;
+        int96 currentNetFlow = supplier.inStream - supplier.outStream.flow;
         int96 newNetFlow = inFlow - outFlow;
 
         if (currentNetFlow < 0) {
@@ -424,7 +424,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 supplier.deposit = supplier.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
                 pool.deposit = pool.deposit + supplier.outStream.minBalance.mul(PRECISSION) - alreadyStreamed.mul(PRECISSION);
                 pool.outFlowBuffer = pool.outFlowBuffer - supplier.outStream.minBalance;
-                supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
+                supplier.outStream = DataTypes.OutStream(0, 0, 0, 0, 0, bytes32(0));
             } else {
                 pool.outFlowRate = pool.outFlowRate + currentNetFlow - newNetFlow;
 
@@ -448,15 +448,12 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 if (currentNetFlow > 0) {
                     poolContract.sfDeleteFlow(_supplier, address(poolContract));
                 }
-                if (supplier.inStream.cancelFlowId != bytes32(0)) {
-                    cancelTask(supplier.inStream.cancelFlowId);
-                }
 
                 _outStreamHasChanged(_supplier, -newNetFlow);
             }
         }
 
-        supplier.inStream.flow = inFlow;
+        supplier.inStream = inFlow;
         supplier.outStream.flow = outFlow;
     }
 
@@ -489,10 +486,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             poolContract.sfCreateFlow(_supplier, newOutFlow);
 
         } else if (supplier.outStream.flow > 0) {
-            if (supplier.outStream.cancelFlowId != bytes32(0)) {
-                cancelTask(supplier.outStream.cancelFlowId);
-            }
-
+         
             if (userBalance < minBalance) {
                 _cancelOutstreamFlow(_supplier, userBalance, minBalance);
             } else if (supplier.outStream.flow != newOutFlow) {
@@ -575,7 +569,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         pool.deposit = pool.deposit - userBalance;
         pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
         supplier.deposit = 0;
-        supplier.outStream = DataTypes.OutStream(0, bytes32(0), 0, 0, 0, 0, bytes32(0));
+        supplier.outStream = DataTypes.OutStream(0,  0, 0, 0, 0, bytes32(0));
     }
 
     // #endregion  ============= =============  Internal Stream Functions ============= ============= //

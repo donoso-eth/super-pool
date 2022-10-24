@@ -51,7 +51,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
     using SafeMath for uint256;
 
-    address owner;
+    address public owner;
     address poolFactory;
 
     ISuperfluid public host; // host
@@ -92,6 +92,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         __ERC20_init(poolInit.name, poolInit.symbol);
         //// super app && superfluid
         host = poolInit.host;
+        owner = poolInit.owner;
         superToken = poolInit.superToken;
 
         cfa = IConstantFlowAgreementV1(address(host.getAgreementClass(keccak256("org.superfluid-finance.agreements.ConstantFlowAgreement.v1"))));
@@ -273,7 +274,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
         uint256 yieldSupplier = poolInternal.totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
 
-        int96 netFlow = supplier.inStream.flow - supplier.outStream.flow;
+        int96 netFlow = supplier.inStream - supplier.outStream.flow;
 
         if (netFlow >= 0) {
             realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
@@ -578,17 +579,12 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     }
 
     modifier onlyOwnerOrPoolFactory() {
-        require(msg.sender == poolFactory || msg.sender == owner, "Only Host");
+        require(msg.sender == poolFactory || msg.sender == owner, "Only Factory or owner");
         _;
     }
 
     modifier onlyPoolInternal() {
         require(msg.sender == address(poolInternal), "Only Internal");
-        _;
-    }
-
-    modifier onlyOwnerOr() {
-        require(msg.sender == owner, "Only Owner");
         _;
     }
 

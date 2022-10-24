@@ -23,11 +23,12 @@ library DataTypes {
     }
 
     struct CreatePoolInput {
-        ISuperToken superToken;
-        IPoolStrategyV1 poolStrategy;
+        address superToken;
+        address poolStrategy;
     }
 
     struct PoolInitializer {
+        uint256 id;
         string name;
         string symbol;
         ISuperfluid host;
@@ -49,6 +50,17 @@ library DataTypes {
         address owner;
     }
 
+
+    struct PoolInfo {
+        uint256 id;
+        uint256 idPerSupertoken;
+        address superToken;
+        address strategy;
+        address pool;
+        address poolInternal;
+
+    }
+
  
     struct PoolRecord {
       address pool;
@@ -56,14 +68,15 @@ library DataTypes {
     }
 
 
+
+    ///// Supplier
+
     struct Stream {
         int96 flow;
-        bytes32 cancelFlowId;
     }
 
     struct OutStream {
         int96 flow;
-        bytes32 cancelFlowId;
         uint256 stepAmount;
         uint256 stepTime;
         uint256 initTime;
@@ -79,7 +92,7 @@ library DataTypes {
         uint256 timestamp;
         uint256 createdTimestamp;
         uint256 eventId;
-        Stream inStream;
+        int96  inStream;
         OutStream outStream;
         APY apy;
     }
@@ -88,6 +101,9 @@ library DataTypes {
         uint256 span;
         uint256 apy;
     }
+
+
+    /// Pool
 
     struct PoolV1 {
         uint256 id;
