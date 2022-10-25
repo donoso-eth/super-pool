@@ -45,7 +45,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   if (poolTotalBalance != undefined) {
     try {
-      expect(poolTotalBalance).to.equal(expected.poolTotalBalance.div(10**12));
+      expect((+poolTotalBalance - +expected.poolTotalBalance.div(10**12))/+poolTotalBalance ).to.lt(0.000001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Assets Balance: ${poolTotalBalance.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${poolTotalBalance.toString()}, expected:${expected.poolTotalBalance.div(10**12)!.toString()}`);
@@ -135,9 +135,9 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (expected.yieldSnapshot != undefined) {
+  if (expected.yieldSnapshot != undefined && !expected.yieldSnapshot.eq(BigNumber.from(0)) ) {
     try {
-      expect(result.yieldSnapshot.div(10**12)).to.equal(aaveBalance);
+      expect((+result.yieldSnapshot.div(10**12)- +aaveBalance)/+aaveBalance).to.lt(0.0000001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}, expected:${(result.yieldSnapshot.div(10**12))!.toString()}`);
@@ -235,36 +235,8 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       }
     }
 
-    if (user.expected.inFlowId != undefined) {
-      try {
-        expect(user.expected.inFlowId).to.equal(userState.inStream.cancelFlowId);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} INFLOW -TaskId: ${userState.inStream.cancelFlowId?.toString()}`);
-      } catch (error) {
-        console.log(
-          '\x1b[31m%s\x1b[0m',
-          '    x',
-          `\x1b[30m#${user.name} INFLOW -TaskId:  ${userState.inStream.cancelFlowId.toString()}, expected: ${user.expected.inFlowId.toString()}`
-        );
-      }
-    }
 
-    if (user.expected.nextExecIn != undefined) {
-      let nextExec = (await contracts.ops?.timedTask(userState.inStream.cancelFlowId))?.nextExec as BigNumber;
 
-      try {
-        //console.log(+timed['nextExec'].toString())
-
-        expect(user.expected.nextExecIn).to.equal(nextExec);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} Gelato Task Next Execution Inflow: ${nextExec.sub(t0).sub(BigNumber.from(tx)).toString()}`);
-      } catch (error) {
-        console.log(
-          '\x1b[31m%s\x1b[0m',
-          '    x',
-          `\x1b[30m#${user.name} Gelato Task Next Execution Inflow:  ${nextExec.toString()}, expected: ${user.expected.nextExecIn.toString()}`
-        );
-        console.log(+nextExec.toString() - +user.expected.nextExecIn.toString());
-      }
-    }
 
     if (user.expected.outFlow != undefined) {
       try {
@@ -331,7 +303,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       }
     }
 
-    if (user.expected.nextExecOut != undefined && user.expected.nextExecOut != BigNumber.from(0) ) {
+    if ( !user.expected.nextExecOut.eq(BigNumber.from(0) )) {
       let nextExec = (await contracts.ops?.timedTask(userState.outStream.cancelWithdrawId))?.nextExec as BigNumber;
 
       try {

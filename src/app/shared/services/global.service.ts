@@ -64,7 +64,7 @@ export class GlobalService {
     this.getTokenInstance();
     this.getSuperTokenInstance();
 
-
+    console.log(this.dapp.signerAddress);
 
     let balance = this.erc20?.balanceOf(this.dapp.signerAddress);
     let superbalance = (this.supertoken as ISuperToken).realtimeBalanceOfNow(

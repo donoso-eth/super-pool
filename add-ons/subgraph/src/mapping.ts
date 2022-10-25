@@ -41,12 +41,10 @@ export function handleSupplierUpdate(event: SupplierUpdate): void {
   supplier.deposit = event.params.supplier.deposit;
   supplier.timestamp  = event.params.supplier.timestamp;
   supplier.inFlow = event.params.supplier.inStream;
-  supplier.inCancelFlowId = event.params.supplier.inStream.cancelFlowId.toHexString();
-
+ 
   let outStream  = event.params.supplier.outStream;
   supplier.outFlow = outStream.flow;
-  supplier.outCancelFlowId = outStream.cancelFlowId.toHexString();
-  supplier.outStepAmount = outStream.stepAmount;
+   supplier.outStepAmount = outStream.stepAmount;
   supplier.outStepTime = outStream.stepTime;
   supplier.outInitTime = outStream.initTime;
   supplier.outMinBalance = outStream.minBalance;

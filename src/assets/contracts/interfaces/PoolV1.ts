@@ -73,16 +73,8 @@ export type PoolV1StructOutput = [
   apy: APYStructOutput;
 };
 
-export type StreamStruct = { flow: BigNumberish; cancelFlowId: BytesLike };
-
-export type StreamStructOutput = [BigNumber, string] & {
-  flow: BigNumber;
-  cancelFlowId: string;
-};
-
 export type OutStreamStruct = {
   flow: BigNumberish;
-  cancelFlowId: BytesLike;
   stepAmount: BigNumberish;
   stepTime: BigNumberish;
   initTime: BigNumberish;
@@ -92,7 +84,6 @@ export type OutStreamStruct = {
 
 export type OutStreamStructOutput = [
   BigNumber,
-  string,
   BigNumber,
   BigNumber,
   BigNumber,
@@ -100,7 +91,6 @@ export type OutStreamStructOutput = [
   string
 ] & {
   flow: BigNumber;
-  cancelFlowId: string;
   stepAmount: BigNumber;
   stepTime: BigNumber;
   initTime: BigNumber;
@@ -116,7 +106,7 @@ export type SupplierStruct = {
   timestamp: BigNumberish;
   createdTimestamp: BigNumberish;
   eventId: BigNumberish;
-  inStream: StreamStruct;
+  inStream: BigNumberish;
   outStream: OutStreamStruct;
   apy: APYStruct;
 };
@@ -129,7 +119,7 @@ export type SupplierStructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
-  StreamStructOutput,
+  BigNumber,
   OutStreamStructOutput,
   APYStructOutput
 ] & {
@@ -140,12 +130,13 @@ export type SupplierStructOutput = [
   timestamp: BigNumber;
   createdTimestamp: BigNumber;
   eventId: BigNumber;
-  inStream: StreamStructOutput;
+  inStream: BigNumber;
   outStream: OutStreamStructOutput;
   apy: APYStructOutput;
 };
 
 export type PoolInitializerStruct = {
+  id: BigNumberish;
   name: string;
   symbol: string;
   host: string;
@@ -158,6 +149,7 @@ export type PoolInitializerStruct = {
 };
 
 export type PoolInitializerStructOutput = [
+  BigNumber,
   string,
   string,
   string,
@@ -168,6 +160,7 @@ export type PoolInitializerStructOutput = [
   string,
   string
 ] & {
+  id: BigNumber;
   name: string;
   symbol: string;
   host: string;
@@ -215,7 +208,7 @@ export interface PoolV1Interface extends utils.Interface {
     "getVersion()": FunctionFragment;
     "host()": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
-    "initialize((string,string,address,address,address,address,address,address,address))": FunctionFragment;
+    "initialize((uint256,string,string,address,address,address,address,address,address,address))": FunctionFragment;
     "internalPushToAAVE(uint256)": FunctionFragment;
     "internalWithDrawStep(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;

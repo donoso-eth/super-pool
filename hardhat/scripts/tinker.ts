@@ -4,7 +4,7 @@ import { initEnv, setNextBlockTimestamp, waitForTx } from '../helpers/utils';
 import {
   ERC20__factory,
   ERC777__factory,
-  PoolFactory__factory,
+  PoolV1__factory,
   SuperPoolFactory__factory,
 } from '../typechain-types';
 import { join } from 'path';
@@ -84,7 +84,7 @@ const tinker = async () => {
   let erc777 = await ERC777__factory.connect(TOKEN1, user1);
   let user1Balance = (await erc777.balanceOf(user1.address)).toString();
 
-  let poolContract = PoolFactory__factory.connect(poolAddress, deployer);
+  let poolContract = PoolV1__factory.connect(poolAddress, deployer);
 
 
 

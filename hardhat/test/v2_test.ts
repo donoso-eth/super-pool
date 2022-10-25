@@ -291,7 +291,7 @@ describe.only('V1 TEST', function () {
     let poolExpected1: IPOOL_RESULT = {
       id: BigNumber.from(1),
       timestamp: t1,
-      poolTotalBalance: expedtedPoolBalance,
+      poolTotalBalance: amount,
       deposit: amount.mul(PRECISSION),
       depositFromInFlowRate: BigNumber.from(0),
       inFlowRate: BigNumber.from(0),

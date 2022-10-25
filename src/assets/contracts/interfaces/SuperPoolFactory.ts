@@ -4,6 +4,7 @@
 import {
   BaseContract,
   BigNumber,
+  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -26,9 +27,27 @@ export type CreatePoolInputStructOutput = [string, string] & {
   poolStrategy: string;
 };
 
-export type PoolRecordStruct = { pool: string; poolInternal: string };
+export type PoolInfoStruct = {
+  id: BigNumberish;
+  idPerSupertoken: BigNumberish;
+  superToken: string;
+  strategy: string;
+  pool: string;
+  poolInternal: string;
+};
 
-export type PoolRecordStructOutput = [string, string] & {
+export type PoolInfoStructOutput = [
+  BigNumber,
+  BigNumber,
+  string,
+  string,
+  string,
+  string
+] & {
+  id: BigNumber;
+  idPerSupertoken: BigNumber;
+  superToken: string;
+  strategy: string;
   pool: string;
   poolInternal: string;
 };
@@ -49,20 +68,28 @@ export type SuperPoolFactoryInitializerStructOutput = [
 
 export interface SuperPoolFactoryInterface extends utils.Interface {
   functions: {
-    "_pcrTokensIssued()": FunctionFragment;
+    "changePoolImplementation(address,address,address)": FunctionFragment;
+    "changePoolInternalImplementation(address,address,address)": FunctionFragment;
     "createSuperPool((address,address))": FunctionFragment;
     "getCodeAddress()": FunctionFragment;
     "getRecordBySuperTokenAddress(address,address)": FunctionFragment;
     "getVersion()": FunctionFragment;
     "initialize((address,address,address,address))": FunctionFragment;
-    "poolbySuperTokenStrategy(address,address)": FunctionFragment;
+    "poolIdBySuperTokenAndId(address,uint256)": FunctionFragment;
+    "poolIdBySuperTokenStrategy(address,address)": FunctionFragment;
+    "poolInfoById(uint256)": FunctionFragment;
+    "pools()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
     "updateCode(address)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "_pcrTokensIssued",
-    values?: undefined
+    functionFragment: "changePoolImplementation",
+    values: [string, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "changePoolInternalImplementation",
+    values: [string, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "createSuperPool",
@@ -85,9 +112,18 @@ export interface SuperPoolFactoryInterface extends utils.Interface {
     values: [SuperPoolFactoryInitializerStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "poolbySuperTokenStrategy",
+    functionFragment: "poolIdBySuperTokenAndId",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "poolIdBySuperTokenStrategy",
     values: [string, string]
   ): string;
+  encodeFunctionData(
+    functionFragment: "poolInfoById",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(functionFragment: "pools", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "proxiableUUID",
     values?: undefined
@@ -95,7 +131,11 @@ export interface SuperPoolFactoryInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "updateCode", values: [string]): string;
 
   decodeFunctionResult(
-    functionFragment: "_pcrTokensIssued",
+    functionFragment: "changePoolImplementation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "changePoolInternalImplementation",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -113,9 +153,18 @@ export interface SuperPoolFactoryInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "getVersion", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "poolbySuperTokenStrategy",
+    functionFragment: "poolIdBySuperTokenAndId",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "poolIdBySuperTokenStrategy",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "poolInfoById",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "pools", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "proxiableUUID",
     data: BytesLike
@@ -169,9 +218,19 @@ export interface SuperPoolFactory extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    _pcrTokensIssued(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { _value: BigNumber }>;
+    changePoolImplementation(
+      newImpl: string,
+      superToken: string,
+      poolStrategy: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    changePoolInternalImplementation(
+      newImpl: string,
+      superToken: string,
+      poolStrategy: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     createSuperPool(
       poolInput: CreatePoolInputStruct,
@@ -186,9 +245,7 @@ export interface SuperPoolFactory extends BaseContract {
       _superToken: string,
       _poolStrategy: string,
       overrides?: CallOverrides
-    ): Promise<
-      [PoolRecordStructOutput] & { poolRecord: PoolRecordStructOutput }
-    >;
+    ): Promise<[PoolInfoStructOutput] & { poolInfo: PoolInfoStructOutput }>;
 
     getVersion(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -197,11 +254,35 @@ export interface SuperPoolFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    poolbySuperTokenStrategy(
+    poolIdBySuperTokenAndId(
+      arg0: string,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    poolIdBySuperTokenStrategy(
       arg0: string,
       arg1: string,
       overrides?: CallOverrides
-    ): Promise<[string, string] & { pool: string; poolInternal: string }>;
+    ): Promise<[BigNumber]>;
+
+    poolInfoById(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, string, string, string, string] & {
+        id: BigNumber;
+        idPerSupertoken: BigNumber;
+        superToken: string;
+        strategy: string;
+        pool: string;
+        poolInternal: string;
+      }
+    >;
+
+    pools(
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { _value: BigNumber }>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
@@ -211,7 +292,19 @@ export interface SuperPoolFactory extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  _pcrTokensIssued(overrides?: CallOverrides): Promise<BigNumber>;
+  changePoolImplementation(
+    newImpl: string,
+    superToken: string,
+    poolStrategy: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  changePoolInternalImplementation(
+    newImpl: string,
+    superToken: string,
+    poolStrategy: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   createSuperPool(
     poolInput: CreatePoolInputStruct,
@@ -224,7 +317,7 @@ export interface SuperPoolFactory extends BaseContract {
     _superToken: string,
     _poolStrategy: string,
     overrides?: CallOverrides
-  ): Promise<PoolRecordStructOutput>;
+  ): Promise<PoolInfoStructOutput>;
 
   getVersion(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -233,11 +326,33 @@ export interface SuperPoolFactory extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  poolbySuperTokenStrategy(
+  poolIdBySuperTokenAndId(
+    arg0: string,
+    arg1: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  poolIdBySuperTokenStrategy(
     arg0: string,
     arg1: string,
     overrides?: CallOverrides
-  ): Promise<[string, string] & { pool: string; poolInternal: string }>;
+  ): Promise<BigNumber>;
+
+  poolInfoById(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber, string, string, string, string] & {
+      id: BigNumber;
+      idPerSupertoken: BigNumber;
+      superToken: string;
+      strategy: string;
+      pool: string;
+      poolInternal: string;
+    }
+  >;
+
+  pools(overrides?: CallOverrides): Promise<BigNumber>;
 
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
@@ -247,7 +362,19 @@ export interface SuperPoolFactory extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    _pcrTokensIssued(overrides?: CallOverrides): Promise<BigNumber>;
+    changePoolImplementation(
+      newImpl: string,
+      superToken: string,
+      poolStrategy: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    changePoolInternalImplementation(
+      newImpl: string,
+      superToken: string,
+      poolStrategy: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     createSuperPool(
       poolInput: CreatePoolInputStruct,
@@ -260,7 +387,7 @@ export interface SuperPoolFactory extends BaseContract {
       _superToken: string,
       _poolStrategy: string,
       overrides?: CallOverrides
-    ): Promise<PoolRecordStructOutput>;
+    ): Promise<PoolInfoStructOutput>;
 
     getVersion(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -269,11 +396,33 @@ export interface SuperPoolFactory extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    poolbySuperTokenStrategy(
+    poolIdBySuperTokenAndId(
+      arg0: string,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    poolIdBySuperTokenStrategy(
       arg0: string,
       arg1: string,
       overrides?: CallOverrides
-    ): Promise<[string, string] & { pool: string; poolInternal: string }>;
+    ): Promise<BigNumber>;
+
+    poolInfoById(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, string, string, string, string] & {
+        id: BigNumber;
+        idPerSupertoken: BigNumber;
+        superToken: string;
+        strategy: string;
+        pool: string;
+        poolInternal: string;
+      }
+    >;
+
+    pools(overrides?: CallOverrides): Promise<BigNumber>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
@@ -292,7 +441,19 @@ export interface SuperPoolFactory extends BaseContract {
   };
 
   estimateGas: {
-    _pcrTokensIssued(overrides?: CallOverrides): Promise<BigNumber>;
+    changePoolImplementation(
+      newImpl: string,
+      superToken: string,
+      poolStrategy: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    changePoolInternalImplementation(
+      newImpl: string,
+      superToken: string,
+      poolStrategy: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     createSuperPool(
       poolInput: CreatePoolInputStruct,
@@ -314,11 +475,24 @@ export interface SuperPoolFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    poolbySuperTokenStrategy(
+    poolIdBySuperTokenAndId(
+      arg0: string,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    poolIdBySuperTokenStrategy(
       arg0: string,
       arg1: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    poolInfoById(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    pools(overrides?: CallOverrides): Promise<BigNumber>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -329,7 +503,19 @@ export interface SuperPoolFactory extends BaseContract {
   };
 
   populateTransaction: {
-    _pcrTokensIssued(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    changePoolImplementation(
+      newImpl: string,
+      superToken: string,
+      poolStrategy: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    changePoolInternalImplementation(
+      newImpl: string,
+      superToken: string,
+      poolStrategy: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     createSuperPool(
       poolInput: CreatePoolInputStruct,
@@ -351,11 +537,24 @@ export interface SuperPoolFactory extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    poolbySuperTokenStrategy(
+    poolIdBySuperTokenAndId(
+      arg0: string,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    poolIdBySuperTokenStrategy(
       arg0: string,
       arg1: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    poolInfoById(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    pools(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

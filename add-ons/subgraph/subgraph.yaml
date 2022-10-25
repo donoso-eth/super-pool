@@ -6,9 +6,9 @@ dataSources:
     name: PoolV1
     network: goerli
     source:
-      address: '0x1727D678ECC61D8E583F6741c476f81608b83ab4'
+      address: '0xf1872346caF0eBf567bd9704AE2B661c8D034998'
       abi: PoolV1
-      startBlock: 7808844
+      startBlock: 7829979
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -19,13 +19,13 @@ dataSources:
         - Event
       abis:
         - name: PoolV1
-          file: ./abis/pool_v2.json
+          file: ./abis/pool_v1.json
       eventHandlers: 
         - event: >-
             PoolUpdate((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))
           handler: handlePoolUpdate
         - event: >-
-            SupplierUpdate((uint256,address,uint256,uint256,uint256,uint256,uint256,(int96,bytes32),(int96,bytes32,uint256,uint256,uint256,uint256,bytes32),(uint256,uint256)))
+            SupplierUpdate((uint256,address,uint256,uint256,uint256,uint256,uint256,int96,(int96,uint256,uint256,uint256,uint256,bytes32),(uint256,uint256)))
           handler: handleSupplierUpdate
         - event: SupplierEvent(uint8,bytes,uint256,address)
           handler: handleSupplierEvent

@@ -29,18 +29,13 @@ export const GET_SUPPLIER = `
         createdTimestamp
         deposit
         cumulatedYield
-      
         inFlow
-        inCancelFlowId
-      
         outFlow
-        outCancelFlowId
         outStepAmount
         outStepTime
         outInitTime
         outMinBalance
         outCancelWithdrawId
-      
         apySpan
         apy
   

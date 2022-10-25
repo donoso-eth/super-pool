@@ -13,9 +13,9 @@ import { Web3Actions, web3Selectors } from './store';
 import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers';
 import { Web3ModalComponent } from './web3-modal/web3-modal.component';
 import { Subject, takeUntil } from 'rxjs';
-import { SuperPool} from 'src/assets/contracts/interfaces/SuperPool';
+import { SuperPoolFactory} from 'src/assets/contracts/interfaces/SuperPoolFactory';
 import { AngularContract } from './classes';
-import HostMetadata from 'src/assets/contracts/super_pool_host_metadata.json';
+import HostMetadata from 'src/assets/contracts/super_pool_factory_metadata.json';
 import PoolMetadata from 'src/assets/contracts/pool_v1_metadata.json';
 
 import { PoolV1 } from 'src/assets/contracts/interfaces/PoolV1';
@@ -205,12 +205,16 @@ export class DappInjector implements OnDestroy {
   private async contractInitialization() {
 
 
-    let hostContract = new Contract(HostMetadata.address, HostMetadata.abi,this.DAPP_STATE.signer!) ;
-    let resolver = await hostContract.getResolverBySuperToken(settings.goerli.supertoken);
+    // let hostContract = new Contract(HostMetadata.address, HostMetadata.abi,this.DAPP_STATE.signer!) as  SuperPoolFactory;
+    
+    // console.log(HostMetadata.address)
 
-    console.log(resolver);
+    // console.log(settings.goerli.supertoken)
+    // let resolver = await hostContract.getRecordBySuperTokenAddress(settings.goerli.supertoken,'0x6346C82d827FC455ccB48cbA56F01c158e1F7c86');
 
-    PoolMetadata.address = resolver.pool
+    // console.log(resolver);
+
+    PoolMetadata.address = '0xf1872346caF0eBf567bd9704AE2B661c8D034998';
 
     const contract = new AngularContract<PoolV1>({
      metadata:  PoolMetadata,

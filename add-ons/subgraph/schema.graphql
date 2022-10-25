@@ -25,10 +25,8 @@ type Supplier @entity {
   cumulatedYield: BigInt!
 
   inFlow: BigInt!
-  inCancelFlowId: String!
 
   outFlow: BigInt!
-  outCancelFlowId: String!
   outStepAmount: BigInt!
   outStepTime: BigInt!
   outInitTime: BigInt!

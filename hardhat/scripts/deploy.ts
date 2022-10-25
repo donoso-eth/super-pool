@@ -70,8 +70,10 @@ async function main() {
   let nonce = await deployer.getTransactionCount();
   console.log(nonce);
 
-  //
-  //// DEPLOY POOLFACTORY
+
+
+
+  //// DEPLOY POOL IMPL
   const poolImpl = await new PoolV1__factory(deployer).deploy({ gasLimit: 10000000, nonce:nonce });
 
 
@@ -90,7 +92,7 @@ async function main() {
 
   console.log(toDeployContract.name + ' Contract Deployed to:', poolImpl.address);
 
-throw new Error("");
+
 
 
   ///// copy Interfaces and create Metadata address/abi to assets folder

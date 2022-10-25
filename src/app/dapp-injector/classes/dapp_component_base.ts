@@ -3,7 +3,7 @@ import { JsonRpcProvider } from '@ethersproject/providers';
 import { Store } from '@ngrx/store';
 import { Signer } from 'ethers';
 import { pipe, Subject, takeUntil } from 'rxjs';
-import { PoolFactory } from 'src/assets/contracts/interfaces/PoolFactory';
+import { PoolV1 } from 'src/assets/contracts/interfaces/PoolV1';
 import { DappInjector } from '../dapp-injector.service';
 import { NETWORK_STATUS, web3Selectors } from '../store';
 import { AngularContract } from './contract';

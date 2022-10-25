@@ -73,16 +73,8 @@ export type PoolV1StructOutput = [
   apy: APYStructOutput;
 };
 
-export type StreamStruct = { flow: BigNumberish; cancelFlowId: BytesLike };
-
-export type StreamStructOutput = [BigNumber, string] & {
-  flow: BigNumber;
-  cancelFlowId: string;
-};
-
 export type OutStreamStruct = {
   flow: BigNumberish;
-  cancelFlowId: BytesLike;
   stepAmount: BigNumberish;
   stepTime: BigNumberish;
   initTime: BigNumberish;
@@ -92,7 +84,6 @@ export type OutStreamStruct = {
 
 export type OutStreamStructOutput = [
   BigNumber,
-  string,
   BigNumber,
   BigNumber,
   BigNumber,
@@ -100,7 +91,6 @@ export type OutStreamStructOutput = [
   string
 ] & {
   flow: BigNumber;
-  cancelFlowId: string;
   stepAmount: BigNumber;
   stepTime: BigNumber;
   initTime: BigNumber;
@@ -116,7 +106,7 @@ export type SupplierStruct = {
   timestamp: BigNumberish;
   createdTimestamp: BigNumberish;
   eventId: BigNumberish;
-  inStream: StreamStruct;
+  inStream: BigNumberish;
   outStream: OutStreamStruct;
   apy: APYStruct;
 };
@@ -129,7 +119,7 @@ export type SupplierStructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
-  StreamStructOutput,
+  BigNumber,
   OutStreamStructOutput,
   APYStructOutput
 ] & {
@@ -140,7 +130,7 @@ export type SupplierStructOutput = [
   timestamp: BigNumber;
   createdTimestamp: BigNumber;
   eventId: BigNumber;
-  inStream: StreamStructOutput;
+  inStream: BigNumber;
   outStream: OutStreamStructOutput;
   apy: APYStructOutput;
 };
@@ -640,7 +630,7 @@ export interface PoolInternalV1 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        StreamStructOutput,
+        BigNumber,
         OutStreamStructOutput,
         APYStructOutput
       ] & {
@@ -651,7 +641,7 @@ export interface PoolInternalV1 extends BaseContract {
         timestamp: BigNumber;
         createdTimestamp: BigNumber;
         eventId: BigNumber;
-        inStream: StreamStructOutput;
+        inStream: BigNumber;
         outStream: OutStreamStructOutput;
         apy: APYStructOutput;
       }
@@ -840,7 +830,7 @@ export interface PoolInternalV1 extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
-      StreamStructOutput,
+      BigNumber,
       OutStreamStructOutput,
       APYStructOutput
     ] & {
@@ -851,7 +841,7 @@ export interface PoolInternalV1 extends BaseContract {
       timestamp: BigNumber;
       createdTimestamp: BigNumber;
       eventId: BigNumber;
-      inStream: StreamStructOutput;
+      inStream: BigNumber;
       outStream: OutStreamStructOutput;
       apy: APYStructOutput;
     }
@@ -1033,7 +1023,7 @@ export interface PoolInternalV1 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        StreamStructOutput,
+        BigNumber,
         OutStreamStructOutput,
         APYStructOutput
       ] & {
@@ -1044,7 +1034,7 @@ export interface PoolInternalV1 extends BaseContract {
         timestamp: BigNumber;
         createdTimestamp: BigNumber;
         eventId: BigNumber;
-        inStream: StreamStructOutput;
+        inStream: BigNumber;
         outStream: OutStreamStructOutput;
         apy: APYStructOutput;
       }

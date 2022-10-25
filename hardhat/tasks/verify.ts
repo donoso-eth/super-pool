@@ -35,12 +35,24 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
 
   //let result = await host.getResolverBySuperToken(network_params.superToken);
 
+
+  // deployContract = 'superPoolFactory';
+  // toDeployContract = contract_config[deployContract];
+  // const poolFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
+
+  // await hre.run('verify:verify', {
+  //   address: '0x5ECC822C5b50A7C2e1b8C8B3F289cC72bC0B710B',// poolFactory.address,
+  //   constructorArguments: [],
+  // });
+
+
+
   deployContract = 'poolV1';
   toDeployContract = contract_config[deployContract];
-  const poolFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
+  const poolImpl = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
   await hre.run('verify:verify', {
-    address: poolFactory.address,
+    address: poolImpl.address,
     constructorArguments: [],
   });
 
