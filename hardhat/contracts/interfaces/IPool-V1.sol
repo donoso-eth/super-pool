@@ -101,6 +101,12 @@ interface IPoolV1 {
 
     function getSuperfluidDeposit() external view returns (uint256);
 
+    function getDepositTriggerAmount() external view returns (uint256);
+
+    function getDepositTriggerTime() external view returns (uint256);
+
+    function getProtocolFee() external view returns(uint256);
+
     function getVersion() external pure returns(uint256);
 
 

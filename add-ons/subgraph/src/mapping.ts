@@ -15,6 +15,7 @@ export function handlePoolUpdate(event: PoolUpdate): void {
     pool.depositFromInflowRate = poolEvent.depositFromInFlowRate;
     pool.inFlowRate= poolEvent.inFlowRate;
     pool.outFlowRate = poolEvent.outFlowRate;
+    pool.outFlowBuffer = poolEvent.outFlowBuffer;
     pool.yieldTokenIndex = poolEvent.yieldTokenIndex;
     pool.yieldInFlowRateIndex = poolEvent.yieldInFlowRateIndex;
     pool.yieldAccrued = poolEvent.yieldAccrued;

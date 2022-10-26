@@ -51,7 +51,8 @@ export class AppTopBarComponent extends DappBaseComponent {
  
 
     if (this.dapp.dappConfig.defaultNetwork! == "localhost") {
-      this.dapp.localWallet(1)
+      this.dapp.launchWebModal()//
+      // this.dapp.localWallet(1)
     } else {
 
       this.dapp.launchWebModal()

@@ -5,7 +5,7 @@ import { INETWORK, NETWORK_TYPE } from "../constants";
 
 
 export interface IDAPP_CONFIG {
-  defaultNetwork: 'goerli' | 'localhost',
+  defaultNetwork: 'goerli' | 'localhost' | 'hardhat',
   wallet: string,
 }
 

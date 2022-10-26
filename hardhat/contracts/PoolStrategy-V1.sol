@@ -37,7 +37,7 @@ contract PoolStrategyV1 is Initializable, IPoolStrategyV1 {
   ERC20mintable token;
   bytes32 public depositTaksId;
   IPoolV1 pool;
-   IPoolInternalV1 poolInternal;
+  IPoolInternalV1 poolInternal;
   IPool aavePool;
   IERC20 aToken;
 
@@ -48,6 +48,7 @@ contract PoolStrategyV1 is Initializable, IPoolStrategyV1 {
   uint256 MAX_INT;
 
 
+  uint256 lastExecution;
 
 
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -118,16 +119,21 @@ contract PoolStrategyV1 is Initializable, IPoolStrategyV1 {
   }
 
   // called by Gelato Execs
-  function checkerDeposit() external view returns (bool canExec, bytes memory execPayload) {
+  function checkerDeposit(uint256) external view returns (bool canExec, bytes memory execPayload) {
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
 
     DataTypes.PoolV1 memory currentPool = poolInternal.getLastPool();
 
      uint256 currentPoolBuffer = currentPool.outFlowBuffer;
 
-     uint256 currentThreshold = currentPoolBuffer.add(0.5 ether);
+     uint256 TRIGGER_AMOUNT = pool.getDepositTriggerAmount();
 
-    canExec = uint256(balance) >= currentThreshold;
+     uint256 currentThreshold = currentPoolBuffer.add(TRIGGER_AMOUNT);
+
+     uint256 TRIGGER_TIME = pool.getDepositTriggerTime();
+
+
+    canExec = uint256(balance) >= currentThreshold  ||block.timestamp > lastExecution + TRIGGER_TIME;
 
     execPayload = abi.encodeWithSelector(this.depositTask.selector);
   }
@@ -139,17 +145,27 @@ contract PoolStrategyV1 is Initializable, IPoolStrategyV1 {
  
     uint256 currentPoolBuffer = poolInternal.getLastPool().outFlowBuffer;
 
-    uint256 currentThreshold = currentPoolBuffer.add(0.5 ether);
+
+     uint256 TRIGGER_AMOUNT = pool.getDepositTriggerAmount();
+
+     uint256 currentThreshold = currentPoolBuffer.add(TRIGGER_AMOUNT);
+
+     uint256 TRIGGER_TIME = pool.getDepositTriggerTime();
 
 
-    require(uint256(balance) >= currentThreshold, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
+    require(uint256(balance) >= currentThreshold || block.timestamp > lastExecution + TRIGGER_TIME, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
 
-    uint256 amountToDeposit = uint256(balance) - currentThreshold + 0.5 ether;
+    uint256 amountToDeposit = uint256(balance) - currentThreshold + TRIGGER_AMOUNT;
 
 
     (fee, feeToken) = IOps(ops).getFeeDetails();
 
     pool.transfer(fee, feeToken);
+
+    _deposit(amountToDeposit);
+  }
+
+  function _deposit(uint256 amountToDeposit) internal {
 
     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
 
@@ -161,8 +177,20 @@ contract PoolStrategyV1 is Initializable, IPoolStrategyV1 {
 
     aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
 
+    lastExecution = block.timestamp;
 
- 
+  }
+
+
+
+  function pushToStrategy() external onlyPool {
+      
+      (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
+      uint256 currentPoolBuffer = poolInternal.getLastPool().outFlowBuffer;
+      uint256 currentThreshold = currentPoolBuffer;
+      uint256 amountToDeposit = uint256(balance) - currentThreshold;
+      _deposit(amountToDeposit);
+
   }
 
   function balanceOf() external view returns (uint256 balance) {
@@ -170,6 +198,12 @@ contract PoolStrategyV1 is Initializable, IPoolStrategyV1 {
   }
 
   // #endregion  ============= ============= Allocation Strategy  ============= ============= //
+
+    modifier onlyPool() {
+    require(msg.sender == address(poolInternal), "Only Pool Allowed");
+    _;
+  }
+
 
   modifier onlyInternal() {
     require(msg.sender == address(poolInternal), "Only Internal Allowed");

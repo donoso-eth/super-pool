@@ -5,7 +5,7 @@ export const GET_POOL = `
         id
         inFlowRate
         outFlowRate
-        outFlowRate
+        outFlowBuffer
         deposit
         depositFromInflowRate
         nrSuppliers

@@ -3,7 +3,7 @@ import { task } from 'hardhat/config';
 import { getTimestamp, initEnv, setNextBlockTimestamp, waitForTx } from '../helpers/utils';
 import { join } from 'path';
 import { constants, utils } from 'ethers';
-import { IOps__factory, PoolStrategyV1__factory, STokenV1__factory } from '../typechain-types';
+import { IOps__factory, PoolStrategyV1__factory } from '../typechain-types';
 import { INETWORK_CONFIG } from '../helpers/models';
 
 let ONE_DAY = 24 * 3600 * 30;

@@ -10,5 +10,6 @@ interface IPoolStrategyV1 {
 
   function withdraw(uint256 amount, address _supplier) external;
 
+  function pushToStrategy() external;
 
 }

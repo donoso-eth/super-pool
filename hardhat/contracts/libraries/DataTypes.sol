@@ -103,6 +103,16 @@ library DataTypes {
     }
 
 
+
+    struct Yield {
+        uint256 yieldTokenIndex;
+        uint256 yieldInFlowRateIndex;
+        uint256 yieldAccrued;
+        uint256 yieldSnapshot;
+        uint256 totalYield;
+        uint256 protocolYield;
+    }
+
     /// Pool
 
     struct PoolV1 {
@@ -115,11 +125,7 @@ library DataTypes {
         int96 inFlowRate;
         int96 outFlowRate;
         uint256 outFlowBuffer;
-        uint256 yieldTokenIndex;
-        uint256 yieldInFlowRateIndex;
-        uint256 yieldAccrued;
-        uint256 yieldSnapshot;
-        uint256 totalYield;
+        Yield yield;
         APY apy;
     }
 

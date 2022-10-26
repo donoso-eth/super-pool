@@ -32,7 +32,7 @@ const mainnetGwei = 21;
 
 
 let defaultNetwork = 'localhost';
-defaultNetwork = 'goerli';
+//defaultNetwork = 'goerli';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -51,12 +51,12 @@ const config: HardhatUserConfig = {
       forking: {
         url: `https://goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e`,
         blockNumber: 7755313
-      
-      },
+        },  
+        chainId: 1337
     },
     localhost: {
       url: 'http://localhost:8545',
-      chainId: 31337,
+      chainId: 1337,
     },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${INFURA_ID}`, // <---- YOUR INFURA ID! (or it won't work)

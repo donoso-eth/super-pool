@@ -52,7 +52,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     using SafeMath for uint256;
 
     address public owner;
-    address poolFactory;
+    address public poolFactory;
 
     ISuperfluid public host; // host
     IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
@@ -76,6 +76,8 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
     uint256 public DEPOSIT_TRIGGER_AMOUNT;
     uint256 public DEPOSIT_TRIGGER_TIME;
+
+    uint256 public PROTOCOL_FEE;
 
     IPoolStrategyV1 poolStrategy;
     IPoolInternalV1 poolInternal;
@@ -129,8 +131,11 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         POOL_BUFFER = 3600; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
         SUPERFLUID_DEPOSIT = 4 * 3600;
 
-        DEPOSIT_TRIGGER_AMOUNT = 0;
-        DEPOSIT_TRIGGER_TIME = 3600;
+        DEPOSIT_TRIGGER_AMOUNT = 100 ether;
+        DEPOSIT_TRIGGER_TIME = 3600 * 24;
+
+        PROTOCOL_FEE = 3;
+
     }
 
     // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
@@ -185,13 +190,15 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
         address _supplier = msg.sender;
 
-        require(balance > redeemAmount, "NOT_ENOUGH_BALANCE");
+      
+
+        require(balance >= redeemAmount, "NOT_ENOUGH_BALANCE");
 
         DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
 
         uint256 max_allowed = balance.sub(supplier.outStream.minBalance);
 
-        require(redeemAmount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
+        require(max_allowed >= redeemAmount, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
 
         poolInternal._redeemDeposit(redeemAmount, _supplier);
 
@@ -475,9 +482,20 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         return POOL_BUFFER;
     }
 
+    function getDepositTriggerAmount() external view returns (uint256) {
+      return DEPOSIT_TRIGGER_AMOUNT;
+    }
+
+    function getDepositTriggerTime() external view returns (uint256) {
+      return DEPOSIT_TRIGGER_TIME;
+    }
+
+       function getProtocolFee() external view returns (uint256) {
+      return PROTOCOL_FEE;
+    }
 
     function getVersion() external pure returns(uint256) {
-        return 1.0;
+        return 1;
     }
 
     // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
@@ -496,7 +514,10 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     function internalWithDrawStep(address supplier, uint256 stepAmount) external override onlyPoolInternal {
         bytes memory payload = abi.encode(stepAmount);
         emit Events.SupplierEvent(DataTypes.SupplierEvent.WITHDRAW, payload, block.timestamp, supplier);
-        emitEvents(supplier);
+        DataTypes.Supplier memory supplier = poolInternal.getSupplier(supplier);
+        emit Events.SupplierUpdate(supplier);
+        DataTypes.PoolV1 memory pool = poolInternal.getLastPool();
+        emit Events.PoolUpdate(pool);
     }
 
     function transfer(uint256 _amount, address _paymentToken) external override onlyPoolStrategyOrInternal {
@@ -508,6 +529,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         emit Events.SupplierUpdate(supplier);
         DataTypes.PoolV1 memory pool = poolInternal.getLastPool();
         emit Events.PoolUpdate(pool);
+        poolStrategy.pushToStrategy();
     }
 
     function _transfer(uint256 _amount, address _paymentToken) internal {
@@ -540,6 +562,17 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         STEPS = _steps;
     }
 
+  
+    function setDepositTriggerAmount(uint256 _amount) external onlyOwner {
+      DEPOSIT_TRIGGER_AMOUNT = _amount;
+    }
+
+    function setDepositTriggerTime(uint256 _time) external onlyOwner {
+      DEPOSIT_TRIGGER_TIME = _time;
+    }
+
+
+
     // #endregion =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
 
     // #region  ==================  Upgradeable settings  ==================
@@ -549,7 +582,6 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     }
 
     function updateCode(address newAddress) external override onlyOwnerOrPoolFactory {
-        require(msg.sender == owner, "only owner can update code");
         return _updateCodeAddress(newAddress);
     }
 
@@ -579,6 +611,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     }
 
     modifier onlyOwnerOrPoolFactory() {
+   
         require(msg.sender == poolFactory || msg.sender == owner, "Only Factory or owner");
         _;
     }

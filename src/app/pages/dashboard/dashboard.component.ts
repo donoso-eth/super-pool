@@ -99,6 +99,13 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
   
     let amount = utils.parseEther(this.depositAmountCtrl.value.toString());
 
+    
+    // console.log(this.depositAmountCtrl.value.toString());
+
+
+    // console.log(amount.toString())
+
+
 
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'it is ok to need the money....', header: 'Un momento' } }));
@@ -120,6 +127,7 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
 
     let amount = utils.parseEther(this.depositAmountCtrl.value.toString());
 
+    
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'Yes, yes your deposit is on the way', header: 'Un momento' } }));
     await this.erc777.depositIntoPool(amount);

@@ -90,7 +90,7 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
   }
 
   getPool() {
-    this.graphqlService.watchPool().subscribe((val) => {
+    this.graphqlService.watchPool().pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
       if (!!val && !!val.data && !!val.data.pools && val.data.pools.length >0) {
         let staked = val.data.pools.map((map: any) => map.yieldSnapshot/1000000);
 
@@ -122,9 +122,9 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
    
         let value = +this.currentPool.inFlowRate * (new Date().getTime() / 1000 - +this.currentPool.timestamp);
         let todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
-        let ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000)
+        let ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000 + +this.currentPool.outFlowBuffer)
       
-        console.log(ttvl)
+
         let formated = this.global.prepareNumbers(ttvl);
         this.twoDec = formated.twoDec;
         this.fourDec = formated.fourDec;
@@ -136,7 +136,7 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
        
           source.pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
            todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
-            ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000)
+            ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000 + +this.currentPool.outFlowBuffer)
       
             let formated = this.global.prepareNumbers(ttvl);
             this.twoDec = formated.twoDec;

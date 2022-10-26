@@ -26,6 +26,20 @@ export const settings = {
     aToken: '0x1Ee669290939f8a8864497Af3BC83728715265FF',
     aaveToken: "0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43"
   },
+  hardhat: {
+    host: '0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9',
+    supertoken: '0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a',
+    token:"0xc94dd466416A7dFE166aB2cF916D3875C049EBB7",
+    resolver: '0x3710AB3fDE2B61736B8BB0CE845D6c61F667a78E',
+    chainId: 1337,
+    subgraph: 'https://thegraph.com/hosted-service/subgraph/superfluid-finance/protocol-v1-goerli',
+    graphUri: 'http://localhost:8000/subgraphs/name/donoso-eth/super-pool',
+    wallet: 'wallet',
+    aavePool: '0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6',
+    aToken: '0x1Ee669290939f8a8864497Af3BC83728715265FF',
+    aaveToken: "0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43"
+  },
+
   goerli: {
     host: '0x22ff293e14F1EC3A09B137e9e06084AFd63adDF9',
     supertoken: '0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a',
@@ -63,7 +77,14 @@ export const NETWORKS: { [key: string]: INETWORK } = {
   localhost: {
     name: 'localhost',
     color: '#666666',
-    chainId: 1337,
+    chainId: 31337,
+    blockExplorer: '',
+    rpcUrl: 'http://' + (window ? window.location.hostname : 'localhost') + ':8545',
+  },
+  hardhat: {
+    name: 'hardhat',
+    color: '#666666',
+    chainId: 31337,
     blockExplorer: '',
     rpcUrl: 'http://' + (window ? window.location.hostname : 'localhost') + ':8545',
   },

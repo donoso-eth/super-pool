@@ -53,7 +53,8 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     uint8 public STEPS; // proportinal decrease deposit
     uint256 public POOL_BUFFER; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
     uint256 public SUPERFLUID_DEPOSIT;
-    uint56 public MIN_OUTFLOW_ALLOWED;
+    uint256 public MIN_OUTFLOW_ALLOWED;
+    uint256 public PROTOCOL_FEE;
     IOps public ops;
 
     /**
@@ -71,11 +72,12 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         ops = internalInit.ops;
 
         lastPoolTimestamp = block.timestamp;
-        poolByTimestamp[block.timestamp] = DataTypes.PoolV1(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+        poolByTimestamp[block.timestamp] = DataTypes.PoolV1(0, block.timestamp, 0, 0, 0, 0,0, 0,DataTypes.Yield( 0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
 
         poolTimestampById[0] = block.timestamp;
 
         PRECISSION = poolContract.getPrecission();
+        PROTOCOL_FEE = poolContract.getProtocolFee();
 
         STEPS = poolContract.getSteps();
         SUPERFLUID_DEPOSIT = poolContract.getSuperfluidDeposit();
@@ -148,8 +150,8 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
         uint256 yieldAccruedSincelastPool = 0;
-        if (currentYieldSnapshot > lastPool.yieldSnapshot) {
-            yieldAccruedSincelastPool = currentYieldSnapshot - lastPool.yieldSnapshot;
+        if (currentYieldSnapshot > lastPool.yield.yieldSnapshot) {
+            yieldAccruedSincelastPool = currentYieldSnapshot - lastPool.yield.yieldSnapshot;
         }
 
         (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex) = _calculateIndexes(yieldAccruedSincelastPool, lastPool);
@@ -185,7 +187,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         if (periodSpan > 0) {
             poolId++;
 
-            DataTypes.PoolV1 memory pool = DataTypes.PoolV1(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DataTypes.APY(0, 0));
+            DataTypes.PoolV1 memory pool = DataTypes.PoolV1(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
 
             pool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
 
@@ -193,24 +195,26 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
             pool.nrSuppliers = supplierId;
 
-            pool.yieldSnapshot = currentYieldSnapshot;
+            pool.yield.yieldSnapshot = currentYieldSnapshot;
 
-            pool.yieldAccrued = pool.yieldSnapshot - lastPool.yieldSnapshot;
+            pool.yield.yieldAccrued = pool.yield.yieldSnapshot - lastPool.yield.yieldSnapshot;
 
-            pool.totalYield = lastPool.totalYield + pool.yieldAccrued;
+            pool.yield.totalYield = lastPool.yield.totalYield + pool.yield.yieldAccrued;
 
            /// apy to be refined
             pool.apy.span = lastPool.apy.span + periodSpan;
-            uint256 periodApy;
+           
+            uint256 periodBalance = lastPool.deposit.add(lastPool.depositFromInFlowRate).add(lastPool.outFlowBuffer);
+            console.log(periodBalance);
 
-            periodApy = lastPool.deposit == 0 ? 0 : pool.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodSpan).div(lastPool.deposit);
+            uint256 periodApy = periodBalance == 0 ? 0 : pool.yield.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodBalance);
 
-            pool.apy.apy = ((periodSpan.mul(periodApy)).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(pool.apy.span);
+            pool.apy.apy = ((periodSpan).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(pool.apy.span);
 
-            (pool.yieldTokenIndex, pool.yieldInFlowRateIndex) = _calculateIndexes(pool.yieldAccrued, lastPool);
+            (pool.yield.yieldTokenIndex, pool.yield.yieldInFlowRateIndex) = _calculateIndexes(pool.yield.yieldAccrued, lastPool);
 
-            pool.yieldTokenIndex = pool.yieldTokenIndex + lastPool.yieldTokenIndex;
-            pool.yieldInFlowRateIndex = pool.yieldInFlowRateIndex + lastPool.yieldInFlowRateIndex;
+            pool.yield.yieldTokenIndex = pool.yield.yieldTokenIndex + lastPool.yield.yieldTokenIndex;
+            pool.yield.yieldInFlowRateIndex = pool.yield.yieldInFlowRateIndex + lastPool.yield.yieldInFlowRateIndex;
 
             pool.inFlowRate = lastPool.inFlowRate;
             pool.outFlowRate = lastPool.outFlowRate;
@@ -292,13 +296,13 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         ///// Yield from deposit
 
-        uint256 yieldFromDeposit = (supplier.deposit * (lastPool.yieldTokenIndex - supplierPool.yieldTokenIndex)).div(PRECISSION);
+        uint256 yieldFromDeposit = (supplier.deposit * (lastPool.yield.yieldTokenIndex - supplierPool.yield.yieldTokenIndex)).div(PRECISSION);
         uint256 yieldFromFlow = 0;
 
         yieldSupplier = yieldFromDeposit;
         if (supplier.inStream > 0) {
             ///// Yield from flow
-          yieldFromFlow = uint96(supplier.inStream) * (lastPool.yieldInFlowRateIndex - supplierPool.yieldInFlowRateIndex);
+          yieldFromFlow = uint96(supplier.inStream) * (lastPool.yield.yieldInFlowRateIndex - supplierPool.yield.yieldInFlowRateIndex);
 
           
         }
@@ -621,7 +625,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
                 if (balance > 0) {
                     poolStrategy.withdraw(balance, _receiver);
-                    pool.yieldSnapshot = pool.yieldSnapshot - balance;
+                    pool.yield.yieldSnapshot = pool.yield.yieldSnapshot - balance;
                 }
 
                 if (_supplier == _receiver) {
@@ -629,7 +633,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 }
             } else {
                 poolStrategy.withdraw(fromStrategy, _receiver);
-                pool.yieldSnapshot = pool.yieldSnapshot - fromStrategy;
+                pool.yield.yieldSnapshot = pool.yield.yieldSnapshot - fromStrategy;
             }
   
         }
@@ -645,7 +649,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
      *       
      */
     function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
-        poolByTimestamp[lastPoolTimestamp].yieldSnapshot += amount;
+        poolByTimestamp[lastPoolTimestamp].yield.yieldSnapshot += amount;
         poolContract.internalPushToAAVE(amount);
     }
 

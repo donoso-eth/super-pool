@@ -93,8 +93,20 @@ export class GlobalService {
   }
 
   prepareNumbers(balance: number) {
-    const niceTwo =  (Math.trunc(balance / 10 ** 18 *100)/100).toString();
-    let twoDec = niceTwo;
+
+
+    let niceTwo =  (Math.trunc(balance / 10 ** 18 *100)/100).toString();
+  
+
+    if (niceTwo == '0'){
+      niceTwo = "0.00"
+
+    } else if (niceTwo.indexOf(".") == niceTwo.length -2) {
+      niceTwo = niceTwo + "0";
+    }
+
+    let twoDec = niceTwo.toString();
+
 
     const niceFour = (balance / 10 ** 18).toFixed(6);
 
