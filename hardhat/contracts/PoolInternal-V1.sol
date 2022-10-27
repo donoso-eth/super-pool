@@ -208,7 +208,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
       uint256 periodApy = periodBalance == 0 ? 0 : pool.yieldObject.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodBalance);
 
-    console.log(208,periodApy);
+      console.log(208,periodApy);
 
       pool.apy.apy = ((periodApy).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(pool.apy.span);
 

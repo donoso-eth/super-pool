@@ -39,7 +39,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   IOps ops;
   ISuperToken superToken;
   ERC20mintable token;
-  bytes32 public depositTaksId;
+  bytes32 public depositTaskId;
   IPoolV1 pool;
   IPoolInternalV1 poolInternal;
   IPool aavePool;
@@ -56,6 +56,19 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
   constructor() {}
+
+  function pauseTask() external onlyOwner {
+    if (depositTaskId != bytes32(0)) {
+      ops.cancelTask(depositTaskId);
+      depositTaskId = bytes32(0);
+    }
+  }
+
+  function launchTask() external onlyOwner {
+    if (depositTaskId != bytes32(0)) {
+      depositTaskId = createDepositTask();
+    }
+  }
 
   // #region  ============= ============= Allocation Strategy  ============= ============= //
 
@@ -83,7 +96,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
     aaveToken.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
-    depositTaksId = createDepositTask();
+    depositTaskId = createDepositTask();
   }
 
   function withdraw(uint256 amount, address _supplier) external onlyInternal {
@@ -180,14 +193,12 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
     uint256 currentPoolBuffer = poolInternal.getLastPool().outFlowBuffer;
     uint256 currentThreshold = currentPoolBuffer;
-        console.log(184,uint256(balance));
-       console.log(185,currentThreshold);
-    if (uint256(balance) >currentThreshold) {
+    console.log(184, uint256(balance));
+    console.log(185, currentThreshold);
+    if (uint256(balance) > currentThreshold) {
+      uint256 amountToDeposit = uint256(balance) - currentThreshold;
 
-    uint256 amountToDeposit = uint256(balance) - currentThreshold;
-
-    _deposit(amountToDeposit);
-
+      _deposit(amountToDeposit);
     }
   }
 
