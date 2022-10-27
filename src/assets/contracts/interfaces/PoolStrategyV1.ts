@@ -24,8 +24,11 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     "checkerDeposit(uint256)": FunctionFragment;
     "depositTaksId()": FunctionFragment;
     "depositTask()": FunctionFragment;
+    "getCodeAddress()": FunctionFragment;
     "initialize(address,address,address,address,address,address,address,address)": FunctionFragment;
+    "proxiableUUID()": FunctionFragment;
     "pushToStrategy()": FunctionFragment;
+    "updateCode(address)": FunctionFragment;
     "withdraw(uint256,address)": FunctionFragment;
   };
 
@@ -44,13 +47,22 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getCodeAddress",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "initialize",
     values: [string, string, string, string, string, string, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "proxiableUUID",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "pushToStrategy",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "updateCode", values: [string]): string;
   encodeFunctionData(
     functionFragment: "withdraw",
     values: [BigNumberish, string]
@@ -70,19 +82,37 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     functionFragment: "depositTask",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "getCodeAddress",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "proxiableUUID",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "pushToStrategy",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "updateCode", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
+    "CodeUpdated(bytes32,address)": EventFragment;
     "Initialized(uint8)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "CodeUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
 }
+
+export type CodeUpdatedEvent = TypedEvent<
+  [string, string],
+  { uuid: string; codeAddress: string }
+>;
+
+export type CodeUpdatedEventFilter = TypedEventFilter<CodeUpdatedEvent>;
 
 export type InitializedEvent = TypedEvent<[number], { version: number }>;
 
@@ -132,6 +162,10 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    getCodeAddress(
+      overrides?: CallOverrides
+    ): Promise<[string] & { codeAddress: string }>;
+
     initialize(
       _ops: string,
       _superToken: string,
@@ -144,7 +178,14 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
+
     pushToStrategy(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    updateCode(
+      newAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -170,6 +211,8 @@ export interface PoolStrategyV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  getCodeAddress(overrides?: CallOverrides): Promise<string>;
+
   initialize(
     _ops: string,
     _superToken: string,
@@ -182,7 +225,14 @@ export interface PoolStrategyV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  proxiableUUID(overrides?: CallOverrides): Promise<string>;
+
   pushToStrategy(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  updateCode(
+    newAddress: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -206,6 +256,8 @@ export interface PoolStrategyV1 extends BaseContract {
 
     depositTask(overrides?: CallOverrides): Promise<void>;
 
+    getCodeAddress(overrides?: CallOverrides): Promise<string>;
+
     initialize(
       _ops: string,
       _superToken: string,
@@ -218,7 +270,11 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    proxiableUUID(overrides?: CallOverrides): Promise<string>;
+
     pushToStrategy(overrides?: CallOverrides): Promise<void>;
+
+    updateCode(newAddress: string, overrides?: CallOverrides): Promise<void>;
 
     withdraw(
       amount: BigNumberish,
@@ -228,6 +284,12 @@ export interface PoolStrategyV1 extends BaseContract {
   };
 
   filters: {
+    "CodeUpdated(bytes32,address)"(
+      uuid?: null,
+      codeAddress?: null
+    ): CodeUpdatedEventFilter;
+    CodeUpdated(uuid?: null, codeAddress?: null): CodeUpdatedEventFilter;
+
     "Initialized(uint8)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
   };
@@ -248,6 +310,8 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    getCodeAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
     initialize(
       _ops: string,
       _superToken: string,
@@ -260,7 +324,14 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
+
     pushToStrategy(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    updateCode(
+      newAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -287,6 +358,8 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    getCodeAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     initialize(
       _ops: string,
       _superToken: string,
@@ -299,7 +372,14 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     pushToStrategy(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    updateCode(
+      newAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

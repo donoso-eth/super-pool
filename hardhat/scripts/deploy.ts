@@ -18,6 +18,7 @@ import { initEnv, waitForTx } from '../helpers/utils';
 import { INETWORK_CONFIG } from '../helpers/models';
 import { PoolV1__factory } from '../typechain-types/factories/PoolV1__factory';
 import { CreatePoolInputStruct, SuperPoolFactory, SuperPoolFactoryInitializerStruct } from '../typechain-types/SuperPoolFactory';
+import { NetworkObject } from '../test/helpers/models-V1';
 
 interface ICONTRACT_DEPLOY {
   artifactsPath: string;
@@ -44,16 +45,7 @@ const eventAbi: any[] = Events__factory.abi;
 ensureDir(contract_path);
 
 async function main() {
-  let addressObject = {} as {
-    poolImpl: string;
-    poolInternalImpl: string;
-    poolStrategyImpl: string;
-    poolFactoryImpl: string;
-    poolProxy: string;
-    poolInternalProxy: string;
-    poolStrategyProxy: string;
-    poolFactoryProxy: string;
-  };
+  let addressObject = {} as NetworkObject 
 
   let network = hardhatArguments.network;
   if (network == undefined) {

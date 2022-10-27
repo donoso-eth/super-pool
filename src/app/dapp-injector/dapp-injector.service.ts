@@ -205,16 +205,16 @@ export class DappInjector implements OnDestroy {
   private async contractInitialization() {
 
 
-    let hostContract = new Contract(HostMetadata.address, HostMetadata.abi,this.DAPP_STATE.signer!) as  SuperPoolFactory;
+    // let hostContract = new Contract(HostMetadata.address, HostMetadata.abi,this.DAPP_STATE.signer!) as  SuperPoolFactory;
     
-    console.log(HostMetadata.address)
+    // console.log(HostMetadata.address)
 
-    console.log(settings.goerli.supertoken)
-    let resolver = await hostContract.getRecordBySuperTokenAddress(settings.goerli.supertoken,'0x07ec67FC9a63Ec50cf47213D4dCE8319b3560615')//'0x6346C82d827FC455ccB48cbA56F01c158e1F7c86');
+    // console.log(settings.goerli.supertoken)
+    // let resolver = await hostContract.getRecordBySuperTokenAddress(settings.goerli.supertoken,'0xD551a700a4c406351B25FD0fF8554dDE365c503D')//'0x6346C82d827FC455ccB48cbA56F01c158e1F7c86');
 
-    console.log(resolver);
+    // console.log(resolver);
 
-    PoolMetadata.address = resolver.pool;//  '0xf1872346caF0eBf567bd9704AE2B661c8D034998';
+    PoolMetadata.address = '0x998DeB10b916dC198f8F2b2E0f5C26959e82510c'//resolver.pool;//  '0xf1872346caF0eBf567bd9704AE2B661c8D034998';
 
     const contract = new AngularContract<PoolV1>({
      metadata:  PoolMetadata,

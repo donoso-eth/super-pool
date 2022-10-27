@@ -56,6 +56,8 @@ type Pool @entity {
   yieldSnapshot: BigInt!
   totalYield: BigInt!
 
+  protocolYield: BigInt!
+
   nrSuppliers: BigInt!
 
   apySpan: BigInt!

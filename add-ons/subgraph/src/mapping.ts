@@ -1,7 +1,6 @@
-
-import { Pool, Supplier,Event } from '../generated/schema';
-import { PoolUpdate, SupplierEvent, SupplierUpdate} from '../generated/PoolV1/PoolV1'
-import { BigInt } from '@graphprotocol/graph-ts';
+import {Pool, Supplier, Event} from '../generated/schema'
+import {PoolUpdate, SupplierEvent,SupplierUpdate} from '../generated/PoolV1/PoolV1'
+import {BigInt} from '@graphprotocol/graph-ts'
 
 export function handlePoolUpdate(event: PoolUpdate): void {
   let id = event.params.pool.id.toString();
@@ -16,11 +15,12 @@ export function handlePoolUpdate(event: PoolUpdate): void {
     pool.inFlowRate= poolEvent.inFlowRate;
     pool.outFlowRate = poolEvent.outFlowRate;
     pool.outFlowBuffer = poolEvent.outFlowBuffer;
-    pool.yieldTokenIndex = poolEvent.yieldTokenIndex;
-    pool.yieldInFlowRateIndex = poolEvent.yieldInFlowRateIndex;
-    pool.yieldAccrued = poolEvent.yieldAccrued;
-    pool.yieldSnapshot = poolEvent.yieldSnapshot;
-    pool.totalYield = poolEvent.totalYield;
+    pool.yieldTokenIndex = poolEvent.yieldObject.yieldTokenIndex;
+    pool.yieldInFlowRateIndex = poolEvent.yieldObject.yieldInFlowRateIndex;
+    pool.yieldAccrued = poolEvent.yieldObject.yieldAccrued;
+    pool.yieldSnapshot = poolEvent.yieldObject.yieldSnapshot;
+    pool.totalYield = poolEvent.yieldObject.totalYield;
+    pool.protocolYield = poolEvent.yieldObject.protocolYield;
     pool.nrSuppliers = poolEvent.nrSuppliers;
     pool.apy  = poolEvent.apy.apy;
     pool.apySpan = poolEvent.apy.span;

@@ -155,28 +155,38 @@ export class PoolUpdatePoolStruct extends ethereum.Tuple {
     return this[7].toBigInt();
   }
 
-  get yieldTokenIndex(): BigInt {
-    return this[8].toBigInt();
-  }
-
-  get yieldInFlowRateIndex(): BigInt {
-    return this[9].toBigInt();
-  }
-
-  get yieldAccrued(): BigInt {
-    return this[10].toBigInt();
-  }
-
-  get yieldSnapshot(): BigInt {
-    return this[11].toBigInt();
-  }
-
-  get totalYield(): BigInt {
-    return this[12].toBigInt();
+  get yieldObject(): PoolUpdatePoolYieldObjectStruct {
+    return changetype<PoolUpdatePoolYieldObjectStruct>(this[8].toTuple());
   }
 
   get apy(): PoolUpdatePoolApyStruct {
-    return changetype<PoolUpdatePoolApyStruct>(this[13].toTuple());
+    return changetype<PoolUpdatePoolApyStruct>(this[9].toTuple());
+  }
+}
+
+export class PoolUpdatePoolYieldObjectStruct extends ethereum.Tuple {
+  get yieldTokenIndex(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get yieldInFlowRateIndex(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get yieldAccrued(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get yieldSnapshot(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get totalYield(): BigInt {
+    return this[4].toBigInt();
+  }
+
+  get protocolYield(): BigInt {
+    return this[5].toBigInt();
   }
 }
 
@@ -351,30 +361,42 @@ export class PoolV1__getLastPoolResultValue0Struct extends ethereum.Tuple {
     return this[7].toBigInt();
   }
 
-  get yieldTokenIndex(): BigInt {
-    return this[8].toBigInt();
-  }
-
-  get yieldInFlowRateIndex(): BigInt {
-    return this[9].toBigInt();
-  }
-
-  get yieldAccrued(): BigInt {
-    return this[10].toBigInt();
-  }
-
-  get yieldSnapshot(): BigInt {
-    return this[11].toBigInt();
-  }
-
-  get totalYield(): BigInt {
-    return this[12].toBigInt();
+  get yieldObject(): PoolV1__getLastPoolResultValue0YieldObjectStruct {
+    return changetype<PoolV1__getLastPoolResultValue0YieldObjectStruct>(
+      this[8].toTuple()
+    );
   }
 
   get apy(): PoolV1__getLastPoolResultValue0ApyStruct {
     return changetype<PoolV1__getLastPoolResultValue0ApyStruct>(
-      this[13].toTuple()
+      this[9].toTuple()
     );
+  }
+}
+
+export class PoolV1__getLastPoolResultValue0YieldObjectStruct extends ethereum.Tuple {
+  get yieldTokenIndex(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get yieldInFlowRateIndex(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get yieldAccrued(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get yieldSnapshot(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get totalYield(): BigInt {
+    return this[4].toBigInt();
+  }
+
+  get protocolYield(): BigInt {
+    return this[5].toBigInt();
   }
 }
 
@@ -421,28 +443,40 @@ export class PoolV1__getPoolResultValue0Struct extends ethereum.Tuple {
     return this[7].toBigInt();
   }
 
-  get yieldTokenIndex(): BigInt {
-    return this[8].toBigInt();
-  }
-
-  get yieldInFlowRateIndex(): BigInt {
-    return this[9].toBigInt();
-  }
-
-  get yieldAccrued(): BigInt {
-    return this[10].toBigInt();
-  }
-
-  get yieldSnapshot(): BigInt {
-    return this[11].toBigInt();
-  }
-
-  get totalYield(): BigInt {
-    return this[12].toBigInt();
+  get yieldObject(): PoolV1__getPoolResultValue0YieldObjectStruct {
+    return changetype<PoolV1__getPoolResultValue0YieldObjectStruct>(
+      this[8].toTuple()
+    );
   }
 
   get apy(): PoolV1__getPoolResultValue0ApyStruct {
-    return changetype<PoolV1__getPoolResultValue0ApyStruct>(this[13].toTuple());
+    return changetype<PoolV1__getPoolResultValue0ApyStruct>(this[9].toTuple());
+  }
+}
+
+export class PoolV1__getPoolResultValue0YieldObjectStruct extends ethereum.Tuple {
+  get yieldTokenIndex(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get yieldInFlowRateIndex(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get yieldAccrued(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get yieldSnapshot(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get totalYield(): BigInt {
+    return this[4].toBigInt();
+  }
+
+  get protocolYield(): BigInt {
+    return this[5].toBigInt();
   }
 }
 
@@ -650,6 +684,21 @@ export class PoolV1 extends ethereum.SmartContract {
 
   try_PRECISSION(): ethereum.CallResult<BigInt> {
     let result = super.tryCall("PRECISSION", "PRECISSION():(uint256)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  PROTOCOL_FEE(): BigInt {
+    let result = super.call("PROTOCOL_FEE", "PROTOCOL_FEE():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_PROTOCOL_FEE(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("PROTOCOL_FEE", "PROTOCOL_FEE():(uint256)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -1148,10 +1197,56 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
+  getDepositTriggerAmount(): BigInt {
+    let result = super.call(
+      "getDepositTriggerAmount",
+      "getDepositTriggerAmount():(uint256)",
+      []
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getDepositTriggerAmount(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "getDepositTriggerAmount",
+      "getDepositTriggerAmount():(uint256)",
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getDepositTriggerTime(): BigInt {
+    let result = super.call(
+      "getDepositTriggerTime",
+      "getDepositTriggerTime():(uint256)",
+      []
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_getDepositTriggerTime(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "getDepositTriggerTime",
+      "getDepositTriggerTime():(uint256)",
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   getLastPool(): PoolV1__getLastPoolResultValue0Struct {
     let result = super.call(
       "getLastPool",
-      "getLastPool():((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))",
+      "getLastPool():((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))",
       []
     );
 
@@ -1165,7 +1260,7 @@ export class PoolV1 extends ethereum.SmartContract {
   > {
     let result = super.tryCall(
       "getLastPool",
-      "getLastPool():((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))",
+      "getLastPool():((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))",
       []
     );
     if (result.reverted) {
@@ -1203,7 +1298,7 @@ export class PoolV1 extends ethereum.SmartContract {
   getPool(timestamp: BigInt): PoolV1__getPoolResultValue0Struct {
     let result = super.call(
       "getPool",
-      "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))",
+      "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))",
       [ethereum.Value.fromUnsignedBigInt(timestamp)]
     );
 
@@ -1215,7 +1310,7 @@ export class PoolV1 extends ethereum.SmartContract {
   ): ethereum.CallResult<PoolV1__getPoolResultValue0Struct> {
     let result = super.tryCall(
       "getPool",
-      "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))",
+      "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))",
       [ethereum.Value.fromUnsignedBigInt(timestamp)]
     );
     if (result.reverted) {
@@ -1256,6 +1351,25 @@ export class PoolV1 extends ethereum.SmartContract {
     let result = super.tryCall(
       "getPrecission",
       "getPrecission():(uint256)",
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  getProtocolFee(): BigInt {
+    let result = super.call("getProtocolFee", "getProtocolFee():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try_getProtocolFee(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "getProtocolFee",
+      "getProtocolFee():(uint256)",
       []
     );
     if (result.reverted) {
@@ -1432,6 +1546,21 @@ export class PoolV1 extends ethereum.SmartContract {
 
   try_owner(): ethereum.CallResult<Address> {
     let result = super.tryCall("owner", "owner():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  poolFactory(): Address {
+    let result = super.call("poolFactory", "poolFactory():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_poolFactory(): ethereum.CallResult<Address> {
+    let result = super.tryCall("poolFactory", "poolFactory():(address)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -2102,6 +2231,66 @@ export class RedeemFlowStopCall__Outputs {
   _call: RedeemFlowStopCall;
 
   constructor(call: RedeemFlowStopCall) {
+    this._call = call;
+  }
+}
+
+export class SetDepositTriggerAmountCall extends ethereum.Call {
+  get inputs(): SetDepositTriggerAmountCall__Inputs {
+    return new SetDepositTriggerAmountCall__Inputs(this);
+  }
+
+  get outputs(): SetDepositTriggerAmountCall__Outputs {
+    return new SetDepositTriggerAmountCall__Outputs(this);
+  }
+}
+
+export class SetDepositTriggerAmountCall__Inputs {
+  _call: SetDepositTriggerAmountCall;
+
+  constructor(call: SetDepositTriggerAmountCall) {
+    this._call = call;
+  }
+
+  get _amount(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class SetDepositTriggerAmountCall__Outputs {
+  _call: SetDepositTriggerAmountCall;
+
+  constructor(call: SetDepositTriggerAmountCall) {
+    this._call = call;
+  }
+}
+
+export class SetDepositTriggerTimeCall extends ethereum.Call {
+  get inputs(): SetDepositTriggerTimeCall__Inputs {
+    return new SetDepositTriggerTimeCall__Inputs(this);
+  }
+
+  get outputs(): SetDepositTriggerTimeCall__Outputs {
+    return new SetDepositTriggerTimeCall__Outputs(this);
+  }
+}
+
+export class SetDepositTriggerTimeCall__Inputs {
+  _call: SetDepositTriggerTimeCall;
+
+  constructor(call: SetDepositTriggerTimeCall) {
+    this._call = call;
+  }
+
+  get _time(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+}
+
+export class SetDepositTriggerTimeCall__Outputs {
+  _call: SetDepositTriggerTimeCall;
+
+  constructor(call: SetDepositTriggerTimeCall) {
     this._call = call;
   }
 }

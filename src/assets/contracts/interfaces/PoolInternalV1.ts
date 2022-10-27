@@ -58,7 +58,7 @@ export type PoolV1Struct = {
   inFlowRate: BigNumberish;
   outFlowRate: BigNumberish;
   outFlowBuffer: BigNumberish;
-  yield: YieldStruct;
+  yieldObject: YieldStruct;
   apy: APYStruct;
 };
 
@@ -82,7 +82,7 @@ export type PoolV1StructOutput = [
   inFlowRate: BigNumber;
   outFlowRate: BigNumber;
   outFlowBuffer: BigNumber;
-  yield: YieldStructOutput;
+  yieldObject: YieldStructOutput;
   apy: APYStructOutput;
 };
 
@@ -617,7 +617,7 @@ export interface PoolInternalV1 extends BaseContract {
         inFlowRate: BigNumber;
         outFlowRate: BigNumber;
         outFlowBuffer: BigNumber;
-        yield: YieldStructOutput;
+        yieldObject: YieldStructOutput;
         apy: APYStructOutput;
       }
     >;
@@ -811,7 +811,7 @@ export interface PoolInternalV1 extends BaseContract {
       inFlowRate: BigNumber;
       outFlowRate: BigNumber;
       outFlowBuffer: BigNumber;
-      yield: YieldStructOutput;
+      yieldObject: YieldStructOutput;
       apy: APYStructOutput;
     }
   >;
@@ -998,7 +998,7 @@ export interface PoolInternalV1 extends BaseContract {
         inFlowRate: BigNumber;
         outFlowRate: BigNumber;
         outFlowBuffer: BigNumber;
-        yield: YieldStructOutput;
+        yieldObject: YieldStructOutput;
         apy: APYStructOutput;
       }
     >;

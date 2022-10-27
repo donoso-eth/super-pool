@@ -5,12 +5,11 @@ import { join } from 'path';
 import { constants } from 'ethers';
 import { INETWORK_CONFIG } from '../helpers/models';
 import { PoolInfoStructOutput, SuperPoolFactory } from '../typechain-types/SuperPoolFactory';
-import { PoolV1, PoolV1__factory, SuperPoolFactory__factory } from '../typechain-types';
+import { PoolInternalV1__factory, PoolV1, PoolV1__factory, SuperPoolFactory__factory } from '../typechain-types';
 
 
 import config from '../hardhat.config';
 import { NetworkObject } from '../test/helpers/models-V1';
-
 const contract_path_relative = '../src/assets/contracts/';
 const processDir = process.cwd();
 const contract_path = join(processDir, contract_path_relative);
@@ -23,11 +22,10 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 let network_params = networks_config['goerli'];
 
 
-task('update_pool_contract', 'update_pool_contract.ts').setAction(async ({}, hre) => {
+task('update_poolInternal_contract', 'update_poolInternal_contract.ts').setAction(async ({}, hre) => {
   const  [deployer, user1, user2, user3, user4, user5, user6,]= await initEnv(hre);
 
 
-  
   let network = hre.network.name;
   if (network == undefined) {
     network = config.defaultNetwork as string;
@@ -39,21 +37,26 @@ task('update_pool_contract', 'update_pool_contract.ts').setAction(async ({}, hre
   let networkAdresses:NetworkObject = JSON.parse(readFileSync(join(processDir,  network +'_contracts.json'), 'utf-8'));
 
 
-  let pool = await PoolV1__factory.connect(networkAdresses.poolProxy, deployer)
+
+  let poolInternal = await PoolV1__factory.connect(networkAdresses.poolInternalProxy, deployer) as PoolV1;
+
+
+  console.log(deployer.address)
+
+
   
 
   ///// deploy new Implementation poolv1
   let nonce = await deployer.getTransactionCount();
-  const poolImpl = await new PoolV1__factory(deployer).deploy({ gasLimit: 10000000, nonce:nonce });
+  const poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy({ gasLimit: 10000000, nonce:nonce });
 
   //await pool.updateCode(poolImpl.address)
 
+ await poolInternal.updateCode(poolInternalImpl.address,{ gasLimit: 10000000, nonce:nonce + 1} ) 
 
 
-  await pool.updateCode(poolImpl.address,{ gasLimit: 10000000, nonce:nonce + 1} ) 
- 
+
   
-
 
 
 

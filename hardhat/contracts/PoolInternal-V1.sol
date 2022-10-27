@@ -11,7 +11,6 @@ import {ISuperToken, ISuperfluid} from "@superfluid-finance/ethereum-contracts/c
 import {IOps} from "./gelato/IOps.sol";
 import {LibDataTypes} from "./gelato/LibDataTypes.sol";
 
-import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 
 import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 import {IPoolV1} from "./interfaces/IPool-V1.sol";
@@ -147,8 +146,8 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
     uint256 yieldAccruedSincelastPool = 0;
-    if (currentYieldSnapshot > lastPool.yield.yieldSnapshot) {
-      yieldAccruedSincelastPool = currentYieldSnapshot - lastPool.yield.yieldSnapshot;
+    if (currentYieldSnapshot > lastPool.yieldObject.yieldSnapshot) {
+      yieldAccruedSincelastPool = currentYieldSnapshot - lastPool.yieldObject.yieldSnapshot;
     }
 
     (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex) = _calculateIndexes(yieldAccruedSincelastPool, lastPool);
@@ -191,30 +190,32 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
       pool.nrSuppliers = supplierId;
 
-      pool.yield.yieldSnapshot = currentYieldSnapshot;
+      pool.yieldObject.yieldSnapshot = currentYieldSnapshot;
 
-      uint256 periodAccrued = pool.yield.yieldSnapshot - lastPool.yield.yieldSnapshot;
+      uint256 periodAccrued = pool.yieldObject.yieldSnapshot - lastPool.yieldObject.yieldSnapshot;
 
-      pool.yield.protocolYield = pool.yield.protocolYield.mul(PROTOCOL_FEE);
+      pool.yieldObject.protocolYield = pool.yieldObject.protocolYield.mul(PROTOCOL_FEE);
 
-      pool.yield.yieldAccrued = periodAccrued.mul(100 - PROTOCOL_FEE).div(100);
+      pool.yieldObject.yieldAccrued = periodAccrued.mul(100 - PROTOCOL_FEE).div(100);
 
-      pool.yield.totalYield = lastPool.yield.totalYield + pool.yield.yieldAccrued;
+      pool.yieldObject.totalYield = lastPool.yieldObject.totalYield + pool.yieldObject.yieldAccrued;
 
       /// apy to be refined
       pool.apy.span = lastPool.apy.span + periodSpan;
 
       uint256 periodBalance = lastPool.deposit.add(lastPool.depositFromInFlowRate).add(lastPool.outFlowBuffer);
-      console.log(periodBalance);
+      console.log(207,periodBalance);
 
-      uint256 periodApy = periodBalance == 0 ? 0 : pool.yield.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodBalance);
+      uint256 periodApy = periodBalance == 0 ? 0 : pool.yieldObject.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodBalance);
+
+    console.log(208,periodApy);
 
       pool.apy.apy = ((periodApy).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(pool.apy.span);
 
-      (pool.yield.yieldTokenIndex, pool.yield.yieldInFlowRateIndex) = _calculateIndexes(pool.yield.yieldAccrued, lastPool);
+      (pool.yieldObject.yieldTokenIndex, pool.yieldObject.yieldInFlowRateIndex) = _calculateIndexes(pool.yieldObject.yieldAccrued, lastPool);
 
-      pool.yield.yieldTokenIndex = pool.yield.yieldTokenIndex + lastPool.yield.yieldTokenIndex;
-      pool.yield.yieldInFlowRateIndex = pool.yield.yieldInFlowRateIndex + lastPool.yield.yieldInFlowRateIndex;
+      pool.yieldObject.yieldTokenIndex = pool.yieldObject.yieldTokenIndex + lastPool.yieldObject.yieldTokenIndex;
+      pool.yieldObject.yieldInFlowRateIndex = pool.yieldObject.yieldInFlowRateIndex + lastPool.yieldObject.yieldInFlowRateIndex;
 
       pool.inFlowRate = lastPool.inFlowRate;
       pool.outFlowRate = lastPool.outFlowRate;
@@ -293,13 +294,13 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
     ///// Yield from deposit
 
-    uint256 yieldFromDeposit = (supplier.deposit * (lastPool.yield.yieldTokenIndex - supplierPool.yield.yieldTokenIndex)).div(PRECISSION);
+    uint256 yieldFromDeposit = (supplier.deposit * (lastPool.yieldObject.yieldTokenIndex - supplierPool.yieldObject.yieldTokenIndex)).div(PRECISSION);
     uint256 yieldFromFlow = 0;
 
     yieldSupplier = yieldFromDeposit;
     if (supplier.inStream > 0) {
       ///// Yield from flow
-      yieldFromFlow = uint96(supplier.inStream) * (lastPool.yield.yieldInFlowRateIndex - supplierPool.yield.yieldInFlowRateIndex);
+      yieldFromFlow = uint96(supplier.inStream) * (lastPool.yieldObject.yieldInFlowRateIndex - supplierPool.yieldObject.yieldInFlowRateIndex);
     }
     yieldSupplier = yieldSupplier + yieldFromFlow;
   }
@@ -615,7 +616,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         if (balance > 0) {
           poolStrategy.withdraw(balance, _receiver);
-          pool.yield.yieldSnapshot = pool.yield.yieldSnapshot - balance;
+          pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - balance;
         }
 
         if (_supplier == _receiver) {
@@ -623,7 +624,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         }
       } else {
         poolStrategy.withdraw(fromStrategy, _receiver);
-        pool.yield.yieldSnapshot = pool.yield.yieldSnapshot - fromStrategy;
+        pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - fromStrategy;
       }
     }
   }
@@ -638,7 +639,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
    *
    */
   function pushedToStrategy(uint256 amount) external onlyPoolStrategy {
-    poolByTimestamp[lastPoolTimestamp].yield.yieldSnapshot += amount;
+    poolByTimestamp[lastPoolTimestamp].yieldObject.yieldSnapshot += amount;
     poolContract.internalPushToAAVE(amount);
   }
 

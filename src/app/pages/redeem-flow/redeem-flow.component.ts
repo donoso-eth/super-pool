@@ -101,8 +101,15 @@ export class RedeemFlowComponent  extends DappBaseComponent implements OnInit {
     console.log(gasLimit);
    // throw new Error("");
     
-    await doSignerTransaction(this.dapp.defaultContract!.instance.redeemFlow(flowRate,{gasLimit:20000000}))
+   let result =  await doSignerTransaction(this.dapp.defaultContract!.instance.redeemFlow(flowRate,{gasLimit:20000000}))
+   if (result.success == true) {
+    this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
 
+  } else {
+    this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+    this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+    return;
+  }
 
     //this.store.dispatch(Web3Actions.chainBusy({ status: false}));
    this.back()

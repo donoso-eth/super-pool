@@ -3,14 +3,13 @@ import { task } from 'hardhat/config';
 import { initEnv, waitForTx } from '../helpers/utils';
 import { join } from 'path';
 import { constants } from 'ethers';
-import { INETWORK_CONFIG } from '../helpers/models';
+
 import { PoolInfoStructOutput, SuperPoolFactory } from '../typechain-types/SuperPoolFactory';
-import { PoolV1, PoolV1__factory, SuperPoolFactory__factory } from '../typechain-types';
+import { PoolInternalV1__factory, PoolStrategyV1__factory, PoolV1, PoolV1__factory, SuperPoolFactory__factory } from '../typechain-types';
 
-
+import { INETWORK_CONFIG } from '../helpers/models';
 import config from '../hardhat.config';
 import { NetworkObject } from '../test/helpers/models-V1';
-
 const contract_path_relative = '../src/assets/contracts/';
 const processDir = process.cwd();
 const contract_path = join(processDir, contract_path_relative);
@@ -23,11 +22,10 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 let network_params = networks_config['goerli'];
 
 
-task('update_pool_contract', 'update_pool_contract.ts').setAction(async ({}, hre) => {
+task('update_poolStrategy_contract', 'update_poolInternal_contract.ts').setAction(async ({}, hre) => {
   const  [deployer, user1, user2, user3, user4, user5, user6,]= await initEnv(hre);
 
 
-  
   let network = hre.network.name;
   if (network == undefined) {
     network = config.defaultNetwork as string;
@@ -39,21 +37,20 @@ task('update_pool_contract', 'update_pool_contract.ts').setAction(async ({}, hre
   let networkAdresses:NetworkObject = JSON.parse(readFileSync(join(processDir,  network +'_contracts.json'), 'utf-8'));
 
 
-  let pool = await PoolV1__factory.connect(networkAdresses.poolProxy, deployer)
+  let poolStrategy = await PoolStrategyV1__factory.connect(networkAdresses.poolStrategyProxy, deployer)
   
 
   ///// deploy new Implementation poolv1
   let nonce = await deployer.getTransactionCount();
-  const poolImpl = await new PoolV1__factory(deployer).deploy({ gasLimit: 10000000, nonce:nonce });
+  const poolStrategyImpl = await new PoolStrategyV1__factory(deployer).deploy({ gasLimit: 10000000, nonce:nonce });
 
   //await pool.updateCode(poolImpl.address)
 
 
 
-  await pool.updateCode(poolImpl.address,{ gasLimit: 10000000, nonce:nonce + 1} ) 
+  await poolStrategy.updateCode(poolStrategyImpl.address,{ gasLimit: 10000000, nonce:nonce + 1} ) 
  
   
-
 
 
 

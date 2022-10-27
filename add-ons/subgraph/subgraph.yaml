@@ -6,7 +6,7 @@ dataSources:
     name: PoolV1
     network: localhost
     source:
-      address: '0xe4594D171Ff0A962c4b8Ce949eE08000B1A43B45'
+      address: '0x998DeB10b916dC198f8F2b2E0f5C26959e82510c'
       abi: PoolV1
       startBlock: 7755313
     mapping:
@@ -22,7 +22,7 @@ dataSources:
           file: ./abis/pool_v1.json
       eventHandlers: 
         - event: >-
-            PoolUpdate((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))
+            PoolUpdate((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))
           handler: handlePoolUpdate
         - event: >-
             SupplierUpdate((uint256,address,uint256,uint256,uint256,uint256,uint256,int96,(int96,uint256,uint256,uint256,uint256,bytes32),(uint256,uint256)))

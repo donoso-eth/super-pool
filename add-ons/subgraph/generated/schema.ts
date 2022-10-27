@@ -23,9 +23,7 @@ export class Supplier extends Entity {
     this.set("deposit", Value.fromBigInt(BigInt.zero()));
     this.set("cumulatedYield", Value.fromBigInt(BigInt.zero()));
     this.set("inFlow", Value.fromBigInt(BigInt.zero()));
-    this.set("inCancelFlowId", Value.fromString(""));
     this.set("outFlow", Value.fromBigInt(BigInt.zero()));
-    this.set("outCancelFlowId", Value.fromString(""));
     this.set("outStepAmount", Value.fromBigInt(BigInt.zero()));
     this.set("outStepTime", Value.fromBigInt(BigInt.zero()));
     this.set("outInitTime", Value.fromBigInt(BigInt.zero()));
@@ -115,15 +113,6 @@ export class Supplier extends Entity {
     this.set("inFlow", Value.fromBigInt(value));
   }
 
-  get inCancelFlowId(): string {
-    let value = this.get("inCancelFlowId");
-    return value!.toString();
-  }
-
-  set inCancelFlowId(value: string) {
-    this.set("inCancelFlowId", Value.fromString(value));
-  }
-
   get outFlow(): BigInt {
     let value = this.get("outFlow");
     return value!.toBigInt();
@@ -131,15 +120,6 @@ export class Supplier extends Entity {
 
   set outFlow(value: BigInt) {
     this.set("outFlow", Value.fromBigInt(value));
-  }
-
-  get outCancelFlowId(): string {
-    let value = this.get("outCancelFlowId");
-    return value!.toString();
-  }
-
-  set outCancelFlowId(value: string) {
-    this.set("outCancelFlowId", Value.fromString(value));
   }
 
   get outStepAmount(): BigInt {
@@ -222,6 +202,7 @@ export class Pool extends Entity {
     this.set("yieldAccrued", Value.fromBigInt(BigInt.zero()));
     this.set("yieldSnapshot", Value.fromBigInt(BigInt.zero()));
     this.set("totalYield", Value.fromBigInt(BigInt.zero()));
+    this.set("protocolYield", Value.fromBigInt(BigInt.zero()));
     this.set("nrSuppliers", Value.fromBigInt(BigInt.zero()));
     this.set("apySpan", Value.fromBigInt(BigInt.zero()));
     this.set("apy", Value.fromBigInt(BigInt.zero()));
@@ -350,6 +331,15 @@ export class Pool extends Entity {
 
   set totalYield(value: BigInt) {
     this.set("totalYield", Value.fromBigInt(value));
+  }
+
+  get protocolYield(): BigInt {
+    let value = this.get("protocolYield");
+    return value!.toBigInt();
+  }
+
+  set protocolYield(value: BigInt) {
+    this.set("protocolYield", Value.fromBigInt(value));
   }
 
   get nrSuppliers(): BigInt {

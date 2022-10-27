@@ -190,7 +190,6 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
         address _supplier = msg.sender;
 
-      
 
         require(balance >= redeemAmount, "NOT_ENOUGH_BALANCE");
 
@@ -525,11 +524,12 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     }
 
     function emitEvents(address _supplier) internal {
+        poolStrategy.pushToStrategy();
         DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
         emit Events.SupplierUpdate(supplier);
         DataTypes.PoolV1 memory pool = poolInternal.getLastPool();
         emit Events.PoolUpdate(pool);
-        poolStrategy.pushToStrategy();
+        
     }
 
     function _transfer(uint256 _amount, address _paymentToken) internal {

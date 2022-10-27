@@ -64,9 +64,18 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
   async stopRedeemFlow() {
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'stopping your Receiving flow', header: 'Un momento' } }));
- 
-    await (doSignerTransaction(this.dapp.defaultContract?.instance.redeemFlowStop({gasLimit:2000000})!))
+  
+      let result =  await (doSignerTransaction(this.dapp.defaultContract?.instance.redeemFlowStop({gasLimit:2000000})!))
 
+      if (result.success == true) {
+        this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+      } else {
+        this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+        this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+        return;
+      }
+  
   }
 
   showStartFlow() {
@@ -100,17 +109,18 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
     let amount = utils.parseEther(this.depositAmountCtrl.value.toString());
 
     
-    // console.log(this.depositAmountCtrl.value.toString());
-
-
-    // console.log(amount.toString())
-
-
 
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'it is ok to need the money....', header: 'Un momento' } }));
-     await doSignerTransaction(this.dapp.defaultContract?.instance?.redeemDeposit(amount,{gasLimit:2000000})!)
-    
+    let result =  await doSignerTransaction(this.dapp.defaultContract?.instance?.redeemDeposit(amount,{gasLimit:2000000})!)
+    if (result.success == true) {
+      this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+    } else {
+      this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+      return;
+    }
     }
 
   async deposit() {
@@ -130,7 +140,14 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
     
     this.store.dispatch(Web3Actions.chainBusy({ status: true }));
     this.store.dispatch(Web3Actions.chainBusyWithMessage({ message: { body: 'Yes, yes your deposit is on the way', header: 'Un momento' } }));
-    await this.erc777.depositIntoPool(amount);
+    let result = await this.erc777.depositIntoPool(amount);
+    if (result.success == true) {
+      this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+    } else {
+      this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+    }
 
     await this.refreshBalance();
     // await this.getMember();
@@ -224,6 +241,8 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
           }
           this.store.dispatch(Web3Actions.chainBusy({ status: false }));
         }
+
+        console.log(val.data.suppliers.length)
         if (val.data.suppliers == null ||val.data.suppliers.length == 0 ) {
  
           this.supplier = {
@@ -255,14 +274,19 @@ export class DashboardComponent extends DappBaseComponent implements OnInit, OnD
           this.fourDec = '0000';
           this.niceFlow = '0.00';
           this.niceOutFlow = '0.00';
+          this.destroyFormatting.next();
           this.store.dispatch(Web3Actions.chainBusy({ status: false }));
         }
+   
+     
+        await this.refreshBalance();
       });
   }
 
   override async hookContractConnected(): Promise<void> {
+  
+
     await this.getMember();
-    await this.refreshBalance();
   }
 
   override ngOnDestroy(): void {

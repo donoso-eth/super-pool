@@ -117,3 +117,15 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
       WITHDRAW_STEP,//
       REBALANCE //
     }
+
+
+    export interface NetworkObject {
+      poolImpl: string;
+      poolInternalImpl: string;
+      poolStrategyImpl: string;
+      poolFactoryImpl: string;
+      poolProxy: string;
+      poolInternalProxy: string;
+      poolStrategyProxy: string;
+      poolFactoryProxy: string;
+    };

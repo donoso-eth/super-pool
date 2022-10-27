@@ -125,7 +125,7 @@ library DataTypes {
         int96 inFlowRate;
         int96 outFlowRate;
         uint256 outFlowBuffer;
-        Yield yield;
+        Yield yieldObject;
         APY apy;
     }
 

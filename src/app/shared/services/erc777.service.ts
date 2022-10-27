@@ -35,6 +35,7 @@ export class ERC777Service {
   console.log(amount);
   await this.getTokenInstance();
 
-  await  doSignerTransaction (this.erc777?.send(this.dapp.defaultContract?.address!,amount,"0x")!)
+ let result =  await  doSignerTransaction (this.erc777?.send(this.dapp.defaultContract?.address!,amount,"0x")!)
+  return result
   }
 }

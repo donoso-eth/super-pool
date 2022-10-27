@@ -27,6 +27,7 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
   twoDec: any;
   fourDec: any;
   destroyFormatting: Subject<void> = new Subject();
+  destroyQueries: Subject<void> = new Subject();
 
   constructor(private router: Router, store: Store, dapp: DappInjector, public global: GlobalService, public graphqlService: GraphQlService) {
     super(dapp, store);
@@ -90,7 +91,7 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
   }
 
   getPool() {
-    this.graphqlService.watchPool().pipe(takeUntil(this.destroyFormatting)).subscribe((val) => {
+    this.graphqlService.watchPool().pipe(takeUntil(this.destroyQueries)).subscribe((val) => {
       if (!!val && !!val.data && !!val.data.pools && val.data.pools.length >0) {
         let staked = val.data.pools.map((map: any) => map.yieldSnapshot/1000000);
 
@@ -123,13 +124,13 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
         let value = +this.currentPool.inFlowRate * (new Date().getTime() / 1000 - +this.currentPool.timestamp);
         let todayms = new Date().getTime() / 1000 - +this.currentPool.timestamp;
         let ttvl = (+todayms *(+this.currentPool.inFlowRate- +this.currentPool.outFlowRate) + (+this.currentPool.deposit + +this.currentPool.depositFromInflowRate)/1000000 + +this.currentPool.outFlowBuffer)
-      
+
 
         let formated = this.global.prepareNumbers(ttvl);
         this.twoDec = formated.twoDec;
         this.fourDec = formated.fourDec;
 
-        if (+this.currentPool.inFlowRate > 0 || +this.currentPool.outFlowRate ) {
+        if (+this.currentPool.inFlowRate > 0 || +this.currentPool.outFlowRate > 0 ) {
           this.destroyFormatting.next();
           let initTime = new Date().getTime() / 1000;
           let source = interval(500);
@@ -142,6 +143,8 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
             this.twoDec = formated.twoDec;
             this.fourDec = formated.fourDec;
           });
+        } else {
+          this.destroyFormatting.next();
         }
       }
     });
@@ -153,9 +156,9 @@ export class LandingComponent extends DappBaseComponent implements OnInit {
 
   override ngOnDestroy(): void {
     this.destroyFormatting.next();
-
+    this.destroyQueries.next();
     this.destroyFormatting.complete();
-
+    this.destroyQueries.complete();
     super.ngOnDestroy();
   }
 }

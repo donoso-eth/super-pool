@@ -161,6 +161,19 @@
   },
   {
     "inputs": [],
+    "name": "PROTOCOL_FEE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "STEPS",
     "outputs": [
       {
@@ -586,6 +599,32 @@
   },
   {
     "inputs": [],
+    "name": "getDepositTriggerAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getDepositTriggerTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getLastPool",
     "outputs": [
       {
@@ -631,29 +670,41 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint256",
-            "name": "yieldTokenIndex",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldInFlowRateIndex",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldAccrued",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldSnapshot",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "totalYield",
-            "type": "uint256"
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "yieldTokenIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldInFlowRateIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldAccrued",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldSnapshot",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "totalYield",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "protocolYield",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct DataTypes.Yield",
+            "name": "yieldObject",
+            "type": "tuple"
           },
           {
             "components": [
@@ -747,29 +798,41 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint256",
-            "name": "yieldTokenIndex",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldInFlowRateIndex",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldAccrued",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldSnapshot",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "totalYield",
-            "type": "uint256"
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "yieldTokenIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldInFlowRateIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldAccrued",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldSnapshot",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "totalYield",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "protocolYield",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct DataTypes.Yield",
+            "name": "yieldObject",
+            "type": "tuple"
           },
           {
             "components": [
@@ -813,6 +876,19 @@
   {
     "inputs": [],
     "name": "getPrecission",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getProtocolFee",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1151,6 +1227,19 @@
   },
   {
     "inputs": [],
+    "name": "poolFactory",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "proxiableUUID",
     "outputs": [
       {
@@ -1191,6 +1280,32 @@
   {
     "inputs": [],
     "name": "redeemFlowStop",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setDepositTriggerAmount",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_time",
+        "type": "uint256"
+      }
+    ],
+    "name": "setDepositTriggerTime",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1546,29 +1661,41 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint256",
-            "name": "yieldTokenIndex",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldInFlowRateIndex",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldAccrued",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "yieldSnapshot",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "totalYield",
-            "type": "uint256"
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "yieldTokenIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldInFlowRateIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldAccrued",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldSnapshot",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "totalYield",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "protocolYield",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct DataTypes.Yield",
+            "name": "yieldObject",
+            "type": "tuple"
           },
           {
             "components": [

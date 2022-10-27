@@ -12,6 +12,7 @@ import { IPOOL_STATE, IPOOL_TOKEN } from '../models/models';
 
 import { Store } from '@ngrx/store';
 import { SuperFluidService } from 'src/app/dapp-injector/services/super-fluid/super-fluid-service.service';
+import { MessageService } from 'primeng/api';
 
 @Injectable({
   providedIn: 'root',
@@ -34,7 +35,8 @@ export class GlobalService {
   constructor(
     public dapp: DappInjector,
     public superfluid: SuperFluidService,
-    public store:Store
+    public store:Store,
+    public msg: MessageService,
   ) {}
 
   async getPoolToken(): Promise<{poolToken:IPOOL_TOKEN, poolState:IPOOL_STATE}> {
@@ -95,6 +97,7 @@ export class GlobalService {
   prepareNumbers(balance: number) {
 
 
+
     let niceTwo =  (Math.trunc(balance / 10 ** 18 *100)/100).toString();
   
 
@@ -110,7 +113,10 @@ export class GlobalService {
 
     const niceFour = (balance / 10 ** 18).toFixed(6);
 
-    let fourDec = niceFour.substring(niceFour.length - 4, niceFour.length);
+    let fourDec = niceFour.substring(niceFour.length - 6, niceFour.length);
+
+ 
+
     return { twoDec, fourDec };
   }
 
@@ -126,21 +132,47 @@ export class GlobalService {
     //  console.log(balance.toString());
 
     const value = utils.parseEther('1000').toString();
-    await doSignerTransaction(
+   let result =  await doSignerTransaction(
       (this.erc20 as Contract).connect(this.dapp.signer!)['mint(address,uint256)'](this.dapp.signerAddress,value)
     );
+   
+    if (result.success == true) {
+      this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+    } else {
+      this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+    }
     this.store.dispatch(Web3Actions.chainBusyWithMessage({message: {body:'Approving the supertoken contract', header:'Un momento'}}))
 
-    await doSignerTransaction(
+
+    result = await doSignerTransaction(
       (this.erc20 as Contract).connect(this.dapp.signer!).approve(
         this.supertoken?.address,
         constants.MaxUint256
       )
     );
+
+    if (result.success == true) {
+      this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+    } else {
+      this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+    }
+
     this.store.dispatch(Web3Actions.chainBusyWithMessage({message: {body:'Upgrading the usdc tokens to supertokens', header:'Un momento más'}}))
 
    
-    await doSignerTransaction((this.supertoken as ISuperToken).connect(this.dapp.signer!).upgrade(value));
+   result =  await doSignerTransaction((this.supertoken as ISuperToken).connect(this.dapp.signer!).upgrade(value));
+
+    if (result.success == true) {
+      this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+    } else {
+      this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+    }
 
     // console.log(this.dapp.defaultContract?.address)
 
