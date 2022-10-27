@@ -17,6 +17,31 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
+export type YieldStruct = {
+  yieldTokenIndex: BigNumberish;
+  yieldInFlowRateIndex: BigNumberish;
+  yieldAccrued: BigNumberish;
+  yieldSnapshot: BigNumberish;
+  totalYield: BigNumberish;
+  protocolYield: BigNumberish;
+};
+
+export type YieldStructOutput = [
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber
+] & {
+  yieldTokenIndex: BigNumber;
+  yieldInFlowRateIndex: BigNumber;
+  yieldAccrued: BigNumber;
+  yieldSnapshot: BigNumber;
+  totalYield: BigNumber;
+  protocolYield: BigNumber;
+};
+
 export type APYStruct = { span: BigNumberish; apy: BigNumberish };
 
 export type APYStructOutput = [BigNumber, BigNumber] & {
@@ -33,11 +58,7 @@ export type PoolV1Struct = {
   inFlowRate: BigNumberish;
   outFlowRate: BigNumberish;
   outFlowBuffer: BigNumberish;
-  yieldTokenIndex: BigNumberish;
-  yieldInFlowRateIndex: BigNumberish;
-  yieldAccrued: BigNumberish;
-  yieldSnapshot: BigNumberish;
-  totalYield: BigNumberish;
+  yield: YieldStruct;
   apy: APYStruct;
 };
 
@@ -50,11 +71,7 @@ export type PoolV1StructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
+  YieldStructOutput,
   APYStructOutput
 ] & {
   id: BigNumber;
@@ -65,11 +82,7 @@ export type PoolV1StructOutput = [
   inFlowRate: BigNumber;
   outFlowRate: BigNumber;
   outFlowBuffer: BigNumber;
-  yieldTokenIndex: BigNumber;
-  yieldInFlowRateIndex: BigNumber;
-  yieldAccrued: BigNumber;
-  yieldSnapshot: BigNumber;
-  totalYield: BigNumber;
+  yield: YieldStructOutput;
   apy: APYStructOutput;
 };
 
@@ -163,9 +176,10 @@ export interface PoolInternalV1Interface extends utils.Interface {
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
     "POOL_BUFFER()": FunctionFragment;
     "PRECISSION()": FunctionFragment;
+    "PROTOCOL_FEE()": FunctionFragment;
     "STEPS()": FunctionFragment;
     "SUPERFLUID_DEPOSIT()": FunctionFragment;
-    "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256)))": FunctionFragment;
+    "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))": FunctionFragment;
     "_calculateYieldSupplier(address)": FunctionFragment;
     "_closeAccount()": FunctionFragment;
     "_poolUpdate()": FunctionFragment;
@@ -206,6 +220,10 @@ export interface PoolInternalV1Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "PRECISSION",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "PROTOCOL_FEE",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "STEPS", values?: undefined): string;
@@ -327,6 +345,10 @@ export interface PoolInternalV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "PRECISSION", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "PROTOCOL_FEE",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "STEPS", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "SUPERFLUID_DEPOSIT",
@@ -482,6 +504,8 @@ export interface PoolInternalV1 extends BaseContract {
 
     PRECISSION(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    PROTOCOL_FEE(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     STEPS(overrides?: CallOverrides): Promise<[number]>;
 
     SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -582,11 +606,7 @@ export interface PoolInternalV1 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
+        YieldStructOutput,
         APYStructOutput
       ] & {
         id: BigNumber;
@@ -597,11 +617,7 @@ export interface PoolInternalV1 extends BaseContract {
         inFlowRate: BigNumber;
         outFlowRate: BigNumber;
         outFlowBuffer: BigNumber;
-        yieldTokenIndex: BigNumber;
-        yieldInFlowRateIndex: BigNumber;
-        yieldAccrued: BigNumber;
-        yieldSnapshot: BigNumber;
-        totalYield: BigNumber;
+        yield: YieldStructOutput;
         apy: APYStructOutput;
       }
     >;
@@ -685,6 +701,8 @@ export interface PoolInternalV1 extends BaseContract {
   POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
   PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+
+  PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
 
   STEPS(overrides?: CallOverrides): Promise<number>;
 
@@ -782,11 +800,7 @@ export interface PoolInternalV1 extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
+      YieldStructOutput,
       APYStructOutput
     ] & {
       id: BigNumber;
@@ -797,11 +811,7 @@ export interface PoolInternalV1 extends BaseContract {
       inFlowRate: BigNumber;
       outFlowRate: BigNumber;
       outFlowBuffer: BigNumber;
-      yieldTokenIndex: BigNumber;
-      yieldInFlowRateIndex: BigNumber;
-      yieldAccrued: BigNumber;
-      yieldSnapshot: BigNumber;
-      totalYield: BigNumber;
+      yield: YieldStructOutput;
       apy: APYStructOutput;
     }
   >;
@@ -885,6 +895,8 @@ export interface PoolInternalV1 extends BaseContract {
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
     PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+
+    PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
 
     STEPS(overrides?: CallOverrides): Promise<number>;
 
@@ -975,11 +987,7 @@ export interface PoolInternalV1 extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
+        YieldStructOutput,
         APYStructOutput
       ] & {
         id: BigNumber;
@@ -990,11 +998,7 @@ export interface PoolInternalV1 extends BaseContract {
         inFlowRate: BigNumber;
         outFlowRate: BigNumber;
         outFlowBuffer: BigNumber;
-        yieldTokenIndex: BigNumber;
-        yieldInFlowRateIndex: BigNumber;
-        yieldAccrued: BigNumber;
-        yieldSnapshot: BigNumber;
-        totalYield: BigNumber;
+        yield: YieldStructOutput;
         apy: APYStructOutput;
       }
     >;
@@ -1084,6 +1088,8 @@ export interface PoolInternalV1 extends BaseContract {
     POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
 
     PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+
+    PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
 
     STEPS(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1226,6 +1232,8 @@ export interface PoolInternalV1 extends BaseContract {
     POOL_BUFFER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     PRECISSION(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    PROTOCOL_FEE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     STEPS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

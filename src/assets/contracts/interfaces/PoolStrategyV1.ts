@@ -21,10 +21,11 @@ export interface PoolStrategyV1Interface extends utils.Interface {
   functions: {
     "ETH()": FunctionFragment;
     "balanceOf()": FunctionFragment;
-    "checkerDeposit()": FunctionFragment;
+    "checkerDeposit(uint256)": FunctionFragment;
     "depositTaksId()": FunctionFragment;
     "depositTask()": FunctionFragment;
     "initialize(address,address,address,address,address,address,address,address)": FunctionFragment;
+    "pushToStrategy()": FunctionFragment;
     "withdraw(uint256,address)": FunctionFragment;
   };
 
@@ -32,7 +33,7 @@ export interface PoolStrategyV1Interface extends utils.Interface {
   encodeFunctionData(functionFragment: "balanceOf", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "checkerDeposit",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "depositTaksId",
@@ -45,6 +46,10 @@ export interface PoolStrategyV1Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "initialize",
     values: [string, string, string, string, string, string, string, string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "pushToStrategy",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "withdraw",
@@ -66,6 +71,10 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "pushToStrategy",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
@@ -113,6 +122,7 @@ export interface PoolStrategyV1 extends BaseContract {
     ): Promise<[BigNumber] & { balance: BigNumber }>;
 
     checkerDeposit(
+      arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
@@ -134,6 +144,10 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    pushToStrategy(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     withdraw(
       amount: BigNumberish,
       _supplier: string,
@@ -146,6 +160,7 @@ export interface PoolStrategyV1 extends BaseContract {
   balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
 
   checkerDeposit(
+    arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
@@ -167,6 +182,10 @@ export interface PoolStrategyV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  pushToStrategy(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   withdraw(
     amount: BigNumberish,
     _supplier: string,
@@ -179,6 +198,7 @@ export interface PoolStrategyV1 extends BaseContract {
     balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
 
     checkerDeposit(
+      arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
@@ -198,6 +218,8 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    pushToStrategy(overrides?: CallOverrides): Promise<void>;
+
     withdraw(
       amount: BigNumberish,
       _supplier: string,
@@ -215,7 +237,10 @@ export interface PoolStrategyV1 extends BaseContract {
 
     balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
 
-    checkerDeposit(overrides?: CallOverrides): Promise<BigNumber>;
+    checkerDeposit(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     depositTaksId(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -235,6 +260,10 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    pushToStrategy(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     withdraw(
       amount: BigNumberish,
       _supplier: string,
@@ -247,7 +276,10 @@ export interface PoolStrategyV1 extends BaseContract {
 
     balanceOf(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    checkerDeposit(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    checkerDeposit(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     depositTaksId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -264,6 +296,10 @@ export interface PoolStrategyV1 extends BaseContract {
       _aToken: string,
       _aaveToken: string,
       _poolInternal: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    pushToStrategy(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

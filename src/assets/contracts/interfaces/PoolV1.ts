@@ -17,6 +17,31 @@ import { FunctionFragment, Result, EventFragment } from "@ethersproject/abi";
 import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
+export type YieldStruct = {
+  yieldTokenIndex: BigNumberish;
+  yieldInFlowRateIndex: BigNumberish;
+  yieldAccrued: BigNumberish;
+  yieldSnapshot: BigNumberish;
+  totalYield: BigNumberish;
+  protocolYield: BigNumberish;
+};
+
+export type YieldStructOutput = [
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber,
+  BigNumber
+] & {
+  yieldTokenIndex: BigNumber;
+  yieldInFlowRateIndex: BigNumber;
+  yieldAccrued: BigNumber;
+  yieldSnapshot: BigNumber;
+  totalYield: BigNumber;
+  protocolYield: BigNumber;
+};
+
 export type APYStruct = { span: BigNumberish; apy: BigNumberish };
 
 export type APYStructOutput = [BigNumber, BigNumber] & {
@@ -33,11 +58,7 @@ export type PoolV1Struct = {
   inFlowRate: BigNumberish;
   outFlowRate: BigNumberish;
   outFlowBuffer: BigNumberish;
-  yieldTokenIndex: BigNumberish;
-  yieldInFlowRateIndex: BigNumberish;
-  yieldAccrued: BigNumberish;
-  yieldSnapshot: BigNumberish;
-  totalYield: BigNumberish;
+  yield: YieldStruct;
   apy: APYStruct;
 };
 
@@ -50,11 +71,7 @@ export type PoolV1StructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
+  YieldStructOutput,
   APYStructOutput
 ] & {
   id: BigNumber;
@@ -65,11 +82,7 @@ export type PoolV1StructOutput = [
   inFlowRate: BigNumber;
   outFlowRate: BigNumber;
   outFlowBuffer: BigNumber;
-  yieldTokenIndex: BigNumber;
-  yieldInFlowRateIndex: BigNumber;
-  yieldAccrued: BigNumber;
-  yieldSnapshot: BigNumber;
-  totalYield: BigNumber;
+  yield: YieldStructOutput;
   apy: APYStructOutput;
 };
 
@@ -180,6 +193,7 @@ export interface PoolV1Interface extends utils.Interface {
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
     "POOL_BUFFER()": FunctionFragment;
     "PRECISSION()": FunctionFragment;
+    "PROTOCOL_FEE()": FunctionFragment;
     "STEPS()": FunctionFragment;
     "SUPERFLUID_DEPOSIT()": FunctionFragment;
     "afterAgreementCreated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
@@ -197,11 +211,14 @@ export interface PoolV1Interface extends utils.Interface {
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "gelato()": FunctionFragment;
     "getCodeAddress()": FunctionFragment;
+    "getDepositTriggerAmount()": FunctionFragment;
+    "getDepositTriggerTime()": FunctionFragment;
     "getLastPool()": FunctionFragment;
     "getLastTimestamp()": FunctionFragment;
     "getPool(uint256)": FunctionFragment;
     "getPoolBuffer()": FunctionFragment;
     "getPrecission()": FunctionFragment;
+    "getProtocolFee()": FunctionFragment;
     "getSteps()": FunctionFragment;
     "getSuperfluidDeposit()": FunctionFragment;
     "getSupplier(address)": FunctionFragment;
@@ -214,10 +231,13 @@ export interface PoolV1Interface extends utils.Interface {
     "name()": FunctionFragment;
     "ops()": FunctionFragment;
     "owner()": FunctionFragment;
+    "poolFactory()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
     "redeemDeposit(uint256)": FunctionFragment;
     "redeemFlow(int96)": FunctionFragment;
     "redeemFlowStop()": FunctionFragment;
+    "setDepositTriggerAmount(uint256)": FunctionFragment;
+    "setDepositTriggerTime(uint256)": FunctionFragment;
     "setPoolBuffer(uint256)": FunctionFragment;
     "setPrecission(uint256)": FunctionFragment;
     "setSteps(uint8)": FunctionFragment;
@@ -254,6 +274,10 @@ export interface PoolV1Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "PRECISSION",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "PROTOCOL_FEE",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "STEPS", values?: undefined): string;
@@ -310,6 +334,14 @@ export interface PoolV1Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getDepositTriggerAmount",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDepositTriggerTime",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getLastPool",
     values?: undefined
   ): string;
@@ -327,6 +359,10 @@ export interface PoolV1Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getPrecission",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getProtocolFee",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "getSteps", values?: undefined): string;
@@ -360,6 +396,10 @@ export interface PoolV1Interface extends utils.Interface {
   encodeFunctionData(functionFragment: "ops", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "poolFactory",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "proxiableUUID",
     values?: undefined
   ): string;
@@ -374,6 +414,14 @@ export interface PoolV1Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "redeemFlowStop",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setDepositTriggerAmount",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setDepositTriggerTime",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setPoolBuffer",
@@ -448,6 +496,10 @@ export interface PoolV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "PRECISSION", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "PROTOCOL_FEE",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "STEPS", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "SUPERFLUID_DEPOSIT",
@@ -496,6 +548,14 @@ export interface PoolV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getDepositTriggerAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDepositTriggerTime",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getLastPool",
     data: BytesLike
   ): Result;
@@ -510,6 +570,10 @@ export interface PoolV1Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getPrecission",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getProtocolFee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getSteps", data: BytesLike): Result;
@@ -540,6 +604,10 @@ export interface PoolV1Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "ops", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "poolFactory",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "proxiableUUID",
     data: BytesLike
   ): Result;
@@ -550,6 +618,14 @@ export interface PoolV1Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "redeemFlow", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "redeemFlowStop",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setDepositTriggerAmount",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setDepositTriggerTime",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -678,6 +754,8 @@ export interface PoolV1 extends BaseContract {
 
     PRECISSION(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    PROTOCOL_FEE(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     STEPS(overrides?: CallOverrides): Promise<[number]>;
 
     SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -776,6 +854,10 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string] & { codeAddress: string }>;
 
+    getDepositTriggerAmount(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    getDepositTriggerTime(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     getLastPool(overrides?: CallOverrides): Promise<[PoolV1StructOutput]>;
 
     getLastTimestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -788,6 +870,8 @@ export interface PoolV1 extends BaseContract {
     getPoolBuffer(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getPrecission(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getSteps(overrides?: CallOverrides): Promise<[number]>;
 
@@ -830,6 +914,8 @@ export interface PoolV1 extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
+    poolFactory(overrides?: CallOverrides): Promise<[string]>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
     redeemDeposit(
@@ -843,6 +929,16 @@ export interface PoolV1 extends BaseContract {
     ): Promise<ContractTransaction>;
 
     redeemFlowStop(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setDepositTriggerAmount(
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setDepositTriggerTime(
+      _time: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -948,6 +1044,8 @@ export interface PoolV1 extends BaseContract {
 
   PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
 
+  PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
+
   STEPS(overrides?: CallOverrides): Promise<number>;
 
   SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1041,6 +1139,10 @@ export interface PoolV1 extends BaseContract {
 
   getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
+  getDepositTriggerAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+  getDepositTriggerTime(overrides?: CallOverrides): Promise<BigNumber>;
+
   getLastPool(overrides?: CallOverrides): Promise<PoolV1StructOutput>;
 
   getLastTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1053,6 +1155,8 @@ export interface PoolV1 extends BaseContract {
   getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
 
   getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
+
+  getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
 
   getSteps(overrides?: CallOverrides): Promise<number>;
 
@@ -1095,6 +1199,8 @@ export interface PoolV1 extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  poolFactory(overrides?: CallOverrides): Promise<string>;
+
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
   redeemDeposit(
@@ -1108,6 +1214,16 @@ export interface PoolV1 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   redeemFlowStop(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setDepositTriggerAmount(
+    _amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setDepositTriggerTime(
+    _time: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -1213,6 +1329,8 @@ export interface PoolV1 extends BaseContract {
 
     PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
 
+    PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
+
     STEPS(overrides?: CallOverrides): Promise<number>;
 
     SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1304,6 +1422,10 @@ export interface PoolV1 extends BaseContract {
 
     getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
+    getDepositTriggerAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getDepositTriggerTime(overrides?: CallOverrides): Promise<BigNumber>;
+
     getLastPool(overrides?: CallOverrides): Promise<PoolV1StructOutput>;
 
     getLastTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1316,6 +1438,8 @@ export interface PoolV1 extends BaseContract {
     getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSteps(overrides?: CallOverrides): Promise<number>;
 
@@ -1358,6 +1482,8 @@ export interface PoolV1 extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
+    poolFactory(overrides?: CallOverrides): Promise<string>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
     redeemDeposit(
@@ -1371,6 +1497,16 @@ export interface PoolV1 extends BaseContract {
     ): Promise<void>;
 
     redeemFlowStop(overrides?: CallOverrides): Promise<void>;
+
+    setDepositTriggerAmount(
+      _amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setDepositTriggerTime(
+      _time: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     setPoolBuffer(
       _poolBuffer: BigNumberish,
@@ -1502,6 +1638,8 @@ export interface PoolV1 extends BaseContract {
 
     PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
 
+    PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
+
     STEPS(overrides?: CallOverrides): Promise<BigNumber>;
 
     SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1595,6 +1733,10 @@ export interface PoolV1 extends BaseContract {
 
     getCodeAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getDepositTriggerAmount(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getDepositTriggerTime(overrides?: CallOverrides): Promise<BigNumber>;
+
     getLastPool(overrides?: CallOverrides): Promise<BigNumber>;
 
     getLastTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1607,6 +1749,8 @@ export interface PoolV1 extends BaseContract {
     getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSteps(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1649,6 +1793,8 @@ export interface PoolV1 extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    poolFactory(overrides?: CallOverrides): Promise<BigNumber>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
     redeemDeposit(
@@ -1662,6 +1808,16 @@ export interface PoolV1 extends BaseContract {
     ): Promise<BigNumber>;
 
     redeemFlowStop(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setDepositTriggerAmount(
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setDepositTriggerTime(
+      _time: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1774,6 +1930,8 @@ export interface PoolV1 extends BaseContract {
 
     PRECISSION(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    PROTOCOL_FEE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     STEPS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     SUPERFLUID_DEPOSIT(
@@ -1872,6 +2030,14 @@ export interface PoolV1 extends BaseContract {
 
     getCodeAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    getDepositTriggerAmount(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getDepositTriggerTime(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getLastPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getLastTimestamp(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -1884,6 +2050,8 @@ export interface PoolV1 extends BaseContract {
     getPoolBuffer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getPrecission(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getSteps(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1928,6 +2096,8 @@ export interface PoolV1 extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    poolFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     redeemDeposit(
@@ -1941,6 +2111,16 @@ export interface PoolV1 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     redeemFlowStop(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setDepositTriggerAmount(
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setDepositTriggerTime(
+      _time: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
