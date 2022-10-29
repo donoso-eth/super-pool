@@ -570,6 +570,8 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
     // #endregion ================= EIGTH PERIOD ============================= //
 
+   
+    
     // #region =================  9th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
@@ -603,6 +605,8 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
 
     // #endregion ================= 9th PERIOD ============================= //
+
+    throw new Error("");
 
     // #region =================  10th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));

@@ -238,7 +238,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
       pool.outFlowBuffer = lastPool.outFlowBuffer;
 
       pool.timestamp = block.timestamp;
-      console.log(244);
+      console.log(244,pool.yieldObject.yieldSnapshot);
       poolByTimestamp[block.timestamp] = pool;
 
       lastPoolTimestamp = block.timestamp;
