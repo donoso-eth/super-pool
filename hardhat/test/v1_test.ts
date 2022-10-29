@@ -312,11 +312,11 @@ describe.only('V1 TEST', function () {
 
     // #endregion ============== FIRST PERIOD ============================= //
 
-    // #region =================  THIRD PERIOD ============================= //
+    // #region =================  SECOND PERIOD ============================= //
 
     await setNextBlockTimestamp(hre, +t1 + 2 * ONE_MONTH);
     let timestamp = t1.add(BigNumber.from(2 * ONE_MONTH));
-    console.log('\x1b[36m%s\x1b[0m', '#3--- User2 provides starts a stream at t0 + 2*  One Day ');
+    console.log('\x1b[36m%s\x1b[0m', '#2--- User2 provides starts a stream 100 tokens/month');
 
     let flowRate = utils.parseEther('100').div(ONE_MONTH);
 
@@ -354,12 +354,13 @@ describe.only('V1 TEST', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
     await testPeriod(BigNumber.from(t0), +t1 + ONE_MONTH * 2, result[1], contractsTest, result[0]);
+    console.log('\x1b[36m%s\x1b[0m', '#2--- Period Tests passed ');
 
-    // #endregion ================= THIRD PERIOD ============================= //
+    // #endregion ================= SECOND PERIOD ============================= //
 
-    // #region =================  FIVE PERIOD ============================= //
+    // #region ================= THIRD PERIOD ============================= //
 
-    console.log('\x1b[36m%s\x1b[0m', '#5--- User2 provides sends 300 at t0 + 3*  One Day ');
+    console.log('\x1b[36m%s\x1b[0m', '#3--- User2 provides sends 300 at t0 + 3*  One Day ');
 
     await setNextBlockTimestamp(hre, +t1 + 4 * ONE_MONTH);
     timestamp = t1.add(BigNumber.from(4 * ONE_MONTH));
@@ -387,12 +388,12 @@ describe.only('V1 TEST', function () {
 
     await testPeriod(BigNumber.from(t0), +t1 + 4 * ONE_MONTH, result[1], contractsTest, result[0]);
 
-    console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
-    // #endregion =================   FIVETH PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
+    // #endregion =================   THIRD PERIOD ============================= //
 
-    // #region =================  SIXTH PERIOD ============================= //
+    // #region =================  FORTH PERIOD ============================= //
 
-    console.log('\x1b[36m%s\x1b[0m', '#6--- User1 Withdaw 150');
+    console.log('\x1b[36m%s\x1b[0m', '#4--- User1 Withdaw 150');
 
     await setNextBlockTimestamp(hre, +t1 + 5 * ONE_MONTH);
     timestamp = t1.add(BigNumber.from(5 * ONE_MONTH));
@@ -420,12 +421,14 @@ describe.only('V1 TEST', function () {
 
     await testPeriod(BigNumber.from(t0), +t1 + 5 * ONE_MONTH, result[1], contractsTest, result[0]);
 
-    console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
-    // #endregion =================   SIXTH PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
+    // #endregion =================   FOUR PERIOD ============================= //
 
-    // #region =================  SEVENTH PERIOD ============================= //
+  
 
-    console.log('\x1b[36m%s\x1b[0m', '#7--- User2 streamstop');
+    // #region =================  FIVE PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#5--- User2 streamstop');
 
     await setNextBlockTimestamp(hre, +t1 + 6 * ONE_MONTH);
     timestamp = t1.add(BigNumber.from(6 * ONE_MONTH));
@@ -457,12 +460,14 @@ describe.only('V1 TEST', function () {
 
     await testPeriod(BigNumber.from(t0), +t1 + 6 * ONE_MONTH, result[1], contractsTest, result[0]);
 
-    console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
+    console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
     // #endregion =================   FIVETH PERIOD ============================= //
 
-    // #region =================  EIGTH PERIOD ============================= //
+ 
 
-    console.log('\x1b[36m%s\x1b[0m', '#8--- User2 reddemFlow');
+    // #region =================  SIXTH PERIOD ============================= //
+
+    console.log('\x1b[36m%s\x1b[0m', '#6--- User2 reddemFlow');
 
     await setNextBlockTimestamp(hre, +t1 + 7 * ONE_MONTH);
     timestamp = t1.add(BigNumber.from(7 * ONE_MONTH));
@@ -500,14 +505,16 @@ describe.only('V1 TEST', function () {
     usersPool[user2.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +t1 + 7 * ONE_MONTH, result[1], contractsTest, result[0]);
 
-    console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
-    // #endregion =================   EIGTH PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
+    // #endregion =================   END 6TH PERIOD ============================= //
 
-    // #region =================  1oth PERIOD ============================= //
+
+
+    // #region =================  7th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
 
-    console.log('\x1b[36m%s\x1b[0m', '#10--- User1 provides starts a stream at t0 + 2*  One Day ');
+    console.log('\x1b[36m%s\x1b[0m', '#7--- User1 provides starts a stream');
 
     flowRate = utils.parseEther('50').div(ONE_MONTH);
 
@@ -539,14 +546,15 @@ describe.only('V1 TEST', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
+    // #endregion ================= END 7TH PERIOD ============================= //
 
-    // #endregion ================= THIRD PERIOD ============================= //
-
-    // #region =================  11th PERIOD ============================= //
+  
+    // #region =================  8th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
 
-    console.log('\x1b[36m%s\x1b[0m', '#12--- User2 stop reddem flow ');
+    console.log('\x1b[36m%s\x1b[0m', '#8--- User2 stop reddem flow ');
 
     await waitForTx(superPool.connect(user2).redeemFlowStop());
 
@@ -566,14 +574,14 @@ describe.only('V1 TEST', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
-
-    // #endregion ================= THIRD PERIOD ============================= //
-
-    // #region =================  11th PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
+    // #endregion ================= EIGTH PERIOD ============================= //
+ 
+    // #region =================  9th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
 
-    console.log('\x1b[36m%s\x1b[0m', '#13--- User1 transfer 75 to user3 ');
+    console.log('\x1b[36m%s\x1b[0m', '#9--- User1 transfer 75 to user3 ');
 
     let transferAmount = utils.parseEther('75');
 
@@ -599,13 +607,17 @@ describe.only('V1 TEST', function () {
     usersPool = result[0];
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
 
-    // #endregion ================= THIRD PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
 
-    // #region =================  11th PERIOD ============================= //
+    // #endregion ================= 9th PERIOD ============================= //
+ 
+  
+
+    // #region =================  10th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
 
-    console.log('\x1b[36m%s\x1b[0m', '#14--- User1 start stream in');
+    console.log('\x1b[36m%s\x1b[0m', '#10--- User3 start stream in');
 
     
     flowRate = utils.parseEther('90').div(ONE_MONTH);
@@ -633,13 +645,17 @@ describe.only('V1 TEST', function () {
     usersPool = result[0];
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
 
-    // #endregion ================= THIRD PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#10--- Period Tests passed ');
+
+    // #endregion ================= 10TH PERIOD ============================= //
  
+ 
+
         // #region =================  11th PERIOD ============================= //
         timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
         await setNextBlockTimestamp(hre, +timestamp);
     
-        console.log('\x1b[36m%s\x1b[0m', '#15--- User1 redeemflow');
+        console.log('\x1b[36m%s\x1b[0m', '#11--- User1 redeemflow');
     
         
         flowRate = utils.parseEther('45').div(ONE_MONTH);
@@ -662,7 +678,7 @@ describe.only('V1 TEST', function () {
         usersPool = result[0];
         await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
     
-        // #endregion ================= THIRD PERIOD ============================= //
+        // #endregion ================= 11th PERIOD ============================= //
      
 
   });

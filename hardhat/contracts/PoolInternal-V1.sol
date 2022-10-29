@@ -196,10 +196,10 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
       DataTypes.PoolV1 memory pool = DataTypes.PoolV1(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
 
       pool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
-
+      console.log(199, pool.depositFromInFlowRate );
       pool.depositFromOutFlowRate = uint96(lastPool.outFlowRate) * PRECISSION * periodSpan + lastPool.depositFromOutFlowRate;
 
-      console.log(202);
+      console.log(202, pool.depositFromOutFlowRate);
 
       pool.deposit = lastPool.deposit;
 
@@ -263,11 +263,12 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
     uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
     uint256 dollarSecondsOutFlow = ((uint96(lastPool.outFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromOutFlowRate * periodSpan;
-    console.log(265);
+    console.log(265,lastPool.depositFromOutFlowRate * periodSpan);
+    console.log(267,((uint96(lastPool.outFlowRate) * (periodSpan**2)) * PRECISSION) / 2 );
     uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow - dollarSecondsOutFlow;
 
     /// we ultiply by PRECISSION
-    console.log(269);
+    console.log(269,dollarSecondsInFlow,dollarSecondsDeposit,dollarSecondsOutFlow);
     if (totalAreaPeriod != 0 && yieldPeriod != 0) {
       uint256 inFlowContribution = (dollarSecondsInFlow * PRECISSION);
       uint256 outFlowContribution = (dollarSecondsOutFlow * PRECISSION);
