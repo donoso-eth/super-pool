@@ -424,8 +424,6 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
     // #endregion =================   FOUR PERIOD ============================= //
 
-  
-
     // #region =================  FIVE PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- User2 streamstop');
@@ -462,8 +460,6 @@ describe.only('V1 TEST', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
     // #endregion =================   FIVETH PERIOD ============================= //
-
- 
 
     // #region =================  SIXTH PERIOD ============================= //
 
@@ -508,8 +504,6 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
     // #endregion =================   END 6TH PERIOD ============================= //
 
-
-
     // #region =================  7th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
@@ -549,7 +543,6 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
     // #endregion ================= END 7TH PERIOD ============================= //
 
-  
     // #region =================  8th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
@@ -576,7 +569,7 @@ describe.only('V1 TEST', function () {
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
     // #endregion ================= EIGTH PERIOD ============================= //
- 
+
     // #region =================  9th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
@@ -610,8 +603,6 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
 
     // #endregion ================= 9th PERIOD ============================= //
- 
-  
 
     // #region =================  10th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
@@ -619,7 +610,6 @@ describe.only('V1 TEST', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#10--- User3 start stream in');
 
-    
     flowRate = utils.parseEther('90').div(ONE_MONTH);
 
     createFlowOperation = sf.cfaV1.createFlow({
@@ -638,7 +628,7 @@ describe.only('V1 TEST', function () {
     pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
     payload = abiCoder.encode(['int96'], [flowRate]);
 
-    lastUsersPool = usersPool; 
+    lastUsersPool = usersPool;
 
     result = await applyUserEvent(SupplierEvent.STREAM_START, user3.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
@@ -648,38 +638,33 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#10--- Period Tests passed ');
 
     // #endregion ================= 10TH PERIOD ============================= //
- 
- 
 
-        // #region =================  11th PERIOD ============================= //
-        timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
-        await setNextBlockTimestamp(hre, +timestamp);
-    
-        console.log('\x1b[36m%s\x1b[0m', '#11--- User1 redeemflow');
-    
-        
-        flowRate = utils.parseEther('45').div(ONE_MONTH);
-    
-        await waitForTx(superPool.connect(user1).redeemFlow(flowRate))
+    // #region =================  11th PERIOD ============================= //
+    timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
+    await setNextBlockTimestamp(hre, +timestamp);
 
-        yieldPool = await poolInternal.getLastPool();
-    
-        yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-        yieldAccrued = yieldPool.yieldObject.yieldAccrued;
-        lastPool = Object.assign({}, pool);
-    
-        pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-        payload = abiCoder.encode(['int96'], [flowRate]);
-    
-        lastUsersPool = usersPool; 
-    
-        result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
-        pools[+timestamp] = result[1];
-        usersPool = result[0];
-        await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
-    
-        // #endregion ================= 11th PERIOD ============================= //
-     
+    console.log('\x1b[36m%s\x1b[0m', '#11--- User1 redeemflow');
 
+    flowRate = utils.parseEther('45').div(ONE_MONTH);
+
+    await waitForTx(superPool.connect(user1).redeemFlow(flowRate));
+
+    yieldPool = await poolInternal.getLastPool();
+
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
+    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    lastPool = Object.assign({}, pool);
+
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    payload = abiCoder.encode(['int96'], [flowRate]);
+
+    lastUsersPool = usersPool;
+
+    result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
+    pools[+timestamp] = result[1];
+    usersPool = result[0];
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+
+    // #endregion ================= 11th PERIOD ============================= //
   });
 });
