@@ -229,10 +229,10 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
       pool.apy.apy = ((periodApy).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(pool.apy.span);
 
       (pool.yieldObject.yieldTokenIndex, pool.yieldObject.yieldInFlowRateIndex, pool.yieldObject.yieldOutFlowRateIndex) = _calculateIndexes(pool.yieldObject.yieldAccrued, lastPool);
-      console.log(235);
+      console.log(235,pool.yieldObject.yieldTokenIndex, pool.yieldObject.yieldInFlowRateIndex, pool.yieldObject.yieldOutFlowRateIndex);
       pool.yieldObject.yieldTokenIndex = pool.yieldObject.yieldTokenIndex + lastPool.yieldObject.yieldTokenIndex;
       pool.yieldObject.yieldInFlowRateIndex = pool.yieldObject.yieldInFlowRateIndex + lastPool.yieldObject.yieldInFlowRateIndex;
-
+      pool.yieldObject.yieldOutFlowRateIndex = pool.yieldObject.yieldOutFlowRateIndex + lastPool.yieldObject.yieldOutFlowRateIndex;
       pool.inFlowRate = lastPool.inFlowRate;
       pool.outFlowRate = lastPool.outFlowRate;
       pool.outFlowBuffer = lastPool.outFlowBuffer;
@@ -322,13 +322,20 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
     uint256 yieldFromDeposit = (supplier.deposit * (lastPool.yieldObject.yieldTokenIndex - supplierPool.yieldObject.yieldTokenIndex)).div(PRECISSION);
     uint256 yieldFromFlow = 0;
+    uint256 yieldFromOutFlow = 0;
 
     yieldSupplier = yieldFromDeposit;
     if (supplier.inStream > 0) {
       ///// Yield from flow
       yieldFromFlow = uint96(supplier.inStream) * (lastPool.yieldObject.yieldInFlowRateIndex - supplierPool.yieldObject.yieldInFlowRateIndex);
     }
-    yieldSupplier = yieldSupplier + yieldFromFlow;
+
+    if (supplier.outStream.flow> 0) {
+      ///// Yield from flow
+      yieldFromOutFlow = uint96(supplier.outStream.flow) * (lastPool.yieldObject.yieldOutFlowRateIndex - supplierPool.yieldObject.yieldOutFlowRateIndex);
+    }
+
+    yieldSupplier = yieldSupplier + yieldFromFlow - yieldFromOutFlow;
   }
 
   /**
@@ -452,7 +459,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         _cancelTask(supplier.outStream.cancelWithdrawId);
         uint256 oldOutFlowBuffer = POOL_BUFFER.mul(uint96(-currentNetFlow));
-        pool.outFlowBuffer += oldOutFlowBuffer;
+        pool.outFlowBuffer -= oldOutFlowBuffer;
         supplier.outStream = DataTypes.OutStream(0, 0, bytes32(0));
         _balanceTreasury();
       } else {

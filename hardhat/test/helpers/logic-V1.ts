@@ -34,6 +34,8 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAc
 
   pool.depositFromInFlowRate = lastPool.depositFromInFlowRate.add(lastPool.inFlowRate.mul(peridodSpan).mul(PRECISSION));
   pool.depositFromOutFlowRate = lastPool.depositFromOutFlowRate.add(lastPool.outFlowRate.mul(peridodSpan).mul(PRECISSION));
+  
+
   pool.yieldTokenIndex = lastPool.yieldTokenIndex.add(indexDeposit);
   pool.yieldInFlowRateIndex = lastPool.yieldInFlowRateIndex.add(indexFlow);
   pool.yieldOutFlowRateIndex = lastPool.yieldOutFlowRateIndex.add(indexOutFlow);
@@ -76,6 +78,8 @@ export const applyUserEvent = async (
   let streamDuration;
   let stepAmount;
   let minimalBalance;
+  let initialBuffer;
+  let initialWithdraw;
   let oldFlow;
   let alreadyStreamed;
   let oldminiminal;
@@ -174,8 +178,11 @@ export const applyUserEvent = async (
       streamDuration = users[activeUser.address].expected.realTimeBalance.div(result[0]);
       stepAmount = users[activeUser.address].expected.outFlow.mul(streamDuration);
 
-      let initialWithdraw = BigNumber.from(5 * 3600)
+      initialWithdraw = BigNumber.from(5 * 3600)
         .mul(result[0])
+
+      initialBuffer =   BigNumber.from( 3600)
+      .mul(result[0])
 
       if ( users[activeUser.address].expected.inFlow > BigNumber.from(0)){
         pool.inFlowRate = pool.inFlowRate.sub(users[activeUser.address].expected.inFlow);
@@ -195,8 +202,7 @@ export const applyUserEvent = async (
  
       pool.outFlowRate = pool.outFlowRate.add(result[0]);
 
-      pool.outFlowBuffer = pool.outFlowBuffer.add(BigNumber.from(3600)
-      .mul(result[0]));
+      pool.outFlowBuffer = pool.outFlowBuffer.add(initialBuffer);
 
       break;
 
@@ -205,32 +211,26 @@ export const applyUserEvent = async (
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
 
-      alreadyStreamed = pool.timestamp.sub(users[activeUser.address].expected.outStreamInit).mul(oldFlow);
+      
 
-      oldminiminal = users[activeUser.address].expected.outMinBalance;
       users[activeUser.address].expected.outFlow = result[0];
       pool.outFlowRate = pool.outFlowRate.add(result[0]).sub(oldFlow);
       streamDuration = users[activeUser.address].expected.realTimeBalance.div(BigNumber.from(10)).div(result[0]);
       stepAmount = users[activeUser.address].expected.outFlow.mul(streamDuration);
 
-      minimalBalance = BigNumber.from(5 * 3600)
+      initialWithdraw = BigNumber.from(5 * 3600)
         .mul(result[0])
         .add(stepAmount);
 
-      users[activeUser.address].expected.outMinBalance = minimalBalance;
-      users[activeUser.address].expected.outStepAmount = stepAmount;
+
+  
       users[activeUser.address].expected.outStepTime = streamDuration;
       users[activeUser.address].expected.outStreamInit = pool.timestamp;
       users[activeUser.address].expected.outStreamCreated = pool.timestamp;
       users[activeUser.address].expected.nextExecOut = pool.timestamp.add(streamDuration);
-      users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit
-        .sub(minimalBalance.mul(PRECISSION))
-        .add(oldminiminal.mul(PRECISSION))
-        .sub(alreadyStreamed.mul(PRECISSION));
-      users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.deposit.add(minimalBalance.mul(PRECISSION)).div(PRECISSION);
+      users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.deposit.div(PRECISSION);
 
-      pool.deposit = pool.deposit.sub(minimalBalance.mul(PRECISSION)).add(oldminiminal.mul(PRECISSION)).sub(alreadyStreamed.mul(PRECISSION));
-      pool.outFlowBuffer = pool.outFlowBuffer.add(minimalBalance).sub(oldminiminal);
+       //pool.outFlowBuffer = pool.outFlowBuffer.add(minimalBalance).sub(oldminiminal);
 
       break;
 
@@ -239,10 +239,8 @@ export const applyUserEvent = async (
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
 
-      alreadyStreamed = pool.timestamp.sub(users[activeUser.address].expected.outStreamInit).mul(oldFlow);
-
-      oldminiminal = users[activeUser.address].expected.outMinBalance;
-      users[activeUser.address].expected.outFlow = result[0];
+      initialBuffer = users[activeUser.address].expected.outFlow.mul(BigNumber.from(3600));
+      users[activeUser.address].expected.outFlow = BigNumber.from(0);
       pool.outFlowRate = pool.outFlowRate.sub(oldFlow);
 
       users[activeUser.address].expected.outMinBalance = BigNumber.from(0);
@@ -253,11 +251,10 @@ export const applyUserEvent = async (
       users[activeUser.address].expected.outStreamCreated = BigNumber.from(0);
       users[activeUser.address].expected.outStreamId = '0x0000000000000000000000000000000000000000000000000000000000000000';
       users[activeUser.address].expected.nextExecOut = BigNumber.from(0);
-      users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.add(oldminiminal.mul(PRECISSION)).sub(alreadyStreamed.mul(PRECISSION));
+      users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit;
       users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.deposit.div(PRECISSION);
 
-      pool.deposit = pool.deposit.add(oldminiminal.mul(PRECISSION)).sub(alreadyStreamed.mul(PRECISSION));
-      pool.outFlowBuffer = pool.outFlowBuffer.sub(oldminiminal);
+      pool.outFlowBuffer = pool.outFlowBuffer.sub(initialBuffer);
 
       break;
 
@@ -311,24 +308,24 @@ export const updateUser = async (
   let yieldOutFlow = yieldArray[2];
   let yieldUser = yieldDeposit.add(yieldFlow).sub(yieldOutFlow);
 
-  if (+user.expected.inFlow > 0) {
-    increment = user.expected.inFlow.mul(pool.timestamp.sub(user.expected.timestamp));
-    // deposit = await getDeposit(user.address,sf,superToken,deployer,superPoolAddress)
-    decrementToken = user.expected.inFlow.mul(pool.timestamp.sub(lastPool.timestamp));
-    user.expected.deposit = user.expected.deposit.add(increment.mul(PRECISSION));
-  }
 
   user.expected.deposit = user.expected.deposit.add(yieldUser);
-  user.expected.realTimeBalance = user.expected.deposit;
+
+  if (+user.expected.inFlow > 0) {
+    increment = user.expected.inFlow.mul(pool.timestamp.sub(user.expected.timestamp));
+      decrementToken = user.expected.inFlow.mul(pool.timestamp.sub(lastPool.timestamp));
+   }
+
+
+
   if (+user.expected.outFlow > 0) {
     decrement = user.expected.outFlow.mul(pool.timestamp.sub(user.expected.outStreamInit));
-    // deposit = await getDeposit(user.address,sf,superToken,deployer,superPoolAddress)
-    incrementToken = user.expected.outFlow.mul(pool.timestamp.sub(lastPool.timestamp));
-    user.expected.realTimeBalance = user.expected.realTimeBalance.add(user.expected.outMinBalance.mul(PRECISSION)).sub(decrement.mul(PRECISSION));
-  }
+     incrementToken = user.expected.outFlow.mul(pool.timestamp.sub(lastPool.timestamp));
+   }
+   user.expected.deposit = user.expected.deposit.add(increment.mul(PRECISSION)).sub(decrement.mul(PRECISSION));
 
   user.expected.tokenBalance = user.expected.tokenBalance.sub(decrementToken).add(incrementToken);
-  user.expected.realTimeBalance = user.expected.realTimeBalance.div(PRECISSION);
+  user.expected.realTimeBalance = user.expected.deposit.div(PRECISSION);
   user.expected.timestamp = pool.timestamp;
 
   pool.depositFromInFlowRate = pool.depositFromInFlowRate.sub(increment.mul(PRECISSION));
@@ -356,7 +353,9 @@ export const updateNonActiveUsers = async (
     let yieldArray = getUserYield(user, pool, pools);
     let yieldDeposit = yieldArray[0].div(PRECISSION);
     let yieldFlow = yieldArray[1];
-    let yieldUser = yieldDeposit.add(yieldFlow);
+    let yieldOutFlow = yieldArray[2];
+    let yieldUser = yieldDeposit.add(yieldFlow).sub(yieldOutFlow);
+  
     let deposit = BigNumber.from(0);
     let increment = BigNumber.from(0);
     let decrementToken = BigNumber.from(0);

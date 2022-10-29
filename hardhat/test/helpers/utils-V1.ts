@@ -49,6 +49,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Assets Balance: ${poolTotalBalance.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${poolTotalBalance.toString()}, expected:${expected.poolTotalBalance.div(10**12)!.toString()}`);
+      console.log(+poolTotalBalance.toString() - +expected.poolTotalBalance.div(10**12)!.toString() )
     }
   }
 
@@ -64,7 +65,6 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
     }
   }
-
   if (expected.depositFromInFlowRate != undefined) {
     try {
       expect(result.depositFromInFlowRate).to.equal(expected.depositFromInFlowRate);
@@ -77,6 +77,21 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       );
     }
   }
+
+  if (expected.depositFromOutFlowRate != undefined) {
+    try {
+      expect(result.depositFromOutFlowRate).to.equal(expected.depositFromOutFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Outflow Rate: ${result.depositFromOutFlowRate.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x #Deposit from Outflow Rate:',
+        `\x1b[30m ${result.depositFromOutFlowRate.toString()}, expected:${expected.depositFromOutFlowRate!.toString()}`
+      );
+      }
+    }
+
+
 
   if (expected.inFlowRate != undefined) {
     try {
@@ -96,28 +111,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (expected.depositFromOutFlowRate != undefined) {
-    try {
-      expect(result.depositFromOutFlowRate).to.equal(expected.depositFromOutFlowRate);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Outflow Rate: ${result.depositFromOutFlowRate.toString()}`);
-    } catch (error) {
-      console.log(
-        '\x1b[31m%s\x1b[0m',
-        '    x #Deposit from Outflow Rate:',
-        `\x1b[30m ${result.depositFromOutFlowRate.toString()}, expected:${expected.depositFromOutFlowRate!.toString()}`
-      );
-      }
-    }
 
-
-  if (expected.outFlowBuffer != undefined) {
-    try {
-      expect(result.outFlowBuffer).to.equal(expected.outFlowBuffer);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow Buffer: ${result.outFlowBuffer.toString()}`);
-    } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x #Out-Flow Buffer: ', `\x1b[30m ${result.outFlowBuffer.toString()}, expected:${expected.outFlowBuffer.toString()}`);
-    }
-  }
 
 
   if (expected.yieldTokenIndex != undefined) {
@@ -143,10 +137,19 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       expect(result.yieldObject.yieldOutFlowRateIndex).to.equal(expected.yieldOutFlowRateIndex);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield Out-FLOW : ${result.yieldObject.yieldOutFlowRateIndex.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Out-FLOW: ${result.yieldObject.yieldOutFlowRateIndex.toString()}, expected:${expected.yieldInFlowRateIndex!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Out-FLOW: ${result.yieldObject.yieldOutFlowRateIndex.toString()}, expected:${expected.yieldOutFlowRateIndex!.toString()}`);
     }
   }
 
+
+  if (expected.outFlowBuffer != undefined) {
+    try {
+      expect(result.outFlowBuffer).to.equal(expected.outFlowBuffer);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Out-Flow Buffer: ${result.outFlowBuffer.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Out-Flow Buffer: ', `\x1b[30m ${result.outFlowBuffer.toString()}, expected:${expected.outFlowBuffer.toString()}`);
+    }
+  }
 
   ///// YIELD PART
 
