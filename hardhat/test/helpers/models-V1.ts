@@ -1,5 +1,5 @@
 import { BigNumber, Contract, logger, utils } from 'ethers';
-import { ERC20, ERC777, IERC20, IERC777, IOps, ISuperfluidToken, ISuperToken, PoolInternalV1, PoolV1, STokenV1 } from '../../typechain-types';
+import { ERC20,  IERC20, IERC777, IOps, ISuperfluidToken, ISuperToken, PoolInternalV1, PoolV1, STokenV1 } from '../../typechain-types';
 
 
 export interface IPOOL {
@@ -9,18 +9,21 @@ export interface IPOOL {
     timestamp: BigNumber;
     deposit: BigNumber;
     depositFromInFlowRate: BigNumber;
+    depositFromOutFlowRate: BigNumber;
   
   
     inFlowRate: BigNumber;
     outFlowRate: BigNumber;
     outFlowBuffer:BigNumber;
-  
+    yieldObject : {
     yieldTokenIndex: BigNumber;
     yieldInFlowRateIndex: BigNumber;
+    yieldOutFlowRateIndex: BigNumber;
   
     yieldAccrued: BigNumber;
     yieldSnapshot: BigNumber;
     totalYield: BigNumber;
+    }
     apy :  { 
             span: BigNumber;
             apy: BigNumber; 

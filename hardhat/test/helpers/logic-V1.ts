@@ -15,7 +15,7 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAc
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
 
-  pool.poolTotalBalance = pool.poolTotalBalance.add(yieldAccrued);
+  pool.poolTotalBalance = pool.poolTotalBalance.add(yieldAccrued.div(97).mul(100));
 
   let depositSeconds = lastPool.deposit.mul(peridodSpan);
 

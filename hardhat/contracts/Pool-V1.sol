@@ -66,7 +66,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     uint256 MAX_INT;
-
+    
     uint256 public PRECISSION;
 
     uint8 public STEPS; // proportinal decrease deposit
@@ -75,7 +75,9 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     uint256 public MIN_OUTFLOW_ALLOWED; // 1 hour minimum flow == Buffer
 
     uint256 public DEPOSIT_TRIGGER_AMOUNT;
-    uint256 public DEPOSIT_TRIGGER_TIME;
+    uint256 public BALANCE_TRIGGER_TIME;
+
+    uint256 public lastExecution;
 
     uint256 public PROTOCOL_FEE;
 
@@ -132,7 +134,9 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         SUPERFLUID_DEPOSIT = 4 * 3600;
 
         DEPOSIT_TRIGGER_AMOUNT = 100 ether;
-        DEPOSIT_TRIGGER_TIME = 3600 * 24;
+        BALANCE_TRIGGER_TIME = 3600 * 24;
+
+     
 
         PROTOCOL_FEE = 3;
 
@@ -195,9 +199,11 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
         DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
 
-        uint256 max_allowed = balance.sub(supplier.outStream.minBalance);
 
-        require(max_allowed >= redeemAmount, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
+        // TODO NOT aLLOWED IF LESS than 24 hours
+       // uint256 max_allowed = balance.sub(supplier.outStream.minBalance);
+
+      //  require(max_allowed >= redeemAmount, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
 
         poolInternal._redeemDeposit(redeemAmount, _supplier);
 
@@ -285,7 +291,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         if (netFlow >= 0) {
             realtimeBalance = yieldSupplier + (supplier.deposit) + uint96(netFlow) * (block.timestamp - supplier.timestamp) * PRECISSION;
         } else {
-            realtimeBalance = yieldSupplier + supplier.outStream.minBalance.mul(PRECISSION) + (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.outStream.initTime) * PRECISSION;
+            realtimeBalance = yieldSupplier  + (supplier.deposit) - uint96(supplier.outStream.flow) * (block.timestamp - supplier.timestamp) * PRECISSION;
         }
     }
 
@@ -304,9 +310,11 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
         DataTypes.Supplier memory supplier = poolInternal.getSupplier(from);
 
-        uint256 max_allowed = fromBalance.sub(supplier.outStream.minBalance);
+        //TODO MIN BALANCE
 
-        require(amount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
+        // uint256 max_allowed = fromBalance.sub(supplier.outStream.minBalance);
+
+        // require(amount <= max_allowed, "NOT_ENOUGH_BALANCE:WITH_OUTFLOW");
 
         poolInternal.transferSTokens(from, to, amount);
 
@@ -486,7 +494,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     }
 
     function getDepositTriggerTime() external view returns (uint256) {
-      return DEPOSIT_TRIGGER_TIME;
+      return BALANCE_TRIGGER_TIME;
     }
 
        function getProtocolFee() external view returns (uint256) {
@@ -524,7 +532,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     }
 
     function emitEvents(address _supplier) internal {
-        poolStrategy.pushToStrategy();
+   
         DataTypes.Supplier memory supplier = poolInternal.getSupplier(_supplier);
         emit Events.SupplierUpdate(supplier);
         DataTypes.PoolV1 memory pool = poolInternal.getLastPool();
@@ -568,7 +576,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
     }
 
     function setDepositTriggerTime(uint256 _time) external onlyOwner {
-      DEPOSIT_TRIGGER_TIME = _time;
+      BALANCE_TRIGGER_TIME = _time;
     }
 
 

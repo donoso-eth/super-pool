@@ -600,20 +600,20 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  DEPOSIT_TRIGGER_TIME(): BigInt {
+  BALANCE_TRIGGER_TIME(): BigInt {
     let result = super.call(
-      "DEPOSIT_TRIGGER_TIME",
-      "DEPOSIT_TRIGGER_TIME():(uint256)",
+      "BALANCE_TRIGGER_TIME",
+      "BALANCE_TRIGGER_TIME():(uint256)",
       []
     );
 
     return result[0].toBigInt();
   }
 
-  try_DEPOSIT_TRIGGER_TIME(): ethereum.CallResult<BigInt> {
+  try_BALANCE_TRIGGER_TIME(): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
-      "DEPOSIT_TRIGGER_TIME",
-      "DEPOSIT_TRIGGER_TIME():(uint256)",
+      "BALANCE_TRIGGER_TIME",
+      "BALANCE_TRIGGER_TIME():(uint256)",
       []
     );
     if (result.reverted) {

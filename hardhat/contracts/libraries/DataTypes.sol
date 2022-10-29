@@ -77,10 +77,7 @@ library DataTypes {
 
     struct OutStream {
         int96 flow;
-        uint256 stepAmount;
         uint256 stepTime;
-        uint256 initTime;
-        uint256 minBalance;
         bytes32 cancelWithdrawId;
     }
 
@@ -107,6 +104,7 @@ library DataTypes {
     struct Yield {
         uint256 yieldTokenIndex;
         uint256 yieldInFlowRateIndex;
+        uint256 yieldOutFlowRateIndex;
         uint256 yieldAccrued;
         uint256 yieldSnapshot;
         uint256 totalYield;
@@ -122,6 +120,7 @@ library DataTypes {
         // uint256 totalShares;
         uint256 deposit;
         uint256 depositFromInFlowRate;
+        uint256 depositFromOutFlowRate;
         int96 inFlowRate;
         int96 outFlowRate;
         uint256 outFlowBuffer;

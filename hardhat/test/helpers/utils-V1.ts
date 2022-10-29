@@ -108,19 +108,19 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   if (expected.yieldTokenIndex != undefined) {
     try {
-      expect(result.yieldTokenIndex).to.equal(expected.yieldTokenIndex);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield Token: ${result.yieldTokenIndex.toString()}`);
+      expect(result.yieldObject.yieldTokenIndex).to.equal(expected.yieldTokenIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield Token: ${result.yieldObject.yieldTokenIndex.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Token: ${result.yieldTokenIndex.toString()}, expected:${expected.yieldTokenIndex!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Token: ${result.yieldObject.yieldTokenIndex.toString()}, expected:${expected.yieldTokenIndex!.toString()}`);
     }
   }
 
   if (expected.yieldInFlowRateIndex != undefined) {
     try {
-      expect(result.yieldInFlowRateIndex).to.equal(expected.yieldInFlowRateIndex);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield In-FLOW : ${result.yieldInFlowRateIndex.toString()}`);
+      expect(result.yieldObject.yieldInFlowRateIndex).to.equal(expected.yieldInFlowRateIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield In-FLOW : ${result.yieldObject.yieldInFlowRateIndex.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield In-FLOW: ${result.yieldInFlowRateIndex.toString()}, expected:${expected.yieldInFlowRateIndex!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield In-FLOW: ${result.yieldObject.yieldInFlowRateIndex.toString()}, expected:${expected.yieldInFlowRateIndex!.toString()}`);
     }
   }
 
@@ -128,28 +128,28 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   if (expected.yieldAccrued != undefined) {
     try {
-      expect(result.yieldAccrued).to.equal(expected.yieldAccrued);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield accrued : ${result.yieldAccrued.toString()}`);
+      expect(result.yieldObject.yieldAccrued).to.equal(expected.yieldAccrued);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield accrued : ${result.yieldObject.yieldAccrued.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Accrued: ${result.yieldAccrued.toString()}, expected:${expected.yieldAccrued!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Accrued: ${result.yieldObject.yieldAccrued.toString()}, expected:${expected.yieldAccrued!.toString()}`);
     }
   }
 
-  if (expected.yieldSnapshot != undefined && !expected.yieldSnapshot.eq(BigNumber.from(0)) ) {
+  if (expected.yieldSnapshot != undefined ) {
     try {
-      expect((+result.yieldSnapshot.div(10**12)- +aaveBalance)/+aaveBalance).to.lt(0.0000001);
+      expect((+result.yieldObject.yieldSnapshot.div(10**12)- +aaveBalance)/+aaveBalance).to.lt(0.0000001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}, expected:${(result.yieldSnapshot.div(10**12))!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}, expected:${(result.yieldObject.yieldSnapshot.div(10**12))!.toString()}`);
     }
   }
 
   if (expected.totalYield != undefined) {
     try {
-      expect(result.totalYield).to.equal(expected.totalYield);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Total Yield : ${result.totalYield.toString()}`);
+      expect(result.yieldObject.totalYield).to.equal(expected.totalYield);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Total Yield : ${result.yieldObject.totalYield.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Total Yield: ${result.totalYield.toString()}, expected:${expected.totalYield!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Total Yield: ${result.yieldObject.totalYield.toString()}, expected:${expected.totalYield!.toString()}`);
     }
   }
 
@@ -248,16 +248,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       }
     }
 
-    
-    if (user.expected.outStepAmount != undefined) {
-      try {
-        expect(user.expected.outStepAmount).to.equal(userState.outStream.stepAmount);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} STEP-AMOUNT: ${userState.outStream.stepAmount?.toString()} units/s`);
-      } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-AMOUNT: ${userState.outStream.stepAmount.toString()} , expected: ${user.expected.outStepAmount.toString()} units`);
-        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStepAmount.toString() - +userState.outStream.stepAmount.toString());
-      }
-    }
+
 
     if (user.expected.outStepTime != undefined) {
       try {
@@ -269,25 +260,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       }
     }
 
-    if (user.expected.outStreamInit != undefined) {
-      try {
-        expect(user.expected.outStreamInit ).to.equal(userState.outStream.initTime);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} INIT-TIME: ${userState.outStream.initTime?.toString()} units/s`);
-      } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} INIT-TIME: ${userState.outStream.initTime.toString()} , expected: ${user.expected.outStreamInit.toString()} units`);
-        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStreamInit.toString() - +userState.outStream.initTime.toString());
-      }
-    }
 
-    if (user.expected.outMinBalance != undefined) {
-      try {
-        expect(user.expected.outMinBalance).to.equal(userState.outStream.minBalance);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} MINIMAL BALANCE: ${userState.outStream.minBalance?.toString()} units/s`);
-      } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} MINIMAL BALANCE: ${userState.outStream.minBalance.toString()} , expected: ${user.expected.outMinBalance.toString()} units`);
-        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outMinBalance.toString() - +userState.outStream.minBalance.toString());
-      }
-    }
 
 
     if (user.expected.outStreamId != undefined) {
@@ -347,11 +320,8 @@ export const getPool = async (poolInternal: PoolInternalV1): Promise<any> => {
     outFlowRate: periodRaw.outFlowRate,
     outFlowBuffer: periodRaw.outFlowBuffer,
     depositFromInFlowRate: periodRaw.depositFromInFlowRate,
-    yieldTokenIndex: periodRaw.yieldTokenIndex,
-    yieldInFlowRateIndex: periodRaw.yieldInFlowRateIndex,
-    yieldAccrued: periodRaw.yieldAccrued,
-    yieldSnapshot: periodRaw.yieldSnapshot,
-    totalYield: periodRaw.totalYield,
+    depositFromOutFlowRate: periodRaw.depositFromOutFlowRate,
+    yieldObject:periodRaw.yieldObject,
     apy: { span: periodRaw.apy.span, apy: periodRaw.apy.apy },
   };
   return pool;
@@ -429,10 +399,10 @@ export const printPool = async (poolInternal: PoolInternalV1, t0: number): Promi
   console.log(`Out-Flow ${period.outFlowRate.toString()}  units/s`);
   console.log(`Deposit From InFlow ${period.depositFromInFlowRate.toString()}  units`);
   console.log(`Deposit ${period.deposit.toString()}  units`);
-  console.log(`IndexYieldToken: ${period.yieldTokenIndex.toString()}  units`);
-  console.log(`IndexYieldInFlowrate: ${period.yieldInFlowRateIndex.toString()}  units`);
-  console.log(`Yield accrued: ${period.yieldAccrued.toString()}  units`);
-  console.log(`Yield snapshot: ${period.yieldSnapshot.toString()}  units`);
+  console.log(`IndexYieldToken: ${period.yieldObject.yieldTokenIndex.toString()}  units`);
+  console.log(`IndexYieldInFlowrate: ${period.yieldObject.yieldInFlowRateIndex.toString()}  units`);
+  console.log(`Yield accrued: ${period.yieldObject.yieldAccrued.toString()}  units`);
+  console.log(`Yield snapshot: ${period.yieldObject.yieldSnapshot.toString()}  units`);
   console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
   return period;

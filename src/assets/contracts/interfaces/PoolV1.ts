@@ -188,7 +188,7 @@ export type PoolInitializerStructOutput = [
 export interface PoolV1Interface extends utils.Interface {
   functions: {
     "DEPOSIT_TRIGGER_AMOUNT()": FunctionFragment;
-    "DEPOSIT_TRIGGER_TIME()": FunctionFragment;
+    "BALANCE_TRIGGER_TIME()": FunctionFragment;
     "ETH()": FunctionFragment;
     "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
     "POOL_BUFFER()": FunctionFragment;
@@ -260,7 +260,7 @@ export interface PoolV1Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "DEPOSIT_TRIGGER_TIME",
+    functionFragment: "BALANCE_TRIGGER_TIME",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
@@ -483,7 +483,7 @@ export interface PoolV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "DEPOSIT_TRIGGER_TIME",
+    functionFragment: "BALANCE_TRIGGER_TIME",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
@@ -744,7 +744,7 @@ export interface PoolV1 extends BaseContract {
   functions: {
     DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    DEPOSIT_TRIGGER_TIME(overrides?: CallOverrides): Promise<[BigNumber]>;
+    BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     ETH(overrides?: CallOverrides): Promise<[string]>;
 
@@ -1034,7 +1034,7 @@ export interface PoolV1 extends BaseContract {
 
   DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
 
-  DEPOSIT_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
+  BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
 
   ETH(overrides?: CallOverrides): Promise<string>;
 
@@ -1319,7 +1319,7 @@ export interface PoolV1 extends BaseContract {
   callStatic: {
     DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
 
-    DEPOSIT_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
+    BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
 
     ETH(overrides?: CallOverrides): Promise<string>;
 
@@ -1628,7 +1628,7 @@ export interface PoolV1 extends BaseContract {
   estimateGas: {
     DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
 
-    DEPOSIT_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
+    BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
 
     ETH(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1916,7 +1916,7 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    DEPOSIT_TRIGGER_TIME(
+    BALANCE_TRIGGER_TIME(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

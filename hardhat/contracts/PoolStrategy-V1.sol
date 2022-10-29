@@ -52,23 +52,12 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   uint256 MAX_INT;
 
   uint256 lastExecution;
+  uint256 intervalExecution;
 
   address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
   constructor() {}
 
-  function pauseTask() external onlyOwner {
-    if (depositTaskId != bytes32(0)) {
-      ops.cancelTask(depositTaskId);
-      depositTaskId = bytes32(0);
-    }
-  }
-
-  function launchTask() external onlyOwner {
-    if (depositTaskId != bytes32(0)) {
-      depositTaskId = createDepositTask();
-    }
-  }
 
   // #region  ============= ============= Allocation Strategy  ============= ============= //
 
@@ -96,10 +85,34 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
     aaveToken.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
-    depositTaskId = createDepositTask();
+    //depositTaskId = createDepositTask();
+
+    lastExecution = block.timestamp;
+    intervalExecution = 24 * 3600;
   }
 
-  function withdraw(uint256 amount, address _supplier) external onlyInternal {
+
+
+    function pauseTask() external onlyOwner {
+    if (depositTaskId != bytes32(0)) {
+      ops.cancelTask(depositTaskId);
+      depositTaskId = bytes32(0);
+    }
+  }
+
+  function launchTask() external onlyOwner {
+    if (depositTaskId != bytes32(0)) {
+      depositTaskId = createDepositTask();
+    }
+  }
+
+
+
+  function withdraw(uint256 amount, address _supplier) external onlyPoolInternal {
+    _withdraw(amount, _supplier);
+  }
+
+  function _withdraw(uint256 amount, address _supplier) internal {
     aavePool.withdraw(address(aaveToken), amount.div(10**12), address(this));
 
     uint256 balanceToken = token.balanceOf(address(this));
@@ -140,9 +153,18 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
     uint256 currentPoolBuffer = currentPool.outFlowBuffer;
 
+    uint256 currentThreshold = currentPoolBuffer;
+
+    int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
+
+    // if (netFlow < 0) {
+    //   currentThreshold = currentThreshold + ((lastExecution + intervalExecution) - block.timestamp) * uint256(-netFlow);
+    // }
+
+
     uint256 TRIGGER_AMOUNT = pool.getDepositTriggerAmount();
 
-    uint256 currentThreshold = currentPoolBuffer.add(TRIGGER_AMOUNT);
+    currentThreshold = currentPoolBuffer.add(TRIGGER_AMOUNT);
 
     uint256 TRIGGER_TIME = pool.getDepositTriggerTime();
 
@@ -180,26 +202,46 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
     superToken.downgrade(amountToDeposit);
 
-    poolInternal.pushedToStrategy(uint256(amountToDeposit));
+    //poolInternal.pushedToStrategy(uint256(amountToDeposit));
 
     aaveToken.mint(amountToDeposit / (10**12));
 
     aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
-
-    lastExecution = block.timestamp;
   }
 
-  function pushToStrategy() external onlyPool {
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
-    uint256 currentPoolBuffer = poolInternal.getLastPool().outFlowBuffer;
+
+
+
+  function _balanceTreasury(uint256 balance, DataTypes.PoolV1 memory currentPool) internal {
+    uint256 currentPoolBuffer = currentPool.outFlowBuffer;
+
     uint256 currentThreshold = currentPoolBuffer;
-    console.log(184, uint256(balance));
-    console.log(185, currentThreshold);
-    if (uint256(balance) > currentThreshold) {
-      uint256 amountToDeposit = uint256(balance) - currentThreshold;
+
+    int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
+
+    if (netFlow < 0) {
+      currentThreshold = currentThreshold + ((lastExecution + intervalExecution) - block.timestamp) * uint96(-netFlow);
+    }
+
+    if (balance > currentThreshold) {
+      _deposit(balance - currentThreshold);
+    } else if (currentThreshold > balance) {
+      uint256 amountToWithdraw = currentThreshold - balance;
+
+      uint256 balanceAave = aToken.balanceOf(address(this)) * (10**12);
+
+      if (amountToWithdraw > balanceAave) {
+        amountToWithdraw = balanceAave;
+      }
+
+      _withdraw(amountToWithdraw, address(pool));
+    }
+  }
+
+  function pushToStrategy(uint256 amountToDeposit) external onlyPoolInternal {
 
       _deposit(amountToDeposit);
-    }
+    
   }
 
   function balanceOf() external view returns (uint256 balance) {
@@ -232,7 +274,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     _;
   }
 
-  modifier onlyInternal() {
+  modifier onlyPoolInternal() {
     require(msg.sender == address(poolInternal), "Only Internal Allowed");
     _;
   }

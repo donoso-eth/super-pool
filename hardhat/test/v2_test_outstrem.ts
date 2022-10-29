@@ -117,7 +117,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe.only('V1 Outstream', function () {
+describe('V1 Outstream', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
