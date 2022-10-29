@@ -301,7 +301,7 @@ export class SupplierUpdateSupplierOutStreamStruct extends ethereum.Tuple {
     return this[1].toBigInt();
   }
 
-  get stepTime(): BigInt {
+  get streamDuration(): BigInt {
     return this[2].toBigInt();
   }
 
@@ -545,7 +545,7 @@ export class PoolV1__getSupplierResultValue0OutStreamStruct extends ethereum.Tup
     return this[1].toBigInt();
   }
 
-  get stepTime(): BigInt {
+  get streamDuration(): BigInt {
     return this[2].toBigInt();
   }
 

@@ -65,9 +65,9 @@ export const getTaskId = (
 };
 
 
-export const getGelatoWithdrawStepId = async (superPool: PoolV1, poolInternal: PoolInternalV1, timestamp:number, interval:number, user:string) => {
+export const getGelatoCloStreamStepId = async ( poolInternal: PoolInternalV1, timestamp:number, interval:number, user:string) => {
 
-  let  execSelector =  poolInternal.interface.getSighash("withdrawStep");
+  let  execSelector =  poolInternal.interface.getSighash("closeStreamFlow");
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
   const timeArgs = utils.defaultAbiCoder.encode(
     ["uint256", "uint256"],
@@ -75,7 +75,7 @@ export const getGelatoWithdrawStepId = async (superPool: PoolV1, poolInternal: P
   );
 
   let moduleData = {
-    modules: [1],
+    modules: [1,3],
     args: [timeArgs],
   };
 

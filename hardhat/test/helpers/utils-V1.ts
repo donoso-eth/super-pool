@@ -96,6 +96,20 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
+  if (expected.depositFromOutFlowRate != undefined) {
+    try {
+      expect(result.depositFromOutFlowRate).to.equal(expected.depositFromOutFlowRate);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Deposit from Outflow Rate: ${result.depositFromOutFlowRate.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x #Deposit from Outflow Rate:',
+        `\x1b[30m ${result.depositFromOutFlowRate.toString()}, expected:${expected.depositFromOutFlowRate!.toString()}`
+      );
+      }
+    }
+
+
   if (expected.outFlowBuffer != undefined) {
     try {
       expect(result.outFlowBuffer).to.equal(expected.outFlowBuffer);
@@ -123,6 +137,16 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield In-FLOW: ${result.yieldObject.yieldInFlowRateIndex.toString()}, expected:${expected.yieldInFlowRateIndex!.toString()}`);
     }
   }
+
+  if (expected.yieldOutFlowRateIndex != undefined) {
+    try {
+      expect(result.yieldObject.yieldOutFlowRateIndex).to.equal(expected.yieldOutFlowRateIndex);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Index Yield Out-FLOW : ${result.yieldObject.yieldOutFlowRateIndex.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Out-FLOW: ${result.yieldObject.yieldOutFlowRateIndex.toString()}, expected:${expected.yieldInFlowRateIndex!.toString()}`);
+    }
+  }
+
 
   ///// YIELD PART
 
@@ -252,11 +276,11 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
     if (user.expected.outStepTime != undefined) {
       try {
-        expect(user.expected.outStepTime).to.equal(userState.outStream.stepTime);
-        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.stepTime?.toString()} units/s`);
+        expect(user.expected.outStepTime).to.equal(userState.outStream.streamDuration);
+        console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.streamDuration?.toString()} units/s`);
       } catch (error) {
-        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.stepTime.toString()} , expected: ${user.expected.outStepTime.toString()} units`);
-        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStepTime.toString() - +userState.outStream.stepTime.toString());
+        console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#${user.name} STEP-TIME: ${userState.outStream.streamDuration.toString()} , expected: ${user.expected.outStepTime.toString()} units`);
+        console.log('\x1b[31m%s\x1b[0m DIFFERENCE:', +user.expected.outStepTime.toString() - +userState.outStream.streamDuration.toString());
       }
     }
 
@@ -416,7 +440,7 @@ export const printUser = async (superPool: PoolV1, userAddress: string): Promise
   console.log(`In-Flow  ${user.inStream.toString()} units/s, `);
   console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s`);
   console.log(`Out-Flow  cancelID ${user.outStream.cancelWithdrawId.toString()} `);
-  console.log(`Out-Flow Stem Time ${user.outStream.stepTime.toString()} `);
+  console.log(`Out-Flow Stem Time ${user.outStream.streamDuration.toString()} `);
   console.log(`Deposit ${user.deposit.toString()}  units`);
   console.log(`TimeStamp ${user.timestamp.toString()}  units`);
   console.log(`Cumulative Yield: ${user.cumulatedYield.toString()}  units`);

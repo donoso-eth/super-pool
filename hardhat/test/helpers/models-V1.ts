@@ -40,6 +40,7 @@ export interface IPOOL_RESULT {
   
     deposit: BigNumber;
     depositFromInFlowRate: BigNumber;
+    depositFromOutFlowRate: BigNumber;
   
     inFlowRate: BigNumber;
     outFlowRate: BigNumber;
@@ -47,7 +48,7 @@ export interface IPOOL_RESULT {
   
     yieldTokenIndex: BigNumber;
     yieldInFlowRateIndex: BigNumber;
-  
+    yieldOutFlowRateIndex: BigNumber;
   
     yieldAccrued: BigNumber;
     yieldSnapshot: BigNumber;

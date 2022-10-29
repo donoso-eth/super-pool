@@ -46,7 +46,7 @@ export function handleSupplierUpdate(event: SupplierUpdate): void {
   let outStream  = event.params.supplier.outStream;
   supplier.outFlow = outStream.flow;
    supplier.outStepAmount = outStream.stepAmount;
-  supplier.outStepTime = outStream.stepTime;
+  supplier.outStepTime = outStream.streamDuration;
   supplier.outInitTime = outStream.initTime;
   supplier.outMinBalance = outStream.minBalance;
   supplier.outCancelWithdrawId = outStream.cancelWithdrawId.toHexString();

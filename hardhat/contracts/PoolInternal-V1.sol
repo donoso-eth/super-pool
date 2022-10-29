@@ -615,7 +615,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
     uint256 userBalance = poolContract.balanceOf(_supplier);
-    uint256 closeStreamTime = userBalance.div(uint96(newOutFlow));
+    uint256 streamDuration = userBalance.div(uint96(newOutFlow));
     uint256 outFlowBuffer = POOL_BUFFER.mul(uint96(newOutFlow));
     uint256 initialWithdraw = POOL_BUFFER.add(SUPERFLUID_DEPOSIT).mul(uint96(newOutFlow));
 
@@ -625,15 +625,17 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
       }
 
       pool.outFlowBuffer += outFlowBuffer;
-      supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, closeStreamTime);
+      supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
       _withdrawTreasury(_supplier, address(poolContract), initialWithdraw);
+      supplier.outStream.streamDuration = streamDuration;
       poolContract.sfCreateFlow(_supplier, newOutFlow);
     } else if (supplier.outStream.flow > 0 && supplier.outStream.flow != newOutFlow) {
       if (userBalance < 24 * 3600 * uint96(newOutFlow)) {
         revert("No sufficent funds");
       }
       _cancelTask(supplier.outStream.cancelWithdrawId);
-      supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, closeStreamTime);
+      supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
+      supplier.outStream.streamDuration = streamDuration;
 
       if (supplier.outStream.flow > newOutFlow) {
         uint256 decreaseBuffer = POOL_BUFFER.add(SUPERFLUID_DEPOSIT).mul(uint96(supplier.outStream.flow - newOutFlow));
@@ -736,8 +738,8 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     taskId = IOps(ops).createTask(address(this), execData, moduleData, ETH);
   }
 
-  function _createCloseStreamTask(address _supplier, uint256 closeStreamTime) internal returns (bytes32 taskId) {
-    bytes memory timeArgs = abi.encode(uint128(block.timestamp + closeStreamTime), closeStreamTime);
+  function _createCloseStreamTask(address _supplier, uint256 streamDuration) internal returns (bytes32 taskId) {
+    bytes memory timeArgs = abi.encode(uint128(block.timestamp + streamDuration), streamDuration);
 
     bytes memory execData = abi.encodeWithSelector(this.closeStreamFlow.selector, _supplier);
 

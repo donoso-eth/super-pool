@@ -89,7 +89,7 @@ export type PoolV1StructOutput = [
 export type OutStreamStruct = {
   flow: BigNumberish;
   stepAmount: BigNumberish;
-  stepTime: BigNumberish;
+  streamDuration: BigNumberish;
   initTime: BigNumberish;
   minBalance: BigNumberish;
   cancelWithdrawId: BytesLike;
@@ -105,7 +105,7 @@ export type OutStreamStructOutput = [
 ] & {
   flow: BigNumber;
   stepAmount: BigNumber;
-  stepTime: BigNumber;
+  streamDuration: BigNumber;
   initTime: BigNumber;
   minBalance: BigNumber;
   cancelWithdrawId: string;

@@ -108,7 +108,7 @@ struct Stream {
         int96 flow;
         bytes32 cancelFlowId;//deprecated
         uint256 stepAmount; //amount to transfer every step
-        uint256 stepTime;// time between steps
+        uint256 streamDuration;// time between steps
         uint256 initTime;// when step started
         uint256 minBalance; // min balance to ensure pool not run out of funds
         bytes32 cancelWithdrawId; //withdraw task id by Gelato

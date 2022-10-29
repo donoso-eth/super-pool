@@ -77,7 +77,7 @@ library DataTypes {
 
     struct OutStream {
         int96 flow;
-        uint256 stepTime;
+        uint256 streamDuration;
         bytes32 cancelWithdrawId;
     }
 

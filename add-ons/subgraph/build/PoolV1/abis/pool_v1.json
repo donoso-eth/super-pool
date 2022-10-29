@@ -991,7 +991,7 @@
               },
               {
                 "internalType": "uint256",
-                "name": "stepTime",
+                "name": "streamDuration",
                 "type": "uint256"
               },
               {
@@ -1814,7 +1814,7 @@
               },
               {
                 "internalType": "uint256",
-                "name": "stepTime",
+                "name": "streamDuration",
                 "type": "uint256"
               },
               {
