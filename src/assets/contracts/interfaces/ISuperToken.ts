@@ -499,7 +499,7 @@ export type AgreementLiquidatedV2Event = TypedEvent<
     id: string;
     liquidatorAccount: string;
     targetAccount: string;
-    rewardAccount: string;
+    rewardAmountReceiver: string;
     rewardAmount: BigNumber;
     targetAccountBalanceDelta: BigNumber;
     liquidationTypeData: string;
@@ -1582,7 +1582,7 @@ export interface ISuperToken extends BaseContract {
       id?: null,
       liquidatorAccount?: string | null,
       targetAccount?: string | null,
-      rewardAccount?: null,
+      rewardAmountReceiver?: null,
       rewardAmount?: null,
       targetAccountBalanceDelta?: null,
       liquidationTypeData?: null
@@ -1592,7 +1592,7 @@ export interface ISuperToken extends BaseContract {
       id?: null,
       liquidatorAccount?: string | null,
       targetAccount?: string | null,
-      rewardAccount?: null,
+      rewardAmountReceiver?: null,
       rewardAmount?: null,
       targetAccountBalanceDelta?: null,
       liquidationTypeData?: null

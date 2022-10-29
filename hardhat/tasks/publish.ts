@@ -59,7 +59,7 @@ task('publish', 'publish subgraph')
         readFileSync(join(processDir, 'contract.config.json'), 'utf-8')
       ) as { [key: string]: ICONTRACT_DEPLOY };
 
-      const deployContracts = ['poolV2'];
+      const deployContracts = ['poolV1'];
 
       // Hardhat always runs the compile task when running scripts with its command
       // line interface.

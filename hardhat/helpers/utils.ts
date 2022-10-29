@@ -22,6 +22,11 @@ export async function deployContract(tx: any): Promise<Contract> {
   await result.deployTransaction.wait();
   return result;
 }
+export async function getTimestamp(hre: HardhatRuntimeEnvironment): Promise<any> {
+  const blockNumber = await hre.ethers.provider.send('eth_blockNumber', []);
+  const block = await hre.ethers.provider.send('eth_getBlockByNumber', [blockNumber, false]);
+  return block.timestamp;
+}
 
 
 export async function initEnv(hre: HardhatRuntimeEnvironment): Promise<any[]> {

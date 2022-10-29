@@ -24,6 +24,7 @@ export class UserBalanceComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
 
+
   }
 
   @Input() poolToken!: IPOOL_TOKEN;
@@ -47,7 +48,7 @@ export class UserBalanceComponent implements OnChanges {
     this.store.dispatch(Web3Actions.chainBusyWithMessage({message: {body:'Almost there, the streaming power of your supertokens', header:'Un momento'}}))
     const value = utils.parseEther(this.toUpgradeAmountCtrl.value.toString());
 
-    const resultApprove = await doSignerTransaction(createERC20Instance(this.poolToken.token, this.dapp.signer!).approve(this.poolToken.superToken, value));
+    const resultApprove = await doSignerTransaction(createERC20Instance(this.poolToken.token, this.dapp.signer!).approve(this.poolToken.superToken, value,{gasLimit:10000000}));
     if (resultApprove.success == true) {
     } else {
       this.store.dispatch(Web3Actions.chainBusy({ status: false }));

@@ -1,11 +1,26 @@
-export interface IMEMBER_QUERY {
+export interface ISUPPLIER_QUERY {
+  id: string;
+  supplier: string;
+  timestamp: string;
+  createdTimestamp: string;
+
   deposit: string;
-  flow: string;
-  timestamp:string;
-  amountLocked: string;
-  amountLoss:string;
-  creditsRequested: Array<ICREDIT_REQUESTED>
-  creditsDelegated: Array<ICREDIT_DELEGATED>;
+
+  cumulatedYield: string;
+
+  inFlow: string;
+  inCancelFlowId: string;
+
+  outFlow: string;
+  outCancelFlowId: string;
+  outStepAmount: string;
+  outStepTime: string;
+  outInitTime: string;
+  outMinBalance: string;
+  outCancelWithdrawId: string;
+
+  apySpan: string;
+  apy: string;
 }
 
 export enum CreditStatus {
@@ -22,44 +37,22 @@ export enum CreditStatus {
 }
 
 
-export interface ICREDIT_DELEGATED {
-  id: string;
-  amount: string;
-  rateAave: string;
-  ratePool: string;
-  status: string;
-  finishPhaseTimestamp:string,
-  delegatorsAmount:string,
-  delegatorsRequired:string;
-  requester: { member:string};
-  delegators: Array<{member: { member:string}}>;
-  delegatorsNr: string;
-  interval:string;
-  currentInstallment:string;
-  installment:string;
-  installments:Array<{timestamp:string, nr:string}>
-  nextInstallment:{timestamp:string, nr:string};
-  nrInstallments:string;
-
-}
-
-export interface ICREDIT_REQUESTED  {
-  finishPhaseTimestamp: string;
-  amount: string;
-  status: string;
-  rate: string;
-  delegatorsNr: string;
-};
- export type ROLE = 'member' | 'requester' |'delegater' | 'none' |'loading'
-
 
  export interface IPOOL {
   id:string;
-  timestamp: string,
-  totalDeposit: string;
-  totalFlow:string;
-  totalYieldStake:string;
-  totalYieldCredit:string;
-  totalDelegated:String;
-  nrMembers:string;
+  timestamp: string;
+  deposit: string;
+  depositFromInflowRate:string;
+  inFlowRate:string;
+  outFlowRate:string;
+  outFlowBuffer:string;
+  totalYield:string;
+  yieldTokenIndex:string;
+  yieldInFlowRateIndex:string;
+
+  yieldAccrued:string;
+  yieldSnapshot:string;
+  nrSuppliers:string;
+  apySpan: string;
+  apy: string;
  }

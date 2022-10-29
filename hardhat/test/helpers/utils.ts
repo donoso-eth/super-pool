@@ -4,7 +4,7 @@ import { hexlify, keccak256, RLP, toUtf8Bytes } from 'ethers/lib/utils';
 import { Network } from 'hardhat/types';
 import { ethers, network } from 'hardhat';
 import { expect } from 'chai';
-import { AllocationMock, ERC20, ERC777, IOps, ISuperfluidToken, PoolFactoryV1 } from '../../typechain-types';
+import { AllocationMock, ERC20, ERC777, IOps, ISuperfluidToken, PoolV1V1 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export interface IPERIOD {
@@ -287,15 +287,15 @@ export const testPeriod = async (
 
   if (user.expected.inFlow != undefined) {
     try {
-      expect(user.expected.inFlow).to.equal(userState.inStream.flow);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} IN-FLOW: ${userState.inStream.flow?.toString()} units/s`);
+      expect(user.expected.inFlow).to.equal(userState.inStream);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#${user.name} IN-FLOW: ${userState.inStream?.toString()} units/s`);
     } catch (error) {
       console.log(
         '\x1b[31m%s\x1b[0m',
         '    x',
-        `\x1b[30m#${user.name} IN-FLOW:  ${userState.inStream.flow.toString()},  ${user.expected.inFlow.toString()} expected: units/s`
+        `\x1b[30m#${user.name} IN-FLOW:  ${userState.inStream.toString()},  ${user.expected.inFlow.toString()} expected: units/s`
       );
-      console.log(+user.expected.inFlow.toString()-+userState.inStream.flow.toString())
+      console.log(+user.expected.inFlow.toString()-+userState.inStream.toString())
     }
   }
 
@@ -596,7 +596,7 @@ export const printPeriodTest = async (result: IPERIOD_RESULT, expected: IPERIOD_
   }
 };
 
-export const getPool = async (superTokenPool: PoolFactoryV1): Promise<any> => {
+export const getPool = async (superTokenPool: PoolV1V1): Promise<any> => {
   let periodTimestamp = +(await superTokenPool.lastPoolTimestamp()).toString();
   let periodRaw = await superTokenPool.poolByTimestamp(periodTimestamp);
 
@@ -645,7 +645,7 @@ export const testMockStrategy = async (
 
 ////// CONTRACTS
 
-export const printPeriod = async (superTokenPool: PoolFactoryV1, t0: number): Promise<any> => {
+export const printPeriod = async (superTokenPool: PoolV1V1, t0: number): Promise<any> => {
   let periodTimestamp = +(await superTokenPool.lastPoolTimestamp()).toString();
   let period = await superTokenPool.poolByTimestamp(periodTimestamp);
   console.log(period.timestamp.toString());
@@ -666,12 +666,12 @@ export const printPeriod = async (superTokenPool: PoolFactoryV1, t0: number): Pr
   return period;
 };
 
-export const printUser = async (superTokenPool: PoolFactoryV1, userAddress: string): Promise<any> => {
+export const printUser = async (superTokenPool: PoolV1V1, userAddress: string): Promise<any> => {
   let user = await superTokenPool.suppliersByAddress(userAddress);
 
   console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
   console.log(`User ${userAddress.toString()} `);
-  console.log(`In-Flow  ${user.inStream.flow.toString()} units/s, `);
+  console.log(`In-Flow  ${user.inStream.toString()} units/s, `);
   console.log(`Out-Flow  ${user.outStream.flow.toString()} units/s`);
   console.log(`Deposit ${user.deposit.amount.toString()}  units`);
   console.log(`TimeStamp ${user.timestamp.toString()}  units`);

@@ -9,64 +9,57 @@ import {
   IERC777,
   IERC777__factory,
   Events__factory,
-  GelatoTasksV2,
-  GelatoTasksV2__factory,
+
   IOps,
   IOps__factory,
   ISuperfluidToken,
   ISuperfluidToken__factory,
   ISuperToken,
   ISuperToken__factory,
-  PoolV2,
-  PoolV2__factory,
-  PoolInternalV2,
-  PoolInternalV2__factory,
-  PoolStrategyV2,
-  PoolStrategyV2__factory,
-  ResolverSettingsV2,
-  ResolverSettingsV2__factory,
-  STokenV2,
-  STokenV2__factory,
-  SuperPoolHost,
-  SuperPoolHost__factory,
+
   IERC20,
   IERC20__factory,
 } from '../typechain-types';
 
 import { constants, utils } from 'ethers';
-import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent, printPeriod, printPoolResult, printUser, testPeriod } from './helpers/utils-V2';
+import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent,printPoolResult, printUser, testPeriod } from './helpers/utils-V1';
 import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core';
 
-import { ResolverSettingsInitilizerStruct, SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
 import { concatMap, from } from 'rxjs';
 import { ethers } from 'hardhat';
 
 import { readFileSync } from 'fs-extra';
 import { INETWORK_CONFIG } from 'hardhat/helpers/models';
 import { join } from 'path';
-import { applyUserEvent, faucet, updatePool } from './helpers/logic-V2';
-import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V2';
+import { applyUserEvent, faucet, updatePool } from './helpers/logic-V1';
+import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V1';
 
 import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
-import { gelatoPushToAave, gelatoWithdrawStep, getGelatoWithdrawStepId } from './helpers/gelato-V2';
+import { gelatoPushToAave, gelatoWithdrawStep, getGelatoWithdrawStepId } from './helpers/gelato-V1';
 
 import { BigNumber } from '@ethersproject/bignumber';
+import { CreatePoolInputStruct, SuperPoolFactory, SuperPoolFactoryInitializerStruct } from '../typechain-types/SuperPoolFactory';
+import { PoolV1 } from '../typechain-types/PoolV1';
+import { PoolStrategyV1 } from '../typechain-types/PoolStrategyV1';
+import { PoolInternalV1 } from '../typechain-types/PoolInternalV1';
+import { PoolInternalV1__factory } from '../typechain-types/factories/PoolInternalV1__factory';
+import { PoolStrategyV1__factory } from '../typechain-types/factories/PoolStrategyV1__factory';
+import { PoolV1__factory } from '../typechain-types/factories/PoolV1__factory';
+import { SuperPoolFactory__factory } from '../typechain-types/factories/SuperPoolFactory__factory';
 
-let superPoolHost: SuperPoolHost;
-let poolFactory: PoolV2;
-let sTokenFactory: STokenV2;
-let gelatoTasks: GelatoTasksV2;
-let poolStrategy: PoolStrategyV2;
-let settings: ResolverSettingsV2;
-let poolInternal: PoolInternalV2;
+let superPoolFactory: SuperPoolFactory;
+let poolFactory: PoolV1;
 
-let superPool: PoolV2;
+let poolStrategy: PoolStrategyV1;
+
+let poolInternal: PoolInternalV1;
+
+let superPool: PoolV1;
 let superPoolAddress: string;
-let sToken: STokenV2;
-let sTokenAddress: string;
+
 
 let superTokenContract: ISuperToken;
-let aaveERC20: IERC20;
+
 let superTokenERC777: IERC777;
 let contractsTest: ICONTRACTS_TEST;
 
@@ -124,7 +117,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe('V2 test OUTSTREAM ONLY', function () {
+describe('V1 Outstream', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -144,69 +137,73 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     provider = hre.ethers.provider;
 
-    superPoolHost = await new SuperPoolHost__factory(deployer).deploy(network_params.host);
-    console.log('Host---> deployed');
-    poolFactory = await new PoolV2__factory(deployer).deploy();
-    console.log('Pool Factory---> deployed: ');
-    sTokenFactory = await new STokenV2__factory(deployer).deploy();
-    console.log('Token Factotokery---> deployed');
+   
+    let poolImpl = await new PoolV1__factory(deployer).deploy();
+    console.log('Pool Impl---> deployed');
 
-    //
-    gelatoTasks = await new GelatoTasksV2__factory(deployer).deploy();
-    console.log('Gelato Resolver---> deployed');
+    let poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy();
+    console.log('PoolInternal ---> deployed');
 
-    poolStrategy = await new PoolStrategyV2__factory(deployer).deploy();
+    poolStrategy = await new PoolStrategyV1__factory(deployer).deploy();
     console.log('Pool Strategy---> deployed');
 
-    settings = await new ResolverSettingsV2__factory(deployer).deploy();
-    console.log('Settings ---> deployed');
+      //// DEPLOY SuperPoolFactory
+  let factoryInit: SuperPoolFactoryInitializerStruct = {
+    host:network_params.host,
+    poolImpl: poolImpl.address,
+    poolInternalImpl: poolInternalImpl.address,
+    ops: network_params.ops
 
-    poolInternal = await new PoolInternalV2__factory(deployer).deploy();
-    console.log('PoolInternal ---> deployed');
+  }
+
+    
+    superPoolFactory = await new SuperPoolFactory__factory(deployer).deploy();
+
+    await superPoolFactory.initialize(factoryInit);
+
+    console.log('Super Pool Factory---> deployed');
 
     eventsLib = await new Events__factory(deployer).deploy();
 
+    let aaveERC20: IERC20 = await IERC20__factory.connect(network_params.aToken, deployer);
 
     superTokenContract = await ISuperToken__factory.connect(network_params.superToken, deployer);
     superTokenERC777 = await IERC777__factory.connect(network_params.superToken, deployer);
     tokenContract = new hre.ethers.Contract(network_params.token, abi_erc20mint, deployer) as ERC20;
 
-    let resolverInit: ResolverSettingsInitilizerStruct = {
-      _poolStrategy: poolStrategy.address,
-      _gelatoTaks: gelatoTasks.address,
-      _gelatoOps: network_params.ops,
-      _poolInternal: poolInternal.address,
+ 
+
+    let superInputStruct: CreatePoolInputStruct = {
+    superToken: network_params.superToken,
+      poolStrategy: poolStrategy.address
     };
 
-    let superInputStruct: SuperPoolInputStruct = {
-      poolFactoryImpl: poolFactory.address,
-      sTokenImpl: sTokenFactory.address,
-      superToken: network_params.superToken,
-      token: network_params.token,
-
-      settings: settings.address,
-      settingsInitializer: resolverInit,
-    };
-
-    await superPoolHost.createSuperPool(superInputStruct);
+    await superPoolFactory.createSuperPool(superInputStruct);
     console.log('SuperPool ---> created');
-    superTokenResolver = await superPoolHost.getResolverBySuperToken(network_params.superToken);
+    
+    let poolRecord = await superPoolFactory.getRecordBySuperTokenAddress(network_params.superToken,poolStrategy.address)
 
-    superPoolAddress = superTokenResolver.pool;
-    sTokenAddress = superTokenResolver.sToken;
+    let poolProxyAddress = poolRecord.pool;
+    let poolInternalProxyAddress = poolRecord.poolInternal;
 
+    superPoolAddress = poolProxyAddress;
     // await poolInternal.initialize(settings.address);
-    // console.log('Gelato Tasks ---> initialized');
+    // console.log('Pool Internal ---> initialized');
 
-    await gelatoTasks.initialize(network_params.ops, superPoolAddress, poolInternal.address);
-    console.log('Gelato Tasks ---> initialized');
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, superPoolAddress, aavePool, aToken,'0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43', poolInternal.address);
+      await poolStrategy.initialize(
+      network_params.ops,
+      network_params.superToken,
+      network_params.token,
+      poolProxyAddress,
+      aavePool,
+      aToken,
+      network_params.aaveToken,
+      poolInternalProxyAddress
+    );
     console.log('Pool Strategy ---> initialized');
 
-    superPool = PoolV2__factory.connect(superPoolAddress, deployer);
-
-
-    sToken = STokenV2__factory.connect(sTokenAddress, deployer);
+    superPool = PoolV1__factory.connect(superPoolAddress, deployer);
+    poolInternal = PoolInternalV1__factory.connect(poolInternalProxyAddress, deployer); 
 
     let initialPoolEth = hre.ethers.utils.parseEther('10');
 
@@ -226,7 +223,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
     /////// INITIAL POOL BALANCE /////////
     initialBalance = utils.parseEther('1000');
 
-   // await superTokenContract.transfer(superPoolAddress, initialBalance);
+    // await superTokenContract.transfer(superPoolAddress, initialBalance);
 
     await faucet(deployer, tokenContract, superTokenContract);
 
@@ -234,10 +231,11 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     await faucet(user2, tokenContract, superTokenContract);
 
+    let balance = await tokenContract.balanceOf(superPoolAddress);
 
     //throw new Error("");
 
-    t0 = +(await superPool.lastPoolTimestamp());
+    t0 = +(await superPool.getLastTimestamp());
 
     await hre.network.provider.request({
       method: 'hardhat_impersonateAccount',
@@ -246,24 +244,19 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     executor = await hre.ethers.provider.getSigner(network_params.opsExec);
 
-    PRECISSION = await settings.getPrecission();
-   aaveERC20= await  IERC20__factory.connect(network_params.aToken, deployer)
-
+    PRECISSION = await superPool.getPrecission();
 
     contractsTest = {
       poolAddress: superPoolAddress,
       superTokenContract: superTokenContract,
       superPool: superPool,
-      sToken: sToken,
-      poolInternal,
       superTokenERC777,
       aaveERC20,
+      poolInternal,
       strategyAddresse: poolStrategy.address,
-      ops:ops,
-      PRECISSION
+      ops: ops,
+      PRECISSION,
     };
-
-  
 
     sf = await Framework.create({
       chainId: 31337,
@@ -272,11 +265,10 @@ describe('V2 test OUTSTREAM ONLY', function () {
       resolverAddress: network_params.sfResolver,
     });
   });
-
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
 
-    t0 = +(await superPool.lastPoolTimestamp());
+    t0 = +(await superPool.getLastTimestamp());
     console.log(t0.toString());
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 800 units at t0 ');
@@ -289,7 +281,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
 
     await erc777.send(superPoolAddress, amount, '0x');
 
-    let t1 = await superPool.lastPoolTimestamp();
+    let t1 = await superPool.getLastTimestamp();
 
     let result: [IUSERS_TEST, IPOOL_RESULT];
 
@@ -416,7 +408,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    let taskId = await getGelatoWithdrawStepId(poolInternal,gelatoTasks,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
+    let taskId = await getGelatoWithdrawStepId(superPool,poolInternal,+timestamp,+usersPool[user2.address].expected.outStepTime, user2.address)
     usersPool[user2.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +t1 + 2 * ONE_DAY, result[1], contractsTest, result[0]);
 
@@ -496,7 +488,7 @@ describe('V2 test OUTSTREAM ONLY', function () {
         timestamp = usersPool[user2.address].expected.nextExecOut; //t1.add(BigNumber.from(7 * ONE_DAY + +usersPool[user2.address].expected.nextExecOut));
     
   
-        await gelatoWithdrawStep(poolInternal,gelatoTasks,ops,executor,user2.address,+usersPool[user2.address].expected.outStreamCreated ,+usersPool[user2.address].expected.outStepTime);
+        await gelatoWithdrawStep(superPool,poolInternal,ops,executor,user2.address,+usersPool[user2.address].expected.outStreamCreated ,+usersPool[user2.address].expected.outStepTime);
 
     
         lastPool = Object.assign({}, pool);

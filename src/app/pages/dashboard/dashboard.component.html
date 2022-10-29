@@ -7,183 +7,16 @@
 
       <div class="col-12">
 
-        <div style="margin-top: 20px" class="grid">
+        <div style="margin-top: 20px" class="grid justify-content-center">
           <!-- //// Wrap-Unwrap -->
           <div class="col-12 lg:col-4 xl:col-4">
             <div
               style="background-color: var(--surface-ground)"
-              class="card mb-0">
-              <div class="grid p-fluid justify-content-center">
-                <div class="col-12 flex align-items-center">
-                 
-                  <h5 style="color:grey">Total Balance</h5>
-                  <!-- #region REALTIME  ////  -->
-                </div>
-                <div class="col-12 text-center">
-                  <div class="flex justify-content-between flex-column mb-3">
-                    <div class="text-900 font-medium text-lg">
-                      <span class="text-green-500">
-                        <span style="font-size: 40px"> {{ twoDec }}</span
-                        >{{ fourDec }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- #endregion REALTIME ////  -->
-
-        
-              </div>
-            </div>
-          </div>
-
-          <div class="col-12 lg:col-4 xl:col-4">
-            <div
-              style="background-color: var(--surface-ground)"
               class="card mb-0"
             >
               <div class="grid p-fluid justify-content-center">
-                <div class="col-12 flex align-items-center">
-                  <h5 style="color:grey">Available Balance</h5>
-                  <!-- #region REALTIME  ////  -->
-                </div>
-                <div class="col-12 text-center">
-                  <div class="flex justify-content-between flex-column mb-3">
-                    <div class="text-900 font-medium text-lg">
-                      <span class="text-green-500">
-                        <span style="font-size: 40px"> {{ twoDecAva }}</span
-                        >{{ fourDecAva }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-  
-              </div>
-            </div>
-          </div>
-
-          <!-- //// Mint area -->
-          <div class="col-12 lg:col-4 xl:col-4">
-            <div
-              style="background-color: var(--surface-ground)"
-              class="card mb-0"
-            >
-            <div class="grid justify-content-center">
-              <div style="position: relative" class="col-12 flex align-items-center">
-                <span class="block text-500 font-medium ml-2"> Your Tokens</span>
-                <!-- <img
-                  src="assets/images/tokens/{{ poolToken?.image }}_icon.svg"
-                  style="position: absolute; width: 40px; right: 20px"
-                /> -->
-              </div>
-              <!-- #region BALANCE REWARDTOKEN ////  -->
-              <div class="col-12 text-center">
-                <div class="flex justify-content-between flex-column mb-1">
-                  <div  style="    display: inline-flex;
-                  align-items: center;
-              "class="text-900 font-medium text-md">
-                
-                    <p style="width:150px;margin:unset;color:grey;">Locked:</p> 
-                    <span 
-              
-                      style="color: var(--yellow-500)"
-                    >
-                      {{member?.amountLocked}}$</span
-                    >
-                  </div>
-                </div>
-      
-                <div class="flex justify-content-between flex-column mb-1">
-                  <div  style="    display: inline-flex;
-                  align-items: center;
-              "class="text-900 font-medium text-md">
-                
-                    <p style="width:150px;margin:unset;color:grey;">Loss:</p> 
-                    <span 
-                    >
-                    {{member?.amountLoss}}$</span
-                    >
-                  </div>
-                </div>
-              </div>
-              <!-- #endregion BALANCE SUPER TOKE DEPOSIT ////  -->
-          
-        
-            </div>
-            </div>
-          </div>
-
-          <div class="col-12 lg:col-4 xl:col-4">
-            <user-balance
-              (refreshEvent)="refreshBalance()"
-              (mintEvent)="mint()"
-              *ngIf="poolToken !== undefined"
-              [poolToken]="poolToken"
-            ></user-balance>
-            <p-progressSpinner   style="position: relative;
-            left: 158px;
-            top: 50px;" *ngIf="poolToken == undefined"></p-progressSpinner>
-          </div>
-
-          <div class="col-12 lg:col-4 xl:col-4">
-            <div
-              style="background-color: var(--surface-ground)"
-              class="card mb-0"
-            >
-              <div class="grid p-fluid justify-content-center">
-                <div class="col-12 flex align-items-center">
-                  <span class="block text-500 font-medium ml-2">
-                    Your stream</span
-                  >
-                  <!-- #region REALTIME  ////  -->
-                </div>
-                <div class="col-12 text-center">
-                  <div class="flex justify-content-between flex-column mb-3">
-                    <div class="text-900 font-medium text-lg">
-                      <span class="text-green-500">
-                        <span style="font-size: 20px">  {{niceFlow}}$/month </span>
-                
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- #endregion REALTIME ////  -->
-
-                <div class="col-12 flex justify-content-around">
-                  <button *ngIf="isFlowAvailable == false"
-                    pButton
-                    pRipple
-                    style="position: relative; width: fit-content"
-                    (click)="showStartFlow()"
-                    type="button"
-                    label="Stream-->"
-                    class="p-button-rounded mr-2 mb-2"
-                  ></button>
-                  <button *ngIf="isFlowAvailable == true"
-                  pButton
-                  pRipple
-                  style="position: relative; width: fit-content"
-                  (click)="stopFlow()"
-                  type="button"
-                  label="Stop Stream"
-                  class="p-button-rounded mr-2 mb-2"
-                ></button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- //// Mint area -->
-          <div class="col-12 lg:col-4 xl:col-4">
-            <div
-              style="background-color: var(--surface-ground)"
-              class="card mb-0"
-            >
-              <div class="grid p-fluid justify-content-center">
-                <div class="col-12 flex align-items-center">
-                  <span class="block text-500 font-medium ml-2"> Deposit</span>
+                <div class="col-12 flex align-items-center justify-content-center">
+                  <span class="block text-500 font-medium ml-2 text-center"> Deposit</span>
                   <!-- #region REALTIME  ////  -->
                 </div>
                 <div class="col-12 text-center">
@@ -192,9 +25,11 @@
                       <p-inputNumber
                         [formControl]="depositAmountCtrl"
                         placeholder="Amount"
-                        mode="decimal"
+                  
                         [showButtons]="true"
+                         [maxFractionDigits]="6"
                         [min]="0"
+                        [step]="0.000001"
                       >
                       </p-inputNumber>
                     </div>
@@ -214,6 +49,87 @@
                     class="p-button-rounded mr-2 mb-2"
                   ></button>
                 </div>
+     
+              </div>
+            </div>
+          </div>
+
+
+          <div class="col-12 lg:col-4 xl:col-4">
+            <div
+              style="background-color: var(--surface-ground);  min-height: 269px;"
+              class="card mb-0"
+            >
+              <div class="grid p-fluid justify-content-center">
+                <div class="col-12 flex align-items-center justify-content-center">
+                  <h5 style="color:grey">Total Balance</h5>
+                  <!-- #region REALTIME  ////  -->
+                </div>
+                <div class="col-12 text-center">
+                  <div class="flex justify-content-between flex-column mb-3">
+                    <div class="text-900 font-medium text-lg">
+                      <span class="text-green-500">
+                        <span style="font-size: 40px"> {{ twoDec }}</span
+                        >{{ fourDec }}
+                      </span>
+                      <a></a>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 flex align-items-center justify-content-center">
+                  <span class="block text-500 font-medium ml-2 text-center">
+                    Your stream</span
+                  >
+                  <!-- #region REALTIME  ////  -->
+                </div>
+                <div class="col-12 text-center">
+                  <div class="flex justify-content-between flex-column mb-3">
+                    <div class="text-900 font-medium text-lg">
+                      <span class="text-green-500">
+                        <span   *ngIf="isOutFlowAvailable == false" style="font-size: 20px">  {{niceFlow}}$/month </span>
+                        <span  *ngIf="isOutFlowAvailable == true" style="font-size: 20px;color:red;"> -{{niceOutFlow}}$/month </span>
+                
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+  
+              </div>
+            </div>
+          </div>
+
+          <!-- //// Mint area -->
+          <div class="col-12 lg:col-4 xl:col-4">
+            <div
+              style="background-color: var(--surface-ground)"
+              class="card mb-0"
+            >
+              <div class="grid p-fluid justify-content-center">
+                <div class="col-12 flex align-items-center justify-content-center">
+                  <span class="block text-500 font-medium ml-2 text-center"> Withdraw</span>
+                  <!-- #region REALTIME  ////  -->
+                </div>
+                <div class="col-12 text-center">
+                  <div class="flex justify-content-between flex-column mb-2">
+                    <div class="text-900 font-medium text-lg">
+                      <p-inputNumber
+                        [formControl]="depositAmountCtrl"
+                        placeholder="Amount"
+                
+                        mode="decimal"
+                       [showButtons]="true"
+                         [maxFractionDigits]="6"
+                        [min]="0"
+                        [step]="0.000001"
+                      >
+                      </p-inputNumber>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- #endregion REALTIME ////  -->
+
                 <div class="col-6 flex justify-content-around">
                   <button
                     pButton
@@ -228,6 +144,121 @@
               </div>
             </div>
           </div>
+    
+
+          <div class="col-12 lg:col-4 xl:col-4">
+            <div
+              style="background-color: var(--surface-ground)"
+              class="card mb-0"
+            >
+              <div class="grid p-fluid justify-content-center">
+                <div class="col-12 flex align-items-center justify-content-center">
+                  <span class="block text-500 font-medium ml-2 text-center">
+                    Your stream Into the Pool</span
+                  >
+                  <!-- #region REALTIME  ////  -->
+                </div>
+                <div class="col-12 text-center">
+                  <div class="flex justify-content-between flex-column mb-3">
+                    <div class="text-900 font-medium text-lg">
+                      <span class="text-green-500">
+                        <span  style="font-size: 20px">  {{niceFlow}}$/month </span>
+                      
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- #endregion REALTIME ////  -->
+
+                <div class="col-12 flex justify-content-around">
+                  <button *ngIf="isFlowAvailable == false"
+                    pButton
+                    pRipple
+                    style="position: relative; width: fit-content"
+                    (click)="showStartFlow()"
+                    type="button"
+                    label="Stream in Pool-->"
+                    class="p-button-rounded mr-2 mb-2"
+                  ></button>
+                  <button *ngIf="isFlowAvailable == true"
+                  pButton
+                  pRipple
+                  style="position: relative; width: fit-content"
+                  (click)="stopFlow()"
+                  type="button"
+                  label="Stop Stream"
+                  class="p-button-rounded mr-2 mb-2"
+                ></button>
+                </div>
+          
+              </div>
+            </div>
+          </div>
+
+          <div  style="position:relative" class="col-12 lg:col-4 xl:col-4">
+            <user-balance
+              (refreshEvent)="refreshBalance()"
+              (mintEvent)="mint()"
+              *ngIf="poolToken !== undefined"
+              [poolToken]="poolToken"
+            ></user-balance>
+            <!-- style="position: relative;left: 158px; top: 50px;" -->
+            <p-progressSpinner   
+             *ngIf="poolToken == undefined"></p-progressSpinner>
+          </div>
+          <!-- //// Mint area -->
+
+          <div class="col-12 lg:col-4 xl:col-4">
+            <div
+              style="background-color: var(--surface-ground)"
+              class="card mb-0"
+            >
+              <div class="grid p-fluid justify-content-center">
+                <div class="col-12 flex align-items-center justify-content-center">
+                  <span class="block text-500 font-medium ml-2 text-center">
+                    Your stream Out of the pool</span
+                  >
+                  <!-- #region REALTIME  ////  -->
+                </div>
+                <div class="col-12 text-center">
+                  <div class="flex justify-content-between flex-column mb-3">
+                    <div class="text-900 font-medium text-lg">
+                      <span class="text-green-500">
+                            <span  style="font-size: 20px;color:red;"> {{niceOutFlow}}$/month </span>
+                
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- #endregion REALTIME ////  -->
+
+
+                <div class="col-12 flex justify-content-around">
+                  <button *ngIf="isOutFlowAvailable == false"
+                    pButton
+                    pRipple
+                    style="position: relative; width: fit-content"
+                    (click)="showRedeemFlow()"
+                    type="button"
+                    label="--> Stream to You"
+                    class="p-button-rounded mr-2 mb-2"
+                  ></button>
+                  <button *ngIf="isOutFlowAvailable == true"
+                  pButton
+                  pRipple
+                  style="position: relative; width: fit-content"
+                  (click)="stopRedeemFlow()"
+                  type="button"
+                  label="Stop Receiving stream"
+                  class="p-button-rounded mr-2 mb-2"
+                ></button>
+                </div>
+              </div>
+            </div>
+          </div>
+ 
         </div>
       </div>
 

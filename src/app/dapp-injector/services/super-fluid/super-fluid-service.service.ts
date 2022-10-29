@@ -1,17 +1,9 @@
 import { Injectable } from '@angular/core';
-import {
-  Framework,
-  SuperToken,
-  ConstantFlowAgreementV1,
-  InstantDistributionAgreementV1,
-  Host,
-} from '@superfluid-finance/sdk-core';
+import { Framework, SuperToken, ConstantFlowAgreementV1, InstantDistributionAgreementV1, Host } from '@superfluid-finance/sdk-core';
 import Operation from '@superfluid-finance/sdk-core/dist/module/Operation';
 import { ethers, Signer, utils } from 'ethers';
 import { settings } from '../../constants';
 import { DappInjector } from '../../dapp-injector.service';
-
-
 
 @Injectable({
   providedIn: 'root',
@@ -25,52 +17,42 @@ export class SuperFluidService {
   async getContracts() {}
 
   async initializeFramework() {
-
-    console.log(this.dapp.DAPP_STATE.connectedNetwork);
+    console.log(20,this.dapp.dappConfig.defaultNetwork);
     this.sf = await Framework.create({
-      chainId: settings[this.dapp.dappConfig.defaultNetwork!].chainId,
+      chainId:settings[this.dapp.dappConfig.defaultNetwork!].chainId,
       provider: this.dapp.DAPP_STATE.defaultProvider!,
-      customSubgraphQueriesEndpoint:
-        settings[this.dapp.dappConfig.defaultNetwork].subgraph,
+      customSubgraphQueriesEndpoint: settings[this.dapp.dappConfig.defaultNetwork].subgraph,
       resolverAddress: settings[this.dapp.dappConfig.defaultNetwork].resolver,
     });
 
     this.flow = this.sf.cfaV1;
-
-
   }
 
+  ///// ---------  ---------  Money Streaming ---------  ---------  ////
+  // #region Money Streaming
+  async startStream(streamConfig: { flowRate: string; receiver: string; superToken: string; data: string }) {
+    if (this.sf == undefined) {
+      await this.initializeFramework();
+    }
 
-///// ---------  ---------  Money Streaming ---------  ---------  ////
-// #region Money Streaming
-  async startStream(streamConfig: {
-    flowRate: string;
-    receiver: string;
-    superToken:string;
-    data: string;
-  }) {
-    this.operations = [];
-    console.log(streamConfig)
-
-    await this.createStream(streamConfig);
-    const result = await this.operations[0].exec(this.dapp.DAPP_STATE.signer!);
-    const result2 = await result.wait();
+    let createFlowOperation = this.sf.cfaV1.createFlow({
+      receiver: this.dapp.defaultContract?.address!,
+      flowRate: streamConfig.flowRate,
+      superToken:streamConfig.superToken,
+    });
+    await createFlowOperation.exec(this.dapp.signer!);
+  
   }
 
-  async createStream(streamConfig: {
-    flowRate: string;
-    receiver: string;
-    superToken:string;
-    data: string;
-  }) {
-    if (this.sf == undefined){
-      await this.initializeFramework()
+  async createStream(streamConfig: { flowRate: string; receiver: string; superToken: string; data: string }) {
+    if (this.sf == undefined) {
+      await this.initializeFramework();
     }
 
     const createFlowOperation = this.flow.createFlow({
       flowRate: streamConfig.flowRate,
       receiver: streamConfig.receiver,
-      superToken: streamConfig.superToken,//  '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f', //environment.mumbaiDAIx,
+      superToken: streamConfig.superToken, //  '0x5D8B4C2554aeB7e86F387B4d6c00Ac33499Ed01f', //environment.mumbaiDAIx,
       userData: streamConfig.data,
       overrides: {
         gasPrice: utils.parseUnits('100', 'gwei'),
@@ -81,14 +63,9 @@ export class SuperFluidService {
     this.operations.push(createFlowOperation);
   }
 
-
-  async stopStream(streamConfig: {
-    receiver: string;
-    superToken: string;
-    data: string;
-  }) {
-    if (this.sf == undefined){
-      await this.initializeFramework()
+  async stopStream(streamConfig: { receiver: string; superToken: string; data: string }) {
+    if (this.sf == undefined) {
+      await this.initializeFramework();
     }
 
     const deleteFlowOperation = this.sf.cfaV1.deleteFlow({
@@ -103,7 +80,6 @@ export class SuperFluidService {
     });
     const result = await deleteFlowOperation.exec(this.dapp.DAPP_STATE.signer!);
     const result2 = await result.wait();
-
   }
 
   calculateFlowRate(amount: any) {
@@ -123,69 +99,40 @@ export class SuperFluidService {
   }
 
   //// VIEW READ FUNCITONS
-  async getFlow(options:{sender:string, receiver:string,superToken:string}) {
-    if (this.sf == undefined){
-      await this.initializeFramework()
+  async getFlow(options: { sender: string; receiver: string; superToken: string }) {
+    if (this.sf == undefined) {
+      await this.initializeFramework();
     }
 
-  const result = await this.flow.getFlow({
-    superToken: options.superToken,
-    sender: options.sender,
-    receiver: options.receiver,
-    providerOrSigner: this.dapp.signer!
-  });
-  return result
-}
-
-// async getAccountFlowInfo(){
-//   await this.flow.getAccountFlowInfo({
-//     superToken: string,
-//     account: string,
-//     providerOrSigner: ethers.providers.Provider | ethers.Signer
-//   });
-// }
-
-// async getNetFlow(){
-//   await this.flow.getNetFlow({
-//     superToken: string,
-//     account: string,
-//     providerOrSigner: Signer
-//   });
-//}
-
- // #endregion Money Streaming  
-
-  async createIndex() {
-    try {
-      let id = '';
-      let DAIx = '';
-      let address = '';
-      let shares = '2';
-      let amount = '2';
-
-      const createIndexOperation = this.sf.idaV1.createIndex({
-        indexId: 'id',
-        superToken: 'DAIx',
-        // userData?: string
-      });
-
-      const updateSubscriptionOperation = this.sf.idaV1.updateSubscriptionUnits(
-        {
-          indexId: id,
-          superToken: DAIx,
-          subscriber: address,
-          units: shares,
-          // userData?: string
-        }
-      );
-      const distributeOperation = this.sf.idaV1.distribute({
-        indexId: id,
-        superToken: DAIx,
-        amount: amount,
-        // userData?: string
-      });
-    } catch (error) {}
+    const result = await this.flow.getFlow({
+      superToken: options.superToken,
+      sender: options.sender,
+      receiver: options.receiver,
+      providerOrSigner: this.dapp.signer!,
+    });
+    return result;
   }
 
+  // async getAccountFlowInfo(){
+  //   await this.flow.getAccountFlowInfo({
+  //     superToken: string,
+  //     account: string,
+  //     providerOrSigner: ethers.providers.Provider | ethers.Signer
+  //   });
+  // }
 
+  // async getNetFlow(){
+  //   await this.flow.getNetFlow({
+  //     superToken: string,
+  //     account: string,
+  //     providerOrSigner: Signer
+  //   });
+  //}
+
+  // #endregion Money Streaming
+
+
+  async isSuperToken() {
+    const p = this.sf.loadSuperToken('sda');
+  }
 }

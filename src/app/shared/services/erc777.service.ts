@@ -7,7 +7,6 @@ import {
   createERC777Instance,
   createSupertokenInstance,
 } from '../helpers/helpers';
-import { ISuperToken } from 'src/assets/contracts/interfaces/ISuperToken';
 
 import { IPOOL_TOKEN } from '../models/models';
 import { GlobalService } from './global.service';
@@ -36,6 +35,7 @@ export class ERC777Service {
   console.log(amount);
   await this.getTokenInstance();
 
-  await  doSignerTransaction (this.erc777?.send(this.dapp.defaultContract?.address!,amount,"0x")!)
+ let result =  await  doSignerTransaction (this.erc777?.send(this.dapp.defaultContract?.address!,amount,"0x")!)
+  return result
   }
 }

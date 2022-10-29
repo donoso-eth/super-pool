@@ -4,12 +4,12 @@ import { initEnv, setNextBlockTimestamp, waitForTx } from '../helpers/utils';
 import {
   ERC20__factory,
   ERC777__factory,
-  PoolFactory__factory,
-  SuperPoolHost__factory,
+  PoolV1__factory,
+  SuperPoolFactory__factory,
 } from '../typechain-types';
 import { join } from 'path';
 import * as hre from 'hardhat';
-import { SuperPoolInputStruct } from '../typechain-types/SuperPoolHost';
+import { SuperPoolInputStruct } from '../typechain-types/SuperPoolFactory';
 import { Framework } from '@superfluid-finance/sdk-core';
 import { getTimestamp, printPeriod } from '../test/helpers/utils';
 import { PeriodStruct } from '../typechain-types/PoolFactory';
@@ -29,9 +29,9 @@ const tinker = async () => {
   console.log(deployer.address);
 
   // ADDRESS TO MINT TO:
-  let deployContract = 'superPoolHost';
+  let deployContract = 'superPoolFactory';
   let toDeployContract = contract_config[deployContract];
-  let superPoolHostMetadata = JSON.parse(
+  let superPoolFactoryMetadata = JSON.parse(
     readFileSync(
       `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
       'utf-8'
@@ -47,13 +47,13 @@ const tinker = async () => {
     )
   );
 
-  const superPoolHost = SuperPoolHost__factory.connect(
-    superPoolHostMetadata.address,
+  const superPoolFactory = SuperPoolFactory__factory.connect(
+    superPoolFactoryMetadata.address,
     deployer
   );
 
   let superotkenContract = await ERC20__factory.connect(TOKEN1, deployer);
-  let poolAddress = await superPoolHost.poolAdressBySuperToken(TOKEN1);
+  let poolAddress = await superPoolFactory.poolAdressBySuperToken(TOKEN1);
 
   if (poolAddress == zeroAddress) {
     let PoolInput: SuperPoolInputStruct = {
@@ -61,8 +61,8 @@ const tinker = async () => {
       superToken: TOKEN1,
     };
 
-    let receipt = await waitForTx(superPoolHost.createSuperPool(PoolInput));
-    poolAddress = await superPoolHost.poolAdressBySuperToken(TOKEN1);
+    let receipt = await waitForTx(superPoolFactory.createSuperPool(PoolInput));
+    poolAddress = await superPoolFactory.poolAdressBySuperToken(TOKEN1);
 
     await superotkenContract.transfer(user1.address, utils.parseEther('100'));
     await superotkenContract.transfer(user2.address, utils.parseEther('100'));
@@ -84,7 +84,7 @@ const tinker = async () => {
   let erc777 = await ERC777__factory.connect(TOKEN1, user1);
   let user1Balance = (await erc777.balanceOf(user1.address)).toString();
 
-  let poolContract = PoolFactory__factory.connect(poolAddress, deployer);
+  let poolContract = PoolV1__factory.connect(poolAddress, deployer);
 
 
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DappInjector, Web3Actions, } from 'angular-web3';
+import { DappInjector, settings, Web3Actions, } from 'angular-web3';
 import { constants, Contract, ethers, Signer, utils } from 'ethers';
 import { doSignerTransaction } from 'src/app/dapp-injector/classes/transactor';
 import {
@@ -12,6 +12,7 @@ import { IPOOL_STATE, IPOOL_TOKEN } from '../models/models';
 
 import { Store } from '@ngrx/store';
 import { SuperFluidService } from 'src/app/dapp-injector/services/super-fluid/super-fluid-service.service';
+import { MessageService } from 'primeng/api';
 
 @Injectable({
   providedIn: 'root',
@@ -21,20 +22,21 @@ export class GlobalService {
   supertoken?: ISuperToken;
   public poolState!: IPOOL_STATE;
   public poolToken: IPOOL_TOKEN = {
-    name: 'USDC',
-    superTokenName: 'USDCx',
+    name: 'fUSDC',
+    superTokenName: 'fUSDCx',
     id: 1,
     image: 'usdc',
-    superToken: '0xbCE2198f789f3AC1Af76D3835BEe8A61830aAd34',
+    superToken: settings.localhost.supertoken,
     superTokenBalance: '0',
-    token: '0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43',
+    token: settings.localhost.token,
     tokenBalance: '0',
   };
 
   constructor(
     public dapp: DappInjector,
     public superfluid: SuperFluidService,
-    public store:Store
+    public store:Store,
+    public msg: MessageService,
   ) {}
 
   async getPoolToken(): Promise<{poolToken:IPOOL_TOKEN, poolState:IPOOL_STATE}> {
@@ -64,7 +66,7 @@ export class GlobalService {
     this.getTokenInstance();
     this.getSuperTokenInstance();
 
-
+    console.log(this.dapp.signerAddress);
 
     let balance = this.erc20?.balanceOf(this.dapp.signerAddress);
     let superbalance = (this.supertoken as ISuperToken).realtimeBalanceOfNow(
@@ -76,20 +78,16 @@ export class GlobalService {
     let poolbalance = await this.supertoken?.balanceOf(
       this.dapp.defaultContract?.address!
     );
-    console.log(poolbalance?.toString());
 
-    // console.log(result[1].availableBalance)
-
-    // console.log(result[1].availableBalance.div(10**6));
-
-    // console.log(await this.supertoken?.decimals())
 
     this.poolToken.superTokenBalance = (+utils.formatEther(
       result[1].availableBalance
     )).toFixed(4);
-    this.poolToken.tokenBalance = result[0].div(10 ** 6).toString();
+    this.poolToken.tokenBalance =  (+utils.formatEther(
+      result[0]
+    )).toFixed(4);
 
-    console.log(this.poolToken.tokenBalance);
+ 
 
 
     await this.getPoolState()
@@ -97,12 +95,28 @@ export class GlobalService {
   }
 
   prepareNumbers(balance: number) {
-    const niceTwo = (balance / 10 ** 18).toFixed(2);
-    let twoDec = niceTwo;
+
+
+
+    let niceTwo =  (Math.trunc(balance / 10 ** 18 *100)/100).toString();
+  
+
+    if (niceTwo == '0'){
+      niceTwo = "0.00"
+
+    } else if (niceTwo.indexOf(".") == niceTwo.length -2) {
+      niceTwo = niceTwo + "0";
+    }
+
+    let twoDec = niceTwo.toString();
+
 
     const niceFour = (balance / 10 ** 18).toFixed(6);
 
-    let fourDec = niceFour.substring(niceFour.length - 4, niceFour.length);
+    let fourDec = niceFour.substring(niceFour.length - 6, niceFour.length);
+
+ 
+
     return { twoDec, fourDec };
   }
 
@@ -116,23 +130,49 @@ export class GlobalService {
     // let balance = await this.erc20?.balanceOf(this.dapp.defaultContract?.address);
 
     //  console.log(balance.toString());
-    let amount = 1000000 * 10 ** 6;
-    let amountSuper = 1000 * 10 ** 18;
-    await doSignerTransaction(
-      (this.erc20 as Contract).connect(this.dapp.signer!)['mint(uint256)'](amount)
+
+    const value = utils.parseEther('1000').toString();
+   let result =  await doSignerTransaction(
+      (this.erc20 as Contract).connect(this.dapp.signer!)['mint(address,uint256)'](this.dapp.signerAddress,value)
     );
+   
+    if (result.success == true) {
+      this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+    } else {
+      this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+    }
     this.store.dispatch(Web3Actions.chainBusyWithMessage({message: {body:'Approving the supertoken contract', header:'Un momento'}}))
 
-    await doSignerTransaction(
+
+    result = await doSignerTransaction(
       (this.erc20 as Contract).connect(this.dapp.signer!).approve(
         this.supertoken?.address,
         constants.MaxUint256
       )
     );
+
+    if (result.success == true) {
+      this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+    } else {
+      this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+    }
+
     this.store.dispatch(Web3Actions.chainBusyWithMessage({message: {body:'Upgrading the usdc tokens to supertokens', header:'Un momento más'}}))
 
-    const value = utils.parseEther('1000000').toString();
-    await doSignerTransaction((this.supertoken as ISuperToken).connect(this.dapp.signer!).upgrade(value));
+   
+   result =  await doSignerTransaction((this.supertoken as ISuperToken).connect(this.dapp.signer!).upgrade(value));
+
+    if (result.success == true) {
+      this.msg.add({ key: 'tst', severity: 'success', summary: 'Great!', detail: `Transaction succesful with txHash:${result.txHash}` });
+
+    } else {
+      this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      this.msg.add({ key: 'tst', severity: 'error', summary: 'OOPS', detail: `Error with txHash:${result.txHash}` });
+    }
 
     // console.log(this.dapp.defaultContract?.address)
 
