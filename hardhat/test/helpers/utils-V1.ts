@@ -81,9 +81,9 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (expected.protocolYield != undefined) {
+  if (expected.protocolYield != undefined &&  expected.protocolYield !== BigNumber.from(0)) {
     try {
-      expect(result.yieldObject.protocolYield).to.equal(expected.protocolYield);
+      expect(+(result.yieldObject.protocolYield.sub(expected.protocolYield))/+result.yieldObject.protocolYield).to.lt(0.000001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Protocol Yield: ${result.yieldObject.protocolYield.toString()}`);
     } catch (error) {
       console.log(
@@ -193,9 +193,9 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   ///// YIELD PART
 
-  if (expected.yieldAccrued != undefined) {
+  if (expected.yieldAccrued != undefined && expected.yieldAccrued !== BigNumber.from(0)) {
     try {
-      expect(result.yieldObject.yieldAccrued).to.equal(expected.yieldAccrued);
+      expect(+(result.yieldObject.yieldAccrued.sub(expected.yieldAccrued))/+result.yieldObject.yieldAccrued).to.lt(0.00001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield accrued : ${result.yieldObject.yieldAccrued.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Accrued: ${result.yieldObject.yieldAccrued.toString()}, expected:${expected.yieldAccrued!.toString()}`);
@@ -211,9 +211,9 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (expected.totalYield != undefined) {
+  if (expected.totalYield != undefined && expected.totalYield !== BigNumber.from(0)) {
     try {
-      expect(result.yieldObject.totalYield).to.equal(expected.totalYield);
+      expect(+(result.yieldObject.totalYield.sub(expected.totalYield))/(+result.yieldObject.totalYield)).lt(0.000001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Total Yield : ${result.yieldObject.totalYield.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Total Yield: ${result.yieldObject.totalYield.toString()}, expected:${expected.totalYield!.toString()}`);
