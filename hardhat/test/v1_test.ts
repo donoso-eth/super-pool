@@ -276,7 +276,7 @@ describe.only('V1 TEST', function () {
       yieldInFlowRateIndex: BigNumber.from(0),
       yieldOutFlowRateIndex: BigNumber.from(0),
       yieldAccrued: BigNumber.from(0),
-      yieldSnapshot: BigNumber.from(0),
+      yieldSnapshot: utils.parseEther('500'),
       totalYield: BigNumber.from(0),
       apy: BigNumber.from(0),
       apySpan: t1.sub(BigNumber.from(t0)),
@@ -386,6 +386,8 @@ describe.only('V1 TEST', function () {
 
     pool.aaveBalance = pool.aaveBalance.add((amount).add(flowRate.mul(2*ONE_MONTH)).div(10**12));
 
+    console.log(420, pool.yieldSnapshot.toString())
+
     payload = abiCoder.encode(['uint256'], [amount]);
 
     lastUsersPool = usersPool;
@@ -402,7 +404,7 @@ describe.only('V1 TEST', function () {
     // #endregion =================   THIRD PERIOD ============================= //
 
 
-    // #region =================  FORTH PERIOD ============================= //
+    // #region =================  FOURTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- User1 Withdaw 150');
 
@@ -416,6 +418,8 @@ describe.only('V1 TEST', function () {
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
+
+    console.log(420, lastPool.yieldSnapshot.toString())
 
     pool = updatePool(lastPool, timestamp, yieldSnapshot.add(utils.parseEther('50')), PRECISSION);
 
@@ -438,6 +442,7 @@ describe.only('V1 TEST', function () {
     // #endregion =================   FOUR PERIOD ============================= //
 
    
+    throw new Error("");
     
   
 
