@@ -263,6 +263,9 @@ describe.only('V1 TEST', function () {
       id: BigNumber.from(1),
       timestamp: t1,
       poolTotalBalance: amount,
+      poolBalance:BigNumber.from(0),
+      aaveBalance:amount.div(10**12),
+      protocolYield:BigNumber.from(0),
       deposit: amount.mul(PRECISSION),
       depositFromInFlowRate: BigNumber.from(0),
       depositFromOutFlowRate: BigNumber.from(0),
@@ -337,13 +340,16 @@ describe.only('V1 TEST', function () {
     yieldPool = await poolInternal.getLastPool();
 
     let yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    let yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    
 
     let lastPool: IPOOL_RESULT = poolExpected1;
 
     let lastUsersPool: IUSERS_TEST = usersPool;
 
-    let pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    let pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
+
+
+
     let payload = abiCoder.encode(['int96'], [flowRate]);
 
     if (lastUsersPool[user2.address] == undefined) {
@@ -357,6 +363,9 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#2--- Period Tests passed ');
 
     // #endregion ================= SECOND PERIOD ============================= //
+
+   
+    
 
     // #region ================= THIRD PERIOD ============================= //
 
@@ -372,9 +381,10 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    yieldSnapshot = (await yieldPool.yieldObject.yieldSnapshot);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot.sub(amount).sub(flowRate.mul(2*ONE_MONTH)), PRECISSION);
+
+    pool.aaveBalance = pool.aaveBalance.add(amount).add(flowRate.mul(2*ONE_MONTH));
 
     payload = abiCoder.encode(['uint256'], [amount]);
 
@@ -391,6 +401,7 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     // #endregion =================   THIRD PERIOD ============================= //
 
+
     // #region =================  FORTH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- User1 Withdaw 150');
@@ -403,11 +414,10 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
 
     payload = abiCoder.encode(['uint256'], [amount]);
 
@@ -423,6 +433,9 @@ describe.only('V1 TEST', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
     // #endregion =================   FOUR PERIOD ============================= //
+
+
+    throw new Error("");
 
     // #region =================  FIVE PERIOD ============================= //
 
@@ -440,11 +453,10 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
 
     payload = abiCoder.encode(['int96'], [usersPool[user2.address].expected.inFlow]);
 
@@ -480,11 +492,10 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
 
     pool.poolTotalBalance = pool.poolTotalBalance.sub(loanStream.deposit);
 
@@ -528,11 +539,10 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
     payload = abiCoder.encode(['int96'], [flowRate]);
     lastUsersPool = usersPool;
 
@@ -553,13 +563,12 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
 
     pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
     payload = abiCoder.encode(['int96'], [flowRate]);
     lastUsersPool = usersPool;
 
@@ -584,11 +593,10 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
     payload = abiCoder.encode(['address', 'uint256'], [user3.address, transferAmount]);
 
     lastUsersPool = usersPool;
@@ -625,11 +633,10 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
     payload = abiCoder.encode(['int96'], [flowRate]);
 
     lastUsersPool = usersPool;
@@ -655,11 +662,10 @@ describe.only('V1 TEST', function () {
 
     yieldPool = await poolInternal.getLastPool();
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = yieldPool.yieldObject.yieldAccrued;
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot
     lastPool = Object.assign({}, pool);
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    pool = updatePool(lastPool, timestamp, yieldSnapshot, PRECISSION);
     payload = abiCoder.encode(['int96'], [flowRate]);
 
     lastUsersPool = usersPool;

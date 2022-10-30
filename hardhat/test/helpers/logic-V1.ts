@@ -10,12 +10,22 @@ import { ERC20, ISuperToken, ISuperfluidToken } from '../../typechain-types';
 import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './models-V1';
 import { printPoolResult, printUserResult } from './utils-V1';
 
-export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAccrued: BigNumber, yieldSnapshot: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
+export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber,  yieldSnapshot: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
   let pool: IPOOL_RESULT = Object.assign({}, lastPool);
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
 
-  pool.poolTotalBalance = pool.poolTotalBalance.add(yieldAccrued.div(97).mul(100));
+  pool.aaveBalance = yieldSnapshot.div(10**12);
+  let periodAccrued = pool.aaveBalance.sub(lastPool.aaveBalance).mul(10**12);
+  let yieldAccrued = periodAccrued.mul(97).div(100)
+
+  
+
+  pool.poolTotalBalance = pool.poolTotalBalance.add(periodAccrued);
+
+ pool.protocolYield = pool.protocolYield.add(periodAccrued.mul(3).div(100));
+
+
 
   let depositSeconds = lastPool.deposit.mul(peridodSpan);
 

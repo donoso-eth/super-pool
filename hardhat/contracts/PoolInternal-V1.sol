@@ -206,10 +206,10 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
       pool.nrSuppliers = supplierId;
 
       pool.yieldObject.yieldSnapshot = currentYieldSnapshot;
-      console.log(209, pool.yieldObject.yieldSnapshot, lastPool.yieldObject.yieldSnapshot);
+      console.log(209, pool.yieldObject.yieldSnapshot - lastPool.yieldObject.yieldSnapshot);
       uint256 periodAccrued = pool.yieldObject.yieldSnapshot - lastPool.yieldObject.yieldSnapshot;
-      console.log(211);
-      pool.yieldObject.protocolYield = pool.yieldObject.protocolYield.mul(PROTOCOL_FEE);
+      console.log(211,periodAccrued.mul(PROTOCOL_FEE).div(100));
+      pool.yieldObject.protocolYield = lastPool.yieldObject.protocolYield + periodAccrued.mul(PROTOCOL_FEE).div(100);
       console.log(213, 100 - PROTOCOL_FEE);
       pool.yieldObject.yieldAccrued = periodAccrued.mul(100 - PROTOCOL_FEE).div(100);
 

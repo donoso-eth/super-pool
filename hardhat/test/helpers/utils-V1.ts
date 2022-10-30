@@ -8,6 +8,7 @@ import { ERC20, IOps, ISuperfluidToken, PoolInternalV1, PoolV1,  } from '../../t
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V1';
+import { PoolV1StructOutput } from '../../typechain-types/IPoolV1';
 
 export const fromBnToNumber = (x: BigNumber) => {
   return +x.toString();
@@ -52,7 +53,46 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
       console.log(+poolTotalBalance.toString() - +expected.poolTotalBalance.div(10**12)!.toString() )
     }
   }
+  
+  if (poolBalance != undefined) {
+    try {
+      if (+poolBalance.availableBalance.toString() == 0){
+        expect((+poolBalance.availableBalance.toString() - +expected.poolBalance.toString())).to.eq(0);
 
+      } else {
+      expect((+poolBalance.availableBalance.toString() - +expected.poolBalance.toString())/+poolBalance.availableBalance.toString() ).to.lt(0.000001);
+      }
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#SuperToken Balance: ${poolBalance.availableBalance.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #SuperToken Balance:', `\x1b[30m ${poolBalance.availableBalance.toString()}, expected:${expected.poolBalance!.toString()}`);
+      console.log(+poolBalance.availableBalance .toString() - +expected.poolBalance!.toString() )
+    }
+  }
+
+
+
+  if (aaveBalance != undefined) {
+    try {
+      expect((+aaveBalance - +expected.aaveBalance)/+aaveBalance ).to.lt(0.000001);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Aave Balance: ${aaveBalance.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Aave Balance:', `\x1b[30m ${aaveBalance.toString()}, expected:${expected.aaveBalance!.toString()}`);
+      console.log(+aaveBalance.toString() - +expected.aaveBalance!.toString() )
+    }
+  }
+
+  if (expected.protocolYield != undefined) {
+    try {
+      expect(result.yieldObject.protocolYield).to.equal(expected.protocolYield);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Protocol Yield: ${result.yieldObject.protocolYield.toString()}`);
+    } catch (error) {
+      console.log(
+        '\x1b[31m%s\x1b[0m',
+        '    x #Protocol Yield:',
+        `\x1b[30m ${result.yieldObject.protocolYield.toString()}, expected:${expected.protocolYield!.toString()}`
+      );
+      }
+    }
 
 
   if (expected.deposit != undefined) {
