@@ -10,17 +10,16 @@ import { ERC20, ISuperToken, ISuperfluidToken } from '../../typechain-types';
 import { IPOOL, IPOOLS_RESULT, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './models-V1';
 import { printPoolResult, printUserResult } from './utils-V1';
 
-export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSnapshot: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
+export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldAccrued:BigNumber,yieldSnapshot: BigNumber, PRECISSION: BigNumber): IPOOL_RESULT => {
   let pool: IPOOL_RESULT = Object.assign({}, lastPool);
   let peridodSpan = timestamp.sub(lastPool.timestamp);
   //// dollarSecond
-  console.log(17,yieldSnapshot,toString());
 
-  pool.aaveBalance = yieldSnapshot.div(10 ** 12);
-  let periodAccrued = yieldSnapshot.sub(lastPool.yieldSnapshot);
-  let yieldAccrued = periodAccrued.mul(97).div(100);
 
-  console.log(22,periodAccrued.toString())
+
+  let periodAccrued = yieldAccrued.mul(100).div(97);;
+
+
 
   pool.poolTotalBalance = pool.poolTotalBalance.add(periodAccrued);
 
@@ -36,14 +35,12 @@ export const updatePool = (lastPool: IPOOL_RESULT, timestamp: BigNumber, yieldSn
   let outFlowContribution = outFlowSeconds.mul(PRECISSION);
   let inFlowContribution = flowSeconds.mul(PRECISSION);
   let depositContribution = depositSeconds.mul(PRECISSION).mul(PRECISSION);
-  console.log(269, depositContribution.toString(), inFlowContribution.toString(), outFlowContribution.toString());
-  console.log(269,lastPool.inFlowRate.toString())
-  console.log(269, yieldAccrued.toString());
+
   let indexDeposit = +depositSeconds == 0 ? 0 : depositContribution.mul(yieldAccrued).div(totalSeconds.mul(lastPool.deposit));
   let indexFlow = +flowSeconds == 0 ? 0 : inFlowContribution.mul(yieldAccrued).div(lastPool.inFlowRate.mul(totalSeconds));
   let indexOutFlow = +outFlowSeconds == 0 ? 0 : outFlowContribution.mul(yieldAccrued).div(lastPool.outFlowRate.mul(totalSeconds));
 
-console.log(235,indexDeposit.toString(),indexFlow.toString(),indexOutFlow.toString() )
+
 
   pool.depositFromInFlowRate = lastPool.depositFromInFlowRate.add(lastPool.inFlowRate.mul(peridodSpan).mul(PRECISSION));
   pool.depositFromOutFlowRate = lastPool.depositFromOutFlowRate.add(lastPool.outFlowRate.mul(peridodSpan).mul(PRECISSION));
@@ -93,6 +90,7 @@ export const applyUserEvent = async (
   let initialBuffer;
   let initialWithdraw;
   let oldFlow;
+  let deposit;
   let alreadyStreamed;
   let oldminiminal;
   pools[+pool.timestamp] = pool;
@@ -164,7 +162,7 @@ export const applyUserEvent = async (
       result = abiCoder.decode(['int96'], payload);
       pool.inFlowRate = pool.inFlowRate.add(result[0]);
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.add(result[0]);
-      let deposit = await getDeposit(activeUser.address, sf, superToken, deployer, superPoolAddress);
+      deposit = await getDeposit(activeUser.address, sf, superToken, deployer, superPoolAddress);
       users[activeUser.address].expected.inFlowDeposit = deposit;
       users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.sub(deposit);
       break;
@@ -175,6 +173,15 @@ export const applyUserEvent = async (
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.sub(result[0]);
       users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(users[activeUser.address].expected.inFlowDeposit);
       break;
+
+      case SupplierEvent.STREAM_UPDATE:
+        console.log('strem-updte');
+        result = abiCoder.decode(['int96'], payload);
+        deposit = await getDeposit(activeUser.address, sf, superToken, deployer, superPoolAddress);
+        pool.inFlowRate = pool.inFlowRate.sub(users[activeUser.address].expected.inFlow).add(result[0]);
+        users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.sub(result[0]);
+        users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(users[activeUser.address].expected.inFlowDeposit).sub(deposit);;
+        break;
 
     case SupplierEvent.OUT_STREAM_START:
       console.log('out_streamio');
@@ -260,7 +267,7 @@ export const applyUserEvent = async (
       console.log('pushio');
       result = abiCoder.decode(['uint256'], payload);
 
-      pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
+      //pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);
       break;
 
     default:

@@ -6,31 +6,33 @@ import { PoolV1 } from "../../typechain-types/PoolV1";
 import { IOps } from "../../typechain-types";
 
 
-export const gelatoPushToAave = async (poolStrategy: PoolStrategyV1, ops:IOps, executor:SignerWithAddress) => {
+export const gelatoBalance= async (poolInternal: PoolInternalV1, ops:IOps, executor:SignerWithAddress) => {
     
     const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
-    const resolverData =  poolStrategy.interface.encodeFunctionData("checkerDeposit");
+    const resolverData =  poolInternal.interface.encodeFunctionData("checkerLastExecution");
     const resolverArgs = utils.defaultAbiCoder.encode(
       ["address", "bytes"],
-      [poolStrategy.address, resolverData]
+      [poolInternal.address, resolverData]
     );
 
-   let  execSelector =  poolStrategy.interface.getSighash("depositTask");
+   let  execSelector =  poolInternal.interface.getSighash("balanceTreasury");
     let moduleData = {
       modules: [0],
       args: [resolverArgs],
     };
 
-    const FEE = utils.parseEther("0.1")
+    const FEE = utils.parseEther("0.01")
 
-    const [, execData] = await poolStrategy.checkerDeposit();
+    const [canExec, execData] = await poolInternal.checkerLastExecution();
+
+
 
     await ops
       .connect(executor)
       .exec(
-        poolStrategy.address,
-        poolStrategy.address,
+        poolInternal.address,
+        poolInternal.address,
         execData,
         moduleData,
         FEE,
@@ -38,6 +40,7 @@ export const gelatoPushToAave = async (poolStrategy: PoolStrategyV1, ops:IOps, e
         false,
         true
       );
+    
 
 }
 
@@ -90,48 +93,3 @@ export const getGelatoCloStreamStepId = async ( poolInternal: PoolInternalV1, ti
 
 }
 
-
-export const gelatoWithdrawStep = async (superPool:PoolV1, poolInternal: PoolInternalV1, ops:IOps, executor:SignerWithAddress, user:string, timestamp:number, interval:number) => {
-    
-  const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-
-  const execData =  poolInternal.interface.encodeFunctionData("withdrawStep",[user]);
-  const timeArgs = utils.defaultAbiCoder.encode(
-    ["uint256", "uint256"],
-    [timestamp + interval, interval]
-  );
-
-
-  let moduleData = {
-    modules: [1],
-    args: [timeArgs],
-  };
-
-  let  execSelector =  poolInternal.interface.getSighash("withdrawStep");
-  let taskId = getTaskId(
-
-    poolInternal.address,
-    poolInternal.address,
-    execSelector,
-    moduleData,
-    ETH
-  );
-
-
-
-  const FEE = utils.parseEther("0.1")
-
-  await ops
-    .connect(executor)
-    .exec(
-      poolInternal.address,
-      poolInternal.address,
-      execData,
-      moduleData,
-      FEE,
-      ETH,
-      false,
-      true
-    );
-
-}
