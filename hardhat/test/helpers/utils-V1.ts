@@ -204,7 +204,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   if (expected.yieldSnapshot != undefined ) {
     try {
-      expect((+result.yieldObject.yieldSnapshot.div(10**12)).to.eq(+aaveBalance));
+      expect(expected.yieldSnapshot).to.eq(+aaveBalance);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}, expected:${(result.yieldObject.yieldSnapshot.div(10**12))!.toString()}`);
