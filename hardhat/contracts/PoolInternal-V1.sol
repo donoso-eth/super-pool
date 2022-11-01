@@ -516,9 +516,8 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         }
         DataTypes.PoolV1 storage currentPool = poolByTimestamp[lastPoolTimestamp];
         console.log(513);
-        uint256 currentPoolBuffer = currentPool.outFlowBuffer;
-        console.log(515);
-        uint256 currentThreshold = currentPoolBuffer;
+   
+        uint256 currentThreshold = currentPool.outFlowBuffer;
         console.log(517);
         int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
         console.log(519, uint96(currentPool.inFlowRate), uint96(currentPool.outFlowRate));
