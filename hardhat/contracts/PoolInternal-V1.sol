@@ -586,7 +586,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             poolAvailable = superToken.balanceOf(address(poolContract)) - (currentThreshold);
         }
 
-        console.log(575, poolAvailable);
+        console.log(575, poolAvailable, withdrawAmount);
         //// if enough in the pool is available then not go to the pool strategy
         if (poolAvailable >= withdrawAmount) {
             //// if the withdrawal is to supplier then we must transfer
@@ -645,7 +645,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         uint256 userBalance = poolContract.balanceOf(_supplier);
         uint256 streamDuration = userBalance.div(uint96(newOutFlow));
         uint256 outFlowBuffer = POOL_BUFFER.mul(uint96(newOutFlow));
-        uint256 initialWithdraw = POOL_BUFFER.add(SUPERFLUID_DEPOSIT).mul(uint96(newOutFlow));
+        uint256 initialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(newOutFlow));
 
         console.log("Initial_withdraw", initialWithdraw);
 

@@ -396,6 +396,9 @@ describe.only('V1 TEST', function () {
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
     lastPool = Object.assign({}, pool);
 
+    console.log(399, loanStream.deposit.toString());
+    let netFlow = flowRate2.sub(flowRate);
+    let firstDay = netFlow.mul(BigNumber.from(24*3600));
     pool.poolTotalBalance = pool.poolTotalBalance.sub(loanStream.deposit);
     yieldSnapshot = yieldSnapshot.sub(flowRate.mul(ONE_MONTH)).add(initialWidthraw);
 
@@ -403,13 +406,14 @@ describe.only('V1 TEST', function () {
     payload = abiCoder.encode(['int96'], [flowRate2]);
     lastUsersPool = usersPool;
 
-    pool.poolBalance = pool.poolBalance.add(initialWidthraw);
+    pool.poolBalance = pool.poolBalance.add(initialWidthraw).add(firstDay).sub(loanStream.deposit);
 
     pool.aaveBalance = pool.aaveBalance
       .add(
         flowRate
           .mul(ONE_MONTH)
           .sub(initialWidthraw)
+          .sub(firstDay)
           .div(10 ** 12)
       )
       .add(
@@ -430,16 +434,18 @@ describe.only('V1 TEST', function () {
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     // #endregion ================= END 3TH PERIOD ============================= //
 
-    let bal = await superTokenContract.balanceOf(superPoolAddress);
-    console.log(bal.toString());
-      
-    let netFlow = flowRate2.sub(flowRate);
+  // #region ================= 4TH PERIOD ============================= //
+
+  console.log('\x1b[36m%s\x1b[0m', '#4--- Gelato 24 hours rebalance Task');
+
+
+ 
     console.log(437,netFlow.toString());
     let initialWithdraw = netFlow.mul(BigNumber.from(5*3600));
-    let firstDay = netFlow.mul(BigNumber.from(24*3600));
 
-      let mustBal = firstDay.add(initialWithdraw);
-      console.log(mustBal.toString())
+
+    let mustBal = firstDay.add(initialWithdraw);
+    console.log(mustBal.toString())
 
 
       
@@ -455,9 +461,11 @@ describe.only('V1 TEST', function () {
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     console.log(462,yieldSnapshot.toString());
-
-
-          
+    console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
+    
+    // #endregion ================= END 4TH PERIOD ============================= //
+    // #region ================= 5TH PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#5--- Gelato 24 hours rebalance Task');     
     timestamp = timestamp.add(BigNumber.from(ONE_DAY));
     await setNextBlockTimestamp(hre, +timestamp);
     yieldPool = await poolInternal.getLastPool();
