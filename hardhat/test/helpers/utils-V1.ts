@@ -7,12 +7,72 @@ import { expect } from 'chai';
 import { ERC20, IOps, ISuperfluidToken, PoolInternalV1, PoolV1,  } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V1';
+import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, ITREASURY_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V1';
 import { PoolV1StructOutput } from '../../typechain-types/IPoolV1';
 
 export const fromBnToNumber = (x: BigNumber) => {
   return +x.toString();
 };
+
+export const testTreasury = async (timestamp:BigNumber, 
+ expected: ITREASURY_RESULT, 
+  contracts:ICONTRACTS_TEST) => {
+  
+  let yieldPool = await contracts.poolInternal.getLastPool();
+  let yieldSnapshot = yieldPool.yieldObject.yieldSnapshot;
+
+  let poolBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
+  let aaveBalance = (await contracts.aaveERC20.balanceOf(contracts.strategyAddresse));
+
+
+  console.log('\x1b[31m%s\x1b[0m', '     =====   TREASURY   =============================');
+  console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Timestamp ${timestamp.toString()}`);
+  
+
+  if (poolBalance != undefined) {
+    try {
+      if (+poolBalance.availableBalance.toString() == 0){
+        expect((+poolBalance.availableBalance.toString() - +expected.superToken.toString())).to.eq(0);
+
+      } else {
+      expect((+poolBalance.availableBalance.toString() - +expected.superToken.toString())/+poolBalance.availableBalance.toString() ).to.lt(0.000001);
+      }
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#SuperToken Balance: ${poolBalance.availableBalance.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #SuperToken Balance:', `\x1b[30m ${poolBalance.availableBalance.toString()}, expected:${expected.superToken!.toString()}`);
+      console.log(+poolBalance.availableBalance .toString() - +expected.superToken!.toString() )
+    }
+  }
+
+
+  if (aaveBalance != undefined) {
+    try {
+      expect((+aaveBalance - +expected.aave)/+aaveBalance ).to.lt(0.000001);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Aave Balance: ${aaveBalance.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x #Aave Balance:', `\x1b[30m ${aaveBalance.toString()}, expected:${expected.aave!.toString()}`);
+      console.log(+aaveBalance.toString() - +expected.aave!.toString() )
+    }
+  }
+
+  console.log(expected.yieldSnapshot.sub(yieldSnapshot).toString())
+  if (expected.yieldSnapshot != undefined ) {
+    try {
+      expect(expected.yieldSnapshot).to.eq(yieldSnapshot);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${expected.yieldSnapshot.toString()}`);
+    } catch (error) {
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${yieldSnapshot.toString()}, expected:${(expected.yieldSnapshot)!.toString()}`);
+    }
+  }
+
+  console.log('\x1b[32m%s\x1b[0m', '   $', `\x1b[30m#Yield Pending: ${(aaveBalance.sub(expected.yieldSnapshot.div(10**12))).toString()}`);
+
+
+
+
+
+}
+
 
 export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESULT, contracts: ICONTRACTS_TEST, users: IUSERS_TEST) => {
   
@@ -23,7 +83,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   let poolTotalBalance  = (poolBalance.availableBalance.div(10**12)).add(aaveBalance);
 
-
+  console.log('\x1b[31m%s\x1b[0m', '     =====   POOL     =============================');
   let result: IPOOL = await getPool(contracts.poolInternal);
 
   if (expected.id != undefined) {
@@ -81,7 +141,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (expected.protocolYield != undefined &&  expected.protocolYield !== BigNumber.from(0)) {
+  if (expected.protocolYield != undefined &&  !expected.protocolYield.isZero()) {
     try {
       expect(+(result.yieldObject.protocolYield.sub(expected.protocolYield))/+result.yieldObject.protocolYield).to.lt(0.000001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Protocol Yield: ${result.yieldObject.protocolYield.toString()}`);
@@ -204,10 +264,10 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   if (expected.yieldSnapshot != undefined ) {
     try {
-      expect(expected.yieldSnapshot).to.eq(+aaveBalance);
-      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}`);
+      expect(expected.yieldSnapshot).to.eq(result.yieldObject.yieldSnapshot);
+      console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${expected.yieldSnapshot.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${aaveBalance.toString()}, expected:${(result.yieldObject.yieldSnapshot.div(10**12))!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${(result.yieldObject.yieldSnapshot)!.toString()}, expected: ${expected.yieldSnapshot.toString()}`);
     }
   }
 
@@ -239,6 +299,8 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
+  console.log('\x1b[31m%s\x1b[0m', '     =====   USERS       =============================');
+
   // #endregion POOL
   let checkUsers = Object.keys(users).map(key=> users[key]).sort((a,b)=> +a.expected.id.sub(b.expected.id))
   for (const user of checkUsers ) {
@@ -248,7 +310,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
 
 
-    console.log('\x1b[35m%s\x1b[0m', '     ==================================');
+    console.log('\x1b[35m%s\x1b[0m', `     ====  ${user.name} =========================`);
 
     if (user.expected.id != undefined) {
       try {

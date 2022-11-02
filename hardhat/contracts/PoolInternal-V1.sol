@@ -53,7 +53,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     uint8 public STEPS; // proportinal decrease deposit
     uint256 public POOL_BUFFER; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
     uint256 public SUPERFLUID_DEPOSIT;
-    uint256 public MIN_OUTFLOW_ALLOWED;
+
     uint256 public PROTOCOL_FEE;
     uint256 public DEPOSIT_TRIGGER_AMOUNT;
     uint256 lastExecution;
@@ -85,7 +85,6 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         STEPS = poolContract.getSteps();
         SUPERFLUID_DEPOSIT = poolContract.getSuperfluidDeposit();
         POOL_BUFFER = poolContract.getPoolBuffer();
-        MIN_OUTFLOW_ALLOWED = 3600;
 
         BALANCE_TRIGGER_TIME = 24 * 3600;
 
@@ -98,11 +97,21 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
     function _tokensReceived(address from, uint256 amount) external onlyPool {
         ///// suppler config updated && pool
+
+
         _updateSupplierDeposit(from, amount, 0);
         _balanceTreasury();
     }
 
     function _redeemDeposit(uint256 redeemAmount, address _supplier) external onlyPool {
+
+        uint256 balance = poolContract.balanceOf(_supplier);
+
+
+        require(balance >= redeemAmount, "NOT_ENOUGH_BALANCE");
+
+  
+
         _updateSupplierDeposit(_supplier, 0, redeemAmount);
 
         _withdrawTreasury(_supplier, _supplier, redeemAmount);
@@ -262,7 +271,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         )
     {
         uint256 periodSpan = block.timestamp - lastPool.timestamp;
-        console.log(261);
+        console.log(261,periodSpan);
         uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
         uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
         uint256 dollarSecondsOutFlow = ((uint96(lastPool.outFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromOutFlowRate * periodSpan;
@@ -392,6 +401,19 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         uint256 inDeposit,
         uint256 outDeposit
     ) internal {
+
+        // DataTypes.Supplier memory supplier = _getSupplier(_supplier);
+
+        // if (supplier.outStream.flow > 0) {
+        //     uint256 balance = poolContract.balanceOf(_supplier);
+        //     uint256 endTime = balance.div(uint96(supplier.outStream.flow));
+        //      require( BALANCE_TRIGGER_TIME >= endTime, "NOT_ENOUGH_BALANCE_WITH_OUTFLOW");
+        //      cancelTask(supplier.outStream.cancelWithdrawId);
+        //      suppliersByAddress[_supplier].outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, endTime);
+
+        // }
+
+
         _poolUpdate();
 
         _supplierUpdateCurrentState(_supplier);

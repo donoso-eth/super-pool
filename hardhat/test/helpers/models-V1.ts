@@ -32,6 +32,12 @@ export interface IPOOL {
   
   }
   
+export interface  ITREASURY_RESULT {
+  superToken:BigNumber,
+  aave:BigNumber,
+  yieldSnapshot:BigNumber,
+}
+
 
 export interface IPOOL_RESULT {
     id:BigNumber;
