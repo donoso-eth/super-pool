@@ -227,7 +227,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
             pool.yieldObject.totalYield = lastPool.yieldObject.totalYield + pool.yieldObject.yieldAccrued;
 
-            console.log(217);
+            console.log(217, pool.yieldObject.yieldAccrued);
             /// apy to be refined
             pool.apy.span = lastPool.apy.span + periodSpan;
 
@@ -551,7 +551,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         console.log(525);
         if (uint256(balance) > currentThreshold) {
             uint256 toDeposit = uint256(balance) - currentThreshold;
-
+            console.log(553, toDeposit);
             poolStrategy.pushToStrategy(toDeposit);
             console.log(513, currentPool.yieldObject.yieldSnapshot);
             currentPool.yieldObject.yieldSnapshot += toDeposit;
@@ -686,17 +686,20 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 revert("No sufficent funds");
             }
             _cancelTask(supplier.outStream.cancelWithdrawId);
+            console.log(689);
             supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
             supplier.outStream.streamDuration = streamDuration;
 
             if (supplier.outStream.flow > newOutFlow) {
-                uint256 decreaseBuffer = POOL_BUFFER.add(SUPERFLUID_DEPOSIT).mul(uint96(supplier.outStream.flow - newOutFlow));
+                uint256 decreaseBuffer = POOL_BUFFER.mul(uint96(supplier.outStream.flow - newOutFlow));
+                   console.log(695);
                 pool.outFlowBuffer -= decreaseBuffer;
                 _balanceTreasury();
+                    console.log(698);
             } else {
-                uint256 increaseBuffer = POOL_BUFFER.add(SUPERFLUID_DEPOSIT).mul(uint96(newOutFlow - supplier.outStream.flow));
+                uint256 increaseBuffer = POOL_BUFFER.mul(uint96(newOutFlow - supplier.outStream.flow));
                 pool.outFlowBuffer += increaseBuffer;
-                uint256 oldInitialWithdraw = POOL_BUFFER.add(SUPERFLUID_DEPOSIT).mul(uint96(supplier.outStream.flow));
+                uint256 oldInitialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(supplier.outStream.flow));
                 _withdrawTreasury(_supplier, address(poolContract), initialWithdraw - oldInitialWithdraw);
                 //To DO REBALANCE
             }

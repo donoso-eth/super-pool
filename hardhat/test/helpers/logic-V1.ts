@@ -179,7 +179,7 @@ export const applyUserEvent = async (
         result = abiCoder.decode(['int96'], payload);
         deposit = await getDeposit(activeUser.address, sf, superToken, deployer, superPoolAddress);
         pool.inFlowRate = pool.inFlowRate.sub(users[activeUser.address].expected.inFlow).add(result[0]);
-        users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.sub(result[0]);
+        users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.sub(users[activeUser.address].expected.inFlow).add(result[0]);
         users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(users[activeUser.address].expected.inFlowDeposit).sub(deposit);;
         break;
 
@@ -219,15 +219,21 @@ export const applyUserEvent = async (
       console.log('out_streamio_stop');
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
-
+      console.log(222,oldFlow.toString())
       users[activeUser.address].expected.outFlow = result[0];
+      console.log(224, pool.outFlowRate.toString())
       pool.outFlowRate = pool.outFlowRate.add(result[0]).sub(oldFlow);
-      streamDuration = users[activeUser.address].expected.realTimeBalance.div(BigNumber.from(10)).div(result[0]);
+      streamDuration = users[activeUser.address].expected.realTimeBalance.div(result[0]);
       stepAmount = users[activeUser.address].expected.outFlow.mul(streamDuration);
 
       initialWithdraw = BigNumber.from(5 * 3600)
         .mul(result[0])
         .add(stepAmount);
+
+      initialBuffer = BigNumber.from(3600).mul(result[0]);
+      let oldBuffer = BigNumber.from(3600).mul(oldFlow);
+
+      pool.outFlowBuffer = pool.outFlowBuffer.sub(oldBuffer).add(initialBuffer);
 
       users[activeUser.address].expected.outStepTime = streamDuration;
       users[activeUser.address].expected.outStreamInit = pool.timestamp;

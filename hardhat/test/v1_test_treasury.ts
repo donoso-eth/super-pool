@@ -579,20 +579,26 @@ describe.only('V1 TEST TREASURY', function () {
 
     lastUsersPool = usersPool;
 
-   
-    pool.aaveBalance = pool.aaveBalance.add(
-      yieldAccrued
-        .mul(100)
-        .div(97)
-        .div(10 ** 12)
-    );
 
     result = await applyUserEvent(SupplierEvent.STREAM_UPDATE, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    treasury.superToken = pool.outFlowBuffer;
-    treasury.yieldSnapshot = treasury.yieldSnapshot.add(compensate).add(yieldAccrued
+    netFlow = pool.outFlowRate.sub(pool.inFlowRate);
+  
+    firstDay = netFlow .mul(ONE_DAY)
+
+   
+    pool.aaveBalance = pool.aaveBalance.add(
+      yieldAccrued
+        .mul(100)
+        .div(97)
+        .div(10 ** 12))
+        .sub(firstDay.div(10**12));
+
+
+    treasury.superToken = pool.outFlowBuffer.add(firstDay);
+    treasury.yieldSnapshot = treasury.yieldSnapshot.sub(firstDay).add(yieldAccrued
     .mul(100)
     .div(97));
     aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
@@ -612,147 +618,112 @@ describe.only('V1 TEST TREASURY', function () {
     // #endregion ================= 7th PERIOD ============================= //
 
 
-      throw new Error("");
-      
+  
+    
 
-    // #region =================  10th PERIOD ============================= //
-    timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
+      for (let i = 0;i<10;i++) {
+
+    // #region ================= 8+ iTH PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', `#${8 + i}-- Gelato 24 hours rebalance Task`);
+    timestamp = timestamp.add(BigNumber.from(ONE_DAY));
     await setNextBlockTimestamp(hre, +timestamp);
 
-    console.log('\x1b[36m%s\x1b[0m', '#10--- User3 start stream in');
+    await gelatoBalance(poolInternal, ops, executor);
+    treasury.superToken = pool.outFlowBuffer.add(firstDay);
+    treasury.yieldSnapshot = treasury.yieldSnapshot.sub(firstDay);
+    aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
+    treasury.aave = aaveBalance;
 
-    flowRate2 = utils.parseEther('90').div(ONE_MONTH);
+    await testTreasury(timestamp, treasury, contractsTest);
 
-    createFlowOperation = sf.cfaV1.createFlow({
-      receiver: superPoolAddress,
-      flowRate: flowRate2.toString(),
-      superToken: network_params.superToken,
-    });
-    await createFlowOperation.exec(user3);
+    console.log('\x1b[36m%s\x1b[0m', `#${8 + i}----- Period Tests passed `);
 
-    yieldPool = await poolInternal.getLastPool();
+      }
 
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
-    lastPool = Object.assign({}, pool);
+  // #endregion =================  17th PERIOD ============================= //
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-    payload = abiCoder.encode(['int96'], [flowRate2]);
+  // #region =================  18th PERIOD ============================= //
+  timestamp = timestamp.add(BigNumber.from(4*ONE_HOUR));
+  await setNextBlockTimestamp(hre, +timestamp);
 
-    lastUsersPool = usersPool;
-    pool.aaveBalance = pool.aaveBalance.sub(firstDay).add(
+  console.log('\x1b[36m%s\x1b[0m', '#18--- User1 redeem flow');
+
+  flowRate2 = utils.parseEther('90').div(ONE_MONTH);
+  await waitForTx(superPool.connect(user1).redeemFlow(flowRate2));
+
+  let loanStream2 = await sf.cfaV1.getFlow({
+    superToken: network_params.superToken,
+    sender: superPoolAddress,
+    receiver: user1.address,
+    providerOrSigner: user1,
+  });
+
+  compensate = netFlow.mul(3600*20)
+
+  initialWidthraw = BigNumber.from(4 * 3600).mul(flowRate2);
+  let outFlowBuffer2 = BigNumber.from(1 * 3600).mul(flowRate2);
+
+  yieldPool = await poolInternal.getLastPool();
+
+  yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
+  yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
+  lastPool = Object.assign({}, pool);
+
+
+  netFlow = flowRate2.sub(flowRate.add(flowRate2));
+  firstDay = netFlow.mul(BigNumber.from(24 * 3600));
+  pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit).sub(loanStream2.deposit);
+
+  pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+  payload = abiCoder.encode(['int96'], [flowRate2]);
+  lastUsersPool = usersPool;
+
+  pool.poolBalance = pool.poolBalance.add(outFlowBuffer).add(firstDay).sub(loanStream.deposit);
+
+  pool.aaveBalance = pool.aaveBalance
+    .add(
+      flowRate
+        .mul(ONE_MONTH)
+        .sub(initialWidthraw)
+        .add(outFlowBuffer)
+        .div(10 ** 12)
+    )
+    .add(
       yieldAccrued
         .mul(100)
         .div(97)
         .div(10 ** 12)
     );
 
-    result = await applyUserEvent(SupplierEvent.STREAM_START, user3.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+ 
 
-    console.log('\x1b[36m%s\x1b[0m', '#10--- Period Tests passed ');
+  result = await applyUserEvent(SupplierEvent.OUT_STREAM_UPDATE, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
+  pools[+timestamp] = result[1];
+  usersPool = result[0];
+   taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+  usersPool[user1.address].expected.outStreamId = taskId;
 
-    // #endregion ================= 10TH PERIOD ============================= //
+  treasury.yieldSnapshot = treasury.yieldSnapshot.add(outFlowBuffer.sub(outFlowBuffer2)).add(yieldAccrued
+    .mul(100)
+    .div(97));
 
-    // #region =================  11th PERIOD ============================= //
-    timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
-    await setNextBlockTimestamp(hre, +timestamp);
+  treasury = {
+    superToken: pool.poolBalance,
+    aave: pool.aaveBalance,
+    yieldSnapshot: result[1].yieldSnapshot,
+  };
 
-    console.log('\x1b[36m%s\x1b[0m', '#11--- User1 redeemflow');
+  pool.yieldSnapshot = treasury.yieldSnapshot;
 
-    let flowRateOut = utils.parseEther('45').div(ONE_MONTH);
+  await testTreasury(timestamp, treasury, contractsTest);
 
-    await waitForTx(superPool.connect(user1).redeemFlow(flowRateOut));
+  await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
 
-    initialWidthraw = BigNumber.from(5 * 3600).mul(flowRateOut);
+  console.log('\x1b[36m%s\x1b[0m', '#18--- Period Tests passed ');
 
-    yieldPool = await poolInternal.getLastPool();
-    yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    lastPool = Object.assign({}, pool);
+  // #endregion =================  18th PERIOD ============================= //
 
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-    payload = abiCoder.encode(['int96'], [flowRateOut]);
-
-    lastUsersPool = usersPool;
-
-    pool.aaveBalance = pool.aaveBalance
-      .add(
-        flowRate
-          .add(flowRate2)
-          .mul(ONE_MONTH)
-          .div(10 ** 12)
-      )
-      .add(
-        yieldAccrued
-          .mul(100)
-          .div(97)
-          .div(10 ** 12)
-      )
-      .sub(initialWidthraw.div(10 ** 12));
-    pool.poolBalance = pool.poolBalance.add(initialWidthraw);
-
-    result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-
-    taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
-    usersPool[user1.address].expected.outStreamId = taskId;
-
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
-
-    console.log('\x1b[36m%s\x1b[0m', '#11--- Period Tests passed ');
-
-    // #endregion ================= 11th PERIOD ============================= //
-
-    // #region =================  12th PERIOD ============================= //
-    timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
-    await setNextBlockTimestamp(hre, +timestamp);
-
-    console.log('\x1b[36m%s\x1b[0m', '#12--- User2 redeemflow');
-
-    let flowRateOut2 = utils.parseEther('45').div(ONE_MONTH);
-
-    await waitForTx(superPool.connect(user2).redeemFlow(flowRateOut2));
-
-    let initialWidthraw2 = BigNumber.from(5 * 3600).mul(flowRateOut2);
-
-    yieldPool = await poolInternal.getLastPool();
-    yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    lastPool = Object.assign({}, pool);
-
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-    payload = abiCoder.encode(['int96'], [flowRateOut2]);
-
-    lastUsersPool = usersPool;
-
-    pool.aaveBalance = pool.aaveBalance
-      .add(flowRate2.mul(ONE_MONTH).div(10 ** 12))
-      .add(
-        yieldAccrued
-          .mul(100)
-          .div(97)
-          .div(10 ** 12)
-      )
-      .sub(initialWidthraw2.div(10 ** 12));
-    pool.poolBalance = pool.poolBalance.add(initialWidthraw2);
-
-    result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-
-    taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
-    usersPool[user2.address].expected.outStreamId = taskId;
-
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
-
-    console.log('\x1b[36m%s\x1b[0m', '#12--- Period Tests passed ');
-
-    // #endregion ================= 12th PERIOD ============================= //
-
+      
     throw new Error('');
 
     });
