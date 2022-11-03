@@ -132,6 +132,21 @@ export const applyUserEvent = async (
       users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.realTimeBalance.add(result[0]);
       users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.sub(result[0]);
 
+      if( +users[activeUser.address].expected.outFlow >0){
+          
+      let outFlow = users[activeUser.address].expected.outFlow;
+
+      initialWithdraw = BigNumber.from(4 * 3600).mul(outFlow);
+      initialBuffer = BigNumber.from(3600).mul(outFlow);
+      streamDuration = users[activeUser.address].expected.realTimeBalance.sub(initialWithdraw.add(initialBuffer)).div(outFlow);
+      users[activeUser.address].expected.outStepTime = users[activeUser.address].expected.outStepTime.add(result[0].div(outFlow)) ;
+      //users[activeUser.address].expected.outStreamInit = pool.timestamp;
+      users[activeUser.address].expected.nextExecOut = users[activeUser.address].expected.nextExecOut.add(result[0].div(outFlow));
+
+      }
+
+
+
       break;
     case SupplierEvent.WITHDRAW:
       console.log('withdrawio');
@@ -141,6 +156,20 @@ export const applyUserEvent = async (
       users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(result[0].mul(PRECISSION));
       users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.realTimeBalance.sub(result[0]);
       users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.add(result[0]);
+
+      if( +users[activeUser.address].expected.outFlow >0){
+          
+        let outFlow = users[activeUser.address].expected.outFlow;
+  
+        initialWithdraw = BigNumber.from(4 * 3600).mul(outFlow);
+        initialBuffer = BigNumber.from(3600).mul(outFlow);
+        streamDuration = users[activeUser.address].expected.realTimeBalance.sub(initialWithdraw.add(initialBuffer)).div(outFlow);
+        users[activeUser.address].expected.outStepTime = streamDuration ;
+        users[activeUser.address].expected.outStreamInit = pool.timestamp;
+        users[activeUser.address].expected.nextExecOut = pool.timestamp.add(streamDuration)
+  
+        }
+
 
       break;
 
