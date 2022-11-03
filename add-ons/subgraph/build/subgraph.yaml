@@ -21,9 +21,9 @@ dataSources:
         - name: PoolV1
           file: PoolV1\abis\pool_v1.json
       eventHandlers:
-        - event: PoolUpdate((uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))
+        - event: PoolUpdate((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))
           handler: handlePoolUpdate
-        - event: SupplierUpdate((uint256,address,uint256,uint256,uint256,uint256,uint256,int96,(int96,uint256,uint256,uint256,uint256,bytes32),(uint256,uint256)))
+        - event: SupplierUpdate((uint256,address,uint256,uint256,uint256,uint256,uint256,int96,(int96,uint256,uint256,bytes32),(uint256,uint256)))
           handler: handleSupplierUpdate
         - event: SupplierEvent(uint8,bytes,uint256,address)
           handler: handleSupplierEvent

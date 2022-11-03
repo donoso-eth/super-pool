@@ -22,12 +22,14 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     "ETH()": FunctionFragment;
     "balanceOf()": FunctionFragment;
     "checkerDeposit(uint256)": FunctionFragment;
-    "depositTaksId()": FunctionFragment;
     "depositTask()": FunctionFragment;
+    "depositTaskId()": FunctionFragment;
     "getCodeAddress()": FunctionFragment;
     "initialize(address,address,address,address,address,address,address,address)": FunctionFragment;
+    "launchTask()": FunctionFragment;
+    "pauseTask()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
-    "pushToStrategy()": FunctionFragment;
+    "pushToStrategy(uint256)": FunctionFragment;
     "updateCode(address)": FunctionFragment;
     "withdraw(uint256,address)": FunctionFragment;
   };
@@ -39,11 +41,11 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "depositTaksId",
+    functionFragment: "depositTask",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "depositTask",
+    functionFragment: "depositTaskId",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -55,12 +57,17 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     values: [string, string, string, string, string, string, string, string]
   ): string;
   encodeFunctionData(
+    functionFragment: "launchTask",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "pauseTask", values?: undefined): string;
+  encodeFunctionData(
     functionFragment: "proxiableUUID",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "pushToStrategy",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "updateCode", values: [string]): string;
   encodeFunctionData(
@@ -75,11 +82,11 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "depositTaksId",
+    functionFragment: "depositTask",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "depositTask",
+    functionFragment: "depositTaskId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -87,6 +94,8 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "launchTask", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pauseTask", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "proxiableUUID",
     data: BytesLike
@@ -156,11 +165,11 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
-    depositTaksId(overrides?: CallOverrides): Promise<[string]>;
-
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    depositTaskId(overrides?: CallOverrides): Promise<[string]>;
 
     getCodeAddress(
       overrides?: CallOverrides
@@ -178,9 +187,18 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    launchTask(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    pauseTask(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
     pushToStrategy(
+      amountToDeposit: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -205,11 +223,11 @@ export interface PoolStrategyV1 extends BaseContract {
     overrides?: CallOverrides
   ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
-  depositTaksId(overrides?: CallOverrides): Promise<string>;
-
   depositTask(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  depositTaskId(overrides?: CallOverrides): Promise<string>;
 
   getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
@@ -225,9 +243,18 @@ export interface PoolStrategyV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  launchTask(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  pauseTask(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
   pushToStrategy(
+    amountToDeposit: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -252,9 +279,9 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
 
-    depositTaksId(overrides?: CallOverrides): Promise<string>;
-
     depositTask(overrides?: CallOverrides): Promise<void>;
+
+    depositTaskId(overrides?: CallOverrides): Promise<string>;
 
     getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
@@ -270,9 +297,16 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    launchTask(overrides?: CallOverrides): Promise<void>;
+
+    pauseTask(overrides?: CallOverrides): Promise<void>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
-    pushToStrategy(overrides?: CallOverrides): Promise<void>;
+    pushToStrategy(
+      amountToDeposit: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     updateCode(newAddress: string, overrides?: CallOverrides): Promise<void>;
 
@@ -304,11 +338,11 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    depositTaksId(overrides?: CallOverrides): Promise<BigNumber>;
-
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    depositTaskId(overrides?: CallOverrides): Promise<BigNumber>;
 
     getCodeAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -324,9 +358,18 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    launchTask(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    pauseTask(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
     pushToStrategy(
+      amountToDeposit: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -352,11 +395,11 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    depositTaksId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     depositTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    depositTaskId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getCodeAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -372,9 +415,18 @@ export interface PoolStrategyV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    launchTask(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    pauseTask(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     pushToStrategy(
+      amountToDeposit: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

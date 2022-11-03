@@ -43,6 +43,7 @@ type Pool @entity {
 
   deposit: BigInt!
   depositFromInflowRate: BigInt!
+  depositFromOutflowRate: BigInt!
 
   inFlowRate: BigInt!
   outFlowRate: BigInt!
@@ -51,7 +52,8 @@ type Pool @entity {
 
   yieldTokenIndex: BigInt!
   yieldInFlowRateIndex: BigInt!
-
+  yieldOutFlowRateIndex: BigInt!
+  
   yieldAccrued: BigInt!
   yieldSnapshot: BigInt!
   totalYield: BigInt!

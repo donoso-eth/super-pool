@@ -12,11 +12,15 @@ export function handlePoolUpdate(event: PoolUpdate): void {
     pool.timestamp = poolEvent.timestamp;
     pool.deposit = poolEvent.deposit;
     pool.depositFromInflowRate = poolEvent.depositFromInFlowRate;
+    pool.depositFromOutflowRate = poolEvent.depositFromOutFlowRate;
+
     pool.inFlowRate= poolEvent.inFlowRate;
     pool.outFlowRate = poolEvent.outFlowRate;
     pool.outFlowBuffer = poolEvent.outFlowBuffer;
     pool.yieldTokenIndex = poolEvent.yieldObject.yieldTokenIndex;
     pool.yieldInFlowRateIndex = poolEvent.yieldObject.yieldInFlowRateIndex;
+    pool.yieldOutFlowRateIndex = poolEvent.yieldObject.yieldOutFlowRateIndex;
+
     pool.yieldAccrued = poolEvent.yieldObject.yieldAccrued;
     pool.yieldSnapshot = poolEvent.yieldObject.yieldSnapshot;
     pool.totalYield = poolEvent.yieldObject.totalYield;
@@ -45,10 +49,9 @@ export function handleSupplierUpdate(event: SupplierUpdate): void {
  
   let outStream  = event.params.supplier.outStream;
   supplier.outFlow = outStream.flow;
-   supplier.outStepAmount = outStream.stepAmount;
+
   supplier.outStepTime = outStream.streamDuration;
-  supplier.outInitTime = outStream.initTime;
-  supplier.outMinBalance = outStream.minBalance;
+  supplier.outInitTime = outStream.streamInit;
   supplier.outCancelWithdrawId = outStream.cancelWithdrawId.toHexString();
 
   supplier.apySpan = event.params.supplier.apy.span;

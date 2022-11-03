@@ -194,11 +194,13 @@ export class Pool extends Entity {
     this.set("timestamp", Value.fromBigInt(BigInt.zero()));
     this.set("deposit", Value.fromBigInt(BigInt.zero()));
     this.set("depositFromInflowRate", Value.fromBigInt(BigInt.zero()));
+    this.set("depositFromOutflowRate", Value.fromBigInt(BigInt.zero()));
     this.set("inFlowRate", Value.fromBigInt(BigInt.zero()));
     this.set("outFlowRate", Value.fromBigInt(BigInt.zero()));
     this.set("outFlowBuffer", Value.fromBigInt(BigInt.zero()));
     this.set("yieldTokenIndex", Value.fromBigInt(BigInt.zero()));
     this.set("yieldInFlowRateIndex", Value.fromBigInt(BigInt.zero()));
+    this.set("yieldOutFlowRateIndex", Value.fromBigInt(BigInt.zero()));
     this.set("yieldAccrued", Value.fromBigInt(BigInt.zero()));
     this.set("yieldSnapshot", Value.fromBigInt(BigInt.zero()));
     this.set("totalYield", Value.fromBigInt(BigInt.zero()));
@@ -261,6 +263,15 @@ export class Pool extends Entity {
     this.set("depositFromInflowRate", Value.fromBigInt(value));
   }
 
+  get depositFromOutflowRate(): BigInt {
+    let value = this.get("depositFromOutflowRate");
+    return value!.toBigInt();
+  }
+
+  set depositFromOutflowRate(value: BigInt) {
+    this.set("depositFromOutflowRate", Value.fromBigInt(value));
+  }
+
   get inFlowRate(): BigInt {
     let value = this.get("inFlowRate");
     return value!.toBigInt();
@@ -304,6 +315,15 @@ export class Pool extends Entity {
 
   set yieldInFlowRateIndex(value: BigInt) {
     this.set("yieldInFlowRateIndex", Value.fromBigInt(value));
+  }
+
+  get yieldOutFlowRateIndex(): BigInt {
+    let value = this.get("yieldOutFlowRateIndex");
+    return value!.toBigInt();
+  }
+
+  set yieldOutFlowRateIndex(value: BigInt) {
+    this.set("yieldOutFlowRateIndex", Value.fromBigInt(value));
   }
 
   get yieldAccrued(): BigInt {

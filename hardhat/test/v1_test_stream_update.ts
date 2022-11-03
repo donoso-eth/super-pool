@@ -757,6 +757,68 @@ describe.only('V1 TEST STREAM UPDATES', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
 
-    // #endregion ================= END 7TH PERIOD ============================= //
+    // #endregion ================= END 8TH PERIOD ============================= //
+   
+    // #region =================  9th PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#9--- User1 redeem FLo to 40 units');
+    timestamp = timestamp.add(ONE_MONTH);
+    await setNextBlockTimestamp(hre, +timestamp);
+
+    let flowRate9 = utils.parseEther('40').div(ONE_MONTH);
+
+    await waitForTx(superPool.connect(user2).redeemFlow(flowRate9));
+
+    let loanStream9 = await sf.cfaV1.getFlow({
+      superToken: network_params.superToken,
+      sender: superPoolAddress,
+      receiver: user2.address,
+      providerOrSigner: user2,
+    });
+
+    yieldPool = await poolInternal.getLastPool();
+
+    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
+    yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
+    lastPool = Object.assign({}, pool);
+
+    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
+    payload = abiCoder.encode(['int96'], [flowRate9]);
+    lastUsersPool = usersPool;
+
+   
+    let oldInitialWithdraw = flowRate60.mul(4*3600);
+    let oldOutBuffer =  flowRate60.mul(1*3600);
+    
+    initialWidthraw = flowRate9.mul(4 * 3600);
+    outFlowBuffer = flowRate9.mul(1 * 3600);
+
+
+    result = await applyUserEvent(SupplierEvent.OUT_STREAM_UPDATE, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
+    pools[+timestamp] = result[1];
+    usersPool = result[0];
+
+    treasury.yieldSnapshot = treasury.yieldSnapshot.add(yieldAccrued.mul(100).div(97))
+    .add(initialWidthraw).add(outFlowBuffer.sub(oldOutBuffer))
+    .add(loanStream.deposit).sub(loanStream9.deposit)
+    ;
+
+    //treasury.yieldSnapshot   .add(yieldAccrued).sub(fromStrategy)
+
+    treasury.superToken = treasury.superToken;
+
+    treasury.aave = pool.aaveBalance;
+
+    treasury.superToken = treasury.superToken;
+
+    await testTreasury(timestamp, treasury, contractsTest);
+
+    taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
+    usersPool[user2.address].expected.outStreamId = taskId;
+
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+
+    console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
+
+    // #endregion ================= END 9TH PERIOD ============================= //
   });
 });

@@ -411,7 +411,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         if (supplier.outStream.flow > 0) {
              cancelTask(supplier.outStream.cancelWithdrawId);
             if (outDeposit > 0) {
-            uint256 balance = poolContract.balanceOf(_supplier);
+            uint256 balance = poolContract.balanceOf(_supplier).sub(outDeposit);
                    uint256 outFlowBuffer = POOL_BUFFER.mul(uint96(supplier.outStream.flow));
                 uint256 initialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(supplier.outStream.flow));
                 uint256 streamDuration = balance.sub(outFlowBuffer.add(initialWithdraw)).div(uint96(supplier.outStream.flow));
@@ -719,7 +719,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 uint256 increaseBuffer = POOL_BUFFER.mul(uint96(newOutFlow - supplier.outStream.flow));
                 pool.outFlowBuffer += increaseBuffer;
                 uint256 oldInitialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(supplier.outStream.flow));
-                _withdrawTreasury(_supplier, address(poolContract), initialWithdraw - oldInitialWithdraw);
+                _withdrawTreasury(_supplier, address(poolContract),increaseBuffer + initialWithdraw - oldInitialWithdraw);
                 //To DO REBALANCE
             }
             poolContract.sfUpdateFlow(_supplier, newOutFlow);

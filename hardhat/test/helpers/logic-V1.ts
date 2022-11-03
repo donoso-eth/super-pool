@@ -253,15 +253,16 @@ export const applyUserEvent = async (
       users[activeUser.address].expected.outFlow = result[0];
       console.log(224, pool.outFlowRate.toString())
       pool.outFlowRate = pool.outFlowRate.add(result[0]).sub(oldFlow);
-      streamDuration = users[activeUser.address].expected.realTimeBalance.div(result[0]);
-      stepAmount = users[activeUser.address].expected.outFlow.mul(streamDuration);
-
+     
       initialWithdraw = BigNumber.from(4 * 3600)
         .mul(result[0])
-        .add(stepAmount);
+  
 
       initialBuffer = BigNumber.from(3600).mul(result[0]);
       let oldBuffer = BigNumber.from(3600).mul(oldFlow);
+
+      streamDuration = users[activeUser.address].expected.realTimeBalance.sub(initialWithdraw.add(initialBuffer)).div(result[0]);
+  
 
       pool.outFlowBuffer = pool.outFlowBuffer.sub(oldBuffer).add(initialBuffer);
 
@@ -381,7 +382,7 @@ export const updateUser = async (
   }
 
   if (+user.expected.outFlow > 0) {
-    decrement = user.expected.outFlow.mul(pool.timestamp.sub(user.expected.outStreamInit));
+    decrement = user.expected.outFlow.mul(pool.timestamp.sub(user.expected.timestamp));
     incrementToken = user.expected.outFlow.mul(pool.timestamp.sub(lastPool.timestamp));
   }
   user.expected.deposit = user.expected.deposit.add(increment.mul(PRECISSION)).sub(decrement.mul(PRECISSION));

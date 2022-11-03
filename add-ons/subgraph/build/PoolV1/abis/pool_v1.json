@@ -83,7 +83,7 @@
   },
   {
     "inputs": [],
-    "name": "DEPOSIT_TRIGGER_AMOUNT",
+    "name": "BALANCE_TRIGGER_TIME",
     "outputs": [
       {
         "internalType": "uint256",
@@ -96,7 +96,7 @@
   },
   {
     "inputs": [],
-    "name": "DEPOSIT_TRIGGER_TIME",
+    "name": "DEPOSIT_TRIGGER_AMOUNT",
     "outputs": [
       {
         "internalType": "uint256",
@@ -655,6 +655,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint256",
+            "name": "depositFromOutFlowRate",
+            "type": "uint256"
+          },
+          {
             "internalType": "int96",
             "name": "inFlowRate",
             "type": "int96"
@@ -679,6 +684,11 @@
               {
                 "internalType": "uint256",
                 "name": "yieldInFlowRateIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldOutFlowRateIndex",
                 "type": "uint256"
               },
               {
@@ -783,6 +793,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint256",
+            "name": "depositFromOutFlowRate",
+            "type": "uint256"
+          },
+          {
             "internalType": "int96",
             "name": "inFlowRate",
             "type": "int96"
@@ -807,6 +822,11 @@
               {
                 "internalType": "uint256",
                 "name": "yieldInFlowRateIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldOutFlowRateIndex",
                 "type": "uint256"
               },
               {
@@ -986,22 +1006,12 @@
               },
               {
                 "internalType": "uint256",
-                "name": "stepAmount",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
                 "name": "streamDuration",
                 "type": "uint256"
               },
               {
                 "internalType": "uint256",
-                "name": "initTime",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "minBalance",
+                "name": "streamInit",
                 "type": "uint256"
               },
               {
@@ -1184,6 +1194,19 @@
     "name": "internalWithDrawStep",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "lastExecution",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1646,6 +1669,11 @@
             "type": "uint256"
           },
           {
+            "internalType": "uint256",
+            "name": "depositFromOutFlowRate",
+            "type": "uint256"
+          },
+          {
             "internalType": "int96",
             "name": "inFlowRate",
             "type": "int96"
@@ -1670,6 +1698,11 @@
               {
                 "internalType": "uint256",
                 "name": "yieldInFlowRateIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldOutFlowRateIndex",
                 "type": "uint256"
               },
               {
@@ -1809,22 +1842,12 @@
               },
               {
                 "internalType": "uint256",
-                "name": "stepAmount",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
                 "name": "streamDuration",
                 "type": "uint256"
               },
               {
                 "internalType": "uint256",
-                "name": "initTime",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "minBalance",
+                "name": "streamInit",
                 "type": "uint256"
               },
               {
