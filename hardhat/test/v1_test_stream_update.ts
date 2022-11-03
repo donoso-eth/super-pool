@@ -104,7 +104,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe('V1 TEST TREASURY', function () {
+describe.only('V1 TEST STREAM UPDATES', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -380,7 +380,7 @@ describe('V1 TEST TREASURY', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#3--- User1 redeem flow');
 
-    let flowRate2 = utils.parseEther('150').div(ONE_MONTH);
+    let flowRate2 = utils.parseEther('100').div(ONE_MONTH);
     await waitForTx(superPool.connect(user1).redeemFlow(flowRate2));
 
     loanStream = await sf.cfaV1.getFlow({
@@ -390,6 +390,8 @@ describe('V1 TEST TREASURY', function () {
       providerOrSigner: user1,
     });
 
+    console.log(loanStream.deposit.toString());
+
     let initialWidthraw = BigNumber.from(4 * 3600).mul(flowRate2);
     let outFlowBuffer = BigNumber.from(1 * 3600).mul(flowRate2);
 
@@ -398,7 +400,6 @@ describe('V1 TEST TREASURY', function () {
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
     lastPool = Object.assign({}, pool);
-
 
     let netFlow = flowRate2.sub(flowRate);
     let firstDay = netFlow.mul(BigNumber.from(24 * 3600));
@@ -448,61 +449,19 @@ describe('V1 TEST TREASURY', function () {
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     // #endregion ================= END 3TH PERIOD ============================= //
 
-    // #region ================= 4TH PERIOD ============================= //
-
-    console.log('\x1b[36m%s\x1b[0m', '#4--- Gelato 24 hours rebalance Task');
-    timestamp = timestamp.add(BigNumber.from(ONE_DAY));
+    // #region =================  4th PERIOD ============================= //
+    console.log('\x1b[36m%s\x1b[0m', '#4--- Gelato Closes Stream');
+    timestamp = usersPool[user1.address].expected.nextExecOut;
     await setNextBlockTimestamp(hre, +timestamp);
 
-    await gelatoBalance(poolInternal, ops, executor);
-    treasury.superToken = pool.outFlowBuffer.add(firstDay);
-    treasury.yieldSnapshot = treasury.yieldSnapshot.sub(firstDay).add(initialWidthraw.sub(loanStream.deposit));
-    let aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
-    treasury.aave = aaveBalance;
+    await getGelatoCloStream(poolInternal, +usersPool[user1.address].expected.nextExecOut, +usersPool[user1.address].expected.outStepTime, user1.address, ops, executor);
 
-    await testTreasury(timestamp, treasury, contractsTest);
-
-    console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
-
-
-    // #endregion ================= END 4TH PERIOD ============================= //
-
-    // #region ================= 5TH PERIOD ============================= //
-    console.log('\x1b[36m%s\x1b[0m', '#5-- Gelato 24 hours rebalance Task');
-    timestamp = timestamp.add(BigNumber.from(ONE_DAY));
-    await setNextBlockTimestamp(hre, +timestamp);
-
-    await gelatoBalance(poolInternal, ops, executor);
-    treasury.superToken = pool.outFlowBuffer.add(firstDay);
-    treasury.yieldSnapshot = treasury.yieldSnapshot.sub(firstDay);
-    aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
-    treasury.aave = aaveBalance;
-
-    await testTreasury(timestamp, treasury, contractsTest);
-
-    console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
-
-
-
-    // #region =================  6th PERIOD ============================= //
-    timestamp = timestamp.add(BigNumber.from(6*ONE_HOUR));
-    await setNextBlockTimestamp(hre, +timestamp);
-
-    console.log('\x1b[36m%s\x1b[0m', '#6--- User3 stream 50 tokens/mont');
-
-   
-    let flowRate3 = utils.parseEther('50').div(ONE_MONTH);
-
-    createFlowOperation = sf.cfaV1.createFlow({
-      receiver: superPoolAddress,
-      flowRate: flowRate3.toString(),
+    let loanStream2 = await sf.cfaV1.getFlow({
       superToken: network_params.superToken,
+      sender: superPoolAddress,
+      receiver: user1.address,
+      providerOrSigner: user1,
     });
-    await createFlowOperation.exec(user3);
-
-    let compensate = netFlow.mul(3600*18)
-
-    console.log(compensate.toString());
 
     yieldPool = await poolInternal.getLastPool();
 
@@ -511,235 +470,47 @@ describe('V1 TEST TREASURY', function () {
     lastPool = Object.assign({}, pool);
 
     pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit);
+    //yieldSnapshot = yieldSnapshot.sub(flowRate.mul(ONE_MONTH)).add(initialWidthraw).add(outFlowBuffer);
 
     pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-
+    payload = abiCoder.encode(['int96'], [flowRate2]);
     lastUsersPool = usersPool;
 
-    pool.poolBalance = pool.poolBalance;
+    pool.poolBalance = pool.poolBalance.sub(initialWidthraw).sub(outFlowBuffer).add(loanStream.deposit);
 
-    pool.aaveBalance = pool.aaveBalance.add(
-      yieldAccrued
-        .mul(100)
-        .div(97)
-        .div(10 ** 12)
-    );
- 
-    if (lastUsersPool[user3.address] == undefined) {
-      lastUsersPool[user3.address] = addUser(user3.address, 3, timestamp);
-    }
-    payload = abiCoder.encode(['int96'], [flowRate3]);
-    result = await applyUserEvent(SupplierEvent.STREAM_START, user3.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-
-    treasury.superToken = pool.outFlowBuffer;
-    treasury.yieldSnapshot = treasury.yieldSnapshot.add(compensate).add(yieldAccrued
-    .mul(100)
-    .div(97));
-    aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
-    treasury.aave = aaveBalance;
-
-    pool.yieldSnapshot = treasury.yieldSnapshot;
-
-
-    await testTreasury(timestamp, treasury, contractsTest);
-
-
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
-
-
-    console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
-    // #endregion ================= SIXTH PERIOD ============================= //
-
-
-    
-
-    // #region =================  7th PERIOD ============================= //
-    timestamp = timestamp.add(BigNumber.from(17*ONE_HOUR));
-    await setNextBlockTimestamp(hre, +timestamp);
-
-    console.log('\x1b[36m%s\x1b[0m', '#7--- User2 update stream to 40 tokens');
-
-    flowRate = utils.parseEther('40').div(ONE_MONTH);
-    let updateFlowOperation = sf.cfaV1.updateFlow({
-      receiver: superPoolAddress,
-      flowRate: flowRate.toString(),
-      superToken: network_params.superToken,
-    });
-    await updateFlowOperation.exec(user2);
-    yieldPool = await poolInternal.getLastPool();
-
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
-    lastPool = Object.assign({}, pool);
-
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-    payload = abiCoder.encode(['int96'], [flowRate]);
-
-    lastUsersPool = usersPool;
-
-
-    result = await applyUserEvent(SupplierEvent.STREAM_UPDATE, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-
-    netFlow = pool.outFlowRate.sub(pool.inFlowRate);
-  
-    firstDay = netFlow .mul(ONE_DAY)
-
-   
-    pool.aaveBalance = pool.aaveBalance.add(
-      yieldAccrued
-        .mul(100)
-        .div(97)
-        .div(10 ** 12))
-        .sub(firstDay.div(10**12));
-
-
-    treasury.superToken = pool.outFlowBuffer.add(firstDay);
-    treasury.yieldSnapshot = treasury.yieldSnapshot.sub(firstDay).add(yieldAccrued
-    .mul(100)
-    .div(97));
-    aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
-    treasury.aave = aaveBalance;
-
-    pool.yieldSnapshot = treasury.yieldSnapshot;
-
-
-    await testTreasury(timestamp, treasury, contractsTest); 
-
-
-
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
-
-    console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
-
-    // #endregion ================= 7th PERIOD ============================= //
-
-
-  
-    
-
-      for (let i = 0;i<10;i++) {
-
-    // #region ================= 8+ iTH PERIOD ============================= //
-    console.log('\x1b[36m%s\x1b[0m', `#${8 + i}-- Gelato 24 hours rebalance Task`);
-    timestamp = timestamp.add(BigNumber.from(ONE_DAY));
-    await setNextBlockTimestamp(hre, +timestamp);
-
-    await gelatoBalance(poolInternal, ops, executor);
-    treasury.superToken = pool.outFlowBuffer.add(firstDay);
-    treasury.yieldSnapshot = treasury.yieldSnapshot.sub(firstDay);
-    aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
-    treasury.aave = aaveBalance;
-
-    await testTreasury(timestamp, treasury, contractsTest);
-
-    console.log('\x1b[36m%s\x1b[0m', `#${8 + i}----- Period Tests passed `);
-
-      }
-
-  // #endregion =================  17th PERIOD ============================= //
-
-  // #region =================  18th PERIOD ============================= //
-  timestamp = timestamp.add(BigNumber.from(4*ONE_HOUR));
-  await setNextBlockTimestamp(hre, +timestamp);
-
-  console.log('\x1b[36m%s\x1b[0m', '#18--- User1 redeem flow');
-
-  flowRate2 = utils.parseEther('90').div(ONE_MONTH);
-  await waitForTx(superPool.connect(user1).redeemFlow(flowRate2));
-
-  let loanStream2 = await sf.cfaV1.getFlow({
-    superToken: network_params.superToken,
-    sender: superPoolAddress,
-    receiver: user1.address,
-    providerOrSigner: user1,
-  });
-
-  compensate = netFlow.mul(3600*20)
-
-  initialWidthraw = BigNumber.from(4 * 3600).mul(flowRate2);
-  let outFlowBuffer2 = BigNumber.from(1 * 3600).mul(flowRate2);
-
-  yieldPool = await poolInternal.getLastPool();
-
-  yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-  yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
-  lastPool = Object.assign({}, pool);
-
-
-  netFlow = flowRate2.sub(flowRate.add(flowRate2));
-  firstDay = netFlow.mul(BigNumber.from(24 * 3600));
-  pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit).sub(loanStream2.deposit);
-
-  pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-  payload = abiCoder.encode(['int96'], [flowRate2]);
-  lastUsersPool = usersPool;
-
-  pool.poolBalance = pool.poolBalance.add(outFlowBuffer).add(firstDay).sub(loanStream.deposit);
-
-  pool.aaveBalance = pool.aaveBalance
-    .add(
-      flowRate
-        .mul(ONE_MONTH)
-        .sub(initialWidthraw)
-        .add(outFlowBuffer)
-        .div(10 ** 12)
-    )
-    .add(
+    pool.aaveBalance = pool.aaveBalance.add(initialWidthraw.add(outFlowBuffer).div(10 ** 12)).add(
       yieldAccrued
         .mul(100)
         .div(97)
         .div(10 ** 12)
     );
 
- 
+    result = await applyUserEvent(SupplierEvent.GELATO_CLOSE_STREAM, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
+    pools[+timestamp] = result[1];
+    usersPool = result[0];
 
-  result = await applyUserEvent(SupplierEvent.OUT_STREAM_UPDATE, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
-  pools[+timestamp] = result[1];
-  usersPool = result[0];
-   taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
-  usersPool[user1.address].expected.outStreamId = taskId;
+    let userClosing = usersPool[user1.address];
 
-  treasury.yieldSnapshot = treasury.yieldSnapshot.add(outFlowBuffer.sub(outFlowBuffer2)).add(yieldAccrued
-    .mul(100)
-    .div(97));
+    let deposit = userClosing.expected.deposit;
+    let realTimeBalance = userClosing.expected.realTimeBalance;
 
-  treasury = {
-    superToken: pool.poolBalance,
-    aave: pool.aaveBalance,
-    yieldSnapshot: result[1].yieldSnapshot,
-  };
+    usersPool[user1.address].expected.deposit = usersPool[user1.address].expected.deposit.sub(deposit);
+    usersPool[user1.address].expected.realTimeBalance = usersPool[user1.address].expected.realTimeBalance.sub(realTimeBalance);
+    usersPool[user1.address].expected.tokenBalance = usersPool[user1.address].expected.tokenBalance.add(realTimeBalance);
 
-  pool.yieldSnapshot = treasury.yieldSnapshot;
+    pools[+timestamp].deposit = pools[+timestamp].deposit.sub(deposit);
 
-  await testTreasury(timestamp, treasury, contractsTest);
+    let poolAvailable = treasury.superToken.add(loanStream.deposit);
 
-  await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    let fromStrategy = realTimeBalance.sub(poolAvailable);
 
-  console.log('\x1b[36m%s\x1b[0m', '#18--- Period Tests passed ');
+    treasury.yieldSnapshot = treasury.yieldSnapshot.add(yieldAccrued.mul(100).div(97)).sub(fromStrategy);
+    //treasury.yieldSnapshot   .add(yieldAccrued).sub(fromStrategy)
 
-  // #endregion =================  18th PERIOD ============================= //
+    treasury.superToken = treasury.superToken.sub(treasury.superToken);
 
-      
-  // #region =================  19th PERIOD ============================= //
-  timestamp = usersPool[user1.address].expected.nextExecOut;
-  await setNextBlockTimestamp(hre, +timestamp);
+    (treasury.aave = pool.aaveBalance), await testTreasury(timestamp, treasury, contractsTest);
 
-  await getGelatoCloStream(poolInternal, +usersPool[user1.address].expected.nextExecOut,+usersPool[user1.address].expected.outStepTime,user1.address,ops,executor )
-
-  loanStream2 = await sf.cfaV1.getFlow({
-    superToken: network_params.superToken,
-    sender: superPoolAddress,
-    receiver: user1.address,
-    providerOrSigner: user1,
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
   });
-
-  console.log(loanStream2)
-
-    throw new Error('');
-
-    });
 });

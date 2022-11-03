@@ -130,7 +130,8 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
       OUT_STREAM_UPDATE, //(int96)
       PUSH_TO_STRATEGY, //(uint256)
       WITHDRAW_STEP,//
-      REBALANCE //
+      REBALANCE, //
+      GELATO_CLOSE_STREAM
     }
 
 

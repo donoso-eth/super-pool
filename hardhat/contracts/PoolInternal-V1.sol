@@ -402,23 +402,37 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         uint256 outDeposit
     ) internal {
 
-        // DataTypes.Supplier memory supplier = _getSupplier(_supplier);
-
-        // if (supplier.outStream.flow > 0) {
-        //     uint256 balance = poolContract.balanceOf(_supplier);
-        //     uint256 endTime = balance.div(uint96(supplier.outStream.flow));
-        //      require( BALANCE_TRIGGER_TIME >= endTime, "NOT_ENOUGH_BALANCE_WITH_OUTFLOW");
-        //      cancelTask(supplier.outStream.cancelWithdrawId);
-        //      suppliersByAddress[_supplier].outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, endTime);
-
-        // }
-
-
         _poolUpdate();
 
         _supplierUpdateCurrentState(_supplier);
 
         DataTypes.Supplier storage supplier = _getSupplier(_supplier);
+
+        if (supplier.outStream.flow > 0) {
+             cancelTask(supplier.outStream.cancelWithdrawId);
+            if (outDeposit > 0) {
+            uint256 balance = poolContract.balanceOf(_supplier);
+                   uint256 outFlowBuffer = POOL_BUFFER.mul(uint96(supplier.outStream.flow));
+                uint256 initialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(supplier.outStream.flow));
+                uint256 streamDuration = balance.sub(outFlowBuffer.add(initialWithdraw)).div(uint96(supplier.outStream.flow));
+
+             require( streamDuration  >= 24 * 3600, "NOT_ENOUGH_BALANCE_WITH_OUTFLOW");
+             supplier.outStream.streamDuration = streamDuration;
+             supplier.outStream.streamInit = block.timestamp;
+             suppliersByAddress[_supplier].outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration );
+
+            }  else if (inDeposit >0) {
+                uint256 currentEndTime = supplier.outStream.streamInit + supplier.outStream.streamDuration;
+                uint256 addTime = inDeposit.div(uint96(supplier.outStream.flow));
+                supplier.outStream.streamDuration = supplier.outStream.streamDuration.add(addTime);
+                supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, currentEndTime.add(addTime).sub(block.timestamp));
+            }
+      
+
+        }
+
+
+
 
         supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
 
@@ -487,7 +501,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 _cancelTask(supplier.outStream.cancelWithdrawId);
                 uint256 oldOutFlowBuffer = POOL_BUFFER.mul(uint96(-currentNetFlow));
                 pool.outFlowBuffer -= oldOutFlowBuffer;
-                supplier.outStream = DataTypes.OutStream(0, 0, bytes32(0));
+                supplier.outStream = DataTypes.OutStream(0, 0, 0,bytes32(0));
                 _balanceTreasury();
             } else {
                 pool.outFlowRate = pool.outFlowRate + currentNetFlow - newNetFlow;
@@ -632,16 +646,19 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             uint256 correction;
             if (fromStrategy > balance) {
                 correction = fromStrategy - balance;
-
+                console.log(635, correction);
                 if (balance > 0) {
+                        console.log(637, balance);
                     poolStrategy.withdraw(balance, _receiver);
                     pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - balance;
                 }
 
                 if (_supplier == _receiver) {
+                      console.log(643, correction);
                     poolContract.transferSuperToken(_receiver, correction);
                 }
             } else {
+                console.log(647,fromStrategy);
                 poolStrategy.withdraw(fromStrategy, _receiver);
                 pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - fromStrategy;
                 poolContract.transferSuperToken(_receiver, poolAvailable);
@@ -664,31 +681,33 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
         uint256 userBalance = poolContract.balanceOf(_supplier);
-        uint256 streamDuration = userBalance.div(uint96(newOutFlow));
+     
         uint256 outFlowBuffer = POOL_BUFFER.mul(uint96(newOutFlow));
         uint256 initialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(newOutFlow));
+        uint256 streamDuration = userBalance.sub(outFlowBuffer.add(initialWithdraw)).div(uint96(newOutFlow));
 
         console.log("Initial_withdraw", initialWithdraw);
 
         if (supplier.outStream.flow == 0) {
-            if (userBalance < 24 * 3600 * uint96(newOutFlow)) {
+            if (streamDuration  < 24 * 3600) {
                 revert("No sufficent funds");
             }
 
             pool.outFlowBuffer += outFlowBuffer;
             supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
-
+            supplier.outStream.streamInit = block.timestamp;
             _withdrawTreasury(_supplier, address(poolContract), initialWithdraw);
             supplier.outStream.streamDuration = streamDuration;
             poolContract.sfCreateFlow(_supplier, newOutFlow);
         } else if (supplier.outStream.flow > 0 && supplier.outStream.flow != newOutFlow) {
-            if (userBalance < 24 * 3600 * uint96(newOutFlow)) {
+            if (streamDuration  < 24 * 3600)  {
                 revert("No sufficent funds");
             }
             _cancelTask(supplier.outStream.cancelWithdrawId);
             console.log(689);
             supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
             supplier.outStream.streamDuration = streamDuration;
+            supplier.outStream.streamInit = block.timestamp;
 
             if (supplier.outStream.flow > newOutFlow) {
                 uint256 decreaseBuffer = POOL_BUFFER.mul(uint96(supplier.outStream.flow - newOutFlow));
@@ -716,19 +735,29 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
      *       or when the redeem flow has been updated and there is no wnough minimal balance
      */
     function closeStreamFlow(address _supplier) external onlyOps {
+
+        _poolUpdate();
+        _supplierUpdateCurrentState(_supplier);
+
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
         DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
+
+
 
         //// TODO clsoe stream transfer yield accrued while dscending
         uint256 userBalance = poolContract.balanceOf(_supplier);
 
-        if (userBalance > 24 * 3600 * uint96(supplier.outStream.flow)) {}
-        // pool.outFlowBuffer = pool.outFlowBuffer - minBalance;
-        // _withdrawTreasury(_supplier, _supplier, userBalance);
-        // pool.deposit = pool.deposit - userBalance;
-        pool.outFlowRate = pool.outFlowRate - supplier.outStream.flow;
+
+         uint256 oldOutFlowBuffer = POOL_BUFFER.mul(uint96(supplier.outStream.flow));
+         pool.outFlowBuffer -= oldOutFlowBuffer;
+         pool.outFlowRate -= supplier.outStream.flow;
+         pool.deposit -= supplier.deposit;
+
         supplier.deposit = 0;
-        supplier.outStream = DataTypes.OutStream(0, 0, bytes32(0));
+        supplier.outStream = DataTypes.OutStream(0, 0, 0,bytes32(0));
+        
+         poolContract.sfDeleteFlow(address(poolContract), _supplier);
+         _withdrawTreasury(_supplier, _supplier, userBalance);
     }
 
     // #endregion  ============= =============  Internal Stream Functions ============= ============= //

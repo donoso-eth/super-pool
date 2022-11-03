@@ -188,12 +188,13 @@ export const applyUserEvent = async (
       result = abiCoder.decode(['int96'], payload);
       users[activeUser.address].expected.outFlow = users[activeUser.address].expected.outFlow.add(result[0]);
 
-      streamDuration = users[activeUser.address].expected.realTimeBalance.div(result[0]);
-      stepAmount = users[activeUser.address].expected.outFlow.mul(streamDuration);
-
-      initialWithdraw = BigNumber.from(5 * 3600).mul(result[0]);
+  
+      initialWithdraw = BigNumber.from(4 * 3600).mul(result[0]);
 
       initialBuffer = BigNumber.from(3600).mul(result[0]);
+      streamDuration = users[activeUser.address].expected.realTimeBalance.sub(initialWithdraw.add(initialBuffer)).div(result[0]);
+  
+
 
       if (users[activeUser.address].expected.inFlow > BigNumber.from(0)) {
         pool.inFlowRate = pool.inFlowRate.sub(users[activeUser.address].expected.inFlow);
@@ -226,7 +227,7 @@ export const applyUserEvent = async (
       streamDuration = users[activeUser.address].expected.realTimeBalance.div(result[0]);
       stepAmount = users[activeUser.address].expected.outFlow.mul(streamDuration);
 
-      initialWithdraw = BigNumber.from(5 * 3600)
+      initialWithdraw = BigNumber.from(4 * 3600)
         .mul(result[0])
         .add(stepAmount);
 
@@ -268,6 +269,31 @@ export const applyUserEvent = async (
       pool.outFlowBuffer = pool.outFlowBuffer.sub(initialBuffer);
 
       break;
+
+      case SupplierEvent.GELATO_CLOSE_STREAM:
+        console.log('out_streamio');
+        result = abiCoder.decode(['int96'], payload);
+        oldFlow = users[activeUser.address].expected.outFlow;
+  
+        initialBuffer = users[activeUser.address].expected.outFlow.mul(BigNumber.from(3600));
+        users[activeUser.address].expected.outFlow = BigNumber.from(0);
+        pool.outFlowRate = pool.outFlowRate.sub(oldFlow);
+  
+        users[activeUser.address].expected.outMinBalance = BigNumber.from(0);
+        users[activeUser.address].expected.outStepAmount = BigNumber.from(0);
+        users[activeUser.address].expected.outFlow = BigNumber.from(0);
+        users[activeUser.address].expected.outStepTime = BigNumber.from(0);
+        users[activeUser.address].expected.outStreamInit = BigNumber.from(0);
+        users[activeUser.address].expected.outStreamCreated = BigNumber.from(0);
+        users[activeUser.address].expected.outStreamId = '0x0000000000000000000000000000000000000000000000000000000000000000';
+        users[activeUser.address].expected.nextExecOut = BigNumber.from(0);
+        users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit;
+        users[activeUser.address].expected.realTimeBalance = users[activeUser.address].expected.deposit.div(PRECISSION);
+  
+        pool.outFlowBuffer = pool.outFlowBuffer.sub(initialBuffer);
+
+        break;
+
 
     case SupplierEvent.PUSH_TO_STRATEGY:
       console.log('pushio');
