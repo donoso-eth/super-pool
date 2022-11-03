@@ -19,7 +19,7 @@ import { applyUserEvent, faucet, updatePool } from './helpers/logic-V1';
 import { ICONTRACTS_TEST, IPOOL_RESULT, ITREASURY_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V1';
 
 import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
-import { gelatoBalance, getGelatoCloStreamStepId } from './helpers/gelato-V1';
+import { gelatoBalance, getGelatoCloStream, getGelatoCloStreamId } from './helpers/gelato-V1';
 
 import { BigNumber } from '@ethersproject/bignumber';
 import { CreatePoolInputStruct, SuperPoolFactory, SuperPoolFactoryInitializerStruct } from '../typechain-types/SuperPoolFactory';
@@ -432,7 +432,7 @@ describe.only('V1 TEST TREASURY', function () {
     result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
     usersPool = result[0];
-    let taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+    let taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
     usersPool[user1.address].expected.outStreamId = taskId;
 
     treasury = {
@@ -700,7 +700,7 @@ describe.only('V1 TEST TREASURY', function () {
   result = await applyUserEvent(SupplierEvent.OUT_STREAM_UPDATE, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
   pools[+timestamp] = result[1];
   usersPool = result[0];
-   taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+   taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
   usersPool[user1.address].expected.outStreamId = taskId;
 
   treasury.yieldSnapshot = treasury.yieldSnapshot.add(outFlowBuffer.sub(outFlowBuffer2)).add(yieldAccrued
@@ -724,6 +724,15 @@ describe.only('V1 TEST TREASURY', function () {
   // #endregion =================  18th PERIOD ============================= //
 
       
+  // #region =================  19th PERIOD ============================= //
+  timestamp = usersPool[user1.address].expected.nextExecOut;
+  await setNextBlockTimestamp(hre, +timestamp);
+
+  await getGelatoCloStream(poolInternal, +usersPool[user1.address].expected.nextExecOut,+usersPool[user1.address].expected.outStepTime,user1.address,ops,executor )
+
+  
+
+
     throw new Error('');
 
     });
