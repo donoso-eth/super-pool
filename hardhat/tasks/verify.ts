@@ -52,10 +52,12 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   const poolImpl = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
   await hre.run('verify:verify', {
-    address: poolImpl.address,
+    address: "0xc7c26e41eCfF2Eb5c400740DfB027201DD291Baa",
     constructorArguments: [],
   });
 
+  throw new Error("");
+  
   
   deployContract = 'poolStrategyV1';
   toDeployContract = contract_config[deployContract];

@@ -140,7 +140,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         address sender
     ) external onlyPool returns (bytes memory updateCtx) {
         updateCtx = _updateSupplierFlow(sender, inFlowRate, 0, newCtx);
-        console.log(129);
+       
     }
 
     // #endregion User Interaction PoolEvents
@@ -202,7 +202,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         uint256 currentYieldSnapshot = poolStrategy.balanceOf();
 
-        console.log(191, currentYieldSnapshot);
+    
 
         if (periodSpan > 0) {
             poolId++;
@@ -217,32 +217,27 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             pool.nrSuppliers = supplierId;
 
             pool.yieldObject.yieldSnapshot = currentYieldSnapshot;
-            console.log(208, currentYieldSnapshot);
-            console.log(209, lastPool.yieldObject.yieldSnapshot);
             uint256 periodAccrued = pool.yieldObject.yieldSnapshot - lastPool.yieldObject.yieldSnapshot;
-            console.log(211, periodAccrued.mul(PROTOCOL_FEE).div(100));
             pool.yieldObject.protocolYield = lastPool.yieldObject.protocolYield + periodAccrued.mul(PROTOCOL_FEE).div(100);
-            console.log(213, 100 - PROTOCOL_FEE);
+        
             pool.yieldObject.yieldAccrued = periodAccrued.mul(100 - PROTOCOL_FEE).div(100);
 
             pool.yieldObject.totalYield = lastPool.yieldObject.totalYield + pool.yieldObject.yieldAccrued;
 
-            console.log(217, pool.yieldObject.yieldAccrued);
             /// apy to be refined
             pool.apy.span = lastPool.apy.span + periodSpan;
 
             uint256 periodBalance = lastPool.deposit.add(lastPool.depositFromInFlowRate).add(lastPool.outFlowBuffer);
-            console.log(207, periodBalance);
+         
 
             uint256 periodApy = periodBalance == 0 ? 0 : pool.yieldObject.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodBalance);
 
-            console.log(208, periodApy);
+        
 
             pool.apy.apy = ((periodApy).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(pool.apy.span);
 
             (pool.yieldObject.yieldTokenIndex, pool.yieldObject.yieldInFlowRateIndex, pool.yieldObject.yieldOutFlowRateIndex) = _calculateIndexes(pool.yieldObject.yieldAccrued, lastPool);
-            console.log(235, pool.yieldObject.yieldTokenIndex, pool.yieldObject.yieldInFlowRateIndex, pool.yieldObject.yieldOutFlowRateIndex);
-            pool.yieldObject.yieldTokenIndex = pool.yieldObject.yieldTokenIndex + lastPool.yieldObject.yieldTokenIndex;
+                 pool.yieldObject.yieldTokenIndex = pool.yieldObject.yieldTokenIndex + lastPool.yieldObject.yieldTokenIndex;
             pool.yieldObject.yieldInFlowRateIndex = pool.yieldObject.yieldInFlowRateIndex + lastPool.yieldObject.yieldInFlowRateIndex;
             pool.yieldObject.yieldOutFlowRateIndex = pool.yieldObject.yieldOutFlowRateIndex + lastPool.yieldObject.yieldOutFlowRateIndex;
             pool.inFlowRate = lastPool.inFlowRate;
@@ -250,7 +245,6 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             pool.outFlowBuffer = lastPool.outFlowBuffer;
 
             pool.timestamp = block.timestamp;
-            console.log(244, pool.yieldObject.yieldSnapshot);
             poolByTimestamp[block.timestamp] = pool;
 
             lastPoolTimestamp = block.timestamp;
@@ -271,16 +265,14 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         )
     {
         uint256 periodSpan = block.timestamp - lastPool.timestamp;
-        console.log(261,periodSpan);
+
         uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
         uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
         uint256 dollarSecondsOutFlow = ((uint96(lastPool.outFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromOutFlowRate * periodSpan;
         uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow - dollarSecondsOutFlow;
 
         /// we ultiply by PRECISSION
-        console.log(269, dollarSecondsDeposit, dollarSecondsInFlow, dollarSecondsOutFlow);
-        console.log(269, uint96(lastPool.inFlowRate));
-        console.log(269, yieldPeriod);
+   
         if (totalAreaPeriod != 0 && yieldPeriod != 0) {
             uint256 inFlowContribution = (dollarSecondsInFlow * PRECISSION);
             uint256 outFlowContribution = (dollarSecondsOutFlow * PRECISSION);
@@ -471,11 +463,11 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         bytes memory _ctx
     ) internal returns (bytes memory newCtx) {
         newCtx = _ctx;
-        console.log(425);
+   
         _poolUpdate();
-        console.log(427);
+      
         _supplierUpdateCurrentState(_supplier);
-        console.log(428);
+  
         DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
         DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
@@ -513,7 +505,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
             if (newNetFlow >= 0) {
                 pool.inFlowRate = pool.inFlowRate - currentNetFlow + inFlow;
-                console.log(463);
+             
                 _balanceTreasury();
             } else {
                 /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW NEGATIVE
@@ -543,33 +535,27 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
     function _balanceTreasury() public {
         lastExecution = block.timestamp;
-        console.log(509);
+       
         (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(poolContract));
         if (balance > 0) {
-            console.log(511, uint256(balance));
-        } else {
-            console.log(514, uint256(-balance));
-        }
+              } else {
+                 }
         DataTypes.PoolV1 storage currentPool = poolByTimestamp[lastPoolTimestamp];
-        console.log(513);
+ 
    
         uint256 currentThreshold = currentPool.outFlowBuffer;
-        console.log(517);
+      
         int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
-        console.log(519, uint96(currentPool.inFlowRate), uint96(currentPool.outFlowRate));
-        if (netFlow < 0) {
-            console.log("aqui");
+            if (netFlow < 0) {
+          
             currentThreshold = currentThreshold + ((BALANCE_TRIGGER_TIME)) * uint96(-netFlow);
-            console.log("aqui-NO");
+           
         }
-        console.log(525);
         if (uint256(balance) > currentThreshold) {
             uint256 toDeposit = uint256(balance) - currentThreshold;
-            console.log(553, toDeposit);
+        
             poolStrategy.pushToStrategy(toDeposit);
-            console.log(513, currentPool.yieldObject.yieldSnapshot);
             currentPool.yieldObject.yieldSnapshot += toDeposit;
-            console.log(515, currentPool.yieldObject.yieldSnapshot);
         } else if (currentThreshold > uint256(balance)) {
             uint256 amountToWithdraw = currentThreshold - uint256(balance);
 
@@ -608,11 +594,10 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         uint256 currentThreshold = currentPoolBuffer;
 
         int96 netFlow = pool.inFlowRate - pool.outFlowRate;
-        console.log(576,uint96(pool.inFlowRate),uint96(pool.outFlowRate));
-        console.log(564, "current_nert_flow", uint96(netFlow));
+
 
         if (netFlow < 0) {
-            console.log(567, "I should not be here");
+          
             currentThreshold = currentThreshold + (BALANCE_TRIGGER_TIME) * uint96(-netFlow);
         }
         //// calculate if any remaining balance of supertokens is inthe pool (push to strategy not yet ran)
@@ -621,11 +606,11 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             poolAvailable = superToken.balanceOf(address(poolContract)) - (currentThreshold);
         }
 
-        console.log(575, poolAvailable, withdrawAmount);
+  
         //// if enough in the pool is available then not go to the pool strategy
         if (poolAvailable >= withdrawAmount) {
             //// if the withdrawal is to supplier then we must transfer
-            console.log("NOT PUSHED");
+        
             if (_supplier == _receiver) {
                 poolContract.transferSuperToken(_receiver, withdrawAmount);
             }
@@ -638,27 +623,25 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             //// in the case the withdraw receiver is the pool, we don0t have to do anything as there is enoguh balance
         } else {
             //// not enough balance then we must withdraw from gtrategy
-            console.log("YES PUSHED");
+       
             uint256 balance = poolStrategy.balanceOf();
 
             uint256 fromStrategy = withdrawAmount - poolAvailable;
-            console.log(594, "fromStrategy", fromStrategy);
+     
             uint256 correction;
             if (fromStrategy > balance) {
                 correction = fromStrategy - balance;
-                console.log(635, correction);
+             
                 if (balance > 0) {
-                        console.log(637, balance);
                     poolStrategy.withdraw(balance, _receiver);
                     pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - balance;
                 }
 
                 if (_supplier == _receiver) {
-                      console.log(643, correction);
                     poolContract.transferSuperToken(_receiver, correction);
                 }
             } else {
-                console.log(647,fromStrategy);
+             
                 poolStrategy.withdraw(fromStrategy, _receiver);
                 pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - fromStrategy;
                 poolContract.transferSuperToken(_receiver, poolAvailable);
@@ -704,17 +687,17 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 revert("No sufficent funds");
             }
             _cancelTask(supplier.outStream.cancelWithdrawId);
-            console.log(689);
+       
             supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
             supplier.outStream.streamDuration = streamDuration;
             supplier.outStream.streamInit = block.timestamp;
 
             if (supplier.outStream.flow > newOutFlow) {
                 uint256 decreaseBuffer = POOL_BUFFER.mul(uint96(supplier.outStream.flow - newOutFlow));
-                   console.log(695);
+           
                 pool.outFlowBuffer -= decreaseBuffer;
                 _balanceTreasury();
-                    console.log(698);
+               
             } else {
                 uint256 increaseBuffer = POOL_BUFFER.mul(uint96(newOutFlow - supplier.outStream.flow));
                 pool.outFlowBuffer += increaseBuffer;
@@ -824,8 +807,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
     }
 
     function checkerLastExecution() external view returns (bool canExec, bytes memory execPayload) {
-        console.log(770, block.timestamp, lastExecution, BALANCE_TRIGGER_TIME);
-        console.log(771, block.timestamp, lastExecution + BALANCE_TRIGGER_TIME);
+      
 
         canExec = block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME;
 

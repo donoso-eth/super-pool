@@ -214,7 +214,7 @@ export class DappInjector implements OnDestroy {
 
     // console.log(resolver);
 
-    PoolMetadata.address = '0x998DeB10b916dC198f8F2b2E0f5C26959e82510c'//resolver.pool;//  '0xf1872346caF0eBf567bd9704AE2B661c8D034998';
+    PoolMetadata.address = '0xD0166BD40cD5652bdc7D6f3Fb3AAF74087Cb6033'//resolver.pool;//  '0xf1872346caF0eBf567bd9704AE2B661c8D034998';
 
     const contract = new AngularContract<PoolV1>({
      metadata:  PoolMetadata,

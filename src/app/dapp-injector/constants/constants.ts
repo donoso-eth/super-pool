@@ -18,7 +18,7 @@ export const settings = {
     supertoken: '0x8aE68021f6170E5a766bE613cEA0d75236ECCa9a',
     token:"0xc94dd466416A7dFE166aB2cF916D3875C049EBB7",
     resolver: '0x3710AB3fDE2B61736B8BB0CE845D6c61F667a78E',
-    chainId: 1337,
+    chainId: 31337,
     subgraph: 'https://thegraph.com/hosted-service/subgraph/superfluid-finance/protocol-v1-goerli',
     graphUri: 'http://localhost:8000/subgraphs/name/donoso-eth/super-pool',
     wallet: 'local',
