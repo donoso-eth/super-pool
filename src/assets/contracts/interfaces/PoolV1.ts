@@ -254,6 +254,7 @@ export interface PoolV1Interface extends utils.Interface {
     "transferFrom(address,address,uint256)": FunctionFragment;
     "transferSuperToken(address,uint256)": FunctionFragment;
     "updateCode(address)": FunctionFragment;
+    "withdraw()": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -482,6 +483,7 @@ export interface PoolV1Interface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "updateCode", values: [string]): string;
+  encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
 
   decodeFunctionResult(
     functionFragment: "BALANCE_TRIGGER_TIME",
@@ -685,6 +687,7 @@ export interface PoolV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "updateCode", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
@@ -1041,6 +1044,10 @@ export interface PoolV1 extends BaseContract {
       newAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    withdraw(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
   };
 
   BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1329,6 +1336,10 @@ export interface PoolV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  withdraw(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1605,6 +1616,8 @@ export interface PoolV1 extends BaseContract {
     ): Promise<void>;
 
     updateCode(newAddress: string, overrides?: CallOverrides): Promise<void>;
+
+    withdraw(overrides?: CallOverrides): Promise<boolean>;
   };
 
   filters: {
@@ -1926,6 +1939,10 @@ export interface PoolV1 extends BaseContract {
       newAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    withdraw(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -2229,6 +2246,10 @@ export interface PoolV1 extends BaseContract {
 
     updateCode(
       newAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    withdraw(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

@@ -10,6 +10,7 @@ import { PoolV1, PoolV1__factory, SuperPoolFactory__factory } from '../typechain
 
 import config from '../hardhat.config';
 import { NetworkObject } from '../test/helpers/models-V1';
+import { writeFileSync } from 'fs';
 
 const contract_path_relative = '../src/assets/contracts/';
 const processDir = process.cwd();
@@ -48,7 +49,9 @@ task('update_pool_contract', 'update_pool_contract.ts').setAction(async ({}, hre
 
   //await pool.updateCode(poolImpl.address)
 
+  networkAdresses.poolImpl = poolImpl.address;
 
+  writeFileSync(join(processDir,  network +'_contracts.json'),JSON.stringify(networkAdresses));
 
   await pool.updateCode(poolImpl.address,{ gasLimit: 10000000, nonce:nonce + 1} ) 
  

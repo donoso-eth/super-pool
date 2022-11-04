@@ -723,23 +723,7 @@ describe('V1 TEST TREASURY', function () {
 
   // #endregion =================  18th PERIOD ============================= //
 
-      
-  // #region =================  19th PERIOD ============================= //
-  timestamp = usersPool[user1.address].expected.nextExecOut;
-  await setNextBlockTimestamp(hre, +timestamp);
 
-  await getGelatoCloStream(poolInternal, +usersPool[user1.address].expected.nextExecOut,+usersPool[user1.address].expected.outStepTime,user1.address,ops,executor )
-
-  loanStream2 = await sf.cfaV1.getFlow({
-    superToken: network_params.superToken,
-    sender: superPoolAddress,
-    receiver: user1.address,
-    providerOrSigner: user1,
-  });
-
-  console.log(loanStream2)
-
-    throw new Error('');
 
     });
 });

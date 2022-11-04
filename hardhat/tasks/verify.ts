@@ -52,7 +52,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   const poolImpl = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
   await hre.run('verify:verify', {
-    address: "0xc7c26e41eCfF2Eb5c400740DfB027201DD291Baa",
+    address: "0x44F24256636EA1dFf729B6466a0821917B125cf9",
     constructorArguments: [],
   });
 

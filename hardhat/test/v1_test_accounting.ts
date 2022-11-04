@@ -818,59 +818,5 @@ describe('V1 TEST ACCOUNTING', function () {
 
     // #endregion ================= 12th PERIOD ============================= //
 
-
-
-
-
-    throw new Error("");
-    
-    // #region =================  13th PERIOD ============================= //
-    timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
-    await setNextBlockTimestamp(hre, +timestamp);
-
-    console.log('\x1b[36m%s\x1b[0m', '#13--- User3 strem 80');
-
-    let flowRate3 = utils.parseEther('45').div(ONE_MONTH);
-
-   let updateFlowOperation = sf.cfaV1.updateFlow({
-      receiver: superPoolAddress,
-      flowRate: flowRate3.toString(),
-      superToken: network_params.superToken,
-    });
-    await updateFlowOperation.exec(user3);
-
-   
-    yieldPool = await poolInternal.getLastPool();
-    yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
-    yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
-    lastPool = Object.assign({}, pool);
-
-    pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-    payload = abiCoder.encode(['int96'], [flowRateOut2]);
-
-    lastUsersPool = usersPool;
-
-    pool.aaveBalance = pool.aaveBalance
-      .add(flowRate2.mul(ONE_MONTH).div(10 ** 12))
-      .add(
-        yieldAccrued
-          .mul(100)
-          .div(97)
-          .div(10 ** 12)
-      );
- 
-
-    result = await applyUserEvent(SupplierEvent.STREAM_UPDATE, user3.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
-    pools[+timestamp] = result[1];
-    usersPool = result[0];
-
-    taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
-    usersPool[user2.address].expected.outStreamId = taskId;
-
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
-
-    console.log('\x1b[36m%s\x1b[0m', '#13--- Period Tests passed ');
-
-    // #endregion ================= 13th PERIOD ============================= //
   });
 });
