@@ -6,9 +6,9 @@ dataSources:
     name: PoolV1
     network: goerli
     source:
-      address: '0xD0166BD40cD5652bdc7D6f3Fb3AAF74087Cb6033'
+      address: '0x82ac8E2Be327AEF1E978BdA95202Ce05253a488e'
       abi: PoolV1
-      startBlock: 7885950
+      startBlock: 7895209
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5

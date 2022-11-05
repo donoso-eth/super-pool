@@ -41,32 +41,32 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   // const poolFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
   // await hre.run('verify:verify', {
-  //   address: '0x5ECC822C5b50A7C2e1b8C8B3F289cC72bC0B710B',// poolFactory.address,
+  //   address: poolFactory.address,
   //   constructorArguments: [],
   // });
 
 
 
-  deployContract = 'poolV1';
-  toDeployContract = contract_config[deployContract];
-  const poolImpl = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
+  // deployContract = 'poolV1';
+  // toDeployContract = contract_config[deployContract];
+  // const poolImpl = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
-  await hre.run('verify:verify', {
-    address: "0x44F24256636EA1dFf729B6466a0821917B125cf9",
-    constructorArguments: [],
-  });
+  // await hre.run('verify:verify', {
+  //   address: "0x44F24256636EA1dFf729B6466a0821917B125cf9",
+  //   constructorArguments: [],
+  // });
 
-  throw new Error("");
+  // throw new Error("");
   
   
-  deployContract = 'poolStrategyV1';
-  toDeployContract = contract_config[deployContract];
-  const poolStrategy= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
+  // deployContract = 'poolStrategyV1';
+  // toDeployContract = contract_config[deployContract];
+  // const poolStrategy= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
-  await hre.run('verify:verify', {
-    address: poolStrategy.address,
-    constructorArguments: [],
-  });
+  // await hre.run('verify:verify', {
+  //   address: poolStrategy.address,
+  //   constructorArguments: [],
+  // });
 
 
   
@@ -75,7 +75,7 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   const poolInternal= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
   await hre.run('verify:verify', {
-    address:poolInternal.address,
+    address:'0x48aC2C263Ac6c0D2746e240f9D76F85D3D57E2E5', //poolInternal.address,
     constructorArguments: [],
   });
 
