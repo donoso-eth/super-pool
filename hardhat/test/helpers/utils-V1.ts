@@ -35,7 +35,7 @@ export const testTreasury = async (timestamp:BigNumber,
         expect((+poolBalance.availableBalance.toString() - +expected.superToken.toString())).to.eq(0);
 
       } else {
-      expect((+poolBalance.availableBalance.toString() - +expected.superToken.toString())/+poolBalance.availableBalance.toString() ).to.lt(0.000001);
+      expect(poolBalance.availableBalance).to.eq(expected.superToken);
       }
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#SuperToken Balance: ${poolBalance.availableBalance.toString()}`);
     } catch (error) {
@@ -58,7 +58,7 @@ export const testTreasury = async (timestamp:BigNumber,
 
   if (expected.yieldSnapshot != undefined && !yieldSnapshot.isZero() ) {
     try {
-      expect(expected.yieldSnapshot).to.eq(yieldSnapshot);
+      expect(expected.yieldSnapshot.sub(yieldSnapshot)).lt(5);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${expected.yieldSnapshot.toString()}`);
     } catch (error) {
       console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Snapshot: ${yieldSnapshot.toString()}, expected:${(expected.yieldSnapshot)!.toString()}`);

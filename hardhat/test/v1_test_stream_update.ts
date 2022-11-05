@@ -668,17 +668,17 @@ describe.only('V1 TEST STREAM UPDATES', function () {
     initialWidthraw = flowRate60.mul(4 * 3600);
     outFlowBuffer = flowRate60.mul(1 * 3600);
 
-    pool.poolBalance = pool.poolBalance;
+    // pool.poolBalance = pool.poolBalance;
 
-    pool.aaveBalance = pool.aaveBalance
-      .add(
-        yieldAccrued
-          .mul(100)
-          .div(97)
-          .div(10 ** 12)
-      )
-      .sub(initialWidthraw)
-      .sub(outFlowBuffer.div(10 ** 12));
+    // pool.aaveBalance = pool.aaveBalance
+    //   .add(
+    //     yieldAccrued
+    //       .mul(100)
+    //       .div(97)
+    //       .div(10 ** 12)
+    //   )
+    //   .sub(initialWidthraw)
+    //   .sub(outFlowBuffer.div(10 ** 12));
 
     result = await applyUserEvent(SupplierEvent.DEPOSIT, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
@@ -688,7 +688,7 @@ describe.only('V1 TEST STREAM UPDATES', function () {
 
     //treasury.yieldSnapshot   .add(yieldAccrued).sub(fromStrategy)
 
-    treasury.superToken = treasury.superToken;
+    treasury.superToken = treasury.superToken.sub(initialWidthraw).add(loanStream.deposit);
 
     treasury.aave = pool.aaveBalance;
 
@@ -724,15 +724,15 @@ describe.only('V1 TEST STREAM UPDATES', function () {
     payload = abiCoder.encode(['uint256'], [amount8]);
     lastUsersPool = usersPool;
 
-    pool.aaveBalance = pool.aaveBalance
-      .add(
-        yieldAccrued
-          .mul(100)
-          .div(97)
-          .div(10 ** 12)
-      )
-      .sub(initialWidthraw)
-      .sub(outFlowBuffer.div(10 ** 12));
+    // pool.aaveBalance = pool.aaveBalance
+    //   .add(
+    //     yieldAccrued
+    //       .mul(100)
+    //       .div(97)
+    //       .div(10 ** 12)
+    //   )
+    //   .sub(initialWidthraw)
+    //   .sub(outFlowBuffer.div(10 ** 12));
 
     result = await applyUserEvent(SupplierEvent.WITHDRAW, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
@@ -786,10 +786,8 @@ describe.only('V1 TEST STREAM UPDATES', function () {
     lastUsersPool = usersPool;
 
    
-    let oldInitialWithdraw = flowRate60.mul(4*3600);
+
     let oldOutBuffer =  flowRate60.mul(1*3600);
-    
-    initialWidthraw = flowRate9.mul(4 * 3600);
     outFlowBuffer = flowRate9.mul(1 * 3600);
 
 
@@ -797,23 +795,18 @@ describe.only('V1 TEST STREAM UPDATES', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    console.log(800,oldOutBuffer.toString());
-    console.log(801,outFlowBuffer.toString());
-    console.log(802,oldInitialWithdraw.toString());
-    console.log(803,initialWidthraw.toString());
+
     treasury.yieldSnapshot = treasury.yieldSnapshot.add(yieldAccrued.mul(100).div(97))
-    // .add(outFlowBuffer.sub(oldOutBuffer))
-    // .add(initialWidthraw)
-   // .sub(flowRate60.sub(flowRate9).mul(24*3600))
+   .add(treasury.superToken).sub(outFlowBuffer)
     ;
 
-    //treasury.yieldSnapshot   .add(yieldAccrued).sub(fromStrategy)
 
-  
 
     treasury.aave = pool.aaveBalance;
 
-    treasury.superToken = treasury.superToken;
+    treasury.superToken = treasury.superToken
+    .sub(oldOutBuffer.sub(outFlowBuffer))
+    .add(loanStream.deposit).sub(loanStream9.deposit);
 
     await testTreasury(timestamp, treasury, contractsTest);
 

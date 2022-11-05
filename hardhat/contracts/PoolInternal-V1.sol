@@ -557,7 +557,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
 
         if (uint256(balance) > currentThreshold) {
             uint256 toDeposit = uint256(balance) - currentThreshold;
-        
+                 console.log(567,toDeposit);
             poolStrategy.pushToStrategy(toDeposit);
             currentPool.yieldObject.yieldSnapshot += toDeposit;
         } else if (currentThreshold > uint256(balance)) {
