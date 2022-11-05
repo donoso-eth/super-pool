@@ -21,7 +21,19 @@ In the same way, a user can redeem a flow of  “spTokens” in this case, the u
 
 Contracts can be found at: [contracts](https://github.com/donoso-eth/super-pool/tree/master/hardhat/contracts)
 
-The k
+The  major proxy contracts are verified and can be found at
+
+User Interaction
+[PoolContract](https://goerli.etherscan.io/address/0x82ac8E2Be327AEF1E978BdA95202Ce05253a488e)
+
+Internal
+[PoolInternal](https://goerli.etherscan.io/address/0x33CABB75fa280c9F56Ca1c45A5802b434e5fE496)
+
+Yield Strategy (aave)
+[PoolStrategy](https://goerli.etherscan.io/address/0x5bA3F5c75EaE795C65Bc72f816c4BD245D52db3D)
+
+PoolFactory (create a pool passing superToken and strategy)
+[PoolFactory](https://goerli.etherscan.io/address/0x8f788693cb0e6afa6C93b0Db55433C42B34F7CC3)
 
 
 ###  Super Pool Factory
