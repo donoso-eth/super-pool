@@ -124,7 +124,7 @@ export const applyUserEvent = async (
 
   switch (code) {
     case SupplierEvent.DEPOSIT:
-      console.log('depositio');
+    
       result = abiCoder.decode(['uint256'], payload);
       pool.deposit = pool.deposit.add(result[0].mul(PRECISSION));
       pool.poolTotalBalance = pool.poolTotalBalance.add(result[0]);
@@ -149,7 +149,7 @@ export const applyUserEvent = async (
 
       break;
     case SupplierEvent.WITHDRAW:
-      console.log('withdrawio');
+     
       result = abiCoder.decode(['uint256'], payload);
       pool.deposit = pool.deposit.sub(result[0].mul(PRECISSION));
       pool.poolTotalBalance = pool.poolTotalBalance.sub(result[0]);
@@ -174,7 +174,7 @@ export const applyUserEvent = async (
       break;
 
     case SupplierEvent.TRANSFER:
-      console.log('transferio');
+   
       result = abiCoder.decode(['address', 'uint256'], payload);
 
       users[activeUser.address].expected.deposit = users[activeUser.address].expected.deposit.sub(result[1].mul(PRECISSION));
@@ -187,7 +187,7 @@ export const applyUserEvent = async (
       break;
 
     case SupplierEvent.STREAM_START:
-      console.log('streamio');
+
       result = abiCoder.decode(['int96'], payload);
       pool.inFlowRate = pool.inFlowRate.add(result[0]);
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.add(result[0]);
@@ -196,7 +196,7 @@ export const applyUserEvent = async (
       users[activeUser.address].expected.tokenBalance = users[activeUser.address].expected.tokenBalance.sub(deposit);
       break;
     case SupplierEvent.STREAM_STOP:
-      console.log('streamstoio');
+
       result = abiCoder.decode(['int96'], payload);
       pool.inFlowRate = pool.inFlowRate.sub(result[0]);
       users[activeUser.address].expected.inFlow = users[activeUser.address].expected.inFlow.sub(result[0]);
@@ -204,7 +204,7 @@ export const applyUserEvent = async (
       break;
 
       case SupplierEvent.STREAM_UPDATE:
-        console.log('strem-updte');
+  
         result = abiCoder.decode(['int96'], payload);
         deposit = await getDeposit(activeUser.address, sf, superToken, deployer, superPoolAddress);
         pool.inFlowRate = pool.inFlowRate.sub(users[activeUser.address].expected.inFlow).add(result[0]);
@@ -213,7 +213,7 @@ export const applyUserEvent = async (
         break;
 
     case SupplierEvent.OUT_STREAM_START:
-      console.log('out_streamio');
+
       result = abiCoder.decode(['int96'], payload);
       users[activeUser.address].expected.outFlow = users[activeUser.address].expected.outFlow.add(result[0]);
 
@@ -246,7 +246,6 @@ export const applyUserEvent = async (
       break;
 
     case SupplierEvent.OUT_STREAM_UPDATE:
-      console.log('out_streamio_stop');
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
 
@@ -277,7 +276,7 @@ export const applyUserEvent = async (
       break;
 
     case SupplierEvent.OUT_STREAM_STOP:
-      console.log('out_streamio');
+  
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
 
@@ -301,7 +300,7 @@ export const applyUserEvent = async (
       break;
 
       case SupplierEvent.GELATO_CLOSE_STREAM:
-        console.log('out_streamio');
+
         result = abiCoder.decode(['int96'], payload);
         oldFlow = users[activeUser.address].expected.outFlow;
   
@@ -326,7 +325,7 @@ export const applyUserEvent = async (
 
 
     case SupplierEvent.PUSH_TO_STRATEGY:
-      console.log('pushio');
+ 
       result = abiCoder.decode(['uint256'], payload);
 
       //pool.yieldSnapshot = pool.yieldSnapshot.add(result[0]);

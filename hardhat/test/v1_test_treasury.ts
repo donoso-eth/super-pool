@@ -97,6 +97,7 @@ let resolverHash;
 let taskId;
 
 let ONE_MONTH = 24 * 3600 * 30;
+
 let ONE_DAY = 24 * 3600;
 let ONE_HOUR = 3600;
 const processDir = process.cwd();
@@ -502,7 +503,6 @@ describe('V1 TEST TREASURY', function () {
 
     let compensate = netFlow.mul(3600*18)
 
-    console.log(compensate.toString());
 
     yieldPool = await poolInternal.getLastPool();
 
@@ -648,10 +648,10 @@ describe('V1 TEST TREASURY', function () {
 
   console.log('\x1b[36m%s\x1b[0m', '#18--- User1 redeem flow');
 
-  flowRate2 = utils.parseEther('90').div(ONE_MONTH);
-  await waitForTx(superPool.connect(user1).redeemFlow(flowRate2));
+  let flowRate18 = utils.parseEther('90').div(ONE_MONTH);
+  await waitForTx(superPool.connect(user1).redeemFlow(flowRate18));
 
-  let loanStream2 = await sf.cfaV1.getFlow({
+  let loanStream18 = await sf.cfaV1.getFlow({
     superToken: network_params.superToken,
     sender: superPoolAddress,
     receiver: user1.address,
@@ -660,8 +660,8 @@ describe('V1 TEST TREASURY', function () {
 
   compensate = netFlow.mul(3600*20)
 
-  initialWidthraw = BigNumber.from(4 * 3600).mul(flowRate2);
-  let outFlowBuffer2 = BigNumber.from(1 * 3600).mul(flowRate2);
+  let initialWidthraw18 = BigNumber.from(4 * 3600).mul(flowRate18);
+  let outFlowBuffer18 = BigNumber.from(1 * 3600).mul(flowRate18);
 
   yieldPool = await poolInternal.getLastPool();
 
@@ -670,32 +670,14 @@ describe('V1 TEST TREASURY', function () {
   lastPool = Object.assign({}, pool);
 
 
-  netFlow = flowRate2.sub(flowRate.add(flowRate2));
-  firstDay = netFlow.mul(BigNumber.from(24 * 3600));
-  pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit).sub(loanStream2.deposit);
+  pool.poolTotalBalance = pool.poolTotalBalance.add(loanStream.deposit).sub(loanStream18.deposit);
 
   pool = updatePool(lastPool, timestamp, yieldAccrued, yieldSnapshot, PRECISSION);
-  payload = abiCoder.encode(['int96'], [flowRate2]);
+  payload = abiCoder.encode(['int96'], [flowRate18]);
   lastUsersPool = usersPool;
 
-  pool.poolBalance = pool.poolBalance.add(outFlowBuffer).add(firstDay).sub(loanStream.deposit);
 
-  pool.aaveBalance = pool.aaveBalance
-    .add(
-      flowRate
-        .mul(ONE_MONTH)
-        .sub(initialWidthraw)
-        .add(outFlowBuffer)
-        .div(10 ** 12)
-    )
-    .add(
-      yieldAccrued
-        .mul(100)
-        .div(97)
-        .div(10 ** 12)
-    );
 
- 
 
   result = await applyUserEvent(SupplierEvent.OUT_STREAM_UPDATE, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
   pools[+timestamp] = result[1];
@@ -703,15 +685,19 @@ describe('V1 TEST TREASURY', function () {
    taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
   usersPool[user1.address].expected.outStreamId = taskId;
 
-  treasury.yieldSnapshot = treasury.yieldSnapshot.add(outFlowBuffer.sub(outFlowBuffer2)).add(yieldAccrued
+  treasury.yieldSnapshot = treasury.yieldSnapshot.add(outFlowBuffer.sub(outFlowBuffer18)).add(yieldAccrued
     .mul(100)
     .div(97));
 
-  treasury = {
-    superToken: pool.poolBalance,
-    aave: pool.aaveBalance,
-    yieldSnapshot: result[1].yieldSnapshot,
-  };
+    treasury.aave = pool.poolBalance;
+
+
+
+    treasury.superToken = treasury.superToken
+    .sub(initialWidthraw.sub(initialWidthraw18))
+    .sub(outFlowBuffer.sub(outFlowBuffer18))
+    .add(loanStream.deposit).sub(loanStream18.deposit)
+    .sub(compensate);
 
   pool.yieldSnapshot = treasury.yieldSnapshot;
 

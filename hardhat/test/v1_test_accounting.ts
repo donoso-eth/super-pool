@@ -19,7 +19,7 @@ import { applyUserEvent, faucet, updatePool } from './helpers/logic-V1';
 import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V1';
 
 import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
-import {  getGelatoCloStreamStepId} from './helpers/gelato-V1';
+import {  getGelatoCloStreamId} from './helpers/gelato-V1';
 
 import { BigNumber } from '@ethersproject/bignumber';
 import { CreatePoolInputStruct, SuperPoolFactory, SuperPoolFactoryInitializerStruct } from '../typechain-types/SuperPoolFactory';
@@ -561,7 +561,7 @@ describe('V1 TEST ACCOUNTING', function () {
     });
 
     let initialWidthraw = BigNumber.from(5 * 3600).mul(flowRate);
-    console.log(564, initialWidthraw.toString());
+
     yieldPool = await poolInternal.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
@@ -590,17 +590,20 @@ describe('V1 TEST ACCOUNTING', function () {
           .div(97)
           .div(10 ** 12)
       );
-    pool.yieldSnapshot = pool.yieldSnapshot.add(flowRate.mul(ONE_MONTH)).add(initialWidthraw);
+
 
     result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
     usersPool = result[0];
-    let taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
+    let taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
     usersPool[user2.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
 
     console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
     // #endregion ================= END 7TH PERIOD ============================= //
+
+
+        
 
     // #region =================  8th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
@@ -763,7 +766,7 @@ describe('V1 TEST ACCOUNTING', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+    taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
     usersPool[user1.address].expected.outStreamId = taskId;
 
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
@@ -809,7 +812,7 @@ describe('V1 TEST ACCOUNTING', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    taskId = await getGelatoCloStreamStepId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
+    taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
     usersPool[user2.address].expected.outStreamId = taskId;
 
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
