@@ -68,12 +68,19 @@ async function main() {
   let nonce = await deployer.getTransactionCount();
   console.log(nonce);
 
+
+
   //// DEPLOY POOL IMPL
+  let toDeployContract;
+  let poolImplAdress = '0x9609564DcB8AfcCB51C056386F5a6f37D25d3Ce7'; 
+  addressObject.poolImpl = poolImplAdress;
+
+
   const poolImpl = await new PoolV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce });
 
   addressObject.poolImpl = poolImpl.address;
-
-  let toDeployContract = contract_config['poolV1'];
+  poolImplAdress =  addressObject.poolImpl;
+  toDeployContract = contract_config['poolV1'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,
     JSON.stringify({
@@ -86,13 +93,13 @@ async function main() {
 
   writeFileSync(`../add-ons/subgraph/abis/${toDeployContract.jsonName}.json`, JSON.stringify(PoolV1__factory.abi.concat(eventAbi)));
 
-  console.log(toDeployContract.name + ' Contract Deployed to:', poolImpl.address);
+  console.log(toDeployContract.name + ' Contract Deployed to:', poolImplAdress);
 
   ///// copy Interfaces and create Metadata address/abi to assets folder
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
 
   //// DEPLOY PoolStrategy
-  let poolStrategyImpl = await new PoolStrategyV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce + 1 });
+  let poolStrategyImpl = await new PoolStrategyV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce +1});
 
   let proxyStrategy: any = await new UUPSProxy__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce + 2 });
 
@@ -117,6 +124,12 @@ async function main() {
   console.log(toDeployContract.name + ' Contract Deployed to:', addressObject.poolStrategyProxy);
   ///// copy Interfaces and create Metadata address/abi to assets folder
   copySync(`./typechain-types/${toDeployContract.name}.ts`, join(contract_path, 'interfaces', `${toDeployContract.name}.ts`));
+
+  writeFileSync(join(processDir,  network +'_contracts.json'),JSON.stringify( addressObject))
+
+
+  
+    
 
   //// DEPLOY POOL INTERNAL
   const poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce + 4 });
@@ -147,7 +160,7 @@ async function main() {
   //// DEPLOY SuperPoolFactory
   let factoryInit: SuperPoolFactoryInitializerStruct = {
     host: network_params.host,
-    poolImpl: poolImpl.address,
+    poolImpl: poolImplAdress,
     poolInternalImpl: poolInternalImpl.address,
     ops: network_params.ops,
   };

@@ -33,7 +33,7 @@ const mainnetGwei = 21;
 
 let defaultNetwork = 'localhost';
 defaultNetwork = 'goerli';
-
+//deafultNEtwork = 'optgoerli'
 const config: HardhatUserConfig = {
   solidity: {
     version: '0.8.17',
@@ -76,8 +76,8 @@ const config: HardhatUserConfig = {
           ? [process.env['DEPLOYER_KEY']]
           : [],
     },
-    xdai: {
-      url: 'https://rpc.xdaichain.com/',
+    optgoerli: {
+      url: 'https://optimism-goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e',
       gasPrice: 1000000000,
           accounts:
         process.env['DEPLOYER_KEY'] !== undefined

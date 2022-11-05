@@ -797,14 +797,19 @@ describe.only('V1 TEST STREAM UPDATES', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
+    console.log(800,oldOutBuffer.toString());
+    console.log(801,outFlowBuffer.toString());
+    console.log(802,oldInitialWithdraw.toString());
+    console.log(803,initialWidthraw.toString());
     treasury.yieldSnapshot = treasury.yieldSnapshot.add(yieldAccrued.mul(100).div(97))
-    .add(initialWidthraw).add(outFlowBuffer.sub(oldOutBuffer))
-    .add(loanStream.deposit).sub(loanStream9.deposit)
+    // .add(outFlowBuffer.sub(oldOutBuffer))
+    // .add(initialWidthraw)
+   // .sub(flowRate60.sub(flowRate9).mul(24*3600))
     ;
 
     //treasury.yieldSnapshot   .add(yieldAccrued).sub(fromStrategy)
 
-    treasury.superToken = treasury.superToken;
+  
 
     treasury.aave = pool.aaveBalance;
 

@@ -249,9 +249,9 @@ export const applyUserEvent = async (
       console.log('out_streamio_stop');
       result = abiCoder.decode(['int96'], payload);
       oldFlow = users[activeUser.address].expected.outFlow;
-      console.log(222,oldFlow.toString())
+
       users[activeUser.address].expected.outFlow = result[0];
-      console.log(224, pool.outFlowRate.toString())
+
       pool.outFlowRate = pool.outFlowRate.add(result[0]).sub(oldFlow);
      
       initialWithdraw = BigNumber.from(4 * 3600)

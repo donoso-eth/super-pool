@@ -55,8 +55,8 @@ export const testTreasury = async (timestamp:BigNumber,
     }
   }
 
-  console.log(expected.yieldSnapshot.sub(yieldSnapshot).toString())
-  if (expected.yieldSnapshot != undefined ) {
+
+  if (expected.yieldSnapshot != undefined && !yieldSnapshot.isZero() ) {
     try {
       expect(expected.yieldSnapshot).to.eq(yieldSnapshot);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield Snapshot: ${expected.yieldSnapshot.toString()}`);
@@ -65,7 +65,7 @@ export const testTreasury = async (timestamp:BigNumber,
     }
   }
 
-  console.log('\x1b[32m%s\x1b[0m', '   $', `\x1b[30m#Yield Pending: ${(aaveBalance.sub(expected.yieldSnapshot.div(10**12))).toString()}`);
+  console.log('\x1b[32m%s\x1b[0m',  '    $', `\x1b[30m#Yield Pending: ${(aaveBalance.sub(expected.yieldSnapshot.div(10**12))).toString()}`);
 
 
 
@@ -253,12 +253,12 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   ///// YIELD PART
 
-  if (expected.yieldAccrued != undefined && expected.yieldAccrued !== BigNumber.from(0)) {
+  if (expected.yieldAccrued != undefined && !expected.yieldAccrued.isZero()) {
     try {
       expect(+(result.yieldObject.yieldAccrued.sub(expected.yieldAccrued))/+result.yieldObject.yieldAccrued).to.lt(0.00001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Yield accrued : ${result.yieldObject.yieldAccrued.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Index Yield Accrued: ${result.yieldObject.yieldAccrued.toString()}, expected:${expected.yieldAccrued!.toString()}`);
+      console.log('\x1b[31m%s\x1b[0m', '    x', `\x1b[30m#Yield Accrued: ${result.yieldObject.yieldAccrued.toString()}, expected:${expected.yieldAccrued!.toString()}`);
     }
   }
 
@@ -271,7 +271,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     }
   }
 
-  if (expected.totalYield != undefined && expected.totalYield !== BigNumber.from(0)) {
+  if (expected.totalYield != undefined && !expected.totalYield.isZero()) {
     try {
       expect(+(result.yieldObject.totalYield.sub(expected.totalYield))/(+result.yieldObject.totalYield)).lt(0.000001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Total Yield : ${result.yieldObject.totalYield.toString()}`);
@@ -310,7 +310,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
     let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
 
 
-    console.log('\x1b[35m%s\x1b[0m', `     ====  ${user.name} =========================`);
+    console.log('\x1b[35m%s\x1b[0m', `     =====   ${user.name} =========================`);
 
     if (user.expected.id != undefined) {
       try {
