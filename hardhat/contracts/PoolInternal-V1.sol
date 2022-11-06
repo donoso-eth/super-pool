@@ -23,10 +23,12 @@ import {Events} from "./libraries/Events.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {PoolStateV1} from "./PoolState-V1.sol";
 
-contract PoolInternalV1 is UUPSProxiable, PoolStateV1 {
+contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
      using SafeMath for uint256;
      using CFAv1Library for CFAv1Library.InitData;
 
+
+     function initialize() external initializer {}
 
     // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
 
@@ -623,21 +625,32 @@ contract PoolInternalV1 is UUPSProxiable, PoolStateV1 {
         require(success, "_transfer: ETH transfer failed");
     }
 
-    function _createBalanceTreasuryTask() internal returns (bytes32 taskId) {
+    function _createBalanceTreasuryTask() external  returns (uint256) {
+
+   
+
         bytes memory resolverData = abi.encodeWithSelector(this.checkerLastExecution.selector);
 
-        bytes memory resolverArgs = abi.encode(address(this), resolverData);
+        // bytes memory resolverArgs = abi.encode(address(this), resolverData);
 
-        LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
+        // LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
 
-        modules[0] = LibDataTypes.Module.RESOLVER;
+        // modules[0] = LibDataTypes.Module.RESOLVER;
 
-        bytes[] memory args = new bytes[](1);
+        // bytes[] memory args = new bytes[](1);
 
-        args[0] = resolverArgs;
+        // args[0] = resolverArgs;
 
-        LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
-        taskId = IOps(ops).createTask(address(this), abi.encodePacked(this.balanceTreasury.selector), moduleData, ETH);
+   
+
+        // LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
+        // taskId = IOps(ops).createTask(address(this), abi.encodePacked(this.balanceTreasury.selector), moduleData, ETH);
+        // console.logBytes32(taskId);
+        // console.log(644);
+
+        return 644;
+
+
     }
 
     function checkerLastExecution() external view returns (bool canExec, bytes memory execPayload) {

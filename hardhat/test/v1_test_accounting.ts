@@ -100,7 +100,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe('V1 TEST ACCOUNTING', function () {
+describe.only('V1 TEST ACCOUNTING', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -178,6 +178,8 @@ describe('V1 TEST ACCOUNTING', function () {
 
     await deployer.sendTransaction({ to: superPoolAddress, value: initialPoolEth });
 
+
+
     superTokenContract.approve(superPoolAddress, hre.ethers.constants.MaxUint256);
 
     ops = IOps__factory.connect(network_params.ops, deployer);
@@ -215,7 +217,7 @@ describe('V1 TEST ACCOUNTING', function () {
 
     executor = await hre.ethers.provider.getSigner(network_params.opsExec);
 
-    PRECISSION = await superPool.getPrecission();
+    PRECISSION = await superPool.PRECISSION();
 
     contractsTest = {
       poolAddress: superPoolAddress,
@@ -337,7 +339,7 @@ describe('V1 TEST ACCOUNTING', function () {
       providerOrSigner: user2,
     });
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     let yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     let yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -382,7 +384,7 @@ describe('V1 TEST ACCOUNTING', function () {
 
     lastPool = Object.assign({}, pool);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -423,7 +425,7 @@ describe('V1 TEST ACCOUNTING', function () {
     amount = utils.parseEther('150');
     await waitForTx(superPool.connect(user1).redeemDeposit(amount));
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -468,7 +470,7 @@ describe('V1 TEST ACCOUNTING', function () {
     });
     let tx = await deleteFlowOperation.exec(user2);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -515,7 +517,7 @@ describe('V1 TEST ACCOUNTING', function () {
     });
     await createFlowOperation.exec(user1);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -562,7 +564,7 @@ describe('V1 TEST ACCOUNTING', function () {
 
     let initialWidthraw = BigNumber.from(5 * 3600).mul(flowRate);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -613,7 +615,7 @@ describe('V1 TEST ACCOUNTING', function () {
 
     await waitForTx(superPool.connect(user2).redeemFlowStop());
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -650,9 +652,9 @@ describe('V1 TEST ACCOUNTING', function () {
 
     let transferAmount = utils.parseEther('75');
 
-    await waitForTx(superPool.connect(user2)['transfer(address,uint256)'](user3.address, transferAmount));
+    await waitForTx(superPool.connect(user2).transfer(user3.address, transferAmount));
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -698,7 +700,7 @@ describe('V1 TEST ACCOUNTING', function () {
     });
     await createFlowOperation.exec(user3);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -736,7 +738,7 @@ describe('V1 TEST ACCOUNTING', function () {
 
     initialWidthraw = BigNumber.from(5 * 3600).mul(flowRateOut);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     lastPool = Object.assign({}, pool);
@@ -787,7 +789,7 @@ describe('V1 TEST ACCOUNTING', function () {
 
     let initialWidthraw2 = BigNumber.from(5 * 3600).mul(flowRateOut2);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     lastPool = Object.assign({}, pool);

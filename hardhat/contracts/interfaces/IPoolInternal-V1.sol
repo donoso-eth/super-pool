@@ -8,7 +8,7 @@ import {IPoolV1} from "./IPool-V1.sol";
 
 interface IPoolInternalV1 {
 
-
+  function initialize() external;
     // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
 
     function _tokensReceived(address from, uint256 amount) external;

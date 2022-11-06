@@ -82,8 +82,6 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         ops = poolInit.ops;
         gelato = ops.gelato();
 
-        token.approve(address(poolStrategy), MAX_INT);
-        superToken.approve(address(poolStrategy), MAX_INT);
 
         PRECISSION = 1_000_000;
         MIN_OUTFLOW_ALLOWED = 24 * 3600; // 1 Day minimum flow == Buffer
@@ -99,13 +97,29 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         poolStrategy = IPoolStrategyV1(poolInit.poolStrategy);
         poolInternal = poolInit.poolInternal;
 
+        token.approve(address(poolStrategy), MAX_INT);
+        superToken.approve(address(poolStrategy), MAX_INT);
+
         lastPoolTimestamp = block.timestamp;
         poolByTimestamp[block.timestamp] = DataTypes.PoolV1(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
         lastExecution = block.timestamp;
 
-        (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_createBalanceTreasuryTask"));
 
-        balanceTreasuryTask = abi.decode(data, (bytes32));
+        console.log(108,poolInternal);
+
+         uint size;
+            assembly {
+                size := extcodesize(poolInternal.slot)
+            }
+
+        console.log(size);
+
+        (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_createBalanceTreasuryTask()"));
+
+       console.log(109,success); 
+         console.logBytes(data); 
+
+        (balanceTreasuryTask) = abi.decode(data, (bytes32));
         // _createBalanceTreasuryTask();
     }
 
