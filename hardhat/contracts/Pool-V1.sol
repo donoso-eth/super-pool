@@ -149,7 +149,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         console.log(147,poolInternal);
 
         (bool success, bytes memory data) = poolInternal.delegatecall(
-          abi.encodeWithSignature("_tokensReceived(adddress,uint256)",from, amount));
+          abi.encodeWithSignature("_tokensReceived(address,uint256)",from, amount));
 
         console.log(150,success);
 
@@ -168,7 +168,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
       //  poolInternal._redeemDeposit(redeemAmount, _supplier);
            (bool success, bytes memory data) = poolInternal.delegatecall(
-          abi.encodeWithSignature("_redeemDeposit(adddress,uint256)",redeemAmount, _supplier));
+          abi.encodeWithSignature("_redeemDeposit(address,uint256)",redeemAmount, _supplier));
           
           emitEvents(_supplier);
 
@@ -193,7 +193,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         DataTypes.SupplierEvent flowEvent = suppliersByAddress[_supplier].outStream.flow > 0 ? DataTypes.SupplierEvent.OUT_STREAM_UPDATE : DataTypes.SupplierEvent.OUT_STREAM_START;
 
         (bool success, bytes memory data) = poolInternal.delegatecall(
-          abi.encodeWithSignature("_redeemFlow((adddress,int96)",_supplier, _outFlowRate));
+          abi.encodeWithSignature("_redeemFlow((address,int96)",_supplier, _outFlowRate));
           
 
        // poolInternal._redeemFlow(_outFlowRate, );
@@ -215,7 +215,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
 
         (bool success, bytes memory data) = poolInternal.delegatecall(
-          abi.encodeWithSignature("_redeemFlowStop(adddress)",_supplier));
+          abi.encodeWithSignature("_redeemFlowStop(address)",_supplier));
         //poolInternal._redeemFlowStop(_supplier);
 
         emitEvents(_supplier);
@@ -358,7 +358,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         } else if (sender == address(this)) {
             console.log("OUT_STREAM_MANUAL_STOPPED");
                 (bool success, bytes memory data) = poolInternal.delegatecall(
-          abi.encodeWithSignature("_redeemFlowStop(adddress)",receiver));
+          abi.encodeWithSignature("_redeemFlowStop(address)",receiver));
            // poolInternal._redeemFlowStop(receiver);
             emitEvents(receiver);
             bytes memory payload = abi.encode("");
@@ -404,7 +404,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         address sender
     ) internal returns (bytes memory updateCtx) {
         // updateCtx = _updateSupplierFlow(sender, inFlowRate, 0, newCtx);
-        (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_updateSupplierFlow(adddress,int96)", sender, inFlowRate, 0, newCtx));
+        (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_updateSupplierFlow(address,int96)", sender, inFlowRate, 0, newCtx));
 
         updateCtx = abi.decode(data, (bytes));
     }
@@ -495,7 +495,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
     function transfer(uint256 _amount, address _paymentToken) internal {
         // _transfer(_amount, _paymentToken);
-        (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_transfer(uint256,adddress)", _amount, _paymentToken));
+        (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_transfer(uint256,address)", _amount, _paymentToken));
     }
 
     function emitEvents(address _supplier) internal {
