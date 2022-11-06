@@ -56,7 +56,10 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
   ISuperfluid public host; // host
   IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
+
   ISuperToken superToken;
+  IERC20 token;
+
 
   using CFAv1Library for CFAv1Library.InitData;
   CFAv1Library.InitData internal _cfaLib;
@@ -69,7 +72,6 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
   uint256 public PRECISSION;
 
-  uint8 public STEPS; // proportinal decrease deposit
   uint256 public SUPERFLUID_DEPOSIT;
   uint256 public POOL_BUFFER; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
   uint256 public MIN_OUTFLOW_ALLOWED; // 1 hour minimum flow == Buffer
@@ -84,7 +86,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
   IPoolStrategyV1 poolStrategy;
   IPoolInternalV1 poolInternal;
 
-  IERC20 token;
+
 
   // #endregion pool state
 
