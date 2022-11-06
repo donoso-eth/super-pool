@@ -6,17 +6,17 @@ import { PoolV1 } from "../../typechain-types/PoolV1";
 import { IOps } from "../../typechain-types";
 
 
-export const gelatoBalance= async (poolInternal: PoolInternalV1, ops:IOps, executor:SignerWithAddress) => {
+export const gelatoBalance= async (superPool: PoolV1, ops:IOps, executor:SignerWithAddress) => {
     
     const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
-    const resolverData =  poolInternal.interface.encodeFunctionData("checkerLastExecution");
+    const resolverData =  superPool.interface.encodeFunctionData("checkerLastExecution");
     const resolverArgs = utils.defaultAbiCoder.encode(
       ["address", "bytes"],
-      [poolInternal.address, resolverData]
+      [superPool.address, resolverData]
     );
 
-   let  execSelector =  poolInternal.interface.getSighash("balanceTreasury");
+   let  execSelector =  superPool.interface.getSighash("balanceTreasury");
     let moduleData = {
       modules: [0],
       args: [resolverArgs],
@@ -24,15 +24,15 @@ export const gelatoBalance= async (poolInternal: PoolInternalV1, ops:IOps, execu
 
     const FEE = utils.parseEther("0.01")
 
-    const [canExec, execData] = await poolInternal.checkerLastExecution();
+    const [canExec, execData] = await superPool.checkerLastExecution();
 
 
 
     await ops
       .connect(executor)
       .exec(
-        poolInternal.address,
-        poolInternal.address,
+        superPool.address,
+        superPool.address,
         execData,
         moduleData,
         FEE,

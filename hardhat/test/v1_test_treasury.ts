@@ -244,7 +244,7 @@ describe('V1 TEST TREASURY', function () {
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
 
-    t0 = +(await poolInternal.lastPoolTimestamp());
+    t0 = +(await superPool.lastPoolTimestamp());
     console.log(t0.toString());
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 500 units at t0 ');
@@ -258,7 +258,7 @@ describe('V1 TEST TREASURY', function () {
 
     await erc777.send(superPoolAddress, amount, '0x');
 
-    let t1 = await poolInternal.lastPoolTimestamp();
+    let t1 = await superPool.lastPoolTimestamp();
 
     let result: [IUSERS_TEST, IPOOL_RESULT];
 
@@ -433,7 +433,7 @@ describe('V1 TEST TREASURY', function () {
     result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
     usersPool = result[0];
-    let taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+    let taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
     usersPool[user1.address].expected.outStreamId = taskId;
 
     treasury = {
@@ -682,7 +682,7 @@ describe('V1 TEST TREASURY', function () {
   result = await applyUserEvent(SupplierEvent.OUT_STREAM_UPDATE, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
   pools[+timestamp] = result[1];
   usersPool = result[0];
-   taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+   taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
   usersPool[user1.address].expected.outStreamId = taskId;
 
   treasury.yieldSnapshot = treasury.yieldSnapshot.add(outFlowBuffer.sub(outFlowBuffer18)).add(yieldAccrued

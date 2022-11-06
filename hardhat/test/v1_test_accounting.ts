@@ -168,11 +168,11 @@ describe.only('V1 TEST ACCOUNTING', function () {
     // await poolInternal.initialize(settings.address);
     // console.log('Pool Internal ---> initialized');
 
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, poolProxyAddress, aavePool, aToken, network_params.aaveToken, poolInternalProxyAddress);
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, poolProxyAddress, aavePool, aToken, network_params.aaveToken, poolImpl.address);
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolV1__factory.connect(superPoolAddress, deployer);
-    poolInternal = PoolInternalV1__factory.connect(poolInternalProxyAddress, deployer);
+   // poolInternal = PoolInternalV1__factory.connect(poolInternalProxyAddress, deployer);
 
     let initialPoolEth = hre.ethers.utils.parseEther('10');
 
@@ -225,7 +225,6 @@ describe.only('V1 TEST ACCOUNTING', function () {
       superPool: superPool,
       superTokenERC777,
       aaveERC20,
-      poolInternal,
       strategyAddresse: poolStrategy.address,
       ops: ops,
       PRECISSION,
@@ -241,7 +240,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
 
-    t0 = +(await poolInternal.lastPoolTimestamp());
+    t0 = +(await superPool.lastPoolTimestamp());
     console.log(t0.toString());
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 500 units at t0 ');
@@ -253,9 +252,9 @@ describe.only('V1 TEST ACCOUNTING', function () {
 
     let amount = utils.parseEther('500');
 
-    await erc777.send(superPoolAddress, amount, '0x');
+    //await erc777.send(superPoolAddress, amount, '0x');
 
-    let t1 = await poolInternal.lastPoolTimestamp();
+    let t1 = await superPool.lastPoolTimestamp();
 
     let result: [IUSERS_TEST, IPOOL_RESULT];
 
@@ -310,12 +309,14 @@ describe.only('V1 TEST ACCOUNTING', function () {
       },
     };
 
-    await testPeriod(BigNumber.from(t0), +t1 - t0, poolExpected1, contractsTest, usersPool);
+    //await testPeriod(BigNumber.from(t0), +t1 - t0, poolExpected1, contractsTest, usersPool);
 
     let yieldPool;
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tests passed ');
 
     // #endregion ============== FIRST PERIOD ============================= //
+
+  
 
     // #region =================  SECOND PERIOD ============================= //
 
@@ -332,6 +333,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
     });
     await createFlowOperation.exec(user2);
 
+    
     fromUser2Stream = await sf.cfaV1.getFlow({
       superToken: network_params.superToken,
       sender: user2.address,
@@ -597,7 +599,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
     result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
     usersPool = result[0];
-    let taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
+    let taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
     usersPool[user2.address].expected.outStreamId = taskId;
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
 
@@ -768,7 +770,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
+    taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user1.address].expected.outStepTime, user1.address);
     usersPool[user1.address].expected.outStreamId = taskId;
 
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
@@ -814,7 +816,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    taskId = await getGelatoCloStreamId(poolInternal, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
+    taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
     usersPool[user2.address].expected.outStreamId = taskId;
 
     await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);

@@ -14,8 +14,8 @@ interface IPoolInternalV1 {
     function _tokensReceived(address from, uint256 amount) external;
 
     function _redeemDeposit(
-        uint256 redeemAmount,
-        address _supplier
+     
+        address _supplier,   uint256 redeemAmount
     ) external;
 
     function _redeemFlow(int96 _outFlowRate, address _supplier) external;

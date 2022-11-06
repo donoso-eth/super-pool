@@ -32,8 +32,10 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
 
     // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
 
-    function _tokensReceived(address _supplier, uint256 amount) external onlyPool {
+    function _tokensReceived(address _supplier, uint256 amount) internal{
         ///// suppler config updated && pool
+
+            console.log(38);
 
         _updateSupplierDeposit(_supplier, amount, 0);
         _balanceTreasury();
@@ -87,11 +89,16 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
      *
      *************************************************************************/
     function _poolUpdate() public {
+          console.log(92);
+
         DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
         uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
         uint256 currentYieldSnapshot = poolStrategy.balanceOf();
+
+        console.log(100,periodSpan);
+
 
         if (periodSpan > 0) {
             poolId++;
@@ -353,12 +360,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
 
     // #endregion
 
-    function balanceTreasury() external onlyOps {
-        require(block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME, "NOT_YER_READY");
-        (uint256 fee, address feeToken) = IOps(ops).getFeeDetails();
-        _transfer(fee, feeToken);
-        _balanceTreasury();
-    }
+
 
     function _balanceTreasury() public {
         lastExecution = block.timestamp;
@@ -625,39 +627,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
         require(success, "_transfer: ETH transfer failed");
     }
 
-    function _createBalanceTreasuryTask() external  returns (uint256) {
 
-   
-
-        bytes memory resolverData = abi.encodeWithSelector(this.checkerLastExecution.selector);
-
-        // bytes memory resolverArgs = abi.encode(address(this), resolverData);
-
-        // LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
-
-        // modules[0] = LibDataTypes.Module.RESOLVER;
-
-        // bytes[] memory args = new bytes[](1);
-
-        // args[0] = resolverArgs;
-
-   
-
-        // LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
-        // taskId = IOps(ops).createTask(address(this), abi.encodePacked(this.balanceTreasury.selector), moduleData, ETH);
-        // console.logBytes32(taskId);
-        // console.log(644);
-
-        return 644;
-
-
-    }
-
-    function checkerLastExecution() external view returns (bool canExec, bytes memory execPayload) {
-        canExec = block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME;
-
-        execPayload = abi.encodeWithSelector(this.balanceTreasury.selector);
-    }
 
     function _createCloseStreamTask(address _supplier, uint256 streamDuration) internal returns (bytes32 taskId) {
         bytes memory timeArgs = abi.encode(uint128(block.timestamp + streamDuration), streamDuration);

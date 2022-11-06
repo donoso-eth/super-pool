@@ -21,6 +21,7 @@ import {SuperAppBase} from "@superfluid-finance/ethereum-contracts/contracts/app
 
 import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
+import {LibDataTypes} from "./gelato/LibDataTypes.sol";
 
 import {IPoolV1} from "./interfaces/IPool-V1.sol";
 import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
@@ -105,22 +106,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         lastExecution = block.timestamp;
 
 
-        console.log(108,poolInternal);
-
-         uint size;
-            assembly {
-                size := extcodesize(poolInternal.slot)
-            }
-
-        console.log(size);
-
-        (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_createBalanceTreasuryTask()"));
-
-       console.log(109,success); 
-         console.logBytes(data); 
-
-        (balanceTreasuryTask) = abi.decode(data, (bytes32));
-        // _createBalanceTreasuryTask();
+        balanceTreasuryTask = createBalanceTreasuryTask();
     }
 
     // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
@@ -142,6 +128,8 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
      *
      ****************************************************************************************************/
 
+ 
+
     /**
      * @notice ERC277 call back allowing deposit tokens via .send()
      * @param from Supplier (user sending tokens)
@@ -158,10 +146,12 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         require(msg.sender == address(superToken), "INVALID_TOKEN");
         require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
+        console.log(147,poolInternal);
+
         (bool success, bytes memory data) = poolInternal.delegatecall(
           abi.encodeWithSignature("_tokensReceived(adddress,uint256)",from, amount));
 
- 
+        console.log(150,success);
 
         emitEvents(from);
 
@@ -431,6 +421,55 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
     // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
+    function balanceTreasury() external onlyOps {
+        require(block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME, "NOT_YER_READY");
+        (uint256 fee, address feeToken) = IOps(ops).getFeeDetails();
+        transfer(fee, feeToken);
+        (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("balanceTreasury()"));
+
+     
+
+
+
+    }
+
+
+
+        function createBalanceTreasuryTask() internal  returns (bytes32 taskId) {
+
+        console.log(630,'here');
+
+        bytes memory resolverData = abi.encodeWithSelector(this.checkerLastExecution.selector);
+
+        bytes memory resolverArgs = abi.encode(address(this), resolverData);
+
+        LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
+
+        modules[0] = LibDataTypes.Module.RESOLVER;
+
+        bytes[] memory args = new bytes[](1);
+
+        args[0] = resolverArgs;
+
+     
+        console.logBytes(abi.encodePacked(this.balanceTreasury.selector));
+        LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
+       taskId = IOps(ops).createTask(address(this), abi.encodePacked(this.balanceTreasury.selector), moduleData, ETH);
+    
+    
+        console.logBytes32(taskId);
+
+  
+
+
+    }
+
+    function checkerLastExecution() external view returns (bool canExec, bytes memory execPayload) {
+        canExec = block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME;
+
+        execPayload = abi.encodeWithSelector(this.balanceTreasury.selector);
+    }
+
      function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier) {
         supplier = suppliersByAddress[_supplier];
     }
@@ -510,6 +549,10 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         _;
     }
 
+    modifier onlyOps() {
+        require(msg.sender == address(ops), "OpsReady: onlyOps");
+        _;
+    }
 
     modifier onlyOwnerOrPoolFactory() {
         require(msg.sender == poolFactory || msg.sender == owner, "Only Factory or owner");

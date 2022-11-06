@@ -109,7 +109,6 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
     poolAddress: string,
      superTokenContract: ISuperToken, 
      superPool:PoolV1,
-     poolInternal: PoolInternalV1,
      superTokenERC777: IERC777,
      ops?:IOps,
      strategyAddresse: string,

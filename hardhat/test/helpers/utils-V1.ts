@@ -18,7 +18,7 @@ export const testTreasury = async (timestamp:BigNumber,
  expected: ITREASURY_RESULT, 
   contracts:ICONTRACTS_TEST) => {
   
-  let yieldPool = await contracts.poolInternal.getLastPool();
+  let yieldPool = await contracts.superPool.getLastPool();
   let yieldSnapshot = yieldPool.yieldObject.yieldSnapshot;
 
   let poolBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
@@ -84,7 +84,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   let poolTotalBalance  = (poolBalance.availableBalance.div(10**12)).add(aaveBalance);
 
   console.log('\x1b[31m%s\x1b[0m', '     =====   POOL     =============================');
-  let result: IPOOL = await getPool(contracts.poolInternal);
+  let result: IPOOL = await getPool(contracts.superPool);
 
   if (expected.id != undefined) {
     try {
@@ -308,7 +308,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   for (const user of checkUsers ) {
     let userRealtimeBalance = await contracts.superPool.balanceOf(user.address);
     let userTokenBalance = await contracts.superTokenERC777.balanceOf(user.address);
-    let userState = await contracts.poolInternal.suppliersByAddress(user.address);
+    let userState = await contracts.superPool.suppliersByAddress(user.address);
     let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
 
 
@@ -439,9 +439,9 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   }
 };
 
-export const getPool = async (poolInternal: PoolInternalV1): Promise<any> => {
-  let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
-  let periodRaw = await poolInternal.poolByTimestamp(periodTimestamp);
+export const getPool = async (superPool:PoolV1): Promise<any> => {
+  let periodTimestamp = +(await superPool.lastPoolTimestamp()).toString();
+  let periodRaw = await superPool.poolByTimestamp(periodTimestamp);
 
   let pool: IPOOL = {
     id: periodRaw.id,
@@ -519,9 +519,9 @@ export const printUserResult = async (user: IUSERTEST): Promise<any> => {
   return user;
 };
 
-export const printPool = async (poolInternal: PoolInternalV1, t0: number): Promise<any> => {
-  let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
-  let period = await poolInternal.getPool(periodTimestamp);
+export const printPool = async (superPool:PoolV1, t0: number): Promise<any> => {
+  let periodTimestamp = +(await superPool.lastPoolTimestamp()).toString();
+  let period = await superPool.getPool(periodTimestamp);
   console.log(period.timestamp.toString());
 
   console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXX   PERIOD    XXXXXXXXXXXXXXXXXXXXX');
