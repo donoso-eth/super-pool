@@ -93,18 +93,18 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
 
 
-    function pauseTask() external onlyOwner {
-    if (depositTaskId != bytes32(0)) {
-      ops.cancelTask(depositTaskId);
-      depositTaskId = bytes32(0);
-    }
-  }
+  //   function pauseTask() external onlyOwner {
+  //   if (depositTaskId != bytes32(0)) {
+  //     ops.cancelTask(depositTaskId);
+  //     depositTaskId = bytes32(0);
+  //   }
+  // }
 
-  function launchTask() external onlyOwner {
-    if (depositTaskId != bytes32(0)) {
-      depositTaskId = createDepositTask();
-    }
-  }
+  // function launchTask() external onlyOwner {
+  //   if (depositTaskId != bytes32(0)) {
+  //     depositTaskId = createDepositTask();
+  //   }
+  // }
 
 
 
@@ -126,76 +126,9 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     IERC20(address(superToken)).transfer(_supplier, amount);
   }
 
-  /// execute
-  function createDepositTask() internal returns (bytes32 taskId) {
-    bytes memory resolverData = abi.encodeWithSelector(this.checkerDeposit.selector);
-
-    bytes memory resolverArgs = abi.encode(address(this), resolverData);
-
-    LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
-
-    modules[0] = LibDataTypes.Module.RESOLVER;
-
-    bytes[] memory args = new bytes[](1);
-
-    args[0] = resolverArgs;
-
-    LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
-
-    taskId = IOps(ops).createTask(address(this), abi.encodePacked(this.depositTask.selector), moduleData, ETH);
-  }
 
   // called by Gelato Execs
-  function checkerDeposit(uint256) external view returns (bool canExec, bytes memory execPayload) {
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
 
-    DataTypes.PoolV1 memory currentPool = poolInternal.getLastPool();
-
-    uint256 currentPoolBuffer = currentPool.outFlowBuffer;
-
-    uint256 currentThreshold = currentPoolBuffer;
-
-    int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
-
-    // if (netFlow < 0) {
-    //   currentThreshold = currentThreshold + ((lastExecution + intervalExecution) - block.timestamp) * uint256(-netFlow);
-    // }
-
-
-    uint256 TRIGGER_AMOUNT = pool.getDepositTriggerAmount();
-
-    currentThreshold = currentPoolBuffer.add(TRIGGER_AMOUNT);
-
-    uint256 TRIGGER_TIME = pool.getDepositTriggerTime();
-
-    canExec = uint256(balance) >= currentThreshold || block.timestamp > lastExecution + TRIGGER_TIME;
-
-    execPayload = abi.encodeWithSelector(this.depositTask.selector);
-  }
-
-  function depositTask() external onlyOps {
-    uint256 fee;
-    address feeToken;
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
-
-    uint256 currentPoolBuffer = poolInternal.getLastPool().outFlowBuffer;
-
-    uint256 TRIGGER_AMOUNT = pool.getDepositTriggerAmount();
-
-    uint256 currentThreshold = currentPoolBuffer.add(TRIGGER_AMOUNT);
-
-    uint256 TRIGGER_TIME = pool.getDepositTriggerTime();
-
-    require(uint256(balance) >= currentThreshold || block.timestamp > lastExecution + TRIGGER_TIME, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
-
-    uint256 amountToDeposit = uint256(balance) - currentThreshold + TRIGGER_AMOUNT;
-
-    (fee, feeToken) = IOps(ops).getFeeDetails();
-
-    pool.transfer(fee, feeToken);
-
-    _deposit(amountToDeposit);
-  }
 
   function _deposit(uint256 amountToDeposit) internal {
     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
@@ -209,34 +142,6 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
   }
 
-
-
-
-  function _balanceTreasury(uint256 balance, DataTypes.PoolV1 memory currentPool) internal {
-    uint256 currentPoolBuffer = currentPool.outFlowBuffer;
-
-    uint256 currentThreshold = currentPoolBuffer;
-
-    int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
-
-    if (netFlow < 0) {
-      currentThreshold = currentThreshold + ((lastExecution + intervalExecution) - block.timestamp) * uint96(-netFlow);
-    }
-
-    if (balance > currentThreshold) {
-      _deposit(balance - currentThreshold);
-    } else if (currentThreshold > balance) {
-      uint256 amountToWithdraw = currentThreshold - balance;
-
-      uint256 balanceAave = aToken.balanceOf(address(this)) * (10**12);
-
-      if (amountToWithdraw > balanceAave) {
-        amountToWithdraw = balanceAave;
-      }
-
-      _withdraw(amountToWithdraw, address(pool));
-    }
-  }
 
   function pushToStrategy(uint256 amountToDeposit) external onlyPoolInternal {
 

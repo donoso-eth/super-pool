@@ -34,7 +34,7 @@ library DataTypes {
         ISuperfluid host;
         ISuperToken superToken;
         IERC20 token;
-        IPoolInternalV1 poolInternal;
+        address poolInternal;
         IPoolStrategyV1 poolStrategy;
         IOps ops;
         address owner;
@@ -42,13 +42,7 @@ library DataTypes {
 
 
 
-    struct PoolInternalInitializer {
-        ISuperToken superToken;
-        IPoolV1 pool;
-        IPoolStrategyV1 poolStrategy;
-        IOps ops;
-        address owner;
-    }
+
 
 
     struct PoolInfo {

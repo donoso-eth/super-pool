@@ -57,27 +57,6 @@ interface IPoolV1 {
 
     // #endregion overriding ERC20
 
-    // #region ===================== Superfluid stream Manipulation Area ===========================
-    /**
-     *  only calleded by Pool Internal when streams to create/update/delete
-     *
-     */
-    function sfDeleteFlow(address sender, address receiver) external;
-
-    function sfCreateFlow(address receiver, int96 newOutFlow) external;
-
-    function sfUpdateFlow(address receiver, int96 newOutFlow) external;
-
-    /// when the user send a stream in the case that he is already receiving a stream from the pool
-    /// this action will stop the pool outgoing stream, as this action is triggered by the after create
-    /// call
-    function sfDeleteFlowWithCtx(
-        bytes calldata _ctx,
-        address sender,
-        address receiver
-    ) external returns (bytes memory newCtx);
-
-    // #endregion ====================Superfluid stream Manipulation Area ==========================
 
     // function internalEmitEvents(address _supplier,DataTypes.SupplierEvent code, bytes memory payload, address sender) external;
 
@@ -93,45 +72,20 @@ interface IPoolV1 {
 
     function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier);
 
-    function getPrecission() external view returns (uint256);
-
-    function getSteps() external view returns (uint8);
-
-    function getPoolBuffer() external view returns (uint256);
-
-    function getSuperfluidDeposit() external view returns (uint256);
-
-    function getDepositTriggerAmount() external view returns (uint256);
-
-    function getDepositTriggerTime() external view returns (uint256);
-
-    function getProtocolFee() external view returns(uint256);
-
     function getVersion() external pure returns(uint256);
 
 
     // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
     // #region  ============= =============  Internal && Pool Internal Functions   ============= ============= //
-    function transferSuperToken(address receiver, uint256 amount) external;
 
-    function internalPushToAAVE(uint256 amount) external;
 
-    function internalWithDrawStep(address supplier, uint256 stepAmount) external;
-
-    function transfer(uint256 _amount, address _paymentToken) external;
+    // function transfer(uint256 _amount, address _paymentToken) external;
 
     // #endregion  ============= =============  Internal && Pool Internal Functions    ============= ============= //
 
     // #region =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
 
-    function setSteps(uint8 _steps) external;
-
-    function setPoolBuffer(uint256 _poolBuffer) external;
-
-    function setSuperfluidDeposit(uint256 _superfluidDeposit) external;
-
-    function setPrecission(uint256 _precission) external;
 
     // #endregion =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
 }

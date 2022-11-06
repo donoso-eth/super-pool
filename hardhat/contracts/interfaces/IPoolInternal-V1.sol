@@ -7,7 +7,7 @@ import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/c
 import {IPoolV1} from "./IPool-V1.sol";
 
 interface IPoolInternalV1 {
-    function initialize(DataTypes.PoolInternalInitializer memory) external;
+
 
     // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
 
@@ -22,27 +22,16 @@ interface IPoolInternalV1 {
 
     function _redeemFlowStop(address _supplier) external;
 
-    function updateStreamRecord(
-        bytes memory newCtx,
-        int96 inFlowRate,
-        address sender
-    ) external returns (bytes memory updatedCtx);
-
      // #endregion User Interaction PoolEvents
 
  
+    function _getSupplierBalance(address _supplier) external view returns (uint256 realtimeBalance);
+
       // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
 
     function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) external view returns (uint256 yieldSupplier);
 
-    function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier);
-
-    function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory);
-
-    function getLastPool() external view returns (DataTypes.PoolV1 memory);
-
-    function getLastTimestamp() external view returns (uint256);
 
     function getVersion() external pure returns(uint256);
 

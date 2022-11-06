@@ -88,7 +88,7 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
       host: host,
       superToken: ISuperToken(poolInput.superToken),
       token: token,
-      poolInternal: IPoolInternalV1(address(poolInternalProxy)),
+      poolInternal: address(poolInternalProxy),
       poolStrategy: IPoolStrategyV1(poolInput.poolStrategy),
       ops: ops,
       owner: owner
@@ -100,13 +100,6 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     host.registerAppByFactory(ISuperApp(address(poolProxy)), configWord);
 
     //Initializer PoolInternal
-    DataTypes.PoolInternalInitializer memory internalInit;
-    internalInit = DataTypes.PoolInternalInitializer({
-      superToken: ISuperToken(poolInput.superToken),
-    pool: IPoolV1(address(poolProxy)), 
-    poolStrategy: IPoolStrategyV1(poolInput.poolStrategy),
-     ops: ops, owner: owner});
-    IPoolInternalV1(address(poolInternalProxy)).initialize(internalInit);
 
     DataTypes.PoolInfo memory poolInfo = DataTypes.PoolInfo({
       id: pools.current(),
