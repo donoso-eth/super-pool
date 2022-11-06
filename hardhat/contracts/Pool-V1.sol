@@ -530,9 +530,9 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
         return result;
     }
 
-    fallback() external payable {
-       poolInternal.delegatecall(msg.data);
-    }
+    // fallback() external payable {
+    //    poolInternal.delegatecall(msg.data);
+    // }
 
     // endregion
 }
