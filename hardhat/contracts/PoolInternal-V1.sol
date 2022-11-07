@@ -10,6 +10,8 @@ import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeE
 
 import {ISuperToken, ISuperfluid} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
 import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
+import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
+
 
 import {IOps} from "./gelato/IOps.sol";
 import {LibDataTypes} from "./gelato/LibDataTypes.sol";
@@ -23,22 +25,76 @@ import {Events} from "./libraries/Events.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {PoolStateV1} from "./PoolState-V1.sol";
 
-contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
-     using SafeMath for uint256;
-     using CFAv1Library for CFAv1Library.InitData;
+contract PoolInternalV1 {
+ using SafeMath for uint256;
+    using CFAv1Library for CFAv1Library.InitData;
+    CFAv1Library.InitData public _cfaLib;
+    ISuperfluid public host; // host
+    IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
 
 
-     function initialize() external initializer {}
+    uint256 public lastPoolTimestamp;
+    uint256 public lastExecution;
+
+    // #region pool state
+
+    address public owner;
+    address public poolFactory;
+
+    //// TOKENS
+    ISuperToken superToken;
+    IERC20 token;
+
+    //// SUPERFLUID
+   
+    //// GELATO
+    IOps public ops;
+    address payable public gelato;
+    address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    bytes32 public balanceTreasuryTask;
+
+    //// PARAMETERS
+
+    uint256 MAX_INT;
+
+    uint256 public PRECISSION;
+
+    uint256 public SUPERFLUID_DEPOSIT;
+    uint256 public POOL_BUFFER; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
+    uint256 public MIN_OUTFLOW_ALLOWED; // 1 hour minimum flow == Buffer
+
+    uint256 public DEPOSIT_TRIGGER_AMOUNT;
+    uint256 public BALANCE_TRIGGER_TIME;
+
+    uint256 public PROTOCOL_FEE;
+
+    address public poolStrategy;
+    address  public poolInternal;
+
+
+
+    /// POOL STATE
+
+    uint256 public poolId;
+    uint256 public supplierId;
+
+    mapping(address => DataTypes.Supplier) public suppliersByAddress;
+
+    mapping(uint256 => DataTypes.PoolV1) public poolByTimestamp;
+
+    // function initialize() external initializer {}
 
     // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
 
-    function _tokensReceived(address _supplier, uint256 amount) internal{
+    function _tokensReceived(address _supplier, uint256 amount) external {
         ///// suppler config updated && pool
-
+            console.log(lastPoolTimestamp);
+            console.log(poolStrategy);
+            console.log(PROTOCOL_FEE);
             console.log(38);
 
-        _updateSupplierDeposit(_supplier, amount, 0);
-        _balanceTreasury();
+         _updateSupplierDeposit(_supplier, amount, 0);
+         _balanceTreasury();
     }
 
     function _redeemDeposit(address _supplier,uint256 redeemAmount) external onlyPool {
@@ -89,15 +145,20 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
      *
      *************************************************************************/
     function _poolUpdate() public {
-          console.log(92);
+          console.log(92,lastPoolTimestamp);
 
         DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
+          console.log(95);
+
         uint256 periodSpan = block.timestamp - lastPool.timestamp;
+   console.log(100,periodSpan);
 
-        uint256 currentYieldSnapshot = poolStrategy.balanceOf();
+        console.log(address(poolStrategy));
 
-        console.log(100,periodSpan);
+       uint256 currentYieldSnapshot = 0;//IPoolStrategyV1(poolStrategy).balanceOf();
+
+        console.log(102,periodSpan);
 
 
         if (periodSpan > 0) {
@@ -175,7 +236,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
     function _getSupplierBalance(address _supplier) internal view returns (uint256 realtimeBalance) {
         DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
 
-        uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
+        uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier, IPoolStrategyV1(poolStrategy).balanceOf());
 
         int96 netFlow = supplier.inStream - supplier.outStream.flow;
 
@@ -199,7 +260,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
         DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
 
         if (supplier.timestamp < block.timestamp) {
-            uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier, poolStrategy.balanceOf());
+            uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier, IPoolStrategyV1(poolStrategy).balanceOf());
 
             if (supplier.inStream > 0) {
                 uint256 inflow = uint96(supplier.inStream) * (block.timestamp - supplier.timestamp);
@@ -364,8 +425,9 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
 
     function _balanceTreasury() public {
         lastExecution = block.timestamp;
-
+          console.log(372);
         (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
+            console.log(374);
         if (balance > 0) {} else {}
         DataTypes.PoolV1 storage currentPool = poolByTimestamp[lastPoolTimestamp];
 
@@ -383,18 +445,18 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
         if (uint256(balance) > currentThreshold) {
             uint256 toDeposit = uint256(balance) - currentThreshold;
             console.log(567, toDeposit);
-            poolStrategy.pushToStrategy(toDeposit);
+            IPoolStrategyV1(poolStrategy).pushToStrategy(toDeposit);
             currentPool.yieldObject.yieldSnapshot += toDeposit;
         } else if (currentThreshold > uint256(balance)) {
             uint256 amountToWithdraw = currentThreshold - uint256(balance);
 
-            uint256 balanceAave = poolStrategy.balanceOf();
+            uint256 balanceAave = IPoolStrategyV1(poolStrategy).balanceOf();
 
             if (amountToWithdraw > balanceAave) {
                 amountToWithdraw = balanceAave;
             }
             console.log(567, amountToWithdraw);
-            poolStrategy.withdraw(amountToWithdraw, address(this));
+            IPoolStrategyV1(poolStrategy).withdraw(amountToWithdraw, address(this));
             currentPool.yieldObject.yieldSnapshot -= amountToWithdraw;
         }
     }
@@ -442,7 +504,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
             }
 
             if (poolAvailable > withdrawAmount) {
-                poolStrategy.pushToStrategy(poolAvailable - withdrawAmount);
+                IPoolStrategyV1(poolStrategy).pushToStrategy(poolAvailable - withdrawAmount);
                 pool.yieldObject.yieldSnapshot += poolAvailable - withdrawAmount;
             }
 
@@ -450,7 +512,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
         } else {
             //// not enough balance then we must withdraw from gtrategy
 
-            uint256 balance = poolStrategy.balanceOf();
+            uint256 balance = IPoolStrategyV1(poolStrategy).balanceOf();
 
             uint256 fromStrategy = withdrawAmount - poolAvailable;
 
@@ -459,7 +521,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
                 correction = fromStrategy - balance;
 
                 if (balance > 0) {
-                    poolStrategy.withdraw(balance, _receiver);
+                    IPoolStrategyV1(poolStrategy).withdraw(balance, _receiver);
                     console.log(637, balance);
                     pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - balance;
                 }
@@ -470,7 +532,7 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
                 }
             } else {
                 console.log(645, fromStrategy);
-                poolStrategy.withdraw(fromStrategy, _receiver);
+                IPoolStrategyV1(poolStrategy).withdraw(fromStrategy, _receiver);
                 pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - fromStrategy;
                 IERC20(address(superToken)).transfer(_receiver, poolAvailable);
             }
@@ -652,14 +714,14 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
 
     // #region  ==================  Upgradeable settings  ==================
 
-    function proxiableUUID() public pure override returns (bytes32) {
-        return keccak256("org.super-pool.pool-internal.v2");
-    }
+    // function proxiableUUID() public pure override returns (bytes32) {
+    //     return keccak256("org.super-pool.pool-internal.v2");
+    // }
 
-    function updateCode(address newAddress) external override onlyOwnerOrPoolFactory {
-        require(msg.sender == owner, "only owner can update code");
-        return _updateCodeAddress(newAddress);
-    }
+    // function updateCode(address newAddress) external override onlyOwnerOrPoolFactory {
+    //     require(msg.sender == owner, "only owner can update code");
+    //     return _updateCodeAddress(newAddress);
+    // }
 
     // #endregion  ==================  Upgradeable settings  ==================
 
@@ -691,4 +753,97 @@ contract PoolInternalV1 is Initializable,UUPSProxiable, PoolStateV1 {
     }
 
     // #endregion =========== =============  Modifiers ============= ============= //
+
+
+        /**
+     * @notice Calculate the yield earned by the suplier
+     * @param _supplier supplier's address
+     * @return yieldSupplier uint256 yield erarnd
+     *
+     * @dev  it calculates the yield between the last pool update and the last supplier interaction
+     *       it uses two indexes (per deosit and flow), the yield is (timespan)(diff index's)
+     */
+    function _calculateYieldSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
+        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
+
+        DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+        DataTypes.PoolV1 memory supplierPool = poolByTimestamp[supplier.timestamp];
+
+        ///// Yield from deposit
+
+        uint256 yieldFromDeposit = (supplier.deposit * (lastPool.yieldObject.yieldTokenIndex - supplierPool.yieldObject.yieldTokenIndex)).div(PRECISSION);
+        uint256 yieldFromFlow = 0;
+        uint256 yieldFromOutFlow = 0;
+
+        yieldSupplier = yieldFromDeposit;
+        if (supplier.inStream > 0) {
+            ///// Yield from flow
+            yieldFromFlow = uint96(supplier.inStream) * (lastPool.yieldObject.yieldInFlowRateIndex - supplierPool.yieldObject.yieldInFlowRateIndex);
+        }
+
+        if (supplier.outStream.flow > 0) {
+            ///// Yield from flow
+            yieldFromOutFlow = uint96(supplier.outStream.flow) * (lastPool.yieldObject.yieldOutFlowRateIndex - supplierPool.yieldObject.yieldOutFlowRateIndex);
+        }
+
+        yieldSupplier = yieldSupplier + yieldFromFlow - yieldFromOutFlow;
+    }
+
+
+
+    function _calculateIndexes(uint256 yieldPeriod, DataTypes.PoolV1 memory lastPool)
+        public
+        view
+        returns (
+            uint256 periodYieldTokenIndex,
+            uint256 periodYieldInFlowRateIndex,
+            uint256 periodYieldOutFlowRateIndex
+        )
+    {
+        uint256 periodSpan = block.timestamp - lastPool.timestamp;
+
+        uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
+        uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
+        uint256 dollarSecondsOutFlow = ((uint96(lastPool.outFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromOutFlowRate * periodSpan;
+        uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow - dollarSecondsOutFlow;
+
+        /// we ultiply by PRECISSION
+
+        if (totalAreaPeriod != 0 && yieldPeriod != 0) {
+            uint256 inFlowContribution = (dollarSecondsInFlow * PRECISSION);
+            uint256 outFlowContribution = (dollarSecondsOutFlow * PRECISSION);
+            uint256 depositContribution = (dollarSecondsDeposit * PRECISSION * PRECISSION);
+            if (lastPool.deposit != 0) {
+                periodYieldTokenIndex = ((depositContribution * yieldPeriod).div((lastPool.deposit) * totalAreaPeriod));
+            }
+            if (lastPool.inFlowRate != 0) {
+                periodYieldInFlowRateIndex = ((inFlowContribution * yieldPeriod).div(uint96(lastPool.inFlowRate) * totalAreaPeriod));
+            }
+            if (lastPool.outFlowRate != 0) {
+                periodYieldOutFlowRateIndex = ((outFlowContribution * yieldPeriod).div(uint96(lastPool.outFlowRate) * totalAreaPeriod));
+            }
+        }
+    }
+    // #endregion pool state
+
+
+        function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) public view returns (uint256 yieldSupplier) {
+        uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
+        DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+
+        uint256 yieldAccruedSincelastPool = 0;
+        if (currentYieldSnapshot > lastPool.yieldObject.yieldSnapshot) {
+            yieldAccruedSincelastPool = currentYieldSnapshot - lastPool.yieldObject.yieldSnapshot;
+        }
+
+        (uint256 yieldTokenIndex, uint256 yieldInFlowRateIndex, uint256 yieldOutFlowRateIndex) = _calculateIndexes(yieldAccruedSincelastPool, lastPool);
+
+        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
+
+        uint256 yieldDeposit = yieldTokenIndex * supplier.deposit.div(PRECISSION);
+        uint256 yieldInFlow = uint96(supplier.inStream) * yieldInFlowRateIndex;
+        uint256 yieldOutFlow = uint96(supplier.outStream.flow) * yieldOutFlowRateIndex;
+
+        yieldSupplier = yieldTilllastPool + yieldDeposit + yieldInFlow - yieldOutFlow;
+    }
 }

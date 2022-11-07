@@ -126,6 +126,8 @@ describe.only('V1 TEST ACCOUNTING', function () {
     let poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy();
     console.log('PoolInternal ---> deployed');
 
+   // await poolInternalImpl.initialize()
+
     poolStrategy = await new PoolStrategyV1__factory(deployer).deploy();
     console.log('Pool Strategy---> deployed');
 
@@ -252,7 +254,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
 
     let amount = utils.parseEther('500');
 
-    //await erc777.send(superPoolAddress, amount, '0x');
+    await erc777.send(superPoolAddress, amount, '0x');
 
     let t1 = await superPool.lastPoolTimestamp();
 
@@ -316,6 +318,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
 
     // #endregion ============== FIRST PERIOD ============================= //
 
+  throw new Error("");
   
 
     // #region =================  SECOND PERIOD ============================= //
