@@ -108,7 +108,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
 
 
-  function withdraw(uint256 amount, address _supplier) external onlyPoolInternal {
+  function withdraw(uint256 amount, address _supplier) external onlyPool {
     _withdraw(amount, _supplier);
   }
 
@@ -131,21 +131,24 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
 
   function _deposit(uint256 amountToDeposit) internal {
+    console.log(134);
     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
-
+  console.log(136);
     superToken.downgrade(amountToDeposit);
-
+ console.log(138);
     //poolInternal.pushedToStrategy(uint256(amountToDeposit));
-
+     console.log(140);
     aaveToken.mint(amountToDeposit / (10**12));
-
+     console.log(142,amountToDeposit / (10**12));
     aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
+    console.log(144,'deposit_ok');
   }
 
 
-  function pushToStrategy(uint256 amountToDeposit) external onlyPoolInternal {
+  function pushToStrategy(uint256 amountToDeposit) external onlyPool {
 
       _deposit(amountToDeposit);
+      console.log(149);
     
   }
 
@@ -179,10 +182,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     _;
   }
 
-  modifier onlyPoolInternal() {
-    require(msg.sender == address(poolInternal), "Only Internal Allowed");
-    _;
-  }
+
 
   modifier onlyOps() {
     require(msg.sender == address(ops), "OpsReady: onlyOps");

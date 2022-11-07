@@ -36,7 +36,7 @@ let poolFactory: PoolV1;
 
 let poolStrategy: PoolStrategyV1;
 
-let poolInternal: PoolInternalV1;
+let poolInternalImpl: PoolInternalV1;
 
 let superPool: PoolV1;
 let superPoolAddress: string;
@@ -127,8 +127,10 @@ describe('V1 TEST STREAM UPDATES', function () {
     let poolImpl = await new PoolV1__factory(deployer).deploy();
     console.log('Pool Impl---> deployed');
 
-    let poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy();
+    poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy();
     console.log('PoolInternal ---> deployed');
+
+   // await poolInternalImpl.initialize()
 
     poolStrategy = await new PoolStrategyV1__factory(deployer).deploy();
     console.log('Pool Strategy---> deployed');
@@ -149,7 +151,7 @@ describe('V1 TEST STREAM UPDATES', function () {
 
     eventsLib = await new Events__factory(deployer).deploy();
 
-    aaveERC20 = await IERC20__factory.connect(network_params.aToken, deployer);
+    let aaveERC20: IERC20 = await IERC20__factory.connect(network_params.aToken, deployer);
 
     superTokenContract = await ISuperToken__factory.connect(network_params.superToken, deployer);
     superTokenERC777 = await IERC777__factory.connect(network_params.superToken, deployer);
@@ -172,15 +174,17 @@ describe('V1 TEST STREAM UPDATES', function () {
     // await poolInternal.initialize(settings.address);
     // console.log('Pool Internal ---> initialized');
 
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, poolProxyAddress, aavePool, aToken, network_params.aaveToken, poolInternalProxyAddress);
+    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, poolProxyAddress, aavePool, aToken, network_params.aaveToken, poolImpl.address);
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolV1__factory.connect(superPoolAddress, deployer);
-    poolInternal = PoolInternalV1__factory.connect(poolInternalProxyAddress, deployer);
+   // poolInternal = PoolInternalV1__factory.connect(poolInternalProxyAddress, deployer);
 
     let initialPoolEth = hre.ethers.utils.parseEther('10');
 
     await deployer.sendTransaction({ to: superPoolAddress, value: initialPoolEth });
+
+
 
     superTokenContract.approve(superPoolAddress, hre.ethers.constants.MaxUint256);
 
@@ -219,7 +223,7 @@ describe('V1 TEST STREAM UPDATES', function () {
 
     executor = await hre.ethers.provider.getSigner(network_params.opsExec);
 
-    PRECISSION = await superPool.getPrecission();
+    PRECISSION = await superPool.PRECISSION();
 
     contractsTest = {
       poolAddress: superPoolAddress,
@@ -227,7 +231,6 @@ describe('V1 TEST STREAM UPDATES', function () {
       superPool: superPool,
       superTokenERC777,
       aaveERC20,
-      poolInternal,
       strategyAddresse: poolStrategy.address,
       ops: ops,
       PRECISSION,
@@ -341,7 +344,7 @@ describe('V1 TEST STREAM UPDATES', function () {
       providerOrSigner: user2,
     });
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     let yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     let yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -395,7 +398,7 @@ describe('V1 TEST STREAM UPDATES', function () {
     let initialWidthraw = BigNumber.from(4 * 3600).mul(flowRate2);
     let outFlowBuffer = BigNumber.from(1 * 3600).mul(flowRate2);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -454,9 +457,9 @@ describe('V1 TEST STREAM UPDATES', function () {
     timestamp = usersPool[user1.address].expected.nextExecOut;
     await setNextBlockTimestamp(hre, +timestamp);
 
-    await getGelatoCloStream(poolInternal, +usersPool[user1.address].expected.nextExecOut, +usersPool[user1.address].expected.outStepTime, user1.address, ops, executor);
+    await getGelatoCloStream(superPool, +usersPool[user1.address].expected.nextExecOut, +usersPool[user1.address].expected.outStepTime, user1.address, ops, executor);
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -530,7 +533,7 @@ describe('V1 TEST STREAM UPDATES', function () {
       receiver: superPoolAddress,
       providerOrSigner: user1,
     });
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -585,7 +588,7 @@ describe('V1 TEST STREAM UPDATES', function () {
       receiver: user2.address,
       providerOrSigner: user2,
     });
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -652,7 +655,7 @@ describe('V1 TEST STREAM UPDATES', function () {
 
     await waitForTx(erc777.connect(user2).send(superPoolAddress, amount7, '0x'));
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -714,7 +717,7 @@ describe('V1 TEST STREAM UPDATES', function () {
 
     await waitForTx(superPool.connect(user2).redeemDeposit(amount8));
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;
@@ -775,7 +778,7 @@ describe('V1 TEST STREAM UPDATES', function () {
       providerOrSigner: user2,
     });
 
-    yieldPool = await poolInternal.getLastPool();
+    yieldPool = await superPool.getLastPool();
 
     yieldSnapshot = await yieldPool.yieldObject.yieldSnapshot;
     yieldAccrued = await yieldPool.yieldObject.yieldAccrued;

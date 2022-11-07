@@ -36,7 +36,7 @@ let poolFactory: PoolV1;
 
 let poolStrategy: PoolStrategyV1;
 
-let poolInternal: PoolInternalV1;
+let poolInternalImpl: PoolInternalV1;
 
 let superPool: PoolV1;
 let superPoolAddress: string;
@@ -100,7 +100,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe.only('V1 TEST ACCOUNTING', function () {
+describe('V1 TEST ACCOUNTING', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -123,7 +123,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
     let poolImpl = await new PoolV1__factory(deployer).deploy();
     console.log('Pool Impl---> deployed');
 
-    let poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy();
+    poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy();
     console.log('PoolInternal ---> deployed');
 
    // await poolInternalImpl.initialize()
@@ -311,14 +311,14 @@ describe.only('V1 TEST ACCOUNTING', function () {
       },
     };
 
-    //await testPeriod(BigNumber.from(t0), +t1 - t0, poolExpected1, contractsTest, usersPool);
+    await testPeriod(BigNumber.from(t0), +t1 - t0, poolExpected1, contractsTest, usersPool);
 
     let yieldPool;
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tests passed ');
 
     // #endregion ============== FIRST PERIOD ============================= //
 
-  throw new Error("");
+  //throw new Error("");
   
 
     // #region =================  SECOND PERIOD ============================= //
@@ -560,6 +560,8 @@ describe.only('V1 TEST ACCOUNTING', function () {
     flowRate = utils.parseEther('50').div(ONE_MONTH);
     await waitForTx(superPool.connect(user2).redeemFlow(flowRate));
 
+      
+
     loanStream = await sf.cfaV1.getFlow({
       superToken: network_params.superToken,
       sender: superPoolAddress,
@@ -608,6 +610,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
 
     console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
     // #endregion ================= END 7TH PERIOD ============================= //
+
 
 
         

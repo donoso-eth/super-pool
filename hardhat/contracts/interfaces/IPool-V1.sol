@@ -42,6 +42,12 @@ interface IPoolV1 {
      */
     function redeemFlow(int96 _outFlowRate) external;
 
+
+     function taskClose(address _supplier) external;
+
+
+     function balanceTreasury() external ;
+
     /**
      * @notice User stop the receiving stream
      *
@@ -74,6 +80,8 @@ interface IPoolV1 {
 
     function getVersion() external pure returns(uint256);
 
+
+ function checkerLastExecution() external  returns (bool canExec, bytes memory execPayload);
 
     // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
