@@ -16,7 +16,7 @@ export const gelatoBalance= async (superPool: PoolV1, ops:IOps, executor:SignerW
       [superPool.address, resolverData]
     );
 
-   let  execSelector =  superPool.interface.getSighash("balanceTreasury");
+   let  execData2 =  superPool.interface.encodeFunctionData("balanceTreasury")
     let moduleData = {
       modules: [0],
       args: [resolverArgs],
@@ -26,14 +26,16 @@ export const gelatoBalance= async (superPool: PoolV1, ops:IOps, executor:SignerW
 
     const [canExec, execData] = await superPool.checkerLastExecution();
 
-
+    console.log(canExec);
+    console.log(execData)
+    console.log(execData2)
 
     await ops
       .connect(executor)
       .exec(
         superPool.address,
         superPool.address,
-        execData,
+        execData2,
         moduleData,
         FEE,
         ETH,
