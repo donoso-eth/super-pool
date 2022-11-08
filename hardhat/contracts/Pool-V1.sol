@@ -94,7 +94,6 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
 
     PROTOCOL_FEE = 3;
 
-    console.log(99, address(poolInit.poolStrategy));
     poolStrategy = address(poolInit.poolStrategy);
     poolInternal = poolInit.poolInternal;
 
@@ -104,11 +103,11 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     lastPoolTimestamp = block.timestamp;
     poolByTimestamp[block.timestamp] = DataTypes.PoolV1(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
     lastExecution = block.timestamp;
-
+  
     bytes memory data = callInternal(abi.encodeWithSignature("_createBalanceTreasuryTask()"));
 
     balanceTreasuryTask = abi.decode(data, (bytes32)); // createBalanceTreasuryTask();
-    console.logBytes32(balanceTreasuryTask);
+ 
   }
 
   // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
@@ -203,8 +202,10 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
   }
 
   function callInternal(bytes memory payload) internal returns (bytes memory) {
+
     (bool success, bytes memory data) = poolInternal.delegatecall(payload);
-    if (!success) {
+   
+     if (!success) {
       if (data.length < 68) revert();
       assembly {
         data := add(data, 0x04)
@@ -357,8 +358,7 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
       bytes memory payload = abi.encode("");
       emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_STOP, payload, block.timestamp, sender);
     } else if (sender == address(this)) {
-      console.log("OUT_STREAM_MANUAL_STOPPED");
-
+    
       // poolInternal._redeemFlowStop(receiver);
       callInternal(abi.encodeWithSignature("_redeemFlowStop(address)", receiver));
 
@@ -424,19 +424,11 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
 
   function balanceTreasury() external onlyOps {
     require(block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME, "NOT_YER_READY");
-    console.log("aqui0000");
+   
     (uint256 fee, address feeToken) = IOps(ops).getFeeDetails();
-    console.log("aqui");
-    console.log(fee);
+ 
     transfer(fee, feeToken);
-    console.log("aqui55555");
-   // (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_balanceTreasury()"));
-
-
-
-
-     callInternal(abi.encodeWithSignature("_balanceTreasury()"));
-  }
+    }
 
   function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier) {
     supplier = suppliersByAddress[_supplier];
@@ -642,10 +634,6 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
 
   function checkerLastExecution() external view returns (bool canExec, bytes memory execPayload) {
     canExec = block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME;
-
-    console.log(656, block.timestamp);
-    console.log(657, lastExecution);
-    console.log(658, BALANCE_TRIGGER_TIME);
 
     execPayload = abi.encodeWithSelector(this.balanceTreasury.selector);
   }

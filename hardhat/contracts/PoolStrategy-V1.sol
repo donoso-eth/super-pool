@@ -115,20 +115,19 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   function _withdraw(uint256 amount, address _supplier) internal {
     aavePool.withdraw(address(aaveToken), amount.div(10**12), address(this));
 
-    console.log(118);
+
 
     uint256 balanceToken = token.balanceOf(address(this));
 
-       console.log(122);
 
     if (balanceToken < amount) {
       token.mint(address(this), amount - balanceToken);
     }
 
     superToken.upgrade(amount);
-      console.log(129);
+
     IERC20(address(superToken)).transfer(_supplier, amount);
-        console.log(131);
+     
   }
 
 
@@ -136,24 +135,23 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
 
   function _deposit(uint256 amountToDeposit) internal {
-    console.log(134);
+
     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
-  console.log(136);
+
     superToken.downgrade(amountToDeposit);
- console.log(138);
-    //poolInternal.pushedToStrategy(uint256(amountToDeposit));
-     console.log(140);
+
+
     aaveToken.mint(amountToDeposit / (10**12));
-     console.log(142,amountToDeposit / (10**12));
+  
     aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
-    console.log(144,'deposit_ok');
+   
   }
 
 
   function pushToStrategy(uint256 amountToDeposit) external onlyPool {
 
       _deposit(amountToDeposit);
-      console.log(149);
+   
     
   }
 

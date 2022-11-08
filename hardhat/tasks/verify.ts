@@ -75,19 +75,19 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   const poolInternal= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
   await hre.run('verify:verify', {
-    address:'0x48aC2C263Ac6c0D2746e240f9D76F85D3D57E2E5', //poolInternal.address,
+    address:'0x077148a0D9595BD3fc1d156F049CE1df11c2188a', //poolInternal.address,
     constructorArguments: [],
   });
 
 
-  // await hre.run('verify:verify', {
-  //   address: '0xEFf7D1F2500ECa73Ff9602C9E2B0071eC6ae0341',
-  //   constructorArguments: [],
-  // });
+  await hre.run('verify:verify', {
+    address: '0xDE77f4f04CBF2CEC335337879dFBf03d6C950416',
+    constructorArguments: [],
+  });
 
-  // await hre.run('verify:verify', {
-  //   address: '0x7567eDB1cb05784abCf657a3Bac408219b31Ee60',
-  //   constructorArguments: [],
-  // });
+  await hre.run('verify:verify', {
+    address: '0xb5AC45Ecd797B211e77434E579926f4bf726045c',
+    constructorArguments: [],
+  });
 
 });

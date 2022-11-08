@@ -194,45 +194,46 @@ export interface PoolV1Interface extends utils.Interface {
     "POOL_BUFFER()": FunctionFragment;
     "PRECISSION()": FunctionFragment;
     "PROTOCOL_FEE()": FunctionFragment;
-    "STEPS()": FunctionFragment;
     "SUPERFLUID_DEPOSIT()": FunctionFragment;
+    "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))": FunctionFragment;
+    "_calculateYieldSupplier(address)": FunctionFragment;
+    "_cfaLib()": FunctionFragment;
     "afterAgreementCreated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementTerminated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementUpdated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
+    "balanceTreasury()": FunctionFragment;
+    "balanceTreasuryTask()": FunctionFragment;
     "beforeAgreementCreated(address,address,bytes32,bytes,bytes)": FunctionFragment;
     "beforeAgreementTerminated(address,address,bytes32,bytes,bytes)": FunctionFragment;
     "beforeAgreementUpdated(address,address,bytes32,bytes,bytes)": FunctionFragment;
     "cfa()": FunctionFragment;
+    "checkerLastExecution()": FunctionFragment;
     "closeAccount()": FunctionFragment;
     "decimals()": FunctionFragment;
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "gelato()": FunctionFragment;
     "getCodeAddress()": FunctionFragment;
-    "getDepositTriggerAmount()": FunctionFragment;
-    "getDepositTriggerTime()": FunctionFragment;
     "getLastPool()": FunctionFragment;
     "getLastTimestamp()": FunctionFragment;
     "getPool(uint256)": FunctionFragment;
-    "getPoolBuffer()": FunctionFragment;
-    "getPrecission()": FunctionFragment;
-    "getProtocolFee()": FunctionFragment;
-    "getSteps()": FunctionFragment;
-    "getSuperfluidDeposit()": FunctionFragment;
     "getSupplier(address)": FunctionFragment;
     "getVersion()": FunctionFragment;
     "host()": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
     "initialize((uint256,string,string,address,address,address,address,address,address,address))": FunctionFragment;
-    "internalPushToAAVE(uint256)": FunctionFragment;
-    "internalWithDrawStep(address,uint256)": FunctionFragment;
     "lastExecution()": FunctionFragment;
+    "lastPoolTimestamp()": FunctionFragment;
     "name()": FunctionFragment;
     "ops()": FunctionFragment;
     "owner()": FunctionFragment;
+    "poolByTimestamp(uint256)": FunctionFragment;
     "poolFactory()": FunctionFragment;
+    "poolId()": FunctionFragment;
+    "poolInternal()": FunctionFragment;
+    "poolStrategy()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
     "redeemDeposit(uint256)": FunctionFragment;
     "redeemFlow(int96)": FunctionFragment;
@@ -240,19 +241,15 @@ export interface PoolV1Interface extends utils.Interface {
     "setDepositTriggerAmount(uint256)": FunctionFragment;
     "setDepositTriggerTime(uint256)": FunctionFragment;
     "setPoolBuffer(uint256)": FunctionFragment;
-    "setPrecission(uint256)": FunctionFragment;
-    "setSteps(uint8)": FunctionFragment;
-    "setSuperfluidDeposit(uint256)": FunctionFragment;
-    "sfCreateFlow(address,int96)": FunctionFragment;
-    "sfDeleteFlow(address,address)": FunctionFragment;
-    "sfDeleteFlowWithCtx(bytes,address,address)": FunctionFragment;
-    "sfUpdateFlow(address,int96)": FunctionFragment;
+    "supplierId()": FunctionFragment;
+    "suppliersByAddress(address)": FunctionFragment;
     "symbol()": FunctionFragment;
+    "taskClose(address)": FunctionFragment;
     "tokensReceived(address,address,address,uint256,bytes,bytes)": FunctionFragment;
     "totalSupply()": FunctionFragment;
+    "totalYieldEarnedSupplier(address,uint256)": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
-    "transferSuperToken(address,uint256)": FunctionFragment;
     "updateCode(address)": FunctionFragment;
     "withdraw()": FunctionFragment;
   };
@@ -282,11 +279,19 @@ export interface PoolV1Interface extends utils.Interface {
     functionFragment: "PROTOCOL_FEE",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "STEPS", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "SUPERFLUID_DEPOSIT",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "_calculateIndexes",
+    values: [BigNumberish, PoolV1Struct]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_calculateYieldSupplier",
+    values: [string]
+  ): string;
+  encodeFunctionData(functionFragment: "_cfaLib", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "afterAgreementCreated",
     values: [string, string, BytesLike, BytesLike, BytesLike, BytesLike]
@@ -309,6 +314,14 @@ export interface PoolV1Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
   encodeFunctionData(
+    functionFragment: "balanceTreasury",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "balanceTreasuryTask",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "beforeAgreementCreated",
     values: [string, string, BytesLike, BytesLike, BytesLike]
   ): string;
@@ -321,6 +334,10 @@ export interface PoolV1Interface extends utils.Interface {
     values: [string, string, BytesLike, BytesLike, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "cfa", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "checkerLastExecution",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "closeAccount",
     values?: undefined
@@ -336,14 +353,6 @@ export interface PoolV1Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getDepositTriggerAmount",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getDepositTriggerTime",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "getLastPool",
     values?: undefined
   ): string;
@@ -354,23 +363,6 @@ export interface PoolV1Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getPool",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getPoolBuffer",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getPrecission",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getProtocolFee",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "getSteps", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "getSuperfluidDeposit",
-    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "getSupplier", values: [string]): string;
   encodeFunctionData(
@@ -387,22 +379,31 @@ export interface PoolV1Interface extends utils.Interface {
     values: [PoolInitializerStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "internalPushToAAVE",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "internalWithDrawStep",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "lastExecution",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "lastPoolTimestamp",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "ops", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "poolByTimestamp",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "poolFactory",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "poolId", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "poolInternal",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "poolStrategy",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -434,34 +435,15 @@ export interface PoolV1Interface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setPrecission",
-    values: [BigNumberish]
+    functionFragment: "supplierId",
+    values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "setSteps",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setSuperfluidDeposit",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sfCreateFlow",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sfDeleteFlow",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sfDeleteFlowWithCtx",
-    values: [BytesLike, string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sfUpdateFlow",
-    values: [string, BigNumberish]
+    functionFragment: "suppliersByAddress",
+    values: [string]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
+  encodeFunctionData(functionFragment: "taskClose", values: [string]): string;
   encodeFunctionData(
     functionFragment: "tokensReceived",
     values: [string, string, string, BigNumberish, BytesLike, BytesLike]
@@ -471,16 +453,16 @@ export interface PoolV1Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "totalYieldEarnedSupplier",
+    values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "transfer",
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "transferFrom",
     values: [string, string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferSuperToken",
-    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "updateCode", values: [string]): string;
   encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
@@ -507,11 +489,19 @@ export interface PoolV1Interface extends utils.Interface {
     functionFragment: "PROTOCOL_FEE",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "STEPS", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "SUPERFLUID_DEPOSIT",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "_calculateIndexes",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_calculateYieldSupplier",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "_cfaLib", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "afterAgreementCreated",
     data: BytesLike
@@ -528,6 +518,14 @@ export interface PoolV1Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "balanceTreasury",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "balanceTreasuryTask",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "beforeAgreementCreated",
     data: BytesLike
   ): Result;
@@ -540,6 +538,10 @@ export interface PoolV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "cfa", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "checkerLastExecution",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "closeAccount",
     data: BytesLike
@@ -555,14 +557,6 @@ export interface PoolV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getDepositTriggerAmount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getDepositTriggerTime",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getLastPool",
     data: BytesLike
   ): Result;
@@ -571,23 +565,6 @@ export interface PoolV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getPool", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getPoolBuffer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getPrecission",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getProtocolFee",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getSteps", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getSuperfluidDeposit",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "getSupplier",
     data: BytesLike
@@ -600,22 +577,31 @@ export interface PoolV1Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "internalPushToAAVE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "internalWithDrawStep",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "lastExecution",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "lastPoolTimestamp",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ops", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "poolByTimestamp",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "poolFactory",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "poolId", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "poolInternal",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "poolStrategy",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -643,32 +629,13 @@ export interface PoolV1Interface extends utils.Interface {
     functionFragment: "setPoolBuffer",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "supplierId", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "setPrecission",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "setSteps", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setSuperfluidDeposit",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sfCreateFlow",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sfDeleteFlow",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sfDeleteFlowWithCtx",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sfUpdateFlow",
+    functionFragment: "suppliersByAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "taskClose", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "tokensReceived",
     data: BytesLike
@@ -677,13 +644,13 @@ export interface PoolV1Interface extends utils.Interface {
     functionFragment: "totalSupply",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "totalYieldEarnedSupplier",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferFrom",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferSuperToken",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "updateCode", data: BytesLike): Result;
@@ -768,9 +735,28 @@ export interface PoolV1 extends BaseContract {
 
     PROTOCOL_FEE(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    STEPS(overrides?: CallOverrides): Promise<[number]>;
-
     SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    _calculateIndexes(
+      yieldPeriod: BigNumberish,
+      lastPool: PoolV1Struct,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber] & {
+        periodYieldTokenIndex: BigNumber;
+        periodYieldInFlowRateIndex: BigNumber;
+        periodYieldOutFlowRateIndex: BigNumber;
+      }
+    >;
+
+    _calculateYieldSupplier(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { yieldSupplier: BigNumber }>;
+
+    _cfaLib(
+      overrides?: CallOverrides
+    ): Promise<[string, string] & { host: string; cfa: string }>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -819,6 +805,12 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { balance: BigNumber }>;
 
+    balanceTreasury(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    balanceTreasuryTask(overrides?: CallOverrides): Promise<[string]>;
+
     beforeAgreementCreated(
       arg0: string,
       arg1: string,
@@ -848,6 +840,10 @@ export interface PoolV1 extends BaseContract {
 
     cfa(overrides?: CallOverrides): Promise<[string]>;
 
+    checkerLastExecution(
+      overrides?: CallOverrides
+    ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
+
     closeAccount(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -866,33 +862,21 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string] & { codeAddress: string }>;
 
-    getDepositTriggerAmount(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getDepositTriggerTime(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getLastPool(overrides?: CallOverrides): Promise<[PoolV1StructOutput]>;
+    getLastPool(
+      overrides?: CallOverrides
+    ): Promise<[PoolV1StructOutput] & { pool: PoolV1StructOutput }>;
 
     getLastTimestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getPool(
       timestamp: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<[PoolV1StructOutput]>;
-
-    getPoolBuffer(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getPrecission(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getProtocolFee(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getSteps(overrides?: CallOverrides): Promise<[number]>;
-
-    getSuperfluidDeposit(overrides?: CallOverrides): Promise<[BigNumber]>;
+    ): Promise<[PoolV1StructOutput] & { pool: PoolV1StructOutput }>;
 
     getSupplier(
       _supplier: string,
       overrides?: CallOverrides
-    ): Promise<[SupplierStructOutput]>;
+    ): Promise<[SupplierStructOutput] & { supplier: SupplierStructOutput }>;
 
     getVersion(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -909,18 +893,9 @@ export interface PoolV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    internalPushToAAVE(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    internalWithDrawStep(
-      supplier: string,
-      stepAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     lastExecution(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    lastPoolTimestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     name(overrides?: CallOverrides): Promise<[string]>;
 
@@ -928,7 +903,44 @@ export interface PoolV1 extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
+    poolByTimestamp(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        YieldStructOutput,
+        APYStructOutput
+      ] & {
+        id: BigNumber;
+        timestamp: BigNumber;
+        nrSuppliers: BigNumber;
+        deposit: BigNumber;
+        depositFromInFlowRate: BigNumber;
+        depositFromOutFlowRate: BigNumber;
+        inFlowRate: BigNumber;
+        outFlowRate: BigNumber;
+        outFlowBuffer: BigNumber;
+        yieldObject: YieldStructOutput;
+        apy: APYStructOutput;
+      }
+    >;
+
     poolFactory(overrides?: CallOverrides): Promise<[string]>;
+
+    poolId(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    poolInternal(overrides?: CallOverrides): Promise<[string]>;
+
+    poolStrategy(overrides?: CallOverrides): Promise<[string]>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
@@ -961,47 +973,43 @@ export interface PoolV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setPrecission(
-      _precission: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    supplierId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    setSteps(
-      _steps: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    setSuperfluidDeposit(
-      _superfluidDeposit: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    sfCreateFlow(
-      receiver: string,
-      newOutFlow: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    sfDeleteFlow(
-      sender: string,
-      receiver: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    sfDeleteFlowWithCtx(
-      _ctx: BytesLike,
-      sender: string,
-      receiver: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    sfUpdateFlow(
-      receiver: string,
-      newOutFlow: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    suppliersByAddress(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        string,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        OutStreamStructOutput,
+        APYStructOutput
+      ] & {
+        id: BigNumber;
+        supplier: string;
+        cumulatedYield: BigNumber;
+        deposit: BigNumber;
+        timestamp: BigNumber;
+        createdTimestamp: BigNumber;
+        eventId: BigNumber;
+        inStream: BigNumber;
+        outStream: OutStreamStructOutput;
+        apy: APYStructOutput;
+      }
+    >;
 
     symbol(overrides?: CallOverrides): Promise<[string]>;
+
+    taskClose(
+      _supplier: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     tokensReceived(
       operator: string,
@@ -1015,27 +1023,21 @@ export interface PoolV1 extends BaseContract {
 
     totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    "transfer(address,uint256)"(
+    totalYieldEarnedSupplier(
+      _supplier: string,
+      currentYieldSnapshot: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { yieldSupplier: BigNumber }>;
+
+    transfer(
       to: string,
       amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    "transfer(uint256,address)"(
-      _amount: BigNumberish,
-      _paymentToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     transferFrom(
       from: string,
       to: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    transferSuperToken(
-      receiver: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -1064,9 +1066,28 @@ export interface PoolV1 extends BaseContract {
 
   PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
 
-  STEPS(overrides?: CallOverrides): Promise<number>;
-
   SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
+
+  _calculateIndexes(
+    yieldPeriod: BigNumberish,
+    lastPool: PoolV1Struct,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber, BigNumber] & {
+      periodYieldTokenIndex: BigNumber;
+      periodYieldInFlowRateIndex: BigNumber;
+      periodYieldOutFlowRateIndex: BigNumber;
+    }
+  >;
+
+  _calculateYieldSupplier(
+    _supplier: string,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  _cfaLib(
+    overrides?: CallOverrides
+  ): Promise<[string, string] & { host: string; cfa: string }>;
 
   afterAgreementCreated(
     _superToken: string,
@@ -1112,6 +1133,12 @@ export interface PoolV1 extends BaseContract {
 
   balanceOf(_supplier: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+  balanceTreasury(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  balanceTreasuryTask(overrides?: CallOverrides): Promise<string>;
+
   beforeAgreementCreated(
     arg0: string,
     arg1: string,
@@ -1141,6 +1168,10 @@ export interface PoolV1 extends BaseContract {
 
   cfa(overrides?: CallOverrides): Promise<string>;
 
+  checkerLastExecution(
+    overrides?: CallOverrides
+  ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
+
   closeAccount(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -1157,10 +1188,6 @@ export interface PoolV1 extends BaseContract {
 
   getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
-  getDepositTriggerAmount(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getDepositTriggerTime(overrides?: CallOverrides): Promise<BigNumber>;
-
   getLastPool(overrides?: CallOverrides): Promise<PoolV1StructOutput>;
 
   getLastTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1169,16 +1196,6 @@ export interface PoolV1 extends BaseContract {
     timestamp: BigNumberish,
     overrides?: CallOverrides
   ): Promise<PoolV1StructOutput>;
-
-  getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getSteps(overrides?: CallOverrides): Promise<number>;
-
-  getSuperfluidDeposit(overrides?: CallOverrides): Promise<BigNumber>;
 
   getSupplier(
     _supplier: string,
@@ -1200,18 +1217,9 @@ export interface PoolV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  internalPushToAAVE(
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  internalWithDrawStep(
-    supplier: string,
-    stepAmount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   lastExecution(overrides?: CallOverrides): Promise<BigNumber>;
+
+  lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
   name(overrides?: CallOverrides): Promise<string>;
 
@@ -1219,7 +1227,44 @@ export interface PoolV1 extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  poolByTimestamp(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      YieldStructOutput,
+      APYStructOutput
+    ] & {
+      id: BigNumber;
+      timestamp: BigNumber;
+      nrSuppliers: BigNumber;
+      deposit: BigNumber;
+      depositFromInFlowRate: BigNumber;
+      depositFromOutFlowRate: BigNumber;
+      inFlowRate: BigNumber;
+      outFlowRate: BigNumber;
+      outFlowBuffer: BigNumber;
+      yieldObject: YieldStructOutput;
+      apy: APYStructOutput;
+    }
+  >;
+
   poolFactory(overrides?: CallOverrides): Promise<string>;
+
+  poolId(overrides?: CallOverrides): Promise<BigNumber>;
+
+  poolInternal(overrides?: CallOverrides): Promise<string>;
+
+  poolStrategy(overrides?: CallOverrides): Promise<string>;
 
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
@@ -1252,47 +1297,43 @@ export interface PoolV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setPrecission(
-    _precission: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
-  setSteps(
-    _steps: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  setSuperfluidDeposit(
-    _superfluidDeposit: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  sfCreateFlow(
-    receiver: string,
-    newOutFlow: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  sfDeleteFlow(
-    sender: string,
-    receiver: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  sfDeleteFlowWithCtx(
-    _ctx: BytesLike,
-    sender: string,
-    receiver: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  sfUpdateFlow(
-    receiver: string,
-    newOutFlow: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  suppliersByAddress(
+    arg0: string,
+    overrides?: CallOverrides
+  ): Promise<
+    [
+      BigNumber,
+      string,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      OutStreamStructOutput,
+      APYStructOutput
+    ] & {
+      id: BigNumber;
+      supplier: string;
+      cumulatedYield: BigNumber;
+      deposit: BigNumber;
+      timestamp: BigNumber;
+      createdTimestamp: BigNumber;
+      eventId: BigNumber;
+      inStream: BigNumber;
+      outStream: OutStreamStructOutput;
+      apy: APYStructOutput;
+    }
+  >;
 
   symbol(overrides?: CallOverrides): Promise<string>;
+
+  taskClose(
+    _supplier: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   tokensReceived(
     operator: string,
@@ -1306,27 +1347,21 @@ export interface PoolV1 extends BaseContract {
 
   totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
-  "transfer(address,uint256)"(
+  totalYieldEarnedSupplier(
+    _supplier: string,
+    currentYieldSnapshot: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  transfer(
     to: string,
     amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  "transfer(uint256,address)"(
-    _amount: BigNumberish,
-    _paymentToken: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   transferFrom(
     from: string,
     to: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  transferSuperToken(
-    receiver: string,
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -1355,9 +1390,28 @@ export interface PoolV1 extends BaseContract {
 
     PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
 
-    STEPS(overrides?: CallOverrides): Promise<number>;
-
     SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _calculateIndexes(
+      yieldPeriod: BigNumberish,
+      lastPool: PoolV1Struct,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber] & {
+        periodYieldTokenIndex: BigNumber;
+        periodYieldInFlowRateIndex: BigNumber;
+        periodYieldOutFlowRateIndex: BigNumber;
+      }
+    >;
+
+    _calculateYieldSupplier(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    _cfaLib(
+      overrides?: CallOverrides
+    ): Promise<[string, string] & { host: string; cfa: string }>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -1403,6 +1457,10 @@ export interface PoolV1 extends BaseContract {
 
     balanceOf(_supplier: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    balanceTreasury(overrides?: CallOverrides): Promise<void>;
+
+    balanceTreasuryTask(overrides?: CallOverrides): Promise<string>;
+
     beforeAgreementCreated(
       arg0: string,
       arg1: string,
@@ -1432,6 +1490,10 @@ export interface PoolV1 extends BaseContract {
 
     cfa(overrides?: CallOverrides): Promise<string>;
 
+    checkerLastExecution(
+      overrides?: CallOverrides
+    ): Promise<[boolean, string] & { canExec: boolean; execPayload: string }>;
+
     closeAccount(overrides?: CallOverrides): Promise<void>;
 
     decimals(overrides?: CallOverrides): Promise<number>;
@@ -1446,10 +1508,6 @@ export interface PoolV1 extends BaseContract {
 
     getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
-    getDepositTriggerAmount(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getDepositTriggerTime(overrides?: CallOverrides): Promise<BigNumber>;
-
     getLastPool(overrides?: CallOverrides): Promise<PoolV1StructOutput>;
 
     getLastTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1458,16 +1516,6 @@ export interface PoolV1 extends BaseContract {
       timestamp: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PoolV1StructOutput>;
-
-    getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getSteps(overrides?: CallOverrides): Promise<number>;
-
-    getSuperfluidDeposit(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSupplier(
       _supplier: string,
@@ -1489,18 +1537,9 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    internalPushToAAVE(
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    internalWithDrawStep(
-      supplier: string,
-      stepAmount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     lastExecution(overrides?: CallOverrides): Promise<BigNumber>;
+
+    lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     name(overrides?: CallOverrides): Promise<string>;
 
@@ -1508,7 +1547,44 @@ export interface PoolV1 extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
+    poolByTimestamp(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        YieldStructOutput,
+        APYStructOutput
+      ] & {
+        id: BigNumber;
+        timestamp: BigNumber;
+        nrSuppliers: BigNumber;
+        deposit: BigNumber;
+        depositFromInFlowRate: BigNumber;
+        depositFromOutFlowRate: BigNumber;
+        inFlowRate: BigNumber;
+        outFlowRate: BigNumber;
+        outFlowBuffer: BigNumber;
+        yieldObject: YieldStructOutput;
+        apy: APYStructOutput;
+      }
+    >;
+
     poolFactory(overrides?: CallOverrides): Promise<string>;
+
+    poolId(overrides?: CallOverrides): Promise<BigNumber>;
+
+    poolInternal(overrides?: CallOverrides): Promise<string>;
+
+    poolStrategy(overrides?: CallOverrides): Promise<string>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
@@ -1539,44 +1615,40 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setPrecission(
-      _precission: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    setSteps(_steps: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    setSuperfluidDeposit(
-      _superfluidDeposit: BigNumberish,
+    suppliersByAddress(
+      arg0: string,
       overrides?: CallOverrides
-    ): Promise<void>;
-
-    sfCreateFlow(
-      receiver: string,
-      newOutFlow: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    sfDeleteFlow(
-      sender: string,
-      receiver: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    sfDeleteFlowWithCtx(
-      _ctx: BytesLike,
-      sender: string,
-      receiver: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    sfUpdateFlow(
-      receiver: string,
-      newOutFlow: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<
+      [
+        BigNumber,
+        string,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        BigNumber,
+        OutStreamStructOutput,
+        APYStructOutput
+      ] & {
+        id: BigNumber;
+        supplier: string;
+        cumulatedYield: BigNumber;
+        deposit: BigNumber;
+        timestamp: BigNumber;
+        createdTimestamp: BigNumber;
+        eventId: BigNumber;
+        inStream: BigNumber;
+        outStream: OutStreamStructOutput;
+        apy: APYStructOutput;
+      }
+    >;
 
     symbol(overrides?: CallOverrides): Promise<string>;
+
+    taskClose(_supplier: string, overrides?: CallOverrides): Promise<void>;
 
     tokensReceived(
       operator: string,
@@ -1590,17 +1662,17 @@ export interface PoolV1 extends BaseContract {
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
-    "transfer(address,uint256)"(
+    totalYieldEarnedSupplier(
+      _supplier: string,
+      currentYieldSnapshot: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    transfer(
       to: string,
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    "transfer(uint256,address)"(
-      _amount: BigNumberish,
-      _paymentToken: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     transferFrom(
       from: string,
@@ -1608,12 +1680,6 @@ export interface PoolV1 extends BaseContract {
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
-
-    transferSuperToken(
-      receiver: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     updateCode(newAddress: string, overrides?: CallOverrides): Promise<void>;
 
@@ -1668,9 +1734,20 @@ export interface PoolV1 extends BaseContract {
 
     PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
 
-    STEPS(overrides?: CallOverrides): Promise<BigNumber>;
-
     SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _calculateIndexes(
+      yieldPeriod: BigNumberish,
+      lastPool: PoolV1Struct,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    _calculateYieldSupplier(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    _cfaLib(overrides?: CallOverrides): Promise<BigNumber>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -1716,6 +1793,12 @@ export interface PoolV1 extends BaseContract {
 
     balanceOf(_supplier: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    balanceTreasury(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    balanceTreasuryTask(overrides?: CallOverrides): Promise<BigNumber>;
+
     beforeAgreementCreated(
       arg0: string,
       arg1: string,
@@ -1745,6 +1828,8 @@ export interface PoolV1 extends BaseContract {
 
     cfa(overrides?: CallOverrides): Promise<BigNumber>;
 
+    checkerLastExecution(overrides?: CallOverrides): Promise<BigNumber>;
+
     closeAccount(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -1761,10 +1846,6 @@ export interface PoolV1 extends BaseContract {
 
     getCodeAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getDepositTriggerAmount(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getDepositTriggerTime(overrides?: CallOverrides): Promise<BigNumber>;
-
     getLastPool(overrides?: CallOverrides): Promise<BigNumber>;
 
     getLastTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1773,16 +1854,6 @@ export interface PoolV1 extends BaseContract {
       timestamp: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    getPoolBuffer(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getPrecission(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getSteps(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getSuperfluidDeposit(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSupplier(
       _supplier: string,
@@ -1804,18 +1875,9 @@ export interface PoolV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    internalPushToAAVE(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    internalWithDrawStep(
-      supplier: string,
-      stepAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     lastExecution(overrides?: CallOverrides): Promise<BigNumber>;
+
+    lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1823,7 +1885,18 @@ export interface PoolV1 extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    poolByTimestamp(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     poolFactory(overrides?: CallOverrides): Promise<BigNumber>;
+
+    poolId(overrides?: CallOverrides): Promise<BigNumber>;
+
+    poolInternal(overrides?: CallOverrides): Promise<BigNumber>;
+
+    poolStrategy(overrides?: CallOverrides): Promise<BigNumber>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1856,47 +1929,19 @@ export interface PoolV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setPrecission(
-      _precission: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+    supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
-    setSteps(
-      _steps: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    setSuperfluidDeposit(
-      _superfluidDeposit: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    sfCreateFlow(
-      receiver: string,
-      newOutFlow: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    sfDeleteFlow(
-      sender: string,
-      receiver: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    sfDeleteFlowWithCtx(
-      _ctx: BytesLike,
-      sender: string,
-      receiver: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    sfUpdateFlow(
-      receiver: string,
-      newOutFlow: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    suppliersByAddress(
+      arg0: string,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     symbol(overrides?: CallOverrides): Promise<BigNumber>;
+
+    taskClose(
+      _supplier: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     tokensReceived(
       operator: string,
@@ -1910,27 +1955,21 @@ export interface PoolV1 extends BaseContract {
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
-    "transfer(address,uint256)"(
-      to: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    totalYieldEarnedSupplier(
+      _supplier: string,
+      currentYieldSnapshot: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    "transfer(uint256,address)"(
-      _amount: BigNumberish,
-      _paymentToken: string,
+    transfer(
+      to: string,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     transferFrom(
       from: string,
       to: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    transferSuperToken(
-      receiver: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -1966,11 +2005,22 @@ export interface PoolV1 extends BaseContract {
 
     PROTOCOL_FEE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    STEPS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     SUPERFLUID_DEPOSIT(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    _calculateIndexes(
+      yieldPeriod: BigNumberish,
+      lastPool: PoolV1Struct,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    _calculateYieldSupplier(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    _cfaLib(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     afterAgreementCreated(
       _superToken: string,
@@ -2019,6 +2069,14 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    balanceTreasury(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    balanceTreasuryTask(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     beforeAgreementCreated(
       arg0: string,
       arg1: string,
@@ -2048,6 +2106,10 @@ export interface PoolV1 extends BaseContract {
 
     cfa(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    checkerLastExecution(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     closeAccount(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -2064,32 +2126,12 @@ export interface PoolV1 extends BaseContract {
 
     getCodeAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getDepositTriggerAmount(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getDepositTriggerTime(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getLastPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getLastTimestamp(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getPool(
       timestamp: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getPoolBuffer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getPrecission(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getProtocolFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getSteps(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getSuperfluidDeposit(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -2113,18 +2155,9 @@ export interface PoolV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    internalPushToAAVE(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    internalWithDrawStep(
-      supplier: string,
-      stepAmount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
     lastExecution(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    lastPoolTimestamp(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -2132,7 +2165,18 @@ export interface PoolV1 extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    poolByTimestamp(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     poolFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    poolId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    poolInternal(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    poolStrategy(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -2165,47 +2209,19 @@ export interface PoolV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setPrecission(
-      _precission: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+    supplierId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    setSteps(
-      _steps: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setSuperfluidDeposit(
-      _superfluidDeposit: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    sfCreateFlow(
-      receiver: string,
-      newOutFlow: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    sfDeleteFlow(
-      sender: string,
-      receiver: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    sfDeleteFlowWithCtx(
-      _ctx: BytesLike,
-      sender: string,
-      receiver: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    sfUpdateFlow(
-      receiver: string,
-      newOutFlow: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    suppliersByAddress(
+      arg0: string,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    taskClose(
+      _supplier: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     tokensReceived(
       operator: string,
@@ -2219,27 +2235,21 @@ export interface PoolV1 extends BaseContract {
 
     totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    "transfer(address,uint256)"(
-      to: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    totalYieldEarnedSupplier(
+      _supplier: string,
+      currentYieldSnapshot: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    "transfer(uint256,address)"(
-      _amount: BigNumberish,
-      _paymentToken: string,
+    transfer(
+      to: string,
+      amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     transferFrom(
       from: string,
       to: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    transferSuperToken(
-      receiver: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
