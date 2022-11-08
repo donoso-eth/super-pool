@@ -115,15 +115,20 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   function _withdraw(uint256 amount, address _supplier) internal {
     aavePool.withdraw(address(aaveToken), amount.div(10**12), address(this));
 
+    console.log(118);
+
     uint256 balanceToken = token.balanceOf(address(this));
+
+       console.log(122);
 
     if (balanceToken < amount) {
       token.mint(address(this), amount - balanceToken);
     }
 
     superToken.upgrade(amount);
-
+      console.log(129);
     IERC20(address(superToken)).transfer(_supplier, amount);
+        console.log(131);
   }
 
 

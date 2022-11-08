@@ -26,9 +26,7 @@ export const gelatoBalance= async (superPool: PoolV1, ops:IOps, executor:SignerW
 
     const [canExec, execData] = await superPool.checkerLastExecution();
 
-    console.log(canExec);
-    console.log(execData)
-    console.log(execData2)
+
 
     await ops
       .connect(executor)

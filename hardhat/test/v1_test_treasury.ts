@@ -105,7 +105,7 @@ let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.
 
 let network_params = networks_config['goerli'];
 
-describe.only('V1 TEST TREASURY', function () {
+describe('V1 TEST TREASURY', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -378,6 +378,9 @@ describe.only('V1 TEST TREASURY', function () {
 
     // #endregion ================= SECOND PERIOD ============================= //
 
+   
+    
+
     // #region =================  3th PERIOD ============================= //
     timestamp = timestamp.add(BigNumber.from(ONE_MONTH));
     await setNextBlockTimestamp(hre, +timestamp);
@@ -452,6 +455,9 @@ describe.only('V1 TEST TREASURY', function () {
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     // #endregion ================= END 3TH PERIOD ============================= //
 
+ 
+    
+
     // #region ================= 4TH PERIOD ============================= //
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- Gelato 24 hours rebalance Task');
@@ -471,7 +477,6 @@ describe.only('V1 TEST TREASURY', function () {
 
     // #endregion ================= END 4TH PERIOD ============================= //
 
-    
 
     // #region ================= 5TH PERIOD ============================= //
     console.log('\x1b[36m%s\x1b[0m', '#5-- Gelato 24 hours rebalance Task');

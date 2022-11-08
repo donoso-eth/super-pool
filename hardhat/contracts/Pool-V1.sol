@@ -430,12 +430,12 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     console.log(fee);
     transfer(fee, feeToken);
     console.log("aqui55555");
-    (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_balanceTreasury()"));
-
-    console.log(success);
+   // (bool success, bytes memory data) = poolInternal.delegatecall(abi.encodeWithSignature("_balanceTreasury()"));
 
 
-    //  callInternal(abi.encodeWithSignature("_balanceTreasury()"));
+
+
+     callInternal(abi.encodeWithSignature("_balanceTreasury()"));
   }
 
   function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier) {
@@ -548,6 +548,7 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     return result;
   }
 
+
   /**
    * @notice Calculate the yield earned by the suplier
    * @param _supplier supplier's address
@@ -615,6 +616,7 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
       }
     }
   }
+
 
   // #endregion pool state
 

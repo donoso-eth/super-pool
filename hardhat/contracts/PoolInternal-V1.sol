@@ -392,6 +392,7 @@ contract PoolInternalV1 is PoolStateV1 {
       console.log(405, amountToWithdraw);
       console.log(poolStrategy);
       IPoolStrategyV1(poolStrategy).withdraw(amountToWithdraw, address(this));
+      console.log(395,amountToWithdraw);
       currentPool.yieldObject.yieldSnapshot -= amountToWithdraw;
     }
   }
@@ -427,12 +428,12 @@ contract PoolInternalV1 is PoolStateV1 {
     }
     //// calculate if any remaining balance of supertokens is inthe pool (push to strategy not yet ran)
     uint256 poolAvailable = 0;
-    console.log(445);
+  
     if (superToken.balanceOf(address(this)) > (currentThreshold)) {
       console.log(447);
       poolAvailable = superToken.balanceOf(address(this)) - (currentThreshold);
     }
-
+  console.log(445,poolAvailable);
     //// if enough in the pool is available then not go to the pool strategy
     if (poolAvailable >= withdrawAmount) {
       console.log(453);
