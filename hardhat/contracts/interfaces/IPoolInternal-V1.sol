@@ -41,7 +41,6 @@ interface IPoolInternalV1 {
 
     function withdrawStep(address _receiver) external;
 
-    function pushedToStrategy(uint256 amount) external;
 
     function transferSTokens(
         address _sender,

@@ -11,7 +11,6 @@ import {IOps} from "./gelato/IOps.sol";
 
 import {IPoolV1} from "./interfaces/IPool-V1.sol";
 
-import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
 import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 import {IPool} from "./aave/IPool.sol";
 import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
@@ -31,53 +30,47 @@ interface ERC20mintable {
   function approve(address approver, uint256 amount) external;
 }
 
+/****************************************************************************************************
+ * @title PoolStrategyV1
+ * @dev This contract provides the allocation strategy to be followed by the pool
+ *   
+ *      The addresse of the strategy will be passed to the pool factory by creation of the pool
+ *      It can be created n-pools by superToken creating n-different strategies (aave, compounf, etc)
+ *      By the pool initialization, the pool approve the strategy contract to operate the supertokens 
+ *
+ ****************************************************************************************************/
 contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   using SafeMath for uint256;
 
   address owner;
 
-  IOps ops;
   ISuperToken superToken;
-  ERC20mintable token;
-  bytes32 public depositTaskId;
-  IPoolV1 pool;
-  IPoolInternalV1 poolInternal;
-  IPool aavePool;
-  IERC20 aToken;
+  IPoolV1 pool; /// Pool
+  IPool aavePool; //// aave Pool to deposit
+  IERC20 aToken; //// aToken received
 
-  ERC20mintable aaveToken;
-
-  uint256 POOL_BUFFER;
+  ///// IN PRODUCTION WE WILL ONLY REQUIRE the token a ERC20
+  ///// NOW WE NEED TO SWAP BETWEEN SUPERFLUID and AAVe FAKE TOKEN
+  ERC20mintable token; // SUPERFLUID Faketoken
+  ERC20mintable aaveToken; // AAVE Fake token
 
   uint256 MAX_INT;
 
-  uint256 lastExecution;
-  uint256 intervalExecution;
-
-  address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
   constructor() {}
 
-
-  // #region  ============= ============= Allocation Strategy  ============= ============= //
-
   function initialize(
-    IOps _ops,
     ISuperToken _superToken,
     ERC20mintable _token,
     IPoolV1 _pool,
     IPool _aavePool,
     IERC20 _aToken,
-    ERC20mintable _aaveToken,
-    IPoolInternalV1 _poolInternal
+    ERC20mintable _aaveToken
   ) external initializer {
     owner = msg.sender;
-    ops = _ops;
     superToken = _superToken;
     token = _token;
     pool = _pool;
-    poolInternal = _poolInternal;
-    POOL_BUFFER = 0; //_POOL_BUFFER;
     aavePool = _aavePool;
     aToken = _aToken;
     aaveToken = _aaveToken;
@@ -85,40 +78,46 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
     aaveToken.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
-    //depositTaskId = createDepositTask();
-
-    lastExecution = block.timestamp;
-    intervalExecution = 24 * 3600;
   }
 
+  /**
+   * @notice ERC277 call back allowing deposit tokens via .send()
+   * @param from Supplier (user sending tokens)
+   * @param amount amount received
+   */
+  function balanceOf() external view returns (uint256 balance) {
+    balance = aToken.balanceOf(address(this)) * (10**12);
+  }
 
-
-  //   function pauseTask() external onlyOwner {
-  //   if (depositTaskId != bytes32(0)) {
-  //     ops.cancelTask(depositTaskId);
-  //     depositTaskId = bytes32(0);
-  //   }
-  // }
-
-  // function launchTask() external onlyOwner {
-  //   if (depositTaskId != bytes32(0)) {
-  //     depositTaskId = createDepositTask();
-  //   }
-  // }
-
-
-
+  // #region  ============= ============= ONLY POOL FUNCTIONS  ============= ============= //
   function withdraw(uint256 amount, address _supplier) external onlyPool {
     _withdraw(amount, _supplier);
   }
 
+  function pushToStrategy(uint256 amountToDeposit) external onlyPool {
+    _deposit(amountToDeposit);
+  }
+
+  // #endregion  ============= ============= ONLY POOL FUNCTIONS  ============= ============= //
+
+  // #region  ============= ============= INTERNAL FUNCTIONS  ============= ============= //
+
+  ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR aNR THE MINTING
+  function _deposit(uint256 amountToDeposit) internal {
+    superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
+
+    superToken.downgrade(amountToDeposit);
+
+    aaveToken.mint(amountToDeposit / (10**12));
+
+    aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
+  }
+
+    ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR 
   function _withdraw(uint256 amount, address _supplier) internal {
     aavePool.withdraw(address(aaveToken), amount.div(10**12), address(this));
 
-
-
     uint256 balanceToken = token.balanceOf(address(this));
-
 
     if (balanceToken < amount) {
       token.mint(address(this), amount - balanceToken);
@@ -127,39 +126,9 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     superToken.upgrade(amount);
 
     IERC20(address(superToken)).transfer(_supplier, amount);
-     
   }
 
-
-  // called by Gelato Execs
-
-
-  function _deposit(uint256 amountToDeposit) internal {
-
-    superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
-
-    superToken.downgrade(amountToDeposit);
-
-
-    aaveToken.mint(amountToDeposit / (10**12));
-  
-    aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
-   
-  }
-
-
-  function pushToStrategy(uint256 amountToDeposit) external onlyPool {
-
-      _deposit(amountToDeposit);
-   
-    
-  }
-
-  function balanceOf() external view returns (uint256 balance) {
-    balance = aToken.balanceOf(address(this)) * (10**12);
-  }
-
-  // #endregion  ============= ============= Allocation Strategy  ============= ============= //
+  // #endregion  ============= ============= INTERNAL FUNCTIONS  ============= ============= //
 
   // #region  ==================  Upgradeable settings  ==================
 
@@ -173,7 +142,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
   // #endregion  ==================  Upgradeable settings  ==================
 
-  //#region modifiers
+  // #region   ==================  modifiers  ==================
 
   modifier onlyOwner() {
     require(msg.sender == owner, "Only Owner");
@@ -182,13 +151,6 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
   modifier onlyPool() {
     require(msg.sender == address(pool), "Only Pool Allowed");
-    _;
-  }
-
-
-
-  modifier onlyOps() {
-    require(msg.sender == address(ops), "OpsReady: onlyOps");
     _;
   }
 

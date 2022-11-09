@@ -103,14 +103,37 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     lastPoolTimestamp = block.timestamp;
     poolByTimestamp[block.timestamp] = DataTypes.PoolV1(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
     lastExecution = block.timestamp;
-  
+
     bytes memory data = callInternal(abi.encodeWithSignature("_createBalanceTreasuryTask()"));
 
     balanceTreasuryTask = abi.decode(data, (bytes32)); // createBalanceTreasuryTask();
- 
   }
 
-  // #region  ============= =============  Pool Events (supplier interaction) ============= ============= //
+  // #region ============ ===============  PUBLIC VIEW FUNCTIONS  ============= ============= //
+
+  function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier) {
+    supplier = suppliersByAddress[_supplier];
+  }
+
+  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory pool) {
+    pool = poolByTimestamp[timestamp];
+  }
+
+  function getLastPool() external view returns (DataTypes.PoolV1 memory pool) {
+    pool = poolByTimestamp[lastPoolTimestamp];
+  }
+
+  function getLastTimestamp() external view returns (uint256) {
+    return lastPoolTimestamp;
+  }
+
+  function getVersion() external pure returns (uint256) {
+    return 1;
+  }
+
+  // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
+
+  // #region ============ ===============  Pool Events (supplier interaction) ============= ============= //
   /****************************************************************************************************
    * @notice Supplier (User) interaction
    * @dev Following interactions are expected:
@@ -118,14 +141,13 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
    * ---- tokensReceived()
    *      implementation callback tokensReceived(). Deposit funds via erc777.send() function.
    *
-   * ---- RedeemDeposit() User withdraw funds from his balalce SuperTokens will be ransfered
-   *
+   * ---- redeemDeposit() User withdraw funds from his balalce SuperTokens will be ransfered
    *
    * ---- redeemFlow() User request a stream from the pool (this balance will be reduced)
    *
    * ---- redeemFlowStop() User stops receiving stream from the pool
    *
-   * ---- closeAcount User receives the complete balance and streams will be closed
+   * ---- closeAcount User receives the complete balance and streams will be closed //TODO
    *
    ****************************************************************************************************/
 
@@ -198,14 +220,12 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
 
     transfer(fee, feeToken);
     callInternal(abi.encodeWithSignature("closeStreamFlow(address)", _supplier));
-
   }
 
   function callInternal(bytes memory payload) internal returns (bytes memory) {
-
     (bool success, bytes memory data) = poolInternal.delegatecall(payload);
-   
-     if (!success) {
+
+    if (!success) {
       if (data.length < 68) revert();
       assembly {
         data := add(data, 0x04)
@@ -241,7 +261,7 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
 
   // #endregion User Interaction PoolEvents
 
-  // #region  ============= =============  ERC20  ============= ============= //
+  // #region ============ ===============  ERC20  ============= ============= //
   /****************************************************************************************************
    * @notice ERC20 overrides
    *
@@ -312,7 +332,7 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
 
   // #endregion overriding ERC20
 
-  ///// REGION SUPERFLUID
+  // #region ============ ===============  SUPERFLUID  ============= =============
   function afterAgreementCreated(
     ISuperToken _superToken,
     address _agreementClass,
@@ -358,7 +378,6 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
       bytes memory payload = abi.encode("");
       emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_STOP, payload, block.timestamp, sender);
     } else if (sender == address(this)) {
-    
       // poolInternal._redeemFlowStop(receiver);
       callInternal(abi.encodeWithSignature("_redeemFlowStop(address)", receiver));
 
@@ -418,41 +437,39 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     return address(_superToken) == address(superToken);
   }
 
-  // #endregion Superfluid manipulation and Super App Calbacks
+  // #endregion============= =============  SUPERFLUID  ============= =============
 
-  // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
+  // #region ============ ===============  BALANCE RREASURY =========== ==============
 
   function balanceTreasury() external onlyOps {
-    require(block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME, "NOT_YER_READY");
-   
+    require(block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME, "NOT_YET_READY");
+
+    DataTypes.PoolV1 memory pool = poolByTimestamp[lastPoolTimestamp];
+
+    uint256 poolBalance = superToken.balanceOf(address(this));
+
+    require(pool.outFlowRate > 0 || poolBalance > DEPOSIT_TRIGGER_AMOUNT, "NOT_CONDITIONS");
+
     (uint256 fee, address feeToken) = IOps(ops).getFeeDetails();
- 
+
     transfer(fee, feeToken);
-    }
 
-  function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier) {
-    supplier = suppliersByAddress[_supplier];
+    callInternal(abi.encodeWithSignature("_balanceTreasury()"));
   }
 
-  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory pool) {
-    pool = poolByTimestamp[timestamp];
+  function checkerLastExecution() external view returns (bool canExec, bytes memory execPayload) {
+    DataTypes.PoolV1 memory pool = poolByTimestamp[lastPoolTimestamp];
+
+    uint256 poolBalance = superToken.balanceOf(address(this));
+
+    canExec = block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME && (pool.outFlowRate > 0 || poolBalance > DEPOSIT_TRIGGER_AMOUNT);
+
+    execPayload = abi.encodeWithSelector(this.balanceTreasury.selector);
   }
 
-  function getLastPool() external view returns (DataTypes.PoolV1 memory pool) {
-    pool = poolByTimestamp[lastPoolTimestamp];
-  }
+  // #endregion ============ ===============  BALANCE RREASURY =========== ==============
 
-  function getLastTimestamp() external view returns (uint256) {
-    return lastPoolTimestamp;
-  }
-
-  function getVersion() external pure returns (uint256) {
-    return 1;
-  }
-
-  // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
-
-  // #region  ============= =============  Internal && Pool Internal Functions   ============= ============= //
+  // #region ============ ===============  Internal && Pool Internal Functions   ============= ============= //
 
   function transfer(uint256 _amount, address _paymentToken) internal {
     // _transfer(_amount, _paymentToken);
@@ -475,7 +492,7 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
 
   // #endregion  ============= =============  Internal && Pool Internal Functions    ============= ============= //
 
-  // #region =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
+  // #region ============ ===============  PARAMETERS ONLY OWNER  ============= ============= //
 
   function setPoolBuffer(uint256 _poolBuffer) external onlyOwner {
     POOL_BUFFER = _poolBuffer;
@@ -489,9 +506,14 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     BALANCE_TRIGGER_TIME = _time;
   }
 
+  function setInternalContract(address _poolInternal) external onlyOwner {
+    poolInternal = _poolInternal;
+
+  }
+
   // #endregion =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
 
-  // #region  ==================  Upgradeable settings  ==================
+  // #region ============ ===============  Upgradeable settings  ==================
 
   function proxiableUUID() public pure override returns (bytes32) {
     return keccak256("org.super-pool.pool.v2");
@@ -503,7 +525,7 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
 
   // #endregion  ==================  Upgradeable settings  ==================
 
-  // #region =========== =============  Modifiers ============= ============= //
+  // #region ============ ===============  Modifiers ============= ============= //
 
   modifier onlyHost() {
     require(msg.sender == address(host), "RedirectAll: support only one host");
@@ -531,6 +553,8 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     _;
   }
 
+  // #endregion =========== =============  Modifiers ============= ============= //
+
   receive() external payable {
     console.log("----- receive:", msg.value);
   }
@@ -539,7 +563,6 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     (bool result, ) = payable(msg.sender).call{value: address(this).balance}("");
     return result;
   }
-
 
   /**
    * @notice Calculate the yield earned by the suplier
@@ -584,6 +607,9 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
       uint256 periodYieldOutFlowRateIndex
     )
   {
+    // bytes memory data = callInternal(abi.encodeWithSignature("_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))", yieldPeriod, lastPool));
+    // (periodYieldTokenIndex,periodYieldInFlowRateIndex,periodYieldOutFlowRateIndex) = abi.decode(data,(uint256,uint256,uint256));
+
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
     uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
@@ -609,9 +635,6 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     }
   }
 
-
-  // #endregion pool state
-
   function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) public view returns (uint256 yieldSupplier) {
     uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
     DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
@@ -630,11 +653,5 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     uint256 yieldOutFlow = uint96(supplier.outStream.flow) * yieldOutFlowRateIndex;
 
     yieldSupplier = yieldTilllastPool + yieldDeposit + yieldInFlow - yieldOutFlow;
-  }
-
-  function checkerLastExecution() external view returns (bool canExec, bytes memory execPayload) {
-    canExec = block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME;
-
-    execPayload = abi.encodeWithSelector(this.balanceTreasury.selector);
   }
 }

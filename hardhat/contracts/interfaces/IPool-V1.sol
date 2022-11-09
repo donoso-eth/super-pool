@@ -6,94 +6,85 @@ import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/c
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IPoolV1 {
-    // ====================== Called only once by deployment ===========================
-    /**
-     * @notice initializer when deployment the contract
-     */
-    function initialize(DataTypes.PoolInitializer memory poolInit) external;
+  // ====================== Called only once by deployment ===========================
+  /**
+   * @notice initializer when deployment the contract
+   */
+  function initialize(DataTypes.PoolInitializer memory poolInit) external;
 
-    // #region ===================== SUpplier interaction Pool Events  ===========================
+  // #region ===================== Supplier interaction Pool Events  ===========================
 
-    /**
-     * @notice ERC277 call back allowing deposit tokens via .send()
-     * @param from Supplier (user sending tokens)
-     * @param amount amount received
-     */
-    function tokensReceived(
-        address operator,
-        address from,
-        address to,
-        uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData
-    ) external;
+  /**
+   * @notice ERC277 call back allowing deposit tokens via .send()
+   * @param from Supplier (user sending tokens)
+   * @param amount amount received
+   */
+  function tokensReceived(
+    address operator,
+    address from,
+    address to,
+    uint256 amount,
+    bytes calldata userData,
+    bytes calldata operatorData
+  ) external;
 
-    /**
-     * @notice User interactipn
-     * @param redeemAmount amount to be reddemed
-     */
-    function redeemDeposit(uint256 redeemAmount) external;
+  /**
+   * @notice User interactipn
+   * @param redeemAmount amount to be reddemed
+   */
+  function redeemDeposit(uint256 redeemAmount) external;
 
-    /**
-     * @notice User starts a flow to be
-     * @param _outFlowRate outflowrate to receive from the pool
-     *
-     ***    This method can be called to create a stream or update a previous one
-     */
-    function redeemFlow(int96 _outFlowRate) external;
+  /**
+   * @notice User starts a flow to be
+   * @param _outFlowRate outflowrate to receive from the pool
+   *
+   ***    This method can be called to create a stream or update a previous one
+   */
+  function redeemFlow(int96 _outFlowRate) external;
 
+  function taskClose(address _supplier) external;
 
-     function taskClose(address _supplier) external;
+  function balanceTreasury() external;
 
+  /**
+   * @notice User stop the receiving stream
+   *
+   */
+  function redeemFlowStop() external;
 
-     function balanceTreasury() external ;
+  // #endregion ===================== SUpplier interaction Pool Events  ===========================
 
-    /**
-     * @notice User stop the receiving stream
-     *
-     */
-    function redeemFlowStop() external;
+  // #region  ============= =============  ERC20  ============= ============= //
+  function balanceOf(address _supplier) external view returns (uint256 balance);
 
-    // #endregion ===================== SUpplier interaction Pool Events  ===========================
+  function totalSupply() external view returns (uint256);
 
-    // #region  ============= =============  ERC20  ============= ============= //
-    function balanceOf(address _supplier) external view returns (uint256 balance);
+  // #endregion overriding ERC20
 
-    function totalSupply() external view returns (uint256);
+  // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
-    // #endregion overriding ERC20
+  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory);
 
+  function getLastPool() external view returns (DataTypes.PoolV1 memory);
 
-    // function internalEmitEvents(address _supplier,DataTypes.SupplierEvent code, bytes memory payload, address sender) external;
+  function getLastTimestamp() external view returns (uint256);
 
-    // function emitEventSupplier(address _supplier) external;
+  function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier);
 
-    // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
+  function getVersion() external pure returns (uint256);
 
-    function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory);
+  function checkerLastExecution() external returns (bool canExec, bytes memory execPayload);
 
-    function getLastPool() external view returns (DataTypes.PoolV1 memory);
+  // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
-    function getLastTimestamp() external view returns (uint256);
+  // #region =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
 
-    function getSupplier(address _supplier) external view returns (DataTypes.Supplier memory supplier);
+  function setPoolBuffer(uint256 _poolBuffer) external;
 
-    function getVersion() external pure returns(uint256);
+  function setDepositTriggerAmount(uint256 _amount) external;
 
+  function setDepositTriggerTime(uint256 _time) external;
 
- function checkerLastExecution() external  returns (bool canExec, bytes memory execPayload);
-
-    // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
-
-    // #region  ============= =============  Internal && Pool Internal Functions   ============= ============= //
-
-
-    // function transfer(uint256 _amount, address _paymentToken) external;
-
-    // #endregion  ============= =============  Internal && Pool Internal Functions    ============= ============= //
-
-    // #region =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
-
-
-    // #endregion =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
+  function setInternalContract(address _poolInternal) external;
+  // #endregion =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
 }

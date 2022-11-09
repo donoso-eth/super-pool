@@ -170,7 +170,7 @@ describe('V1 TEST ACCOUNTING', function () {
     // await poolInternal.initialize(settings.address);
     // console.log('Pool Internal ---> initialized');
 
-    await poolStrategy.initialize(network_params.ops, network_params.superToken, network_params.token, poolProxyAddress, aavePool, aToken, network_params.aaveToken, poolImpl.address);
+    await poolStrategy.initialize( network_params.superToken, network_params.token, poolProxyAddress, aavePool, aToken, network_params.aaveToken);
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolV1__factory.connect(superPoolAddress, deployer);
