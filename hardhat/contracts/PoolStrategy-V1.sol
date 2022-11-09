@@ -80,11 +80,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     token.approve(address(superToken), MAX_INT);
   }
 
-  /**
-   * @notice ERC277 call back allowing deposit tokens via .send()
-   * @param from Supplier (user sending tokens)
-   * @param amount amount received
-   */
+
   function balanceOf() external view returns (uint256 balance) {
     balance = aToken.balanceOf(address(this)) * (10**12);
   }
