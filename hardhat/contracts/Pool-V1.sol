@@ -397,7 +397,7 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
       bytes memory payload = abi.encode("");
       emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_STOP, payload, block.timestamp, sender);
     } else if (sender == address(this)) {
-      console.log("OUT_STREAM_MANUAL_STOPPED");
+   
       poolInternal._redeemFlowStop(receiver);
       emitEvents(receiver);
       bytes memory payload = abi.encode("");
@@ -419,22 +419,22 @@ contract PoolV1 is UUPSProxiable, ERC20Upgradeable, SuperAppBase, IERC777Recipie
 
     (address sender, address receiver) = abi.decode(_agreementData, (address, address));
 
-    console.log(receiver);
+
 
     (, int96 inFlowRate, , ) = cfa.getFlow(superToken, sender, address(this));
 
     // If In-Stream we will request a pool update
     if (receiver == address(this)) {
       newCtx = poolInternal.updateStreamRecord(newCtx, inFlowRate, sender);
-      console.log(431);
+   
       emitEvents(sender);
-      console.log(432);
+   
       bytes memory payload = abi.encode("");
-      console.log(435);
+  
       emit Events.SupplierEvent(DataTypes.SupplierEvent.STREAM_UPDATE, payload, block.timestamp, sender);
-      console.log(437);
+     
     }
-    console.logBytes(newCtx);
+    
     return newCtx;
   }
 

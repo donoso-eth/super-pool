@@ -252,7 +252,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             poolTimestampById[pool.id] = block.timestamp;
         }
 
-        console.log("pool_update");
+     
     }
 
     function _calculateIndexes(uint256 yieldPeriod, DataTypes.PoolV1 memory lastPool)
@@ -375,7 +375,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             supplier.deposit = supplier.deposit + yieldSupplier;
             supplier.timestamp = block.timestamp;
         }
-        console.log("supplier_updte");
+      
     }
 
     /**
@@ -542,7 +542,6 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                  }
         DataTypes.PoolV1 storage currentPool = poolByTimestamp[lastPoolTimestamp];
 
-        console.log(545, uint256(balance));
    
         uint256 currentThreshold = currentPool.outFlowBuffer;
       
@@ -553,11 +552,10 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
            
         }
 
-        console.log(556,currentThreshold);
 
         if (uint256(balance) > currentThreshold) {
             uint256 toDeposit = uint256(balance) - currentThreshold;
-                 console.log(567,toDeposit);
+             
             poolStrategy.pushToStrategy(toDeposit);
             currentPool.yieldObject.yieldSnapshot += toDeposit;
         } else if (currentThreshold > uint256(balance)) {
@@ -568,7 +566,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
             if (amountToWithdraw > balanceAave) {
                 amountToWithdraw = balanceAave;
             }
-            console.log(567, amountToWithdraw);
+        
             poolStrategy.withdraw(amountToWithdraw, address(poolContract));
             currentPool.yieldObject.yieldSnapshot -= amountToWithdraw;
         }
@@ -638,7 +636,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
              
                 if (balance > 0) {
                     poolStrategy.withdraw(balance, _receiver);
-                    console.log(637, balance);
+               
                     pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - balance;
                 }
 
@@ -646,7 +644,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                     poolContract.transferSuperToken(_receiver, correction);
                 }
             } else {
-                console.log(645, fromStrategy);
+           
                 poolStrategy.withdraw(fromStrategy, _receiver);
                 pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - fromStrategy;
                 poolContract.transferSuperToken(_receiver, poolAvailable);
@@ -674,7 +672,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
         uint256 initialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(newOutFlow));
         uint256 streamDuration = userBalance.sub(outFlowBuffer.add(initialWithdraw)).div(uint96(newOutFlow));
 
-        console.log("Initial_withdraw", initialWithdraw);
+      
 
         if (supplier.outStream.flow == 0) {
             if (streamDuration  < 24 * 3600) {
@@ -708,7 +706,7 @@ contract PoolInternalV1 is Initializable, UUPSProxiable {
                 pool.outFlowBuffer += increaseBuffer;
                 uint256 oldInitialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(supplier.outStream.flow));
                 uint256 toWithDraw = increaseBuffer + initialWithdraw - oldInitialWithdraw;
-                console.log(707,toWithDraw);
+            
                 _withdrawTreasury(_supplier, address(poolContract),toWithDraw);
                 //To DO REBALANCE
             }
