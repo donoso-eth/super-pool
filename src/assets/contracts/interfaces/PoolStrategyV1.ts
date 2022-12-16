@@ -19,30 +19,23 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
 export interface PoolStrategyV1Interface extends utils.Interface {
   functions: {
-    "ETH()": FunctionFragment;
     "balanceOf()": FunctionFragment;
-    "depositTaskId()": FunctionFragment;
     "getCodeAddress()": FunctionFragment;
-    "initialize(address,address,address,address,address,address,address,address)": FunctionFragment;
+    "initialize(address,address,address,address,address,address)": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
     "pushToStrategy(uint256)": FunctionFragment;
     "updateCode(address)": FunctionFragment;
     "withdraw(uint256,address)": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
   encodeFunctionData(functionFragment: "balanceOf", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "depositTaskId",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "getCodeAddress",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [string, string, string, string, string, string, string, string]
+    values: [string, string, string, string, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "proxiableUUID",
@@ -58,12 +51,7 @@ export interface PoolStrategyV1Interface extends utils.Interface {
     values: [BigNumberish, string]
   ): string;
 
-  decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "depositTaskId",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "getCodeAddress",
     data: BytesLike
@@ -127,27 +115,21 @@ export interface PoolStrategyV1 extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    ETH(overrides?: CallOverrides): Promise<[string]>;
-
     balanceOf(
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { balance: BigNumber }>;
-
-    depositTaskId(overrides?: CallOverrides): Promise<[string]>;
 
     getCodeAddress(
       overrides?: CallOverrides
     ): Promise<[string] & { codeAddress: string }>;
 
     initialize(
-      _ops: string,
       _superToken: string,
       _token: string,
       _pool: string,
       _aavePool: string,
       _aToken: string,
       _aaveToken: string,
-      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -170,23 +152,17 @@ export interface PoolStrategyV1 extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  ETH(overrides?: CallOverrides): Promise<string>;
-
   balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
-
-  depositTaskId(overrides?: CallOverrides): Promise<string>;
 
   getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
   initialize(
-    _ops: string,
     _superToken: string,
     _token: string,
     _pool: string,
     _aavePool: string,
     _aToken: string,
     _aaveToken: string,
-    _poolInternal: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -209,23 +185,17 @@ export interface PoolStrategyV1 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    ETH(overrides?: CallOverrides): Promise<string>;
-
     balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
-
-    depositTaskId(overrides?: CallOverrides): Promise<string>;
 
     getCodeAddress(overrides?: CallOverrides): Promise<string>;
 
     initialize(
-      _ops: string,
       _superToken: string,
       _token: string,
       _pool: string,
       _aavePool: string,
       _aToken: string,
       _aaveToken: string,
-      _poolInternal: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -257,23 +227,17 @@ export interface PoolStrategyV1 extends BaseContract {
   };
 
   estimateGas: {
-    ETH(overrides?: CallOverrides): Promise<BigNumber>;
-
     balanceOf(overrides?: CallOverrides): Promise<BigNumber>;
-
-    depositTaskId(overrides?: CallOverrides): Promise<BigNumber>;
 
     getCodeAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
     initialize(
-      _ops: string,
       _superToken: string,
       _token: string,
       _pool: string,
       _aavePool: string,
       _aToken: string,
       _aaveToken: string,
-      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -297,23 +261,17 @@ export interface PoolStrategyV1 extends BaseContract {
   };
 
   populateTransaction: {
-    ETH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     balanceOf(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    depositTaskId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getCodeAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     initialize(
-      _ops: string,
       _superToken: string,
       _token: string,
       _pool: string,
       _aavePool: string,
       _aToken: string,
       _aaveToken: string,
-      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

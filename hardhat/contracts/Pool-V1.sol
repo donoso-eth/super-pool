@@ -101,7 +101,7 @@ contract PoolV1 is PoolStateV1, UUPSProxiable, ERC20Upgradeable, SuperAppBase, I
     superToken.approve(address(poolStrategy), MAX_INT);
 
     lastPoolTimestamp = block.timestamp;
-    poolByTimestamp[block.timestamp] = DataTypes.PoolV1(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
+    poolByTimestamp[block.timestamp] = DataTypes.pPoolV1(0, block.timestamp, 0, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
     lastExecution = block.timestamp;
 
     bytes memory data = callInternal(abi.encodeWithSignature("_createBalanceTreasuryTask()"));
