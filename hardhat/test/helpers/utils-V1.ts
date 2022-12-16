@@ -670,7 +670,7 @@ Object.keys(jsonObj).forEach((key:any)=> {
 
 })  
 
-writeFileSync(join(processDir,`expected${jsonObj.id.toString()}.json`), JSON.stringify(printObj))
+writeFileSync(join(processDir,`expected${jsonObj.id.toString()}.json`),JSON.stringify(printObj, (key, value) => (isNaN(value) ? value : +value)))
 
 
 }
