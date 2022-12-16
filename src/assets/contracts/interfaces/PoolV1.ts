@@ -240,6 +240,7 @@ export interface PoolV1Interface extends utils.Interface {
     "redeemFlowStop()": FunctionFragment;
     "setDepositTriggerAmount(uint256)": FunctionFragment;
     "setDepositTriggerTime(uint256)": FunctionFragment;
+    "setInternalContract(address)": FunctionFragment;
     "setPoolBuffer(uint256)": FunctionFragment;
     "supplierId()": FunctionFragment;
     "suppliersByAddress(address)": FunctionFragment;
@@ -429,6 +430,10 @@ export interface PoolV1Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setDepositTriggerTime",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setInternalContract",
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "setPoolBuffer",
@@ -623,6 +628,10 @@ export interface PoolV1Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setDepositTriggerTime",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setInternalContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -968,6 +977,11 @@ export interface PoolV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setInternalContract(
+      _poolInternal: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     setPoolBuffer(
       _poolBuffer: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1292,6 +1306,11 @@ export interface PoolV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setInternalContract(
+    _poolInternal: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   setPoolBuffer(
     _poolBuffer: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -1610,6 +1629,11 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setInternalContract(
+      _poolInternal: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setPoolBuffer(
       _poolBuffer: BigNumberish,
       overrides?: CallOverrides
@@ -1924,6 +1948,11 @@ export interface PoolV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setInternalContract(
+      _poolInternal: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     setPoolBuffer(
       _poolBuffer: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -2201,6 +2230,11 @@ export interface PoolV1 extends BaseContract {
 
     setDepositTriggerTime(
       _time: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setInternalContract(
+      _poolInternal: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

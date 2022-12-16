@@ -149,7 +149,6 @@ export interface PoolInternalV1Interface extends utils.Interface {
     "poolId()": FunctionFragment;
     "poolInternal()": FunctionFragment;
     "poolStrategy()": FunctionFragment;
-    "pushedToStrategy(uint256)": FunctionFragment;
     "supplierId()": FunctionFragment;
     "suppliersByAddress(address)": FunctionFragment;
     "totalYieldEarnedSupplier(address,uint256)": FunctionFragment;
@@ -277,10 +276,6 @@ export interface PoolInternalV1Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "pushedToStrategy",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "supplierId",
     values?: undefined
   ): string;
@@ -406,10 +401,6 @@ export interface PoolInternalV1Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "poolStrategy",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "pushedToStrategy",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "supplierId", data: BytesLike): Result;
@@ -607,11 +598,6 @@ export interface PoolInternalV1 extends BaseContract {
 
     poolStrategy(overrides?: CallOverrides): Promise<[string]>;
 
-    pushedToStrategy(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     supplierId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     suppliersByAddress(
@@ -808,11 +794,6 @@ export interface PoolInternalV1 extends BaseContract {
 
   poolStrategy(overrides?: CallOverrides): Promise<string>;
 
-  pushedToStrategy(
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
   suppliersByAddress(
@@ -998,11 +979,6 @@ export interface PoolInternalV1 extends BaseContract {
 
     poolStrategy(overrides?: CallOverrides): Promise<string>;
 
-    pushedToStrategy(
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
     suppliersByAddress(
@@ -1168,11 +1144,6 @@ export interface PoolInternalV1 extends BaseContract {
 
     poolStrategy(overrides?: CallOverrides): Promise<BigNumber>;
 
-    pushedToStrategy(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     supplierId(overrides?: CallOverrides): Promise<BigNumber>;
 
     suppliersByAddress(
@@ -1321,11 +1292,6 @@ export interface PoolInternalV1 extends BaseContract {
     poolInternal(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     poolStrategy(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    pushedToStrategy(
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     supplierId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
