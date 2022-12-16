@@ -9,10 +9,14 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, ITREASURY_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V1';
 import { PoolV1StructOutput } from '../../typechain-types/IPoolV1';
+import { writeFileSync } from 'fs-extra';
+import { join } from 'path';
 
 export const fromBnToNumber = (x: BigNumber) => {
   return +x.toString();
 };
+
+const processDir = process.cwd();
 
 export const testTreasury = async (timestamp:BigNumber, 
  expected: ITREASURY_RESULT, 
@@ -23,6 +27,8 @@ export const testTreasury = async (timestamp:BigNumber,
 
   let poolBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
   let aaveBalance = (await contracts.aaveERC20.balanceOf(contracts.strategyAddresse));
+
+
 
 
   console.log('\x1b[31m%s\x1b[0m', '     =====   TREASURY   =============================');
@@ -68,9 +74,6 @@ export const testTreasury = async (timestamp:BigNumber,
   console.log('\x1b[32m%s\x1b[0m',  '    $', `\x1b[30m#Yield Pending: ${(aaveBalance.sub(expected.yieldSnapshot.div(10**12))).toString()}`);
 
 
-
-
-
 }
 
 
@@ -85,6 +88,8 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   console.log('\x1b[31m%s\x1b[0m', '     =====   POOL     =============================');
   let result: IPOOL = await getPool(contracts.superPool);
+
+  printToJson(expected)
 
   if (expected.id != undefined) {
     try {
@@ -651,6 +656,23 @@ function matchRecursiveArray(expected: Array<any>, params: Array<any>) {
     }
   }
   return invalidParamsButExists;
+}
+
+
+export const printToJson = async (jsonObj:any) => {
+
+let printObj:any = {};
+
+Object.keys(jsonObj).forEach((key:any)=> {
+
+  let value = jsonObj[key].toString()
+  printObj[key] = value;
+
+})  
+
+writeFileSync(join(processDir,`expected${jsonObj.id.toString()}.json`), JSON.stringify(printObj))
+
+
 }
 
 ////// BLOCKCHAIN
