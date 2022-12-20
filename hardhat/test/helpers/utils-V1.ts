@@ -16,6 +16,8 @@ export const fromBnToNumber = (x: BigNumber) => {
   return +x.toString();
 };
 
+let i = 1;
+
 const processDir = process.cwd();
 
 export const testTreasury = async (timestamp:BigNumber, 
@@ -28,7 +30,10 @@ export const testTreasury = async (timestamp:BigNumber,
   let poolBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
   let aaveBalance = (await contracts.aaveERC20.balanceOf(contracts.strategyAddresse));
 
+expected.id = i.toString()
+i++;
 
+printToJson(expected, 'treasury')
 
 
   console.log('\x1b[31m%s\x1b[0m', '     =====   TREASURY   =============================');
@@ -89,7 +94,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   console.log('\x1b[31m%s\x1b[0m', '     =====   POOL     =============================');
   let result: IPOOL = await getPool(contracts.superPool);
 
-  printToJson(expected)
+  printToJson(expected,'expected')
 
   if (expected.id != undefined) {
     try {
@@ -659,7 +664,7 @@ function matchRecursiveArray(expected: Array<any>, params: Array<any>) {
 }
 
 
-export const printToJson = async (jsonObj:any) => {
+export const printToJson = async (jsonObj:any,key:string) => {
 
 let printObj:any = {};
 
@@ -670,7 +675,8 @@ Object.keys(jsonObj).forEach((key:any)=> {
 
 })  
 
-writeFileSync(join(processDir,`expected${jsonObj.id.toString()}.json`),JSON.stringify(printObj, (key, value) => (isNaN(value) ? value : +value)))
+//writeFileSync(join(processDir,`expected${jsonObj.id.toString()}.json`),JSON.stringify(printObj, (key, value) => (isNaN(value) ? value : +value)))
+writeFileSync(join(processDir,`${key + jsonObj.id.toString()}.json`),JSON.stringify(printObj))
 
 
 }

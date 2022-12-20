@@ -36,6 +36,7 @@ export interface  ITREASURY_RESULT {
   superToken:BigNumber,
   aave:BigNumber,
   yieldSnapshot:BigNumber,
+  id?:string
 }
 
 
