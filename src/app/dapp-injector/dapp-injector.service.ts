@@ -214,7 +214,7 @@ export class DappInjector implements OnDestroy {
 
     // console.log(resolver);
 
-    PoolMetadata.address = '0x82ac8E2Be327AEF1E978BdA95202Ce05253a488e'//resolver.pool;//  '0xf1872346caF0eBf567bd9704AE2B661c8D034998';
+    PoolMetadata.address = '0x742D0aA53a08A2C304e87e0Af386f4A7134dBcf2';//0x82ac8E2Be327AEF1E978BdA95202Ce05253a488e'//resolver.pool;//  '0xf1872346caF0eBf567bd9704AE2B661c8D034998';
 
     const contract = new AngularContract<PoolV1>({
      metadata:  PoolMetadata,
@@ -268,6 +268,7 @@ export class DappInjector implements OnDestroy {
       console.log('i am disconnecting');
       this.store.dispatch(Web3Actions.chainStatus({ status: 'fail-to-connect-network' }));
       this.store.dispatch(Web3Actions.chainBusy({ status: false }));
+      
     });
 
     ///// Disconnecting manually.....

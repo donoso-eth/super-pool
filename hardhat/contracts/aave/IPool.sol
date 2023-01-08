@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.0;
 
-import {DataTypesAAVE} from './DataTypes.sol';
+import { DataTypesAAVE } from "./DataTypes.sol";
 
 /**
  * @title IPool
  * @author Aave
  * @notice Defines the basic interface for an Aave Pool.
- **/
+ *
+ */
 interface IPool {
-
-
   /**
    * @notice Supplies an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
    * - E.g. User supplies 100 USDC and gets in return 100 aUSDC
@@ -21,14 +20,9 @@ interface IPool {
    *   is a different wallet
    * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
    *   0 if the action is executed directly by the user, without any middle-man
-   **/
-  function supply(
-    address asset,
-    uint256 amount,
-    address onBehalfOf,
-    uint16 referralCode
-  ) external;
-
+   *
+   */
+  function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
   /**
    * @notice Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
@@ -40,22 +34,15 @@ interface IPool {
    *   wants to receive it on his own wallet, or a different address if the beneficiary is a
    *   different wallet
    * @return The final amount withdrawn
-   **/
-  function withdraw(
-    address asset,
-    uint256 amount,
-    address to
-  ) external returns (uint256);
-
+   *
+   */
+  function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 
   /**
    * @notice Returns the state and configuration of the reserve
    * @param asset The address of the underlying asset of the reserve
    * @return The state and configuration data of the reserve
-   **/
+   *
+   */
   function getReserveData(address asset) external view returns (DataTypesAAVE.ReserveData memory);
-
-
-
-
 }

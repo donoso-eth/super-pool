@@ -215,12 +215,15 @@ export const applyUserEvent = async (
     case SupplierEvent.OUT_STREAM_START:
 
       result = abiCoder.decode(['int96'], payload);
+   
       users[activeUser.address].expected.outFlow = users[activeUser.address].expected.outFlow.add(result[0]);
 
   
       initialWithdraw = BigNumber.from(4 * 3600).mul(result[0]);
 
       initialBuffer = BigNumber.from(3600).mul(result[0]);
+
+    
       streamDuration = users[activeUser.address].expected.realTimeBalance.sub(initialWithdraw.add(initialBuffer)).div(result[0]);
   
 

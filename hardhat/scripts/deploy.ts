@@ -72,7 +72,7 @@ async function main() {
 
   //// DEPLOY POOL IMPL
   let toDeployContract;
-  let poolImplAdress = '0x9609564DcB8AfcCB51C056386F5a6f37D25d3Ce7'; 
+  let poolImplAdress:any;
   addressObject.poolImpl = poolImplAdress;
 
 
@@ -134,6 +134,8 @@ async function main() {
   //// DEPLOY POOL INTERNAL
   const poolInternalImpl = await new PoolInternalV1__factory(deployer).deploy({ gasLimit: 10000000, nonce: nonce + 4 });
 
+
+  
   toDeployContract = contract_config['poolInternalV1'];
   writeFileSync(
     `${contract_path}/${toDeployContract.jsonName}_metadata.json`,

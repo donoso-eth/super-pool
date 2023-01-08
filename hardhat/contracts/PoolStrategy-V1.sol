@@ -1,254 +1,135 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import {OpsReady} from "./gelato/OpsReady.sol";
-import {IOps} from "./gelato/IOps.sol";
+import { OpsReady } from "./gelato/OpsReady.sol";
+import { IOps } from "./gelato/IOps.sol";
 
-import {IPoolV1} from "./interfaces/IPool-V1.sol";
+import { IPoolV1 } from "./interfaces/IPool-V1.sol";
 
-import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
-import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
-import {IPool} from "./aave/IPool.sol";
-import {ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import {LibDataTypes} from "./gelato/LibDataTypes.sol";
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {Events} from "./libraries/Events.sol";
-import {UUPSProxiable} from "./upgradability/UUPSProxiable.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { IPoolStrategyV1 } from "./interfaces/IPoolStrategy-V1.sol";
+import { IPool } from "./aave/IPool.sol";
+import { ISuperToken } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { LibDataTypes } from "./gelato/LibDataTypes.sol";
+import { DataTypes } from "./libraries/DataTypes.sol";
+import { Events } from "./libraries/Events.sol";
+import { UUPSProxiable } from "./upgradability/UUPSProxiable.sol";
+import { ERC20Mintable } from "./interfaces/ERC20Mintable.sol";
 
-interface ERC20mintable {
-  function mint(address receiver, uint256 amount) external;
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-  function mint(uint256 amount) external;
-
-  function balanceOf(address receiver) external returns (uint256);
-
-  function approve(address approver, uint256 amount) external;
-}
-
+/**
+ *
+ * @title PoolStrategyV1
+ * @dev This contract provides the allocation strategy to be followed by the pool
+ *
+ *      The addresse of the strategy will be passed to the pool factory by creation of the pool
+ *      It can be created n-pools by superToken creating n-different strategies (aave, compounf, etc)
+ *      By the pool initialization, the pool approve the strategy contract to operate the supertokens
+ *
+ *
+ */
 contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   using SafeMath for uint256;
 
   address owner;
 
-  IOps ops;
   ISuperToken superToken;
-  ERC20mintable token;
-  bytes32 public depositTaskId;
   IPoolV1 pool;
-  IPoolInternalV1 poolInternal;
-  IPool aavePool;
-  IERC20 aToken;
+  /// Pool
+  IPool aavePool; //// aave Pool to deposit
+  IERC20 aToken; //// aToken received
 
-  ERC20mintable aaveToken;
-
-  uint256 POOL_BUFFER;
+  ///// IN PRODUCTION WE WILL ONLY REQUIRE the token a ERC20
+  ///// NOW WE NEED TO SWAP BETWEEN SUPERFLUID and AAVe FAKE TOKEN
+  ERC20Mintable token; // SUPERFLUID Faketoken
+  ERC20Mintable aaveToken; // AAVE Fake token
 
   uint256 MAX_INT;
 
-  uint256 lastExecution;
-  uint256 intervalExecution;
+  constructor() { }
 
-  address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-
-  constructor() {}
-
-
-  // #region  ============= ============= Allocation Strategy  ============= ============= //
-
-  function initialize(
-    IOps _ops,
-    ISuperToken _superToken,
-    ERC20mintable _token,
-    IPoolV1 _pool,
-    IPool _aavePool,
-    IERC20 _aToken,
-    ERC20mintable _aaveToken,
-    IPoolInternalV1 _poolInternal
-  ) external initializer {
+  function initialize(ISuperToken _superToken, ERC20Mintable _token, IPoolV1 _pool, IPool _aavePool, IERC20 _aToken, ERC20Mintable _aaveToken) external initializer {
     owner = msg.sender;
-    ops = _ops;
     superToken = _superToken;
     token = _token;
     pool = _pool;
-    poolInternal = _poolInternal;
-    POOL_BUFFER = 0; //_POOL_BUFFER;
     aavePool = _aavePool;
     aToken = _aToken;
     aaveToken = _aaveToken;
-    MAX_INT = 2**256 - 1;
+    MAX_INT = 2 ** 256 - 1;
 
     aaveToken.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
-    //depositTaskId = createDepositTask();
-
-    lastExecution = block.timestamp;
-    intervalExecution = 24 * 3600;
   }
 
-
-
-    function pauseTask() external onlyOwner {
-    if (depositTaskId != bytes32(0)) {
-      ops.cancelTask(depositTaskId);
-      depositTaskId = bytes32(0);
-    }
+  function balanceOf() public view returns (uint256 balance) {
+    balance = aToken.balanceOf(address(this)) * (10 ** 12);
   }
 
-  function launchTask() external onlyOwner {
-    if (depositTaskId != bytes32(0)) {
-      depositTaskId = createDepositTask();
-    }
-  }
-
-
-
-  function withdraw(uint256 amount, address _supplier) external onlyPoolInternal {
+  // #region  ============= ============= ONLY POOL FUNCTIONS  ============= ============= //
+  function withdraw(uint256 amount, address _supplier) external onlyPool {
     _withdraw(amount, _supplier);
   }
 
-  function _withdraw(uint256 amount, address _supplier) internal {
-    aavePool.withdraw(address(aaveToken), amount.div(10**12), address(this));
-
-    uint256 balanceToken = token.balanceOf(address(this));
-
-    if (balanceToken < amount) {
-      token.mint(address(this), amount - balanceToken);
-    }
-
-    superToken.upgrade(amount);
-
-    IERC20(address(superToken)).transfer(_supplier, amount);
+  function pushToStrategy(uint256 amountToDeposit) external onlyPool {
+    if (amountToDeposit > 0) _deposit(amountToDeposit);
   }
 
-  /// execute
-  function createDepositTask() internal returns (bytes32 taskId) {
-    bytes memory resolverData = abi.encodeWithSelector(this.checkerDeposit.selector);
+  // #endregion  ============= ============= ONLY POOL FUNCTIONS  ============= ============= //
 
-    bytes memory resolverArgs = abi.encode(address(this), resolverData);
 
-    LibDataTypes.Module[] memory modules = new LibDataTypes.Module[](1);
+   // #region =========== ================ EMERGENCY =========== ================ //
 
-    modules[0] = LibDataTypes.Module.RESOLVER;
+  function withdrawEmergency() external onlyOwner {
+        uint balance = aToken.balanceOf(address(this)) * (10 ** 12);
+        _withdraw(balance, address(pool));
 
-    bytes[] memory args = new bytes[](1);
-
-    args[0] = resolverArgs;
-
-    LibDataTypes.ModuleData memory moduleData = LibDataTypes.ModuleData(modules, args);
-
-    taskId = IOps(ops).createTask(address(this), abi.encodePacked(this.depositTask.selector), moduleData, ETH);
   }
 
-  // called by Gelato Execs
-  function checkerDeposit(uint256) external view returns (bool canExec, bytes memory execPayload) {
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
-
-    DataTypes.PoolV1 memory currentPool = poolInternal.getLastPool();
-
-    uint256 currentPoolBuffer = currentPool.outFlowBuffer;
-
-    uint256 currentThreshold = currentPoolBuffer;
-
-    int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
-
-    // if (netFlow < 0) {
-    //   currentThreshold = currentThreshold + ((lastExecution + intervalExecution) - block.timestamp) * uint256(-netFlow);
-    // }
+   // #endregion  =========== ================ EMERGENCY =========== ================ //
 
 
-    uint256 TRIGGER_AMOUNT = pool.getDepositTriggerAmount();
+  // #region  ============= ============= INTERNAL FUNCTIONS  ============= ============= //
 
-    currentThreshold = currentPoolBuffer.add(TRIGGER_AMOUNT);
-
-    uint256 TRIGGER_TIME = pool.getDepositTriggerTime();
-
-    canExec = uint256(balance) >= currentThreshold || block.timestamp > lastExecution + TRIGGER_TIME;
-
-    execPayload = abi.encodeWithSelector(this.depositTask.selector);
-  }
-
-  function depositTask() external onlyOps {
-    uint256 fee;
-    address feeToken;
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(pool));
-
-    uint256 currentPoolBuffer = poolInternal.getLastPool().outFlowBuffer;
-
-    uint256 TRIGGER_AMOUNT = pool.getDepositTriggerAmount();
-
-    uint256 currentThreshold = currentPoolBuffer.add(TRIGGER_AMOUNT);
-
-    uint256 TRIGGER_TIME = pool.getDepositTriggerTime();
-
-    require(uint256(balance) >= currentThreshold || block.timestamp > lastExecution + TRIGGER_TIME, "NOT_ENOUGH_FUNDS_TO DEPOSIT");
-
-    uint256 amountToDeposit = uint256(balance) - currentThreshold + TRIGGER_AMOUNT;
-
-    (fee, feeToken) = IOps(ops).getFeeDetails();
-
-    pool.transfer(fee, feeToken);
-
-    _deposit(amountToDeposit);
-  }
-
+  ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR aNR THE MINTING
   function _deposit(uint256 amountToDeposit) internal {
+
+
     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
 
     superToken.downgrade(amountToDeposit);
 
-    //poolInternal.pushedToStrategy(uint256(amountToDeposit));
+    // COMMENT
+    aaveToken.mint(amountToDeposit / (10 ** 12));
 
-    aaveToken.mint(amountToDeposit / (10**12));
-
-    aavePool.supply(address(aaveToken), amountToDeposit / (10**12), address(this), 0);
+    if (amountToDeposit / (10 ** 12) > 0) {
+      aavePool.supply(address(aaveToken), amountToDeposit / (10 ** 12), address(this), 0);
+    }
   }
 
+  ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR
+  function _withdraw(uint256 amount, address _supplier) internal {
+    if (amount.div(10 ** 12) > 0) {
+      aavePool.withdraw(address(aaveToken), amount.div(10 ** 12), address(this));
 
+      uint256 balanceToken = token.balanceOf(address(this));
 
-
-  function _balanceTreasury(uint256 balance, DataTypes.PoolV1 memory currentPool) internal {
-    uint256 currentPoolBuffer = currentPool.outFlowBuffer;
-
-    uint256 currentThreshold = currentPoolBuffer;
-
-    int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
-
-    if (netFlow < 0) {
-      currentThreshold = currentThreshold + ((lastExecution + intervalExecution) - block.timestamp) * uint96(-netFlow);
-    }
-
-    if (balance > currentThreshold) {
-      _deposit(balance - currentThreshold);
-    } else if (currentThreshold > balance) {
-      uint256 amountToWithdraw = currentThreshold - balance;
-
-      uint256 balanceAave = aToken.balanceOf(address(this)) * (10**12);
-
-      if (amountToWithdraw > balanceAave) {
-        amountToWithdraw = balanceAave;
+      if (balanceToken < amount) {
+        token.mint(address(this), amount - balanceToken);
       }
 
-      _withdraw(amountToWithdraw, address(pool));
+      superToken.upgrade(amount);
+
+      IERC20(address(superToken)).transfer(_supplier, amount);
     }
   }
 
-  function pushToStrategy(uint256 amountToDeposit) external onlyPoolInternal {
-
-      _deposit(amountToDeposit);
-    
-  }
-
-  function balanceOf() external view returns (uint256 balance) {
-    balance = aToken.balanceOf(address(this)) * (10**12);
-  }
-
-  // #endregion  ============= ============= Allocation Strategy  ============= ============= //
+  // #endregion  ============= ============= INTERNAL FUNCTIONS  ============= ============= //
 
   // #region  ==================  Upgradeable settings  ==================
 
@@ -262,7 +143,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
   // #endregion  ==================  Upgradeable settings  ==================
 
-  //#region modifiers
+  // #region   ==================  modifiers  ==================
 
   modifier onlyOwner() {
     require(msg.sender == owner, "Only Owner");
@@ -271,16 +152,6 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
   modifier onlyPool() {
     require(msg.sender == address(pool), "Only Pool Allowed");
-    _;
-  }
-
-  modifier onlyPoolInternal() {
-    require(msg.sender == address(poolInternal), "Only Internal Allowed");
-    _;
-  }
-
-  modifier onlyOps() {
-    require(msg.sender == address(ops), "OpsReady: onlyOps");
     _;
   }
 

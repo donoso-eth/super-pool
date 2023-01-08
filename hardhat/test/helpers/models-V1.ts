@@ -25,10 +25,7 @@ export interface IPOOL {
     totalYield: BigNumber;
     protocolYield:BigNumber;
     }
-    apy :  { 
-            span: BigNumber;
-            apy: BigNumber; 
-          }
+
   
   }
   
@@ -36,6 +33,7 @@ export interface  ITREASURY_RESULT {
   superToken:BigNumber,
   aave:BigNumber,
   yieldSnapshot:BigNumber,
+  id?:string
 }
 
 
@@ -109,7 +107,6 @@ export interface IPOOLS_RESULT {[key:number]:IPOOL_RESULT};
     poolAddress: string,
      superTokenContract: ISuperToken, 
      superPool:PoolV1,
-     poolInternal: PoolInternalV1,
      superTokenERC777: IERC777,
      ops?:IOps,
      strategyAddresse: string,

@@ -1,30 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+
 import "hardhat/console.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import {UUPSProxy} from "./upgradability/UUPSProxy.sol";
-import {UUPSProxiable} from "./upgradability/UUPSProxiable.sol";
-import {IUUPSProxiable} from "./upgradability/IUUPSProxiable.sol";
+import { ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { UUPSProxy } from "./upgradability/UUPSProxy.sol";
+import { UUPSProxiable } from "./upgradability/UUPSProxiable.sol";
+import { IUUPSProxiable } from "./upgradability/IUUPSProxiable.sol";
 
-import {IPoolV1} from "./interfaces/IPool-V1.sol";
-import {PoolV1} from "./Pool-V1.sol";
-import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
+import { IPoolV1 } from "./interfaces/IPool-V1.sol";
+import { PoolV1 } from "./Pool-V1.sol";
+import { IPoolInternalV1 } from "./interfaces/IPoolInternal-V1.sol";
 
-import {IOps} from "./gelato/IOps.sol";
+import { IOps } from "./gelato/IOps.sol";
 
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {Events} from "./libraries/Events.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
+import { DataTypes } from "./libraries/DataTypes.sol";
+import { Events } from "./libraries/Events.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { IPoolStrategyV1 } from "./interfaces/IPoolStrategy-V1.sol";
 
 contract SuperPoolFactory is Initializable, UUPSProxiable {
   using Counters for Counters.Counter;
+
   Counters.Counter public pools;
 
   ISuperfluid host;
@@ -69,26 +71,29 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     ERC20 token = ERC20(superToken.getUnderlyingToken());
     string memory tokenName = token.name();
     string memory symbol = token.symbol();
-
+    console.log(tokenName);
+    console.log(symbol);
+    console.logBytes32(bytes32(abi.encodePacked("sp", symbol)));
     /// Create Proxy Contracts
 
     UUPSProxy poolProxy = new UUPSProxy();
-
     poolProxy.initializeProxy(poolImpl);
 
-    UUPSProxy poolInternalProxy = new UUPSProxy();
-    poolInternalProxy.initializeProxy(poolInternalImpl);
+    // UUPSProxy poolInternalProxy = new UUPSProxy();
+    // poolInternalProxy.initializeProxy(poolInternalImpl);
+
+
 
     /////// Initializer Pool
     DataTypes.PoolInitializer memory poolInit;
     poolInit = DataTypes.PoolInitializer({
       id: pools.current(),
       name: string(abi.encodePacked("Super Pool ", tokenName)),
-      symbol: string(abi.encodePacked("sp ", symbol)),
+      symbol: string(abi.encodePacked("sp", symbol)),
       host: host,
       superToken: ISuperToken(poolInput.superToken),
       token: token,
-      poolInternal: IPoolInternalV1(address(poolInternalProxy)),
+      poolInternal: poolInternalImpl,
       poolStrategy: IPoolStrategyV1(poolInput.poolStrategy),
       ops: ops,
       owner: owner
@@ -100,22 +105,8 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     host.registerAppByFactory(ISuperApp(address(poolProxy)), configWord);
 
     //Initializer PoolInternal
-    DataTypes.PoolInternalInitializer memory internalInit;
-    internalInit = DataTypes.PoolInternalInitializer({
-      superToken: ISuperToken(poolInput.superToken),
-    pool: IPoolV1(address(poolProxy)), 
-    poolStrategy: IPoolStrategyV1(poolInput.poolStrategy),
-     ops: ops, owner: owner});
-    IPoolInternalV1(address(poolInternalProxy)).initialize(internalInit);
 
-    DataTypes.PoolInfo memory poolInfo = DataTypes.PoolInfo({
-      id: pools.current(),
-      idPerSupertoken: poolNrBysuperToken,
-      superToken: poolInput.superToken,
-      strategy: poolInput.poolStrategy,
-      pool: address(poolProxy),
-      poolInternal: address(poolInternalProxy)
-    });
+    DataTypes.PoolInfo memory poolInfo = DataTypes.PoolInfo({id: pools.current(), idPerSupertoken: poolNrBysuperToken, superToken: poolInput.superToken, strategy: poolInput.poolStrategy, pool: address(poolProxy), poolInternal: poolInternalImpl});
 
     poolInfoById[poolInfo.id] = poolInfo;
     poolIdBySuperTokenStrategy[poolInput.superToken][poolInput.poolStrategy] = poolInfo.id;
@@ -124,22 +115,14 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
 
   // #region============ Upgradeability ============= ============= =============  //
 
-  function changePoolImplementation(
-    address newImpl,
-    address superToken,
-    address poolStrategy
-  ) external onlyOwner {
+  function changePoolImplementation(address newImpl, address superToken, address poolStrategy) external onlyOwner {
     uint256 poolId = poolIdBySuperTokenStrategy[superToken][poolStrategy];
     DataTypes.PoolInfo memory poolInfo = poolInfoById[poolId];
     IUUPSProxiable(poolInfo.pool).updateCode(newImpl);
     poolImpl = newImpl;
   }
 
-  function changePoolInternalImplementation(
-    address newImpl,
-    address superToken,
-    address poolStrategy
-  ) external onlyOwner {
+  function changePoolInternalImplementation(address newImpl, address superToken, address poolStrategy) external onlyOwner {
     uint256 poolId = poolIdBySuperTokenStrategy[superToken][poolStrategy];
     DataTypes.PoolInfo memory poolInfo = poolInfoById[poolId];
     IUUPSProxiable(poolInfo.poolInternal).updateCode(newImpl);
@@ -169,9 +152,8 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
   }
   // #endregion View Functions
 
-  
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only Owner");
-        _;
-    }
+  modifier onlyOwner() {
+    require(msg.sender == owner, "Only Owner");
+    _;
+  }
 }

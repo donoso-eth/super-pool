@@ -6,17 +6,17 @@ import { PoolV1 } from "../../typechain-types/PoolV1";
 import { IOps } from "../../typechain-types";
 
 
-export const gelatoBalance= async (poolInternal: PoolInternalV1, ops:IOps, executor:SignerWithAddress) => {
+export const gelatoBalance= async (superPool: PoolV1, ops:IOps, executor:SignerWithAddress) => {
     
     const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
-    const resolverData =  poolInternal.interface.encodeFunctionData("checkerLastExecution");
+    const resolverData =  superPool.interface.encodeFunctionData("checkerLastExecution");
     const resolverArgs = utils.defaultAbiCoder.encode(
       ["address", "bytes"],
-      [poolInternal.address, resolverData]
+      [superPool.address, resolverData]
     );
 
-   let  execSelector =  poolInternal.interface.getSighash("balanceTreasury");
+   let  execData2 =  superPool.interface.encodeFunctionData("balanceTreasury")
     let moduleData = {
       modules: [0],
       args: [resolverArgs],
@@ -24,16 +24,16 @@ export const gelatoBalance= async (poolInternal: PoolInternalV1, ops:IOps, execu
 
     const FEE = utils.parseEther("0.01")
 
-    const [canExec, execData] = await poolInternal.checkerLastExecution();
+    const [canExec, execData] = await superPool.checkerLastExecution();
 
 
 
     await ops
       .connect(executor)
       .exec(
-        poolInternal.address,
-        poolInternal.address,
-        execData,
+        superPool.address,
+        superPool.address,
+        execData2,
         moduleData,
         FEE,
         ETH,
@@ -68,9 +68,9 @@ export const getTaskId = (
 };
 
 
-export const getGelatoCloStreamId = async ( poolInternal: PoolInternalV1, timestamp:number, interval:number, user:string) => {
+export const getGelatoCloStreamId = async (  superPool:PoolV1,timestamp:number, interval:number, user:string) => {
 
-  let  execSelector =  poolInternal.interface.getSighash("closeStreamFlow");
+  let  execSelector =  superPool.interface.getSighash("taskClose");
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
   const timeArgs = utils.defaultAbiCoder.encode(
     ["uint256", "uint256"],
@@ -83,8 +83,8 @@ export const getGelatoCloStreamId = async ( poolInternal: PoolInternalV1, timest
   };
 
   let taskId = getTaskId(
-  poolInternal.address,
-  poolInternal.address,
+  superPool.address,
+  superPool.address,
   execSelector,
   moduleData,
   ETH
@@ -93,11 +93,11 @@ export const getGelatoCloStreamId = async ( poolInternal: PoolInternalV1, timest
 
 }
 
-export const getGelatoCloStream = async ( poolInternal: PoolInternalV1, nextExec:number, interval:number,user:string,ops:IOps, executor:SignerWithAddress) => {
+export const getGelatoCloStream = async (superPool:PoolV1, nextExec:number, interval:number,user:string,ops:IOps, executor:SignerWithAddress) => {
 
-  let  execSelector =  poolInternal.interface.getSighash("closeStreamFlow");
+  let  execSelector =  superPool.interface.getSighash("taskClose");
 
-  let execData = poolInternal.interface.encodeFunctionData("closeStreamFlow",[user] )
+  let execData = superPool.interface.encodeFunctionData("taskClose",[user] )
   const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
   const FEE = utils.parseEther("0.01")
   const timeArgs = utils.defaultAbiCoder.encode(
@@ -114,8 +114,8 @@ export const getGelatoCloStream = async ( poolInternal: PoolInternalV1, nextExec
   await ops
   .connect(executor)
   .exec(
-    poolInternal.address,
-    poolInternal.address,
+    superPool.address,
+    superPool.address,
     execData,
     moduleData,
     FEE,

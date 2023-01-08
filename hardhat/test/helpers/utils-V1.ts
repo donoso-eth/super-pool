@@ -8,21 +8,33 @@ import { ERC20, IOps, ISuperfluidToken, PoolInternalV1, PoolV1,  } from '../../t
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import { ICONTRACTS_TEST, IPOOL, IPOOL_RESULT, ITREASURY_RESULT, IUSERS_TEST, IUSERTEST, IUSER_CHECK } from './models-V1';
-import { PoolV1StructOutput } from '../../typechain-types/IPoolV1';
+import { writeFileSync } from 'fs-extra';
+import { join } from 'path';
 
 export const fromBnToNumber = (x: BigNumber) => {
   return +x.toString();
 };
 
+let i = 1;
+
+const processDir = process.cwd();
+
 export const testTreasury = async (timestamp:BigNumber, 
  expected: ITREASURY_RESULT, 
-  contracts:ICONTRACTS_TEST) => {
+  contracts:ICONTRACTS_TEST, folder: string) => {
   
-  let yieldPool = await contracts.poolInternal.getLastPool();
+  let yieldPool = await contracts.superPool.getLastPool();
   let yieldSnapshot = yieldPool.yieldObject.yieldSnapshot;
 
   let poolBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
   let aaveBalance = (await contracts.aaveERC20.balanceOf(contracts.strategyAddresse));
+
+  console.log(33,aaveBalance.toString())
+
+expected.id = i.toString()
+i++;
+
+printToJson(expected, 'treasury',folder)
 
 
   console.log('\x1b[31m%s\x1b[0m', '     =====   TREASURY   =============================');
@@ -68,23 +80,26 @@ export const testTreasury = async (timestamp:BigNumber,
   console.log('\x1b[32m%s\x1b[0m',  '    $', `\x1b[30m#Yield Pending: ${(aaveBalance.sub(expected.yieldSnapshot.div(10**12))).toString()}`);
 
 
-
-
-
 }
 
 
-export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESULT, contracts: ICONTRACTS_TEST, users: IUSERS_TEST) => {
+export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESULT, contracts: ICONTRACTS_TEST, users: IUSERS_TEST, folder:string) => {
   
   // #region POOL
 
   let poolBalance = await contracts.superTokenContract.realtimeBalanceOfNow(contracts.poolAddress);
   let aaveBalance = (await contracts.aaveERC20.balanceOf(contracts.strategyAddresse));
 
+
+  expected.aaveBalance = aaveBalance;
+  expected.poolBalance = poolBalance.availableBalance;
+
   let poolTotalBalance  = (poolBalance.availableBalance.div(10**12)).add(aaveBalance);
 
   console.log('\x1b[31m%s\x1b[0m', '     =====   POOL     =============================');
-  let result: IPOOL = await getPool(contracts.poolInternal);
+  let result: IPOOL = await getPool(contracts.superPool);
+
+  printToJson(expected,'expected',folder)
 
   if (expected.id != undefined) {
     try {
@@ -308,9 +323,10 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   for (const user of checkUsers ) {
     let userRealtimeBalance = await contracts.superPool.balanceOf(user.address);
     let userTokenBalance = await contracts.superTokenERC777.balanceOf(user.address);
-    let userState = await contracts.poolInternal.suppliersByAddress(user.address);
+    let userState = await contracts.superPool.getSupplier(user.address);
     let periodSpan = BigNumber.from(tx).sub(userState.timestamp.sub(t0));
-
+    
+    printToJson(user.expected,  expected.id+  '-user-expected',folder)
 
     console.log('\x1b[35m%s\x1b[0m', `     =====   ${user.name} =========================`);
 
@@ -439,9 +455,9 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   }
 };
 
-export const getPool = async (poolInternal: PoolInternalV1): Promise<any> => {
-  let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
-  let periodRaw = await poolInternal.poolByTimestamp(periodTimestamp);
+export const getPool = async (superPool:PoolV1): Promise<any> => {
+  let periodTimestamp = +(await superPool.getLastTimestamp()).toString();
+  let periodRaw = await superPool.getPool(periodTimestamp);
 
   let pool: IPOOL = {
     id: periodRaw.id,
@@ -452,8 +468,7 @@ export const getPool = async (poolInternal: PoolInternalV1): Promise<any> => {
     outFlowBuffer: periodRaw.outFlowBuffer,
     depositFromInFlowRate: periodRaw.depositFromInFlowRate,
     depositFromOutFlowRate: periodRaw.depositFromOutFlowRate,
-    yieldObject:periodRaw.yieldObject,
-    apy: { span: periodRaw.apy.span, apy: periodRaw.apy.apy },
+    yieldObject:periodRaw.yieldObject
   };
   return pool;
 };
@@ -519,9 +534,9 @@ export const printUserResult = async (user: IUSERTEST): Promise<any> => {
   return user;
 };
 
-export const printPool = async (poolInternal: PoolInternalV1, t0: number): Promise<any> => {
-  let periodTimestamp = +(await poolInternal.lastPoolTimestamp()).toString();
-  let period = await poolInternal.getPool(periodTimestamp);
+export const printPool = async (superPool:PoolV1, t0: number): Promise<any> => {
+  let periodTimestamp = +(await superPool.getLastTimestamp()).toString();
+  let period = await superPool.getPool(periodTimestamp);
   console.log(period.timestamp.toString());
 
   console.log('\x1b[36m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXX   PERIOD    XXXXXXXXXXXXXXXXXXXXX');
@@ -550,7 +565,6 @@ export const printUser = async (superPool: PoolV1, userAddress: string): Promise
   console.log(`Out-Flow Stem Time ${user.outStream.streamDuration.toString()} `);
   console.log(`Deposit ${user.deposit.toString()}  units`);
   console.log(`TimeStamp ${user.timestamp.toString()}  units`);
-  console.log(`Cumulative Yield: ${user.cumulatedYield.toString()}  units`);
   console.log('\x1b[32m%s\x1b[0m', 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
 
   return user;
@@ -651,6 +665,23 @@ function matchRecursiveArray(expected: Array<any>, params: Array<any>) {
     }
   }
   return invalidParamsButExists;
+}
+
+
+export const printToJson = async (jsonObj:any,key:string,folder: string) => {
+
+let printObj:any = {};
+
+Object.keys(jsonObj).forEach((key:any)=> {
+
+  let value = jsonObj[key].toString()
+  printObj[key] = value;
+
+})  
+
+writeFileSync(join(processDir,'expected',folder,`${key + jsonObj.id.toString()}.json`),JSON.stringify(printObj))
+
+
 }
 
 ////// BLOCKCHAIN
