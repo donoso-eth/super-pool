@@ -1,79 +1,80 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
-import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
+import { ISuperfluid, ISuperAgreement, ISuperToken, ISuperApp, SuperAppDefinitions } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { CFAv1Library } from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
+import { IConstantFlowAgreementV1 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 
-import {IOps} from "./gelato/IOps.sol";
-import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
-import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
+import { IOps } from "./gelato/IOps.sol";
+import { IPoolInternalV1 } from "./interfaces/IPoolInternal-V1.sol";
+import { IPoolStrategyV1 } from "./interfaces/IPoolStrategy-V1.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {Events} from "./libraries/Events.sol";
-
+import { DataTypes } from "./libraries/DataTypes.sol";
+import { Events } from "./libraries/Events.sol";
 
 contract PoolStateV1 {
+  bool emergency = false;
 
-    
-    uint256 public lastPoolTimestamp;
-    uint256 public lastExecution;
+  //ERC20
 
-    // #region pool state
+  mapping(address => uint256) public _balances;
 
-    address public owner;
-    address public poolFactory;
+  mapping(address => mapping(address => uint256)) public _allowances;
 
-    //// TOKENS
-    ISuperToken superToken;
-    IERC20 token;
+  uint256 public _totalSupply;
 
-    //// SUPERFLUID
-   
-    //// GELATO
-    IOps public ops;
-    address payable public gelato;
-    address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    bytes32 public balanceTreasuryTask;
+  string public _name;
+  string public _symbol;
 
-    //// PARAMETERS
+  // #region pool state
 
-    uint256 MAX_INT;
+  address owner;
+  address poolFactory;
 
-    uint256 public PRECISSION;
+  uint256 lastPoolTimestamp;
+  uint256 lastExecution;
+  //// TOKENS
+  ISuperToken superToken;
+  IERC20 token;
 
-    uint256 public SUPERFLUID_DEPOSIT;
-    uint256 public POOL_BUFFER; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
-    uint256 public MIN_OUTFLOW_ALLOWED; // 1 hour minimum flow == Buffer
+  //// SUPERFLUID
 
-    uint256 public DEPOSIT_TRIGGER_AMOUNT;
-    uint256 public BALANCE_TRIGGER_TIME;
+  //// GELATO
+  IOps public ops;
+  address payable public gelato;
+  address public constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+  bytes32 public balanceTreasuryTask;
 
-    uint256 public PROTOCOL_FEE;
+  //// PARAMETERS
 
-    address public poolStrategy;
-    address  public poolInternal;
+  uint256 constant MAX_INT = 2 ** 256 - 1;
 
+  uint256 constant PRECISSION = 1_000_000;
 
+  uint256 constant SUPERFLUID_DEPOSIT = 4 * 3600;
+  uint256 constant POOL_BUFFER = 3600; // buffer to keep in the pool (outstream 4hours deposit) + outstream partial deposits
+  uint256 constant MIN_OUTFLOW_ALLOWED = 24 * 3600; // 1 hour minimum flow == Buffer
 
-    /// POOL STATE
+  uint256 constant DEPOSIT_TRIGGER_AMOUNT = 100 ether;
+  uint256 constant BALANCE_TRIGGER_TIME = 24 * 3600;
 
-    uint256 public poolId;
-    uint256 public supplierId;
+  uint256 constant PROTOCOL_FEE = 3;
 
-    mapping(address => DataTypes.Supplier) public suppliersByAddress;
+  address public poolStrategy;
+  address public poolInternal;
 
-    mapping(uint256 => DataTypes.PoolV1) public poolByTimestamp;
+  /// POOL STATE
 
+  uint256 poolId;
+  uint256 supplierId;
 
-  
-    CFAv1Library.InitData public _cfaLib;
-    ISuperfluid public host; // host
-    IConstantFlowAgreementV1 public cfa; // the stored constant flow agreement class address
+  mapping(address => DataTypes.Supplier) suppliersByAddress;
 
+  mapping(uint256 => DataTypes.Pool) poolByTimestamp;
 
-
-
+  CFAv1Library.InitData _cfaLib;
+  ISuperfluid host; // host
+  IConstantFlowAgreementV1 cfa; // the stored constant flow agreement class address
 }

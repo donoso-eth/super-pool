@@ -1,9 +1,9 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {DataTypes} from "../libraries/DataTypes.sol";
-import {ISuperfluid, ISuperToken} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { DataTypes } from "../libraries/DataTypes.sol";
+import { ISuperfluid, ISuperToken } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IPoolV1 {
   // ====================== Called only once by deployment ===========================
@@ -19,14 +19,7 @@ interface IPoolV1 {
    * @param from Supplier (user sending tokens)
    * @param amount amount received
    */
-  function tokensReceived(
-    address operator,
-    address from,
-    address to,
-    uint256 amount,
-    bytes calldata userData,
-    bytes calldata operatorData
-  ) external;
+  function tokensReceived(address operator, address from, address to, uint256 amount, bytes calldata userData, bytes calldata operatorData) external;
 
   /**
    * @notice User interactipn
@@ -38,7 +31,7 @@ interface IPoolV1 {
    * @notice User starts a flow to be
    * @param _outFlowRate outflowrate to receive from the pool
    *
-   ***    This method can be called to create a stream or update a previous one
+   *    This method can be called to create a stream or update a previous one
    */
   function redeemFlow(int96 _outFlowRate) external;
 
@@ -63,9 +56,9 @@ interface IPoolV1 {
 
   // #region =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
-  function getPool(uint256 timestamp) external view returns (DataTypes.PoolV1 memory);
+  function getPool(uint256 timestamp) external view returns (DataTypes.Pool memory);
 
-  function getLastPool() external view returns (DataTypes.PoolV1 memory);
+  function getLastPool() external view returns (DataTypes.Pool memory);
 
   function getLastTimestamp() external view returns (uint256);
 
@@ -78,12 +71,6 @@ interface IPoolV1 {
   // #endregion =========== =============  PUBLIC VIEW FUNCTIONS  ============= ============= //
 
   // #region =========== =============  PARAMETERS ONLY OWNER  ============= ============= //
-
-  function setPoolBuffer(uint256 _poolBuffer) external;
-
-  function setDepositTriggerAmount(uint256 _amount) external;
-
-  function setDepositTriggerTime(uint256 _time) external;
 
   function setInternalContract(address _poolInternal) external;
   // #endregion =========== =============  PARAMETERS ONLY OWNER  ============= ============= //

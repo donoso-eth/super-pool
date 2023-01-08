@@ -1,25 +1,25 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {ISuperToken, ISuperfluid} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
-import {CFAv1Library} from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
-import {IConstantFlowAgreementV1} from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
+import { ISuperToken, ISuperfluid } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/superfluid/ISuperfluid.sol";
+import { CFAv1Library } from "@superfluid-finance/ethereum-contracts/contracts/apps/CFAv1Library.sol";
+import { IConstantFlowAgreementV1 } from "@superfluid-finance/ethereum-contracts/contracts/interfaces/agreements/IConstantFlowAgreementV1.sol";
 
-import {IOps} from "./gelato/IOps.sol";
-import {LibDataTypes} from "./gelato/LibDataTypes.sol";
+import { IOps } from "./gelato/IOps.sol";
+import { LibDataTypes } from "./gelato/LibDataTypes.sol";
 
-import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
-import {IPoolV1} from "./interfaces/IPool-V1.sol";
+import { IPoolStrategyV1 } from "./interfaces/IPoolStrategy-V1.sol";
+import { IPoolV1 } from "./interfaces/IPool-V1.sol";
 
-import {DataTypes} from "./libraries/DataTypes.sol";
-import {Events} from "./libraries/Events.sol";
+import { DataTypes } from "./libraries/DataTypes.sol";
+import { Events } from "./libraries/Events.sol";
 
-import {PoolStateV1} from "./PoolState-V1.sol";
+import { PoolStateV1 } from "./PoolState-V1.sol";
 
 contract PoolInternalV1 is PoolStateV1 {
   using SafeMath for uint256;
@@ -31,7 +31,9 @@ contract PoolInternalV1 is PoolStateV1 {
     ///// suppler config updated && pool
 
     _updateSupplierDeposit(_supplier, amount, 0);
-    _balanceTreasury();
+    DataTypes.Pool memory pool = poolByTimestamp[block.timestamp];
+    pool = _balanceTreasury(pool);
+    poolByTimestamp[block.timestamp] = pool;
   }
 
   function _redeemDeposit(address _supplier, uint256 redeemAmount) external {
@@ -40,22 +42,27 @@ contract PoolInternalV1 is PoolStateV1 {
     require(balance >= redeemAmount, "NOT_ENOUGH_BALANCE");
 
     _updateSupplierDeposit(_supplier, 0, redeemAmount);
-
-    _withdrawTreasury(_supplier, _supplier, redeemAmount);
+    DataTypes.Pool memory pool = poolByTimestamp[block.timestamp];
+    pool = _withdrawTreasury(_supplier, _supplier, redeemAmount, pool);
+    poolByTimestamp[block.timestamp] = pool;
   }
 
   function _redeemFlow(address _supplier, int96 _outFlowRate) external {
     bytes memory placeHolder = "0x";
 
     _updateSupplierFlow(_supplier, 0, _outFlowRate, placeHolder);
+
+    console.log(55, superToken.balanceOf(address(this)));
   }
 
   function _redeemFlowStop(address _supplier) external {
     _updateSupplierFlow(_supplier, 0, 0, "0x");
-    _balanceTreasury();
+    DataTypes.Pool memory pool = poolByTimestamp[block.timestamp];
+    pool = _balanceTreasury(pool);
+    poolByTimestamp[block.timestamp] = pool;
   }
 
-  function _closeAccount() external onlyPool {}
+  function _closeAccount() external onlyPool { }
 
   // #endregion User Interaction PoolEvents
 
@@ -69,12 +76,14 @@ contract PoolInternalV1 is PoolStateV1 {
 
   // #region =========== =============  POOL UPDATE ============= ============= //
 
-  /**************************************************************************
+  /**
+   *
    * Pool Update
    *
-   *************************************************************************/
+   *
+   */
   function _poolUpdate() public {
-    DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+    DataTypes.Pool memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
@@ -83,7 +92,7 @@ contract PoolInternalV1 is PoolStateV1 {
     if (periodSpan > 0) {
       poolId++;
 
-      DataTypes.PoolV1 memory pool = DataTypes.PoolV1(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0, 0), DataTypes.APY(0, 0));
+      DataTypes.Pool memory pool = DataTypes.Pool(poolId, block.timestamp, 0, 0, 0, 0, 0, 0, 0, DataTypes.Yield(0, 0, 0, 0, 0, 0, 0));
 
       pool.depositFromInFlowRate = uint96(lastPool.inFlowRate) * PRECISSION * periodSpan + lastPool.depositFromInFlowRate;
       pool.depositFromOutFlowRate = uint96(lastPool.outFlowRate) * PRECISSION * periodSpan + lastPool.depositFromOutFlowRate;
@@ -100,15 +109,6 @@ contract PoolInternalV1 is PoolStateV1 {
 
       pool.yieldObject.totalYield = lastPool.yieldObject.totalYield + pool.yieldObject.yieldAccrued;
 
-      /// apy to be refined
-      pool.apy.span = lastPool.apy.span + periodSpan;
-
-      uint256 periodBalance = lastPool.deposit.add(lastPool.depositFromInFlowRate).add(lastPool.outFlowBuffer);
-
-      uint256 periodApy = periodBalance == 0 ? 0 : pool.yieldObject.yieldAccrued.mul(365 * 24 * 3600 * 100).div(periodBalance);
-
-      pool.apy.apy = ((periodApy).add(lastPool.apy.span.mul(lastPool.apy.apy))).div(pool.apy.span);
-
       (pool.yieldObject.yieldTokenIndex, pool.yieldObject.yieldInFlowRateIndex, pool.yieldObject.yieldOutFlowRateIndex) = _calculateIndexes(pool.yieldObject.yieldAccrued, lastPool);
       pool.yieldObject.yieldTokenIndex = pool.yieldObject.yieldTokenIndex + lastPool.yieldObject.yieldTokenIndex;
       pool.yieldObject.yieldInFlowRateIndex = pool.yieldObject.yieldInFlowRateIndex + lastPool.yieldObject.yieldInFlowRateIndex;
@@ -123,23 +123,23 @@ contract PoolInternalV1 is PoolStateV1 {
       lastPoolTimestamp = block.timestamp;
     }
 
-    console.log("pool_update");
+    console.log("pool_ka_update");
   }
 
   // #endregion POOL UPDATE
 
   // #region =========== =============  Internal Supplier Update ============= ============= //
 
-  function _getSupplier(address _supplier) internal returns (DataTypes.Supplier storage) {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
+  function _getSupplier(address _supplier) internal returns (DataTypes.Supplier memory) {
+    DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
 
-    if (supplier.createdTimestamp == 0) {
-      supplier.createdTimestamp = block.timestamp;
+    if (supplier.timestamp == 0) {
       supplier.supplier = _supplier;
       supplier.timestamp = block.timestamp;
       supplierId = supplierId + 1;
       supplier.id = supplierId;
       poolByTimestamp[block.timestamp].nrSuppliers++;
+      suppliersByAddress[_supplier] = supplier;
     }
 
     return supplier;
@@ -168,8 +168,8 @@ contract PoolInternalV1 is PoolStateV1 {
    *
    */
   function _supplierUpdateCurrentState(address _supplier) internal {
-    DataTypes.Supplier storage supplier = _getSupplier(_supplier);
-    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.Supplier memory supplier = _getSupplier(_supplier);
+    DataTypes.Pool memory pool = poolByTimestamp[block.timestamp];
 
     if (supplier.timestamp < block.timestamp) {
       uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier, IPoolStrategyV1(poolStrategy).balanceOf());
@@ -191,6 +191,8 @@ contract PoolInternalV1 is PoolStateV1 {
       pool.deposit = yieldSupplier + pool.deposit;
       supplier.deposit = supplier.deposit + yieldSupplier;
       supplier.timestamp = block.timestamp;
+      poolByTimestamp[block.timestamp] = pool;
+      suppliersByAddress[_supplier] = supplier;
     }
   }
 
@@ -204,16 +206,12 @@ contract PoolInternalV1 is PoolStateV1 {
    * @dev  it update the pool, update the suppleir record and apply the changes to the pool
    *
    */
-  function _updateSupplierDeposit(
-    address _supplier,
-    uint256 inDeposit,
-    uint256 outDeposit
-  ) internal {
+  function _updateSupplierDeposit(address _supplier, uint256 inDeposit, uint256 outDeposit) internal {
     _poolUpdate();
 
     _supplierUpdateCurrentState(_supplier);
 
-    DataTypes.Supplier storage supplier = _getSupplier(_supplier);
+    DataTypes.Supplier memory supplier = _getSupplier(_supplier);
 
     if (supplier.outStream.flow > 0) {
       cancelTask(supplier.outStream.cancelWithdrawId);
@@ -226,7 +224,7 @@ contract PoolInternalV1 is PoolStateV1 {
         require(streamDuration >= 24 * 3600, "NOT_ENOUGH_BALANCE_WITH_OUTFLOW");
         supplier.outStream.streamDuration = streamDuration;
         supplier.outStream.streamInit = block.timestamp;
-        suppliersByAddress[_supplier].outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
+        supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
       } else if (inDeposit > 0) {
         uint256 currentEndTime = supplier.outStream.streamInit + supplier.outStream.streamDuration;
         uint256 addTime = inDeposit.div(uint96(supplier.outStream.flow));
@@ -236,7 +234,7 @@ contract PoolInternalV1 is PoolStateV1 {
     }
 
     supplier.deposit = supplier.deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
-
+    suppliersByAddress[_supplier] = supplier;
     poolByTimestamp[block.timestamp].deposit = poolByTimestamp[block.timestamp].deposit + inDeposit * PRECISSION - outDeposit * PRECISSION;
   }
 
@@ -265,20 +263,17 @@ contract PoolInternalV1 is PoolStateV1 {
    *       6) user stops redeeming flow --> update record and stop the superfluid stream
    *
    */
-  function _updateSupplierFlow(
-    address _supplier,
-    int96 inFlow,
-    int96 outFlow,
-    bytes memory _ctx
-  ) public returns (bytes memory newCtx) {
+  function _updateSupplierFlow(address _supplier, int96 inFlow, int96 outFlow, bytes memory _ctx) public returns (bytes memory newCtx) {
     newCtx = _ctx;
-
+    console.log(269, superToken.balanceOf(address(this)));
     _poolUpdate();
 
     _supplierUpdateCurrentState(_supplier);
 
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
+    console.log(474, superToken.balanceOf(address(this)));
+
+    DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
+    DataTypes.Pool memory pool = poolByTimestamp[block.timestamp];
 
     int96 currentNetFlow = supplier.inStream - supplier.outStream.flow;
     int96 newNetFlow = inFlow - outFlow;
@@ -302,33 +297,37 @@ contract PoolInternalV1 is PoolStateV1 {
         uint256 oldOutFlowBuffer = POOL_BUFFER.mul(uint96(-currentNetFlow));
         pool.outFlowBuffer -= oldOutFlowBuffer;
         supplier.outStream = DataTypes.OutStream(0, 0, 0, bytes32(0));
-        _balanceTreasury();
+        pool = _balanceTreasury(pool);
       } else {
         pool.outFlowRate = pool.outFlowRate + currentNetFlow - newNetFlow;
 
-        _outStreamHasChanged(_supplier, -newNetFlow);
+        (pool, supplier) = _outStreamHasChanged(supplier, -newNetFlow, pool);
       }
     } else {
       /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW THE SAME
-
+      console.log(309, superToken.balanceOf(address(this)));
       if (newNetFlow >= 0) {
         pool.inFlowRate = pool.inFlowRate - currentNetFlow + inFlow;
 
-        _balanceTreasury();
+        pool = _balanceTreasury(pool);
       } else {
         /// PREVIOUS FLOW NOT EXISTENT OR POSITIVE AND CURRENT FLOW NEGATIVE
-
+        console.log(316, superToken.balanceOf(address(this)));
         if (currentNetFlow > 0) {
           _cfaLib.deleteFlow(_supplier, address(this), superToken);
         }
+        console.log(320, superToken.balanceOf(address(this)));
         pool.outFlowRate += -newNetFlow;
         pool.inFlowRate -= currentNetFlow;
-        _outStreamHasChanged(_supplier, -newNetFlow);
+        console.log(322, superToken.balanceOf(address(this)));
+        (pool, supplier) = _outStreamHasChanged(supplier, -newNetFlow, pool);
       }
     }
 
     supplier.inStream = inFlow;
     supplier.outStream.flow = outFlow;
+    suppliersByAddress[_supplier] = supplier;
+    poolByTimestamp[block.timestamp] = pool;
   }
 
   // #endregion
@@ -352,13 +351,19 @@ contract PoolInternalV1 is PoolStateV1 {
     taskId = IOps(ops).createTask(address(this), abi.encodePacked(IPoolV1.balanceTreasury.selector), moduleData, ETH);
   }
 
-  function _balanceTreasury() public {
+  function _balanceTreasuryFromGelato() public {
+    DataTypes.Pool memory pool = poolByTimestamp[lastPoolTimestamp];
+    pool = _balanceTreasury(pool);
+    poolByTimestamp[lastPoolTimestamp] = pool;
+  }
+
+  function _balanceTreasury(DataTypes.Pool memory currentPool) public returns (DataTypes.Pool memory) {
     lastExecution = block.timestamp;
 
-    (int256 balance, , , ) = superToken.realtimeBalanceOfNow(address(this));
+    (int256 balance,,,) = superToken.realtimeBalanceOfNow(address(this));
 
-    if (balance > 0) {} else {}
-    DataTypes.PoolV1 storage currentPool = poolByTimestamp[lastPoolTimestamp];
+    // if (balance > 0) { } else { }
+    //DataTypes.Pool storage currentPool = poolByTimestamp[lastPoolTimestamp];
 
     uint256 currentThreshold = currentPool.outFlowBuffer;
 
@@ -385,6 +390,7 @@ contract PoolInternalV1 is PoolStateV1 {
 
       currentPool.yieldObject.yieldSnapshot -= amountToWithdraw;
     }
+    return currentPool;
   }
 
   /**
@@ -399,21 +405,18 @@ contract PoolInternalV1 is PoolStateV1 {
    *       else if (_supplier != _receiver) the tokens are transferred to the superpool to ensure the out flows
    *
    */
-  function _withdrawTreasury(
-    address _supplier,
-    address _receiver,
-    uint256 withdrawAmount
-  ) internal {
+  function _withdrawTreasury(address _supplier, address _receiver, uint256 withdrawAmount, DataTypes.Pool memory pool) internal returns (DataTypes.Pool memory) {
+    console.log(407, superToken.balanceOf(address(this)));
     lastExecution = block.timestamp;
-    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
-    uint256 currentPoolBuffer = pool.outFlowBuffer;
+    // DataTypes.Pool storage pool = poolByTimestamp[block.timestamp];
 
-    uint256 currentThreshold = currentPoolBuffer;
+    uint256 currentThreshold = pool.outFlowBuffer;
+    uint256 outFlowBuffer = 0;
 
     int96 netFlow = pool.inFlowRate - pool.outFlowRate;
 
     if (netFlow < 0) {
-      currentThreshold = currentThreshold + (BALANCE_TRIGGER_TIME) * uint96(-netFlow);
+      outFlowBuffer = (BALANCE_TRIGGER_TIME) * uint96(-netFlow);
     }
     //// calculate if any remaining balance of supertokens is inthe pool (push to strategy not yet ran)
     uint256 poolAvailable = 0;
@@ -423,16 +426,23 @@ contract PoolInternalV1 is PoolStateV1 {
     }
 
     //// if enough in the pool is available then not go to the pool strategy
-    if (poolAvailable >= withdrawAmount) {
+    if (poolAvailable >= withdrawAmount + outFlowBuffer) {
       //// if the withdrawal is to supplier then we must transfer
 
       if (_supplier == _receiver) {
         IERC20(address(superToken)).transfer(_receiver, withdrawAmount);
       }
 
-      if (poolAvailable > withdrawAmount) {
-        IPoolStrategyV1(poolStrategy).pushToStrategy(poolAvailable - withdrawAmount);
-        pool.yieldObject.yieldSnapshot += poolAvailable - withdrawAmount;
+      if (poolAvailable > withdrawAmount + outFlowBuffer) {
+        console.log(432, poolAvailable);
+        console.log(433, withdrawAmount + outFlowBuffer);
+        console.log(436, superToken.balanceOf(address(this)));
+        console.log(436, superToken.balanceOf(address(this)) - (withdrawAmount + outFlowBuffer));
+        IPoolStrategyV1(poolStrategy).pushToStrategy(poolAvailable - (withdrawAmount + outFlowBuffer));
+
+        console.log(436, superToken.balanceOf(address(this)));
+
+        pool.yieldObject.yieldSnapshot += poolAvailable - (withdrawAmount + outFlowBuffer);
       }
 
       //// in the case the withdraw receiver is the pool, we don0t have to do anything as there is enoguh balance
@@ -441,7 +451,7 @@ contract PoolInternalV1 is PoolStateV1 {
 
       uint256 balance = IPoolStrategyV1(poolStrategy).balanceOf();
 
-      uint256 fromStrategy = withdrawAmount - poolAvailable;
+      uint256 fromStrategy = (withdrawAmount + outFlowBuffer) - poolAvailable;
 
       uint256 correction;
       if (fromStrategy > balance) {
@@ -459,9 +469,12 @@ contract PoolInternalV1 is PoolStateV1 {
       } else {
         IPoolStrategyV1(poolStrategy).withdraw(fromStrategy, _receiver);
         pool.yieldObject.yieldSnapshot = pool.yieldObject.yieldSnapshot - fromStrategy;
-        IERC20(address(superToken)).transfer(_receiver, poolAvailable);
+        if (_supplier == _receiver) {
+          IERC20(address(superToken)).transfer(_receiver, poolAvailable);
+        }
       }
     }
+    return pool;
   }
 
   // #endregion  ============= =============  TREASURY ============= ============= //
@@ -471,41 +484,52 @@ contract PoolInternalV1 is PoolStateV1 {
   /**
    * @notice internal call from updteSupplierFlow() when a redeemflow has been started or updated
    *
-   * @param _supplier supplier's address
+   * @param supplier supplier
    * @param newOutFlow supplier's new Outflow
    *
    * @dev  if the outflow does not exist, will be created, if does, will be updted
    */
-  function _outStreamHasChanged(address _supplier, int96 newOutFlow) internal {
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
+  function _outStreamHasChanged(DataTypes.Supplier memory supplier, int96 newOutFlow, DataTypes.Pool memory pool) internal returns (DataTypes.Pool memory, DataTypes.Supplier memory) {
+    // DataTypes.Supplier storage supplier = suppliersByAddress[supplier.supplier];
+    // DataTypes.Pool memory pool = poolByTimestamp[block.timestamp];
 
-    uint256 userBalance = _getSupplierBalance(_supplier).div(PRECISSION);
+    console.log(496, superToken.balanceOf(address(this)));
+
+    uint256 userBalance = _getSupplierBalance(supplier.supplier).div(PRECISSION);
+    console.log(487, userBalance);
 
     uint256 outFlowBuffer = POOL_BUFFER.mul(uint96(newOutFlow));
+
     uint256 initialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(newOutFlow));
+    console.log(493, initialWithdraw);
     uint256 streamDuration = userBalance.sub(outFlowBuffer.add(initialWithdraw)).div(uint96(newOutFlow));
 
     if (supplier.outStream.flow == 0) {
       if (streamDuration < 24 * 3600) {
-        revert("No sufficent funds");
+        revert("INSUFFICIENT_FUNDS");
       }
 
       pool.outFlowBuffer += outFlowBuffer;
-      supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
+
+      supplier.outStream.cancelWithdrawId = _createCloseStreamTask(supplier.supplier, streamDuration);
+
       supplier.outStream.streamInit = block.timestamp;
 
-      _withdrawTreasury(_supplier, address(this), initialWithdraw);
+      pool = _withdrawTreasury(supplier.supplier, address(this), initialWithdraw, pool);
 
       supplier.outStream.streamDuration = streamDuration;
-      _cfaLib.createFlow(_supplier, superToken, newOutFlow);
+
+      _cfaLib.createFlow(supplier.supplier, superToken, newOutFlow);
+
+      // uint256 bal = superToken.balanceOf(address(this));
+      //(int256 realBal, uint256 deposit,,) = superToken.realtimeBalanceOfNow(address(this));
     } else if (supplier.outStream.flow > 0 && supplier.outStream.flow != newOutFlow) {
       if (streamDuration < 24 * 3600) {
         revert("No sufficent funds");
       }
       _cancelTask(supplier.outStream.cancelWithdrawId);
 
-      supplier.outStream.cancelWithdrawId = _createCloseStreamTask(_supplier, streamDuration);
+      supplier.outStream.cancelWithdrawId = _createCloseStreamTask(supplier.supplier, streamDuration);
       supplier.outStream.streamDuration = streamDuration;
       supplier.outStream.streamInit = block.timestamp;
 
@@ -513,22 +537,23 @@ contract PoolInternalV1 is PoolStateV1 {
         uint256 decreaseBuffer = POOL_BUFFER.mul(uint96(supplier.outStream.flow - newOutFlow));
 
         pool.outFlowBuffer -= decreaseBuffer;
-        _balanceTreasury();
+        pool = _balanceTreasury(pool);
       } else {
         uint256 increaseBuffer = POOL_BUFFER.mul(uint96(newOutFlow - supplier.outStream.flow));
         pool.outFlowBuffer += increaseBuffer;
         uint256 oldInitialWithdraw = SUPERFLUID_DEPOSIT.mul(uint96(supplier.outStream.flow));
         uint256 toWithDraw = increaseBuffer + initialWithdraw - oldInitialWithdraw;
 
-        _withdrawTreasury(_supplier, address(this), toWithDraw);
+        pool = _withdrawTreasury(supplier.supplier, address(this), toWithDraw, pool);
         //To DO REBALANCE
       }
 
-      _cfaLib.updateFlow(_supplier, superToken, newOutFlow);
+      _cfaLib.updateFlow(supplier.supplier, superToken, newOutFlow);
     }
+    return (pool, supplier);
   }
 
-    function _createCloseStreamTask(address _supplier, uint256 streamDuration) internal returns (bytes32 taskId) {
+  function _createCloseStreamTask(address _supplier, uint256 streamDuration) internal returns (bytes32 taskId) {
     bytes memory timeArgs = abi.encode(uint128(block.timestamp + streamDuration), streamDuration);
 
     bytes memory execData = abi.encodeWithSelector(IPoolV1.taskClose.selector, _supplier);
@@ -559,8 +584,8 @@ contract PoolInternalV1 is PoolStateV1 {
     _poolUpdate();
     _supplierUpdateCurrentState(_supplier);
 
-    DataTypes.Supplier storage supplier = suppliersByAddress[_supplier];
-    DataTypes.PoolV1 storage pool = poolByTimestamp[block.timestamp];
+    DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
+    DataTypes.Pool memory pool = poolByTimestamp[block.timestamp];
 
     //// TODO clsoe stream transfer yield accrued while dscending
     uint256 userBalance = _getSupplierBalance(_supplier).div(PRECISSION);
@@ -574,27 +599,28 @@ contract PoolInternalV1 is PoolStateV1 {
     supplier.outStream = DataTypes.OutStream(0, 0, 0, bytes32(0));
 
     _cfaLib.deleteFlow(address(this), _supplier, superToken);
-    _withdrawTreasury(_supplier, _supplier, userBalance);
+    suppliersByAddress[_supplier] = supplier;
+    pool = _withdrawTreasury(_supplier, _supplier, userBalance, pool);
+    poolByTimestamp[block.timestamp] = pool;
   }
 
   // #endregion  ============= =============  Internal Stream Functions ============= ============= //
 
   // #region  ============= =============  ERC20  ============= ============= //
-  function transferSTokens(
-    address _sender,
-    address _receiver,
-    uint256 amount
-  ) external {
+  function transferSTokens(address _sender, address _receiver, uint256 amount) external {
     _poolUpdate();
     _supplierUpdateCurrentState(_sender);
-    DataTypes.Supplier storage sender = _getSupplier(_sender);
+    DataTypes.Supplier memory sender = _getSupplier(_sender);
     _supplierUpdateCurrentState(_receiver);
-    DataTypes.Supplier storage receiver = _getSupplier(_receiver);
+    DataTypes.Supplier memory receiver = _getSupplier(_receiver);
 
-    sender.deposit = sender.deposit.sub(amount.mul(PRECISSION));
-    receiver.deposit = receiver.deposit.add(amount.mul(PRECISSION));
-
-    _balanceTreasury();
+    // sender.deposit = sender.deposit.sub(amount.mul(PRECISSION));
+    // receiver.deposit = receiver.deposit.add(amount.mul(PRECISSION));
+    suppliersByAddress[_sender].deposit = sender.deposit.sub(amount.mul(PRECISSION));
+    suppliersByAddress[_receiver].deposit = receiver.deposit.add(amount.mul(PRECISSION));
+    DataTypes.Pool memory pool = poolByTimestamp[block.timestamp];
+    pool = _balanceTreasury(pool);
+    poolByTimestamp[block.timestamp] = pool;
   }
 
   // #endregion  ============= =============  ERC20  ============= ============= //
@@ -640,7 +666,6 @@ contract PoolInternalV1 is PoolStateV1 {
 
   // #endregion =========== =============  Modifiers ============= ============= //
 
-
   //// TO BE REFACTOR SO FAR REDUNDANT
 
   /**
@@ -654,8 +679,8 @@ contract PoolInternalV1 is PoolStateV1 {
   function _calculateYieldSupplier(address _supplier) public view returns (uint256 yieldSupplier) {
     DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
 
-    DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
-    DataTypes.PoolV1 memory supplierPool = poolByTimestamp[supplier.timestamp];
+    DataTypes.Pool memory lastPool = poolByTimestamp[lastPoolTimestamp];
+    DataTypes.Pool memory supplierPool = poolByTimestamp[supplier.timestamp];
 
     ///// Yield from deposit
 
@@ -677,20 +702,12 @@ contract PoolInternalV1 is PoolStateV1 {
     yieldSupplier = yieldSupplier + yieldFromFlow - yieldFromOutFlow;
   }
 
-  function _calculateIndexes(uint256 yieldPeriod, DataTypes.PoolV1 memory lastPool)
-    public
-    view
-    returns (
-      uint256 periodYieldTokenIndex,
-      uint256 periodYieldInFlowRateIndex,
-      uint256 periodYieldOutFlowRateIndex
-    )
-  {
+  function _calculateIndexes(uint256 yieldPeriod, DataTypes.Pool memory lastPool) public view returns (uint256 periodYieldTokenIndex, uint256 periodYieldInFlowRateIndex, uint256 periodYieldOutFlowRateIndex) {
     uint256 periodSpan = block.timestamp - lastPool.timestamp;
 
     uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
-    uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
-    uint256 dollarSecondsOutFlow = ((uint96(lastPool.outFlowRate) * (periodSpan**2)) * PRECISSION) / 2 + lastPool.depositFromOutFlowRate * periodSpan;
+    uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) * (periodSpan ** 2)) * PRECISSION) / 2 + lastPool.depositFromInFlowRate * periodSpan;
+    uint256 dollarSecondsOutFlow = ((uint96(lastPool.outFlowRate) * (periodSpan ** 2)) * PRECISSION) / 2 + lastPool.depositFromOutFlowRate * periodSpan;
     uint256 totalAreaPeriod = dollarSecondsDeposit + dollarSecondsInFlow - dollarSecondsOutFlow;
 
     /// we ultiply by PRECISSION
@@ -713,7 +730,7 @@ contract PoolInternalV1 is PoolStateV1 {
 
   function totalYieldEarnedSupplier(address _supplier, uint256 currentYieldSnapshot) public view returns (uint256 yieldSupplier) {
     uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
-    DataTypes.PoolV1 memory lastPool = poolByTimestamp[lastPoolTimestamp];
+    DataTypes.Pool memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
     uint256 yieldAccruedSincelastPool = 0;
     if (currentYieldSnapshot > lastPool.yieldObject.yieldSnapshot) {

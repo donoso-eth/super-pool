@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {DataTypes} from "./DataTypes.sol";
+import { DataTypes } from "./DataTypes.sol";
 
 /**
  * @title Helpers
@@ -9,8 +9,4 @@ import {DataTypes} from "./DataTypes.sol";
  *
  * @notice A standard library of data types used throughout.
  */
-library Helpers {
-    
-
-
-}
+library Helpers { }

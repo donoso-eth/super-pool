@@ -9,10 +9,8 @@ import { constants, utils } from 'ethers';
 import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent, printPoolResult, printUser, testPeriod, testTreasury } from './helpers/utils-V1';
 import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core';
 
-import { concatMap, from } from 'rxjs';
-import { ethers } from 'hardhat';
 
-import { readFileSync } from 'fs-extra';
+import { ensureDirSync, readFileSync,removeSync } from 'fs-extra';
 import { INETWORK_CONFIG } from 'hardhat/helpers/models';
 import { join } from 'path';
 import { applyUserEvent, faucet, updatePool } from './helpers/logic-V1';
@@ -104,6 +102,9 @@ const processDir = process.cwd();
 let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.json'), 'utf-8')) as INETWORK_CONFIG;
 
 let network_params = networks_config['goerli'];
+
+removeSync(join(processDir,'expected','treasury'));
+ensureDirSync(join(processDir,'expected','treasury'));
 
 describe('V1 TEST TREASURY', function () {
   beforeEach(async () => {
@@ -224,7 +225,7 @@ describe('V1 TEST TREASURY', function () {
 
     executor = await hre.ethers.provider.getSigner(network_params.opsExec);
 
-    PRECISSION = await superPool.PRECISSION();
+    PRECISSION = BigNumber.from(1000000);
 
     contractsTest = {
       poolAddress: superPoolAddress,
@@ -247,7 +248,7 @@ describe('V1 TEST TREASURY', function () {
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
 
-    t0 = +(await superPool.lastPoolTimestamp());
+    t0 = +(await superPool.getLastTimestamp());
     console.log(t0.toString());
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 500 units at t0 ');
@@ -261,7 +262,7 @@ describe('V1 TEST TREASURY', function () {
 
     await erc777.send(superPoolAddress, amount, '0x');
 
-    let t1 = await superPool.lastPoolTimestamp();
+    let t1 = await superPool.getLastTimestamp();
 
     let result: [IUSERS_TEST, IPOOL_RESULT];
 
@@ -316,7 +317,7 @@ describe('V1 TEST TREASURY', function () {
       },
     };
 
-    await testPeriod(BigNumber.from(t0), +t1 - t0, poolExpected1, contractsTest, usersPool);
+    await testPeriod(BigNumber.from(t0), +t1 - t0, poolExpected1, contractsTest, usersPool,'treasury');
 
     let yieldPool;
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tests passed ');
@@ -373,7 +374,7 @@ describe('V1 TEST TREASURY', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'treasury');
     console.log('\x1b[36m%s\x1b[0m', '#2--- Period Tests passed ');
 
     // #endregion ================= SECOND PERIOD ============================= //
@@ -448,9 +449,9 @@ describe('V1 TEST TREASURY', function () {
       yieldSnapshot: result[1].yieldSnapshot,
     };
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'treasury');
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'treasury');
 
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     // #endregion ================= END 3TH PERIOD ============================= //
@@ -470,7 +471,7 @@ describe('V1 TEST TREASURY', function () {
     let aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
     treasury.aave = aaveBalance;
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'treasury');
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
 
@@ -489,7 +490,7 @@ describe('V1 TEST TREASURY', function () {
     aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
     treasury.aave = aaveBalance;
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'treasury');
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
 
@@ -553,10 +554,10 @@ describe('V1 TEST TREASURY', function () {
     pool.yieldSnapshot = treasury.yieldSnapshot;
 
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'treasury');
 
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'treasury');
 
 
     console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
@@ -617,11 +618,11 @@ describe('V1 TEST TREASURY', function () {
     pool.yieldSnapshot = treasury.yieldSnapshot;
 
 
-    await testTreasury(timestamp, treasury, contractsTest); 
+    await testTreasury(timestamp, treasury, contractsTest,'treasury'); 
 
 
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'treasury');
 
     console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
 
@@ -644,7 +645,7 @@ describe('V1 TEST TREASURY', function () {
     aaveBalance = await aaveERC20.balanceOf(poolStrategy.address);
     treasury.aave = aaveBalance;
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'treasury');
 
     console.log('\x1b[36m%s\x1b[0m', `#${8 + i}----- Period Tests passed `);
 
@@ -711,9 +712,9 @@ describe('V1 TEST TREASURY', function () {
 
   pool.yieldSnapshot = treasury.yieldSnapshot;
 
-  await testTreasury(timestamp, treasury, contractsTest);
+  await testTreasury(timestamp, treasury, contractsTest,'treasury');
 
-  await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+  await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'treasury');
 
   console.log('\x1b[36m%s\x1b[0m', '#18--- Period Tests passed ');
 

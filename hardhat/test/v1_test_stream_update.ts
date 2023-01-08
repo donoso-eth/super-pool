@@ -12,7 +12,7 @@ import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core'
 import { concatMap, from } from 'rxjs';
 import { ethers } from 'hardhat';
 
-import { readFileSync } from 'fs-extra';
+import { ensureDirSync, readFileSync, removeSync } from 'fs-extra';
 import { INETWORK_CONFIG } from 'hardhat/helpers/models';
 import { join } from 'path';
 import { applyUserEvent, faucet, updatePool } from './helpers/logic-V1';
@@ -103,8 +103,9 @@ const processDir = process.cwd();
 let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.json'), 'utf-8')) as INETWORK_CONFIG;
 
 let network_params = networks_config['goerli'];
-
-describe.only('V1 TEST STREAM UPDATES', function () {
+removeSync(join(processDir,'expected','test-stream'));
+ensureDirSync(join(processDir,'expected','test-stream'));
+describe('V1 TEST STREAM UPDATES', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -223,7 +224,7 @@ describe.only('V1 TEST STREAM UPDATES', function () {
 
     executor = await hre.ethers.provider.getSigner(network_params.opsExec);
 
-    PRECISSION = await superPool.PRECISSION();
+    PRECISSION = BigNumber.from(1000000);
 
     contractsTest = {
       poolAddress: superPoolAddress,
@@ -246,7 +247,7 @@ describe.only('V1 TEST STREAM UPDATES', function () {
   it('should be successfull', async function () {
     // #region ================= FIRST PERIOD ============================= //
 
-    t0 = +(await superPool.lastPoolTimestamp());
+    t0 = +(await superPool.getLastTimestamp());
     console.log(t0.toString());
 
     console.log('\x1b[36m%s\x1b[0m', '#1--- User1 provides 500 units at t0 ');
@@ -260,7 +261,7 @@ describe.only('V1 TEST STREAM UPDATES', function () {
 
     await erc777.send(superPoolAddress, amount, '0x');
 
-    let t1 = await superPool.lastPoolTimestamp();
+    let t1 = await superPool.getLastTimestamp();
 
     let result: [IUSERS_TEST, IPOOL_RESULT];
 
@@ -315,7 +316,7 @@ describe.only('V1 TEST STREAM UPDATES', function () {
       },
     };
 
-    await testPeriod(BigNumber.from(t0), +t1 - t0, poolExpected1, contractsTest, usersPool);
+    await testPeriod(BigNumber.from(t0), +t1 - t0, poolExpected1, contractsTest, usersPool,'test-stream');
 
     let yieldPool;
     console.log('\x1b[36m%s\x1b[0m', '#1--- Period Tests passed ');
@@ -372,7 +373,7 @@ describe.only('V1 TEST STREAM UPDATES', function () {
     pools[+timestamp] = result[1];
     usersPool = result[0];
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'test-steram');
     console.log('\x1b[36m%s\x1b[0m', '#2--- Period Tests passed ');
 
     // #endregion ================= SECOND PERIOD ============================= //
@@ -445,12 +446,16 @@ describe.only('V1 TEST STREAM UPDATES', function () {
       yieldSnapshot: result[1].yieldSnapshot,
     };
 
-    await testTreasury(timestamp, treasury, contractsTest);
+  
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testTreasury(timestamp, treasury, contractsTest,'test-stream');
+
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'test-steram');
 
     console.log('\x1b[36m%s\x1b[0m', '#3--- Period Tests passed ');
     // #endregion ================= END 3TH PERIOD ============================= //
+
+
 
     // #region =================  4th PERIOD ============================= //
     console.log('\x1b[36m%s\x1b[0m', '#4--- Gelato Closes Stream');
@@ -505,9 +510,9 @@ describe.only('V1 TEST STREAM UPDATES', function () {
 
     treasury.superToken = treasury.superToken.sub(treasury.superToken);
 
-    (treasury.aave = pool.aaveBalance), await testTreasury(timestamp, treasury, contractsTest);
+    (treasury.aave = pool.aaveBalance), await testTreasury(timestamp, treasury, contractsTest,'test-stream');
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'test-steram');
 
     console.log('\x1b[36m%s\x1b[0m', '#4--- Period Tests passed ');
 
@@ -569,9 +574,9 @@ describe.only('V1 TEST STREAM UPDATES', function () {
     treasury.superToken = treasury.superToken;
 
     treasury.aave = pool.aaveBalance;
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'test-stream');
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'test-steram');
 
     console.log('\x1b[36m%s\x1b[0m', '#5--- Period Tests passed ');
 
@@ -637,12 +642,12 @@ describe.only('V1 TEST STREAM UPDATES', function () {
 
     treasury.superToken = treasury.superToken.add(initialWidthraw).add(outFlowBuffer).sub(loanStream.deposit);
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'test-stream');
 
     taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
     usersPool[user2.address].expected.outStreamId = taskId;
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'test-steram');
 
     console.log('\x1b[36m%s\x1b[0m', '#6--- Period Tests passed ');
 
@@ -699,12 +704,12 @@ describe.only('V1 TEST STREAM UPDATES', function () {
 
     treasury.superToken = treasury.superToken;
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'test-stream');
 
     taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user2.address].expected.nextExecOut - +pool.timestamp, user2.address);
     usersPool[user2.address].expected.outStreamId = taskId;
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'test-steram');
 
     console.log('\x1b[36m%s\x1b[0m', '#7--- Period Tests passed ');
 
@@ -753,12 +758,12 @@ describe.only('V1 TEST STREAM UPDATES', function () {
 
     treasury.superToken = treasury.superToken;
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'test-stream');
 
     taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
     usersPool[user2.address].expected.outStreamId = taskId;
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'test-steram');
 
     console.log('\x1b[36m%s\x1b[0m', '#8--- Period Tests passed ');
 
@@ -813,12 +818,12 @@ describe.only('V1 TEST STREAM UPDATES', function () {
     .sub(oldOutBuffer.sub(outFlowBuffer))
     .add(loanStream.deposit).sub(loanStream9.deposit);
 
-    await testTreasury(timestamp, treasury, contractsTest);
+    await testTreasury(timestamp, treasury, contractsTest,'test-stream');
 
     taskId = await getGelatoCloStreamId(superPool, +timestamp, +usersPool[user2.address].expected.outStepTime, user2.address);
     usersPool[user2.address].expected.outStreamId = taskId;
 
-    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0]);
+    await testPeriod(BigNumber.from(t0), +timestamp, result[1], contractsTest, result[0],'test-steram');
 
     console.log('\x1b[36m%s\x1b[0m', '#9--- Period Tests passed ');
 

@@ -25,10 +25,7 @@ export interface IPOOL {
     totalYield: BigNumber;
     protocolYield:BigNumber;
     }
-    apy :  { 
-            span: BigNumber;
-            apy: BigNumber; 
-          }
+
   
   }
   
