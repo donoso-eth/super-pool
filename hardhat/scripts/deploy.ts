@@ -214,9 +214,9 @@ async function main() {
   let aavePool = '0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6';
   let aToken = '0x1Ee669290939f8a8864497Af3BC83728715265FF';
 
-  await PoolStrategyV1__factory.connect(addressObject.poolStrategyProxy, deployer).initialize(network_params.ops, network_params.superToken, network_params.token, 
+  await PoolStrategyV1__factory.connect(addressObject.poolStrategyProxy, deployer).initialize( network_params.superToken, network_params.token, 
     poolProxyAddress, aavePool, aToken, network_params.aaveToken, 
-    poolInternalProxyAddress, { gasLimit: 10000000, nonce: nonce + 10 });
+  { gasLimit: 10000000, nonce: nonce + 10 });
 
   let initialPoolEth = hre.ethers.utils.parseEther('0.1');
 

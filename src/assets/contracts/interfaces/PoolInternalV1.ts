@@ -45,14 +45,7 @@ export type YieldStructOutput = [
   protocolYield: BigNumber;
 };
 
-export type APYStruct = { span: BigNumberish; apy: BigNumberish };
-
-export type APYStructOutput = [BigNumber, BigNumber] & {
-  span: BigNumber;
-  apy: BigNumber;
-};
-
-export type PoolV1Struct = {
+export type PoolStruct = {
   id: BigNumberish;
   timestamp: BigNumberish;
   nrSuppliers: BigNumberish;
@@ -63,10 +56,9 @@ export type PoolV1Struct = {
   outFlowRate: BigNumberish;
   outFlowBuffer: BigNumberish;
   yieldObject: YieldStruct;
-  apy: APYStruct;
 };
 
-export type PoolV1StructOutput = [
+export type PoolStructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
@@ -76,8 +68,7 @@ export type PoolV1StructOutput = [
   BigNumber,
   BigNumber,
   BigNumber,
-  YieldStructOutput,
-  APYStructOutput
+  YieldStructOutput
 ] & {
   id: BigNumber;
   timestamp: BigNumber;
@@ -89,114 +80,62 @@ export type PoolV1StructOutput = [
   outFlowRate: BigNumber;
   outFlowBuffer: BigNumber;
   yieldObject: YieldStructOutput;
-  apy: APYStructOutput;
-};
-
-export type OutStreamStruct = {
-  flow: BigNumberish;
-  streamDuration: BigNumberish;
-  streamInit: BigNumberish;
-  cancelWithdrawId: BytesLike;
-};
-
-export type OutStreamStructOutput = [
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  string
-] & {
-  flow: BigNumber;
-  streamDuration: BigNumber;
-  streamInit: BigNumber;
-  cancelWithdrawId: string;
 };
 
 export interface PoolInternalV1Interface extends utils.Interface {
   functions: {
-    "BALANCE_TRIGGER_TIME()": FunctionFragment;
-    "DEPOSIT_TRIGGER_AMOUNT()": FunctionFragment;
     "ETH()": FunctionFragment;
-    "MIN_OUTFLOW_ALLOWED()": FunctionFragment;
-    "POOL_BUFFER()": FunctionFragment;
-    "PRECISSION()": FunctionFragment;
-    "PROTOCOL_FEE()": FunctionFragment;
-    "SUPERFLUID_DEPOSIT()": FunctionFragment;
-    "_balanceTreasury()": FunctionFragment;
-    "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))": FunctionFragment;
+    "_allowances(address,address)": FunctionFragment;
+    "_balanceTreasury((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))": FunctionFragment;
+    "_balanceTreasuryFromGelato()": FunctionFragment;
+    "_balances(address)": FunctionFragment;
+    "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))": FunctionFragment;
     "_calculateYieldSupplier(address)": FunctionFragment;
-    "_cfaLib()": FunctionFragment;
     "_closeAccount()": FunctionFragment;
     "_createBalanceTreasuryTask()": FunctionFragment;
+    "_name()": FunctionFragment;
     "_poolUpdate()": FunctionFragment;
     "_redeemDeposit(address,uint256)": FunctionFragment;
     "_redeemFlow(address,int96)": FunctionFragment;
     "_redeemFlowStop(address)": FunctionFragment;
+    "_symbol()": FunctionFragment;
     "_tokensReceived(address,uint256)": FunctionFragment;
+    "_totalSupply()": FunctionFragment;
     "_updateSupplierFlow(address,int96,int96,bytes)": FunctionFragment;
     "balanceTreasuryTask()": FunctionFragment;
     "cancelTask(bytes32)": FunctionFragment;
-    "cfa()": FunctionFragment;
     "closeStreamFlow(address)": FunctionFragment;
     "gelato()": FunctionFragment;
     "getVersion()": FunctionFragment;
-    "host()": FunctionFragment;
-    "lastExecution()": FunctionFragment;
-    "lastPoolTimestamp()": FunctionFragment;
     "ops()": FunctionFragment;
-    "owner()": FunctionFragment;
-    "poolByTimestamp(uint256)": FunctionFragment;
-    "poolFactory()": FunctionFragment;
-    "poolId()": FunctionFragment;
     "poolInternal()": FunctionFragment;
     "poolStrategy()": FunctionFragment;
-    "supplierId()": FunctionFragment;
-    "suppliersByAddress(address)": FunctionFragment;
     "totalYieldEarnedSupplier(address,uint256)": FunctionFragment;
     "transferSTokens(address,address,uint256)": FunctionFragment;
   };
 
-  encodeFunctionData(
-    functionFragment: "BALANCE_TRIGGER_TIME",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "DEPOSIT_TRIGGER_AMOUNT",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "MIN_OUTFLOW_ALLOWED",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "POOL_BUFFER",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "PRECISSION",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "PROTOCOL_FEE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "SUPERFLUID_DEPOSIT",
-    values?: undefined
+    functionFragment: "_allowances",
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "_balanceTreasury",
-    values?: undefined
+    values: [PoolStruct]
   ): string;
   encodeFunctionData(
+    functionFragment: "_balanceTreasuryFromGelato",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "_balances", values: [string]): string;
+  encodeFunctionData(
     functionFragment: "_calculateIndexes",
-    values: [BigNumberish, PoolV1Struct]
+    values: [BigNumberish, PoolStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "_calculateYieldSupplier",
     values: [string]
   ): string;
-  encodeFunctionData(functionFragment: "_cfaLib", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_closeAccount",
     values?: undefined
@@ -205,6 +144,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "_createBalanceTreasuryTask",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "_name", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_poolUpdate",
     values?: undefined
@@ -221,9 +161,14 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "_redeemFlowStop",
     values: [string]
   ): string;
+  encodeFunctionData(functionFragment: "_symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_tokensReceived",
     values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_totalSupply",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "_updateSupplierFlow",
@@ -237,7 +182,6 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "cancelTask",
     values: [BytesLike]
   ): string;
-  encodeFunctionData(functionFragment: "cfa", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "closeStreamFlow",
     values: [string]
@@ -247,26 +191,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "getVersion",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "host", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "lastExecution",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "lastPoolTimestamp",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "ops", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "poolByTimestamp",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "poolFactory",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "poolId", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "poolInternal",
     values?: undefined
@@ -274,14 +199,6 @@ export interface PoolInternalV1Interface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "poolStrategy",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "supplierId",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "suppliersByAddress",
-    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "totalYieldEarnedSupplier",
@@ -292,36 +209,20 @@ export interface PoolInternalV1Interface extends utils.Interface {
     values: [string, string, BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "BALANCE_TRIGGER_TIME",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "DEPOSIT_TRIGGER_AMOUNT",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "ETH", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "MIN_OUTFLOW_ALLOWED",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "POOL_BUFFER",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "PRECISSION", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "PROTOCOL_FEE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "SUPERFLUID_DEPOSIT",
+    functionFragment: "_allowances",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "_balanceTreasury",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "_balanceTreasuryFromGelato",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "_balances", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_calculateIndexes",
     data: BytesLike
@@ -330,7 +231,6 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "_calculateYieldSupplier",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "_cfaLib", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_closeAccount",
     data: BytesLike
@@ -339,6 +239,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "_createBalanceTreasuryTask",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "_name", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_poolUpdate",
     data: BytesLike
@@ -355,8 +256,13 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "_redeemFlowStop",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "_symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_tokensReceived",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_totalSupply",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -368,44 +274,19 @@ export interface PoolInternalV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "cancelTask", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "cfa", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "closeStreamFlow",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "gelato", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "getVersion", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "host", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "lastExecution",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "lastPoolTimestamp",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "ops", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "poolByTimestamp",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "poolFactory",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "poolId", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "poolInternal",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "poolStrategy",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "supplierId", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "suppliersByAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -447,29 +328,28 @@ export interface PoolInternalV1 extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     ETH(overrides?: CallOverrides): Promise<[string]>;
 
-    MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    POOL_BUFFER(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    PRECISSION(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    PROTOCOL_FEE(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<[BigNumber]>;
+    _allowances(
+      arg0: string,
+      arg1: string,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     _balanceTreasury(
+      currentPool: PoolStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    _balanceTreasuryFromGelato(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    _balances(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+
     _calculateIndexes(
       yieldPeriod: BigNumberish,
-      lastPool: PoolV1Struct,
+      lastPool: PoolStruct,
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber, BigNumber] & {
@@ -484,10 +364,6 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { yieldSupplier: BigNumber }>;
 
-    _cfaLib(
-      overrides?: CallOverrides
-    ): Promise<[string, string] & { host: string; cfa: string }>;
-
     _closeAccount(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -495,6 +371,8 @@ export interface PoolInternalV1 extends BaseContract {
     _createBalanceTreasuryTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    _name(overrides?: CallOverrides): Promise<[string]>;
 
     _poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -517,11 +395,15 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    _symbol(overrides?: CallOverrides): Promise<[string]>;
+
     _tokensReceived(
       _supplier: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    _totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _updateSupplierFlow(
       _supplier: string,
@@ -538,8 +420,6 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    cfa(overrides?: CallOverrides): Promise<[string]>;
-
     closeStreamFlow(
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -549,85 +429,11 @@ export interface PoolInternalV1 extends BaseContract {
 
     getVersion(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    host(overrides?: CallOverrides): Promise<[string]>;
-
-    lastExecution(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    lastPoolTimestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     ops(overrides?: CallOverrides): Promise<[string]>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    poolByTimestamp(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        YieldStructOutput,
-        APYStructOutput
-      ] & {
-        id: BigNumber;
-        timestamp: BigNumber;
-        nrSuppliers: BigNumber;
-        deposit: BigNumber;
-        depositFromInFlowRate: BigNumber;
-        depositFromOutFlowRate: BigNumber;
-        inFlowRate: BigNumber;
-        outFlowRate: BigNumber;
-        outFlowBuffer: BigNumber;
-        yieldObject: YieldStructOutput;
-        apy: APYStructOutput;
-      }
-    >;
-
-    poolFactory(overrides?: CallOverrides): Promise<[string]>;
-
-    poolId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     poolInternal(overrides?: CallOverrides): Promise<[string]>;
 
     poolStrategy(overrides?: CallOverrides): Promise<[string]>;
-
-    supplierId(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    suppliersByAddress(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        string,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        OutStreamStructOutput,
-        APYStructOutput
-      ] & {
-        id: BigNumber;
-        supplier: string;
-        cumulatedYield: BigNumber;
-        deposit: BigNumber;
-        timestamp: BigNumber;
-        createdTimestamp: BigNumber;
-        eventId: BigNumber;
-        inStream: BigNumber;
-        outStream: OutStreamStructOutput;
-        apy: APYStructOutput;
-      }
-    >;
 
     totalYieldEarnedSupplier(
       _supplier: string,
@@ -643,29 +449,28 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
-
-  DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
   ETH(overrides?: CallOverrides): Promise<string>;
 
-  MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
-
-  POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
-
-  PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
-
-  PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
-
-  SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
+  _allowances(
+    arg0: string,
+    arg1: string,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   _balanceTreasury(
+    currentPool: PoolStruct,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  _balanceTreasuryFromGelato(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  _balances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+
   _calculateIndexes(
     yieldPeriod: BigNumberish,
-    lastPool: PoolV1Struct,
+    lastPool: PoolStruct,
     overrides?: CallOverrides
   ): Promise<
     [BigNumber, BigNumber, BigNumber] & {
@@ -680,10 +485,6 @@ export interface PoolInternalV1 extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  _cfaLib(
-    overrides?: CallOverrides
-  ): Promise<[string, string] & { host: string; cfa: string }>;
-
   _closeAccount(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -691,6 +492,8 @@ export interface PoolInternalV1 extends BaseContract {
   _createBalanceTreasuryTask(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  _name(overrides?: CallOverrides): Promise<string>;
 
   _poolUpdate(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -713,11 +516,15 @@ export interface PoolInternalV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  _symbol(overrides?: CallOverrides): Promise<string>;
+
   _tokensReceived(
     _supplier: string,
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
   _updateSupplierFlow(
     _supplier: string,
@@ -734,8 +541,6 @@ export interface PoolInternalV1 extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  cfa(overrides?: CallOverrides): Promise<string>;
-
   closeStreamFlow(
     _supplier: string,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -745,85 +550,11 @@ export interface PoolInternalV1 extends BaseContract {
 
   getVersion(overrides?: CallOverrides): Promise<BigNumber>;
 
-  host(overrides?: CallOverrides): Promise<string>;
-
-  lastExecution(overrides?: CallOverrides): Promise<BigNumber>;
-
-  lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
-
   ops(overrides?: CallOverrides): Promise<string>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  poolByTimestamp(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      YieldStructOutput,
-      APYStructOutput
-    ] & {
-      id: BigNumber;
-      timestamp: BigNumber;
-      nrSuppliers: BigNumber;
-      deposit: BigNumber;
-      depositFromInFlowRate: BigNumber;
-      depositFromOutFlowRate: BigNumber;
-      inFlowRate: BigNumber;
-      outFlowRate: BigNumber;
-      outFlowBuffer: BigNumber;
-      yieldObject: YieldStructOutput;
-      apy: APYStructOutput;
-    }
-  >;
-
-  poolFactory(overrides?: CallOverrides): Promise<string>;
-
-  poolId(overrides?: CallOverrides): Promise<BigNumber>;
 
   poolInternal(overrides?: CallOverrides): Promise<string>;
 
   poolStrategy(overrides?: CallOverrides): Promise<string>;
-
-  supplierId(overrides?: CallOverrides): Promise<BigNumber>;
-
-  suppliersByAddress(
-    arg0: string,
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      BigNumber,
-      string,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      OutStreamStructOutput,
-      APYStructOutput
-    ] & {
-      id: BigNumber;
-      supplier: string;
-      cumulatedYield: BigNumber;
-      deposit: BigNumber;
-      timestamp: BigNumber;
-      createdTimestamp: BigNumber;
-      eventId: BigNumber;
-      inStream: BigNumber;
-      outStream: OutStreamStructOutput;
-      apy: APYStructOutput;
-    }
-  >;
 
   totalYieldEarnedSupplier(
     _supplier: string,
@@ -839,27 +570,26 @@ export interface PoolInternalV1 extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
-
-    DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
     ETH(overrides?: CallOverrides): Promise<string>;
 
-    MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
+    _allowances(
+      arg0: string,
+      arg1: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
-    POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
+    _balanceTreasury(
+      currentPool: PoolStruct,
+      overrides?: CallOverrides
+    ): Promise<PoolStructOutput>;
 
-    PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
+    _balanceTreasuryFromGelato(overrides?: CallOverrides): Promise<void>;
 
-    PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _balanceTreasury(overrides?: CallOverrides): Promise<void>;
+    _balances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     _calculateIndexes(
       yieldPeriod: BigNumberish,
-      lastPool: PoolV1Struct,
+      lastPool: PoolStruct,
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber, BigNumber] & {
@@ -874,13 +604,11 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    _cfaLib(
-      overrides?: CallOverrides
-    ): Promise<[string, string] & { host: string; cfa: string }>;
-
     _closeAccount(overrides?: CallOverrides): Promise<void>;
 
     _createBalanceTreasuryTask(overrides?: CallOverrides): Promise<string>;
+
+    _name(overrides?: CallOverrides): Promise<string>;
 
     _poolUpdate(overrides?: CallOverrides): Promise<void>;
 
@@ -901,11 +629,15 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    _symbol(overrides?: CallOverrides): Promise<string>;
+
     _tokensReceived(
       _supplier: string,
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     _updateSupplierFlow(
       _supplier: string,
@@ -919,8 +651,6 @@ export interface PoolInternalV1 extends BaseContract {
 
     cancelTask(_taskId: BytesLike, overrides?: CallOverrides): Promise<void>;
 
-    cfa(overrides?: CallOverrides): Promise<string>;
-
     closeStreamFlow(
       _supplier: string,
       overrides?: CallOverrides
@@ -930,85 +660,11 @@ export interface PoolInternalV1 extends BaseContract {
 
     getVersion(overrides?: CallOverrides): Promise<BigNumber>;
 
-    host(overrides?: CallOverrides): Promise<string>;
-
-    lastExecution(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
-
     ops(overrides?: CallOverrides): Promise<string>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    poolByTimestamp(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        YieldStructOutput,
-        APYStructOutput
-      ] & {
-        id: BigNumber;
-        timestamp: BigNumber;
-        nrSuppliers: BigNumber;
-        deposit: BigNumber;
-        depositFromInFlowRate: BigNumber;
-        depositFromOutFlowRate: BigNumber;
-        inFlowRate: BigNumber;
-        outFlowRate: BigNumber;
-        outFlowBuffer: BigNumber;
-        yieldObject: YieldStructOutput;
-        apy: APYStructOutput;
-      }
-    >;
-
-    poolFactory(overrides?: CallOverrides): Promise<string>;
-
-    poolId(overrides?: CallOverrides): Promise<BigNumber>;
 
     poolInternal(overrides?: CallOverrides): Promise<string>;
 
     poolStrategy(overrides?: CallOverrides): Promise<string>;
-
-    supplierId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    suppliersByAddress(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        string,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        OutStreamStructOutput,
-        APYStructOutput
-      ] & {
-        id: BigNumber;
-        supplier: string;
-        cumulatedYield: BigNumber;
-        deposit: BigNumber;
-        timestamp: BigNumber;
-        createdTimestamp: BigNumber;
-        eventId: BigNumber;
-        inStream: BigNumber;
-        outStream: OutStreamStructOutput;
-        apy: APYStructOutput;
-      }
-    >;
 
     totalYieldEarnedSupplier(
       _supplier: string,
@@ -1027,29 +683,28 @@ export interface PoolInternalV1 extends BaseContract {
   filters: {};
 
   estimateGas: {
-    BALANCE_TRIGGER_TIME(overrides?: CallOverrides): Promise<BigNumber>;
-
-    DEPOSIT_TRIGGER_AMOUNT(overrides?: CallOverrides): Promise<BigNumber>;
-
     ETH(overrides?: CallOverrides): Promise<BigNumber>;
 
-    MIN_OUTFLOW_ALLOWED(overrides?: CallOverrides): Promise<BigNumber>;
-
-    POOL_BUFFER(overrides?: CallOverrides): Promise<BigNumber>;
-
-    PRECISSION(overrides?: CallOverrides): Promise<BigNumber>;
-
-    PROTOCOL_FEE(overrides?: CallOverrides): Promise<BigNumber>;
-
-    SUPERFLUID_DEPOSIT(overrides?: CallOverrides): Promise<BigNumber>;
+    _allowances(
+      arg0: string,
+      arg1: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     _balanceTreasury(
+      currentPool: PoolStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    _balanceTreasuryFromGelato(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    _balances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+
     _calculateIndexes(
       yieldPeriod: BigNumberish,
-      lastPool: PoolV1Struct,
+      lastPool: PoolStruct,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1058,8 +713,6 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    _cfaLib(overrides?: CallOverrides): Promise<BigNumber>;
-
     _closeAccount(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -1067,6 +720,8 @@ export interface PoolInternalV1 extends BaseContract {
     _createBalanceTreasuryTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    _name(overrides?: CallOverrides): Promise<BigNumber>;
 
     _poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1089,11 +744,15 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    _symbol(overrides?: CallOverrides): Promise<BigNumber>;
+
     _tokensReceived(
       _supplier: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     _updateSupplierFlow(
       _supplier: string,
@@ -1110,8 +769,6 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    cfa(overrides?: CallOverrides): Promise<BigNumber>;
-
     closeStreamFlow(
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1121,35 +778,11 @@ export interface PoolInternalV1 extends BaseContract {
 
     getVersion(overrides?: CallOverrides): Promise<BigNumber>;
 
-    host(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastExecution(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastPoolTimestamp(overrides?: CallOverrides): Promise<BigNumber>;
-
     ops(overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    poolByTimestamp(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    poolFactory(overrides?: CallOverrides): Promise<BigNumber>;
-
-    poolId(overrides?: CallOverrides): Promise<BigNumber>;
 
     poolInternal(overrides?: CallOverrides): Promise<BigNumber>;
 
     poolStrategy(overrides?: CallOverrides): Promise<BigNumber>;
-
-    supplierId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    suppliersByAddress(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     totalYieldEarnedSupplier(
       _supplier: string,
@@ -1166,37 +799,31 @@ export interface PoolInternalV1 extends BaseContract {
   };
 
   populateTransaction: {
-    BALANCE_TRIGGER_TIME(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    DEPOSIT_TRIGGER_AMOUNT(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     ETH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    MIN_OUTFLOW_ALLOWED(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    POOL_BUFFER(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    PRECISSION(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    PROTOCOL_FEE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    SUPERFLUID_DEPOSIT(
+    _allowances(
+      arg0: string,
+      arg1: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     _balanceTreasury(
+      currentPool: PoolStruct,
       overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    _balanceTreasuryFromGelato(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    _balances(
+      arg0: string,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     _calculateIndexes(
       yieldPeriod: BigNumberish,
-      lastPool: PoolV1Struct,
+      lastPool: PoolStruct,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1205,8 +832,6 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    _cfaLib(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     _closeAccount(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -1214,6 +839,8 @@ export interface PoolInternalV1 extends BaseContract {
     _createBalanceTreasuryTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    _name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1236,11 +863,15 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    _symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     _tokensReceived(
       _supplier: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    _totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _updateSupplierFlow(
       _supplier: string,
@@ -1259,8 +890,6 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    cfa(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     closeStreamFlow(
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1270,35 +899,11 @@ export interface PoolInternalV1 extends BaseContract {
 
     getVersion(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    host(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    lastExecution(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    lastPoolTimestamp(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     ops(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    poolByTimestamp(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    poolFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    poolId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     poolInternal(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     poolStrategy(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    supplierId(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    suppliersByAddress(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     totalYieldEarnedSupplier(
       _supplier: string,
