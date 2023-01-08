@@ -162,10 +162,6 @@ export class PoolUpdatePoolStruct extends ethereum.Tuple {
   get yieldObject(): PoolUpdatePoolYieldObjectStruct {
     return changetype<PoolUpdatePoolYieldObjectStruct>(this[9].toTuple());
   }
-
-  get apy(): PoolUpdatePoolApyStruct {
-    return changetype<PoolUpdatePoolApyStruct>(this[10].toTuple());
-  }
 }
 
 export class PoolUpdatePoolYieldObjectStruct extends ethereum.Tuple {
@@ -195,16 +191,6 @@ export class PoolUpdatePoolYieldObjectStruct extends ethereum.Tuple {
 
   get protocolYield(): BigInt {
     return this[6].toBigInt();
-  }
-}
-
-export class PoolUpdatePoolApyStruct extends ethereum.Tuple {
-  get span(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get apy(): BigInt {
-    return this[1].toBigInt();
   }
 }
 
@@ -267,36 +253,20 @@ export class SupplierUpdateSupplierStruct extends ethereum.Tuple {
     return this[1].toAddress();
   }
 
-  get cumulatedYield(): BigInt {
+  get deposit(): BigInt {
     return this[2].toBigInt();
   }
 
-  get deposit(): BigInt {
+  get timestamp(): BigInt {
     return this[3].toBigInt();
   }
 
-  get timestamp(): BigInt {
+  get inStream(): BigInt {
     return this[4].toBigInt();
   }
 
-  get createdTimestamp(): BigInt {
-    return this[5].toBigInt();
-  }
-
-  get eventId(): BigInt {
-    return this[6].toBigInt();
-  }
-
-  get inStream(): BigInt {
-    return this[7].toBigInt();
-  }
-
   get outStream(): SupplierUpdateSupplierOutStreamStruct {
-    return changetype<SupplierUpdateSupplierOutStreamStruct>(this[8].toTuple());
-  }
-
-  get apy(): SupplierUpdateSupplierApyStruct {
-    return changetype<SupplierUpdateSupplierApyStruct>(this[9].toTuple());
+    return changetype<SupplierUpdateSupplierOutStreamStruct>(this[5].toTuple());
   }
 }
 
@@ -318,17 +288,27 @@ export class SupplierUpdateSupplierOutStreamStruct extends ethereum.Tuple {
   }
 }
 
-export class SupplierUpdateSupplierApyStruct extends ethereum.Tuple {
-  get span(): BigInt {
-    return this[0].toBigInt();
+export class PoolV1___calculateIndexesResult {
+  value0: BigInt;
+  value1: BigInt;
+  value2: BigInt;
+
+  constructor(value0: BigInt, value1: BigInt, value2: BigInt) {
+    this.value0 = value0;
+    this.value1 = value1;
+    this.value2 = value2;
   }
 
-  get apy(): BigInt {
-    return this[1].toBigInt();
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
+    map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
+    map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
+    return map;
   }
 }
 
-export class PoolV1__getLastPoolResultValue0Struct extends ethereum.Tuple {
+export class PoolV1___calculateIndexesInputLastPoolStruct extends ethereum.Tuple {
   get id(): BigInt {
     return this[0].toBigInt();
   }
@@ -365,20 +345,14 @@ export class PoolV1__getLastPoolResultValue0Struct extends ethereum.Tuple {
     return this[8].toBigInt();
   }
 
-  get yieldObject(): PoolV1__getLastPoolResultValue0YieldObjectStruct {
-    return changetype<PoolV1__getLastPoolResultValue0YieldObjectStruct>(
+  get yieldObject(): PoolV1___calculateIndexesInputLastPoolYieldObjectStruct {
+    return changetype<PoolV1___calculateIndexesInputLastPoolYieldObjectStruct>(
       this[9].toTuple()
-    );
-  }
-
-  get apy(): PoolV1__getLastPoolResultValue0ApyStruct {
-    return changetype<PoolV1__getLastPoolResultValue0ApyStruct>(
-      this[10].toTuple()
     );
   }
 }
 
-export class PoolV1__getLastPoolResultValue0YieldObjectStruct extends ethereum.Tuple {
+export class PoolV1___calculateIndexesInputLastPoolYieldObjectStruct extends ethereum.Tuple {
   get yieldTokenIndex(): BigInt {
     return this[0].toBigInt();
   }
@@ -408,17 +382,24 @@ export class PoolV1__getLastPoolResultValue0YieldObjectStruct extends ethereum.T
   }
 }
 
-export class PoolV1__getLastPoolResultValue0ApyStruct extends ethereum.Tuple {
-  get span(): BigInt {
-    return this[0].toBigInt();
+export class PoolV1__checkerLastExecutionResult {
+  value0: boolean;
+  value1: Bytes;
+
+  constructor(value0: boolean, value1: Bytes) {
+    this.value0 = value0;
+    this.value1 = value1;
   }
 
-  get apy(): BigInt {
-    return this[1].toBigInt();
+  toMap(): TypedMap<string, ethereum.Value> {
+    let map = new TypedMap<string, ethereum.Value>();
+    map.set("value0", ethereum.Value.fromBoolean(this.value0));
+    map.set("value1", ethereum.Value.fromBytes(this.value1));
+    return map;
   }
 }
 
-export class PoolV1__getPoolResultValue0Struct extends ethereum.Tuple {
+export class PoolV1__getLastPoolResultPoolStruct extends ethereum.Tuple {
   get id(): BigInt {
     return this[0].toBigInt();
   }
@@ -455,18 +436,14 @@ export class PoolV1__getPoolResultValue0Struct extends ethereum.Tuple {
     return this[8].toBigInt();
   }
 
-  get yieldObject(): PoolV1__getPoolResultValue0YieldObjectStruct {
-    return changetype<PoolV1__getPoolResultValue0YieldObjectStruct>(
+  get yieldObject(): PoolV1__getLastPoolResultPoolYieldObjectStruct {
+    return changetype<PoolV1__getLastPoolResultPoolYieldObjectStruct>(
       this[9].toTuple()
     );
   }
-
-  get apy(): PoolV1__getPoolResultValue0ApyStruct {
-    return changetype<PoolV1__getPoolResultValue0ApyStruct>(this[10].toTuple());
-  }
 }
 
-export class PoolV1__getPoolResultValue0YieldObjectStruct extends ethereum.Tuple {
+export class PoolV1__getLastPoolResultPoolYieldObjectStruct extends ethereum.Tuple {
   get yieldTokenIndex(): BigInt {
     return this[0].toBigInt();
   }
@@ -496,17 +473,81 @@ export class PoolV1__getPoolResultValue0YieldObjectStruct extends ethereum.Tuple
   }
 }
 
-export class PoolV1__getPoolResultValue0ApyStruct extends ethereum.Tuple {
-  get span(): BigInt {
+export class PoolV1__getPoolResultPoolStruct extends ethereum.Tuple {
+  get id(): BigInt {
     return this[0].toBigInt();
   }
 
-  get apy(): BigInt {
+  get timestamp(): BigInt {
     return this[1].toBigInt();
+  }
+
+  get nrSuppliers(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get deposit(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get depositFromInFlowRate(): BigInt {
+    return this[4].toBigInt();
+  }
+
+  get depositFromOutFlowRate(): BigInt {
+    return this[5].toBigInt();
+  }
+
+  get inFlowRate(): BigInt {
+    return this[6].toBigInt();
+  }
+
+  get outFlowRate(): BigInt {
+    return this[7].toBigInt();
+  }
+
+  get outFlowBuffer(): BigInt {
+    return this[8].toBigInt();
+  }
+
+  get yieldObject(): PoolV1__getPoolResultPoolYieldObjectStruct {
+    return changetype<PoolV1__getPoolResultPoolYieldObjectStruct>(
+      this[9].toTuple()
+    );
   }
 }
 
-export class PoolV1__getSupplierResultValue0Struct extends ethereum.Tuple {
+export class PoolV1__getPoolResultPoolYieldObjectStruct extends ethereum.Tuple {
+  get yieldTokenIndex(): BigInt {
+    return this[0].toBigInt();
+  }
+
+  get yieldInFlowRateIndex(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get yieldOutFlowRateIndex(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get yieldAccrued(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get yieldSnapshot(): BigInt {
+    return this[4].toBigInt();
+  }
+
+  get totalYield(): BigInt {
+    return this[5].toBigInt();
+  }
+
+  get protocolYield(): BigInt {
+    return this[6].toBigInt();
+  }
+}
+
+export class PoolV1__getSupplierResultSupplierStruct extends ethereum.Tuple {
   get id(): BigInt {
     return this[0].toBigInt();
   }
@@ -515,44 +556,26 @@ export class PoolV1__getSupplierResultValue0Struct extends ethereum.Tuple {
     return this[1].toAddress();
   }
 
-  get cumulatedYield(): BigInt {
+  get deposit(): BigInt {
     return this[2].toBigInt();
   }
 
-  get deposit(): BigInt {
+  get timestamp(): BigInt {
     return this[3].toBigInt();
   }
 
-  get timestamp(): BigInt {
+  get inStream(): BigInt {
     return this[4].toBigInt();
   }
 
-  get createdTimestamp(): BigInt {
-    return this[5].toBigInt();
-  }
-
-  get eventId(): BigInt {
-    return this[6].toBigInt();
-  }
-
-  get inStream(): BigInt {
-    return this[7].toBigInt();
-  }
-
-  get outStream(): PoolV1__getSupplierResultValue0OutStreamStruct {
-    return changetype<PoolV1__getSupplierResultValue0OutStreamStruct>(
-      this[8].toTuple()
-    );
-  }
-
-  get apy(): PoolV1__getSupplierResultValue0ApyStruct {
-    return changetype<PoolV1__getSupplierResultValue0ApyStruct>(
-      this[9].toTuple()
+  get outStream(): PoolV1__getSupplierResultSupplierOutStreamStruct {
+    return changetype<PoolV1__getSupplierResultSupplierOutStreamStruct>(
+      this[5].toTuple()
     );
   }
 }
 
-export class PoolV1__getSupplierResultValue0OutStreamStruct extends ethereum.Tuple {
+export class PoolV1__getSupplierResultSupplierOutStreamStruct extends ethereum.Tuple {
   get flow(): BigInt {
     return this[0].toBigInt();
   }
@@ -570,65 +593,9 @@ export class PoolV1__getSupplierResultValue0OutStreamStruct extends ethereum.Tup
   }
 }
 
-export class PoolV1__getSupplierResultValue0ApyStruct extends ethereum.Tuple {
-  get span(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get apy(): BigInt {
-    return this[1].toBigInt();
-  }
-}
-
 export class PoolV1 extends ethereum.SmartContract {
   static bind(address: Address): PoolV1 {
     return new PoolV1("PoolV1", address);
-  }
-
-  BALANCE_TRIGGER_TIME(): BigInt {
-    let result = super.call(
-      "BALANCE_TRIGGER_TIME",
-      "BALANCE_TRIGGER_TIME():(uint256)",
-      []
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_BALANCE_TRIGGER_TIME(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "BALANCE_TRIGGER_TIME",
-      "BALANCE_TRIGGER_TIME():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  DEPOSIT_TRIGGER_AMOUNT(): BigInt {
-    let result = super.call(
-      "DEPOSIT_TRIGGER_AMOUNT",
-      "DEPOSIT_TRIGGER_AMOUNT():(uint256)",
-      []
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_DEPOSIT_TRIGGER_AMOUNT(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "DEPOSIT_TRIGGER_AMOUNT",
-      "DEPOSIT_TRIGGER_AMOUNT():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
   ETH(): Address {
@@ -646,21 +613,24 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
-  MIN_OUTFLOW_ALLOWED(): BigInt {
+  _allowances(param0: Address, param1: Address): BigInt {
     let result = super.call(
-      "MIN_OUTFLOW_ALLOWED",
-      "MIN_OUTFLOW_ALLOWED():(uint256)",
-      []
+      "_allowances",
+      "_allowances(address,address):(uint256)",
+      [ethereum.Value.fromAddress(param0), ethereum.Value.fromAddress(param1)]
     );
 
     return result[0].toBigInt();
   }
 
-  try_MIN_OUTFLOW_ALLOWED(): ethereum.CallResult<BigInt> {
+  try__allowances(
+    param0: Address,
+    param1: Address
+  ): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
-      "MIN_OUTFLOW_ALLOWED",
-      "MIN_OUTFLOW_ALLOWED():(uint256)",
-      []
+      "_allowances",
+      "_allowances(address,address):(uint256)",
+      [ethereum.Value.fromAddress(param0), ethereum.Value.fromAddress(param1)]
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -669,14 +639,18 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  POOL_BUFFER(): BigInt {
-    let result = super.call("POOL_BUFFER", "POOL_BUFFER():(uint256)", []);
+  _balances(param0: Address): BigInt {
+    let result = super.call("_balances", "_balances(address):(uint256)", [
+      ethereum.Value.fromAddress(param0)
+    ]);
 
     return result[0].toBigInt();
   }
 
-  try_POOL_BUFFER(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("POOL_BUFFER", "POOL_BUFFER():(uint256)", []);
+  try__balances(param0: Address): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("_balances", "_balances(address):(uint256)", [
+      ethereum.Value.fromAddress(param0)
+    ]);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -684,67 +658,82 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  PRECISSION(): BigInt {
-    let result = super.call("PRECISSION", "PRECISSION():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_PRECISSION(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("PRECISSION", "PRECISSION():(uint256)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  PROTOCOL_FEE(): BigInt {
-    let result = super.call("PROTOCOL_FEE", "PROTOCOL_FEE():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_PROTOCOL_FEE(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall("PROTOCOL_FEE", "PROTOCOL_FEE():(uint256)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  STEPS(): i32 {
-    let result = super.call("STEPS", "STEPS():(uint8)", []);
-
-    return result[0].toI32();
-  }
-
-  try_STEPS(): ethereum.CallResult<i32> {
-    let result = super.tryCall("STEPS", "STEPS():(uint8)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toI32());
-  }
-
-  SUPERFLUID_DEPOSIT(): BigInt {
+  _calculateIndexes(
+    yieldPeriod: BigInt,
+    lastPool: PoolV1___calculateIndexesInputLastPoolStruct
+  ): PoolV1___calculateIndexesResult {
     let result = super.call(
-      "SUPERFLUID_DEPOSIT",
-      "SUPERFLUID_DEPOSIT():(uint256)",
-      []
+      "_calculateIndexes",
+      "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256))):(uint256,uint256,uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(yieldPeriod),
+        ethereum.Value.fromTuple(lastPool)
+      ]
+    );
+
+    return new PoolV1___calculateIndexesResult(
+      result[0].toBigInt(),
+      result[1].toBigInt(),
+      result[2].toBigInt()
+    );
+  }
+
+  try__calculateIndexes(
+    yieldPeriod: BigInt,
+    lastPool: PoolV1___calculateIndexesInputLastPoolStruct
+  ): ethereum.CallResult<PoolV1___calculateIndexesResult> {
+    let result = super.tryCall(
+      "_calculateIndexes",
+      "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256))):(uint256,uint256,uint256)",
+      [
+        ethereum.Value.fromUnsignedBigInt(yieldPeriod),
+        ethereum.Value.fromTuple(lastPool)
+      ]
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(
+      new PoolV1___calculateIndexesResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+        value[2].toBigInt()
+      )
+    );
+  }
+
+  _calculateYieldSupplier(_supplier: Address): BigInt {
+    let result = super.call(
+      "_calculateYieldSupplier",
+      "_calculateYieldSupplier(address):(uint256)",
+      [ethereum.Value.fromAddress(_supplier)]
     );
 
     return result[0].toBigInt();
   }
 
-  try_SUPERFLUID_DEPOSIT(): ethereum.CallResult<BigInt> {
+  try__calculateYieldSupplier(_supplier: Address): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
-      "SUPERFLUID_DEPOSIT",
-      "SUPERFLUID_DEPOSIT():(uint256)",
-      []
+      "_calculateYieldSupplier",
+      "_calculateYieldSupplier(address):(uint256)",
+      [ethereum.Value.fromAddress(_supplier)]
     );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  _totalSupply(): BigInt {
+    let result = super.call("_totalSupply", "_totalSupply():(uint256)", []);
+
+    return result[0].toBigInt();
+  }
+
+  try__totalSupply(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall("_totalSupply", "_totalSupply():(uint256)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -968,6 +957,29 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  balanceTreasuryTask(): Bytes {
+    let result = super.call(
+      "balanceTreasuryTask",
+      "balanceTreasuryTask():(bytes32)",
+      []
+    );
+
+    return result[0].toBytes();
+  }
+
+  try_balanceTreasuryTask(): ethereum.CallResult<Bytes> {
+    let result = super.tryCall(
+      "balanceTreasuryTask",
+      "balanceTreasuryTask():(bytes32)",
+      []
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBytes());
+  }
+
   beforeAgreementCreated(
     param0: Address,
     param1: Address,
@@ -1109,19 +1121,37 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBytes());
   }
 
-  cfa(): Address {
-    let result = super.call("cfa", "cfa():(address)", []);
+  checkerLastExecution(): PoolV1__checkerLastExecutionResult {
+    let result = super.call(
+      "checkerLastExecution",
+      "checkerLastExecution():(bool,bytes)",
+      []
+    );
 
-    return result[0].toAddress();
+    return new PoolV1__checkerLastExecutionResult(
+      result[0].toBoolean(),
+      result[1].toBytes()
+    );
   }
 
-  try_cfa(): ethereum.CallResult<Address> {
-    let result = super.tryCall("cfa", "cfa():(address)", []);
+  try_checkerLastExecution(): ethereum.CallResult<
+    PoolV1__checkerLastExecutionResult
+  > {
+    let result = super.tryCall(
+      "checkerLastExecution",
+      "checkerLastExecution():(bool,bytes)",
+      []
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toAddress());
+    return ethereum.CallResult.fromValue(
+      new PoolV1__checkerLastExecutionResult(
+        value[0].toBoolean(),
+        value[1].toBytes()
+      )
+    );
   }
 
   decimals(): i32 {
@@ -1205,70 +1235,20 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
-  getDepositTriggerAmount(): BigInt {
-    let result = super.call(
-      "getDepositTriggerAmount",
-      "getDepositTriggerAmount():(uint256)",
-      []
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_getDepositTriggerAmount(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "getDepositTriggerAmount",
-      "getDepositTriggerAmount():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  getDepositTriggerTime(): BigInt {
-    let result = super.call(
-      "getDepositTriggerTime",
-      "getDepositTriggerTime():(uint256)",
-      []
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_getDepositTriggerTime(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "getDepositTriggerTime",
-      "getDepositTriggerTime():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  getLastPool(): PoolV1__getLastPoolResultValue0Struct {
+  getLastPool(): PoolV1__getLastPoolResultPoolStruct {
     let result = super.call(
       "getLastPool",
-      "getLastPool():((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))",
+      "getLastPool():((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))",
       []
     );
 
-    return changetype<PoolV1__getLastPoolResultValue0Struct>(
-      result[0].toTuple()
-    );
+    return changetype<PoolV1__getLastPoolResultPoolStruct>(result[0].toTuple());
   }
 
-  try_getLastPool(): ethereum.CallResult<
-    PoolV1__getLastPoolResultValue0Struct
-  > {
+  try_getLastPool(): ethereum.CallResult<PoolV1__getLastPoolResultPoolStruct> {
     let result = super.tryCall(
       "getLastPool",
-      "getLastPool():((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))",
+      "getLastPool():((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))",
       []
     );
     if (result.reverted) {
@@ -1276,7 +1256,7 @@ export class PoolV1 extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      changetype<PoolV1__getLastPoolResultValue0Struct>(value[0].toTuple())
+      changetype<PoolV1__getLastPoolResultPoolStruct>(value[0].toTuple())
     );
   }
 
@@ -1303,22 +1283,22 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  getPool(timestamp: BigInt): PoolV1__getPoolResultValue0Struct {
+  getPool(timestamp: BigInt): PoolV1__getPoolResultPoolStruct {
     let result = super.call(
       "getPool",
-      "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))",
+      "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))",
       [ethereum.Value.fromUnsignedBigInt(timestamp)]
     );
 
-    return changetype<PoolV1__getPoolResultValue0Struct>(result[0].toTuple());
+    return changetype<PoolV1__getPoolResultPoolStruct>(result[0].toTuple());
   }
 
   try_getPool(
     timestamp: BigInt
-  ): ethereum.CallResult<PoolV1__getPoolResultValue0Struct> {
+  ): ethereum.CallResult<PoolV1__getPoolResultPoolStruct> {
     let result = super.tryCall(
       "getPool",
-      "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))",
+      "getPool(uint256):((uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))",
       [ethereum.Value.fromUnsignedBigInt(timestamp)]
     );
     if (result.reverted) {
@@ -1326,123 +1306,28 @@ export class PoolV1 extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      changetype<PoolV1__getPoolResultValue0Struct>(value[0].toTuple())
+      changetype<PoolV1__getPoolResultPoolStruct>(value[0].toTuple())
     );
   }
 
-  getPoolBuffer(): BigInt {
-    let result = super.call("getPoolBuffer", "getPoolBuffer():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_getPoolBuffer(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "getPoolBuffer",
-      "getPoolBuffer():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  getPrecission(): BigInt {
-    let result = super.call("getPrecission", "getPrecission():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_getPrecission(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "getPrecission",
-      "getPrecission():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  getProtocolFee(): BigInt {
-    let result = super.call("getProtocolFee", "getProtocolFee():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_getProtocolFee(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "getProtocolFee",
-      "getProtocolFee():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  getSteps(): i32 {
-    let result = super.call("getSteps", "getSteps():(uint8)", []);
-
-    return result[0].toI32();
-  }
-
-  try_getSteps(): ethereum.CallResult<i32> {
-    let result = super.tryCall("getSteps", "getSteps():(uint8)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toI32());
-  }
-
-  getSuperfluidDeposit(): BigInt {
-    let result = super.call(
-      "getSuperfluidDeposit",
-      "getSuperfluidDeposit():(uint256)",
-      []
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_getSuperfluidDeposit(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "getSuperfluidDeposit",
-      "getSuperfluidDeposit():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  getSupplier(_supplier: Address): PoolV1__getSupplierResultValue0Struct {
+  getSupplier(_supplier: Address): PoolV1__getSupplierResultSupplierStruct {
     let result = super.call(
       "getSupplier",
-      "getSupplier(address):((uint256,address,uint256,uint256,uint256,uint256,uint256,int96,(int96,uint256,uint256,bytes32),(uint256,uint256)))",
+      "getSupplier(address):((uint256,address,uint256,uint256,int96,(int96,uint256,uint256,bytes32)))",
       [ethereum.Value.fromAddress(_supplier)]
     );
 
-    return changetype<PoolV1__getSupplierResultValue0Struct>(
+    return changetype<PoolV1__getSupplierResultSupplierStruct>(
       result[0].toTuple()
     );
   }
 
   try_getSupplier(
     _supplier: Address
-  ): ethereum.CallResult<PoolV1__getSupplierResultValue0Struct> {
+  ): ethereum.CallResult<PoolV1__getSupplierResultSupplierStruct> {
     let result = super.tryCall(
       "getSupplier",
-      "getSupplier(address):((uint256,address,uint256,uint256,uint256,uint256,uint256,int96,(int96,uint256,uint256,bytes32),(uint256,uint256)))",
+      "getSupplier(address):((uint256,address,uint256,uint256,int96,(int96,uint256,uint256,bytes32)))",
       [ethereum.Value.fromAddress(_supplier)]
     );
     if (result.reverted) {
@@ -1450,7 +1335,7 @@ export class PoolV1 extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(
-      changetype<PoolV1__getSupplierResultValue0Struct>(value[0].toTuple())
+      changetype<PoolV1__getSupplierResultSupplierStruct>(value[0].toTuple())
     );
   }
 
@@ -1467,21 +1352,6 @@ export class PoolV1 extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
-  host(): Address {
-    let result = super.call("host", "host():(address)", []);
-
-    return result[0].toAddress();
-  }
-
-  try_host(): ethereum.CallResult<Address> {
-    let result = super.tryCall("host", "host():(address)", []);
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
   increaseAllowance(spender: Address, addedValue: BigInt): boolean {
@@ -1516,25 +1386,6 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBoolean());
   }
 
-  lastExecution(): BigInt {
-    let result = super.call("lastExecution", "lastExecution():(uint256)", []);
-
-    return result[0].toBigInt();
-  }
-
-  try_lastExecution(): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "lastExecution",
-      "lastExecution():(uint256)",
-      []
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
   name(): string {
     let result = super.call("name", "name():(string)", []);
 
@@ -1565,14 +1416,14 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
-  owner(): Address {
-    let result = super.call("owner", "owner():(address)", []);
+  poolInternal(): Address {
+    let result = super.call("poolInternal", "poolInternal():(address)", []);
 
     return result[0].toAddress();
   }
 
-  try_owner(): ethereum.CallResult<Address> {
-    let result = super.tryCall("owner", "owner():(address)", []);
+  try_poolInternal(): ethereum.CallResult<Address> {
+    let result = super.tryCall("poolInternal", "poolInternal():(address)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -1580,14 +1431,14 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
-  poolFactory(): Address {
-    let result = super.call("poolFactory", "poolFactory():(address)", []);
+  poolStrategy(): Address {
+    let result = super.call("poolStrategy", "poolStrategy():(address)", []);
 
     return result[0].toAddress();
   }
 
-  try_poolFactory(): ethereum.CallResult<Address> {
-    let result = super.tryCall("poolFactory", "poolFactory():(address)", []);
+  try_poolStrategy(): ethereum.CallResult<Address> {
+    let result = super.tryCall("poolStrategy", "poolStrategy():(address)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -1614,33 +1465,21 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBytes());
   }
 
-  sfDeleteFlowWithCtx(_ctx: Bytes, sender: Address, receiver: Address): Bytes {
+  readStorageSlot(i: i32): Bytes {
     let result = super.call(
-      "sfDeleteFlowWithCtx",
-      "sfDeleteFlowWithCtx(bytes,address,address):(bytes)",
-      [
-        ethereum.Value.fromBytes(_ctx),
-        ethereum.Value.fromAddress(sender),
-        ethereum.Value.fromAddress(receiver)
-      ]
+      "readStorageSlot",
+      "readStorageSlot(uint8):(bytes32)",
+      [ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(i))]
     );
 
     return result[0].toBytes();
   }
 
-  try_sfDeleteFlowWithCtx(
-    _ctx: Bytes,
-    sender: Address,
-    receiver: Address
-  ): ethereum.CallResult<Bytes> {
+  try_readStorageSlot(i: i32): ethereum.CallResult<Bytes> {
     let result = super.tryCall(
-      "sfDeleteFlowWithCtx",
-      "sfDeleteFlowWithCtx(bytes,address,address):(bytes)",
-      [
-        ethereum.Value.fromBytes(_ctx),
-        ethereum.Value.fromAddress(sender),
-        ethereum.Value.fromAddress(receiver)
-      ]
+      "readStorageSlot",
+      "readStorageSlot(uint8):(bytes32)",
+      [ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(i))]
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1672,6 +1511,41 @@ export class PoolV1 extends ethereum.SmartContract {
 
   try_totalSupply(): ethereum.CallResult<BigInt> {
     let result = super.tryCall("totalSupply", "totalSupply():(uint256)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  totalYieldEarnedSupplier(
+    _supplier: Address,
+    currentYieldSnapshot: BigInt
+  ): BigInt {
+    let result = super.call(
+      "totalYieldEarnedSupplier",
+      "totalYieldEarnedSupplier(address,uint256):(uint256)",
+      [
+        ethereum.Value.fromAddress(_supplier),
+        ethereum.Value.fromUnsignedBigInt(currentYieldSnapshot)
+      ]
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_totalYieldEarnedSupplier(
+    _supplier: Address,
+    currentYieldSnapshot: BigInt
+  ): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "totalYieldEarnedSupplier",
+      "totalYieldEarnedSupplier(address,uint256):(uint256)",
+      [
+        ethereum.Value.fromAddress(_supplier),
+        ethereum.Value.fromUnsignedBigInt(currentYieldSnapshot)
+      ]
+    );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -1728,6 +1602,21 @@ export class PoolV1 extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigInt(amount)
       ]
     );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  withdraw(): boolean {
+    let result = super.call("withdraw", "withdraw():(bool)", []);
+
+    return result[0].toBoolean();
+  }
+
+  try_withdraw(): ethereum.CallResult<boolean> {
+    let result = super.tryCall("withdraw", "withdraw():(bool)", []);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
@@ -1936,6 +1825,32 @@ export class ApproveCall__Outputs {
   }
 }
 
+export class BalanceTreasuryCall extends ethereum.Call {
+  get inputs(): BalanceTreasuryCall__Inputs {
+    return new BalanceTreasuryCall__Inputs(this);
+  }
+
+  get outputs(): BalanceTreasuryCall__Outputs {
+    return new BalanceTreasuryCall__Outputs(this);
+  }
+}
+
+export class BalanceTreasuryCall__Inputs {
+  _call: BalanceTreasuryCall;
+
+  constructor(call: BalanceTreasuryCall) {
+    this._call = call;
+  }
+}
+
+export class BalanceTreasuryCall__Outputs {
+  _call: BalanceTreasuryCall;
+
+  constructor(call: BalanceTreasuryCall) {
+    this._call = call;
+  }
+}
+
 export class CloseAccountCall extends ethereum.Call {
   get inputs(): CloseAccountCall__Inputs {
     return new CloseAccountCall__Inputs(this);
@@ -1997,6 +1912,74 @@ export class DecreaseAllowanceCall__Outputs {
 
   get value0(): boolean {
     return this._call.outputValues[0].value.toBoolean();
+  }
+}
+
+export class EmergencyCloseStreamCall extends ethereum.Call {
+  get inputs(): EmergencyCloseStreamCall__Inputs {
+    return new EmergencyCloseStreamCall__Inputs(this);
+  }
+
+  get outputs(): EmergencyCloseStreamCall__Outputs {
+    return new EmergencyCloseStreamCall__Outputs(this);
+  }
+}
+
+export class EmergencyCloseStreamCall__Inputs {
+  _call: EmergencyCloseStreamCall;
+
+  constructor(call: EmergencyCloseStreamCall) {
+    this._call = call;
+  }
+
+  get sender(): Array<Address> {
+    return this._call.inputValues[0].value.toAddressArray();
+  }
+
+  get receiver(): Array<Address> {
+    return this._call.inputValues[1].value.toAddressArray();
+  }
+}
+
+export class EmergencyCloseStreamCall__Outputs {
+  _call: EmergencyCloseStreamCall;
+
+  constructor(call: EmergencyCloseStreamCall) {
+    this._call = call;
+  }
+}
+
+export class EmergencyUpdateBalanceSuppplierCall extends ethereum.Call {
+  get inputs(): EmergencyUpdateBalanceSuppplierCall__Inputs {
+    return new EmergencyUpdateBalanceSuppplierCall__Inputs(this);
+  }
+
+  get outputs(): EmergencyUpdateBalanceSuppplierCall__Outputs {
+    return new EmergencyUpdateBalanceSuppplierCall__Outputs(this);
+  }
+}
+
+export class EmergencyUpdateBalanceSuppplierCall__Inputs {
+  _call: EmergencyUpdateBalanceSuppplierCall;
+
+  constructor(call: EmergencyUpdateBalanceSuppplierCall) {
+    this._call = call;
+  }
+
+  get suppliers(): Array<Address> {
+    return this._call.inputValues[0].value.toAddressArray();
+  }
+
+  get balances(): Array<BigInt> {
+    return this._call.inputValues[1].value.toBigIntArray();
+  }
+}
+
+export class EmergencyUpdateBalanceSuppplierCall__Outputs {
+  _call: EmergencyUpdateBalanceSuppplierCall;
+
+  constructor(call: EmergencyUpdateBalanceSuppplierCall) {
+    this._call = call;
   }
 }
 
@@ -2112,70 +2095,6 @@ export class InitializeCallPoolInitStruct extends ethereum.Tuple {
   }
 }
 
-export class InternalPushToAAVECall extends ethereum.Call {
-  get inputs(): InternalPushToAAVECall__Inputs {
-    return new InternalPushToAAVECall__Inputs(this);
-  }
-
-  get outputs(): InternalPushToAAVECall__Outputs {
-    return new InternalPushToAAVECall__Outputs(this);
-  }
-}
-
-export class InternalPushToAAVECall__Inputs {
-  _call: InternalPushToAAVECall;
-
-  constructor(call: InternalPushToAAVECall) {
-    this._call = call;
-  }
-
-  get amount(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
-}
-
-export class InternalPushToAAVECall__Outputs {
-  _call: InternalPushToAAVECall;
-
-  constructor(call: InternalPushToAAVECall) {
-    this._call = call;
-  }
-}
-
-export class InternalWithDrawStepCall extends ethereum.Call {
-  get inputs(): InternalWithDrawStepCall__Inputs {
-    return new InternalWithDrawStepCall__Inputs(this);
-  }
-
-  get outputs(): InternalWithDrawStepCall__Outputs {
-    return new InternalWithDrawStepCall__Outputs(this);
-  }
-}
-
-export class InternalWithDrawStepCall__Inputs {
-  _call: InternalWithDrawStepCall;
-
-  constructor(call: InternalWithDrawStepCall) {
-    this._call = call;
-  }
-
-  get supplier(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get stepAmount(): BigInt {
-    return this._call.inputValues[1].value.toBigInt();
-  }
-}
-
-export class InternalWithDrawStepCall__Outputs {
-  _call: InternalWithDrawStepCall;
-
-  constructor(call: InternalWithDrawStepCall) {
-    this._call = call;
-  }
-}
-
 export class RedeemDepositCall extends ethereum.Call {
   get inputs(): RedeemDepositCall__Inputs {
     return new RedeemDepositCall__Inputs(this);
@@ -2262,326 +2181,92 @@ export class RedeemFlowStopCall__Outputs {
   }
 }
 
-export class SetDepositTriggerAmountCall extends ethereum.Call {
-  get inputs(): SetDepositTriggerAmountCall__Inputs {
-    return new SetDepositTriggerAmountCall__Inputs(this);
+export class SetEmergencyCall extends ethereum.Call {
+  get inputs(): SetEmergencyCall__Inputs {
+    return new SetEmergencyCall__Inputs(this);
   }
 
-  get outputs(): SetDepositTriggerAmountCall__Outputs {
-    return new SetDepositTriggerAmountCall__Outputs(this);
+  get outputs(): SetEmergencyCall__Outputs {
+    return new SetEmergencyCall__Outputs(this);
   }
 }
 
-export class SetDepositTriggerAmountCall__Inputs {
-  _call: SetDepositTriggerAmountCall;
+export class SetEmergencyCall__Inputs {
+  _call: SetEmergencyCall;
 
-  constructor(call: SetDepositTriggerAmountCall) {
+  constructor(call: SetEmergencyCall) {
     this._call = call;
   }
 
-  get _amount(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
+  get _emergency(): boolean {
+    return this._call.inputValues[0].value.toBoolean();
   }
 }
 
-export class SetDepositTriggerAmountCall__Outputs {
-  _call: SetDepositTriggerAmountCall;
+export class SetEmergencyCall__Outputs {
+  _call: SetEmergencyCall;
 
-  constructor(call: SetDepositTriggerAmountCall) {
-    this._call = call;
-  }
-}
-
-export class SetDepositTriggerTimeCall extends ethereum.Call {
-  get inputs(): SetDepositTriggerTimeCall__Inputs {
-    return new SetDepositTriggerTimeCall__Inputs(this);
-  }
-
-  get outputs(): SetDepositTriggerTimeCall__Outputs {
-    return new SetDepositTriggerTimeCall__Outputs(this);
-  }
-}
-
-export class SetDepositTriggerTimeCall__Inputs {
-  _call: SetDepositTriggerTimeCall;
-
-  constructor(call: SetDepositTriggerTimeCall) {
-    this._call = call;
-  }
-
-  get _time(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
-}
-
-export class SetDepositTriggerTimeCall__Outputs {
-  _call: SetDepositTriggerTimeCall;
-
-  constructor(call: SetDepositTriggerTimeCall) {
+  constructor(call: SetEmergencyCall) {
     this._call = call;
   }
 }
 
-export class SetPoolBufferCall extends ethereum.Call {
-  get inputs(): SetPoolBufferCall__Inputs {
-    return new SetPoolBufferCall__Inputs(this);
+export class SetInternalContractCall extends ethereum.Call {
+  get inputs(): SetInternalContractCall__Inputs {
+    return new SetInternalContractCall__Inputs(this);
   }
 
-  get outputs(): SetPoolBufferCall__Outputs {
-    return new SetPoolBufferCall__Outputs(this);
+  get outputs(): SetInternalContractCall__Outputs {
+    return new SetInternalContractCall__Outputs(this);
   }
 }
 
-export class SetPoolBufferCall__Inputs {
-  _call: SetPoolBufferCall;
+export class SetInternalContractCall__Inputs {
+  _call: SetInternalContractCall;
 
-  constructor(call: SetPoolBufferCall) {
+  constructor(call: SetInternalContractCall) {
     this._call = call;
   }
 
-  get _poolBuffer(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
-}
-
-export class SetPoolBufferCall__Outputs {
-  _call: SetPoolBufferCall;
-
-  constructor(call: SetPoolBufferCall) {
-    this._call = call;
-  }
-}
-
-export class SetPrecissionCall extends ethereum.Call {
-  get inputs(): SetPrecissionCall__Inputs {
-    return new SetPrecissionCall__Inputs(this);
-  }
-
-  get outputs(): SetPrecissionCall__Outputs {
-    return new SetPrecissionCall__Outputs(this);
-  }
-}
-
-export class SetPrecissionCall__Inputs {
-  _call: SetPrecissionCall;
-
-  constructor(call: SetPrecissionCall) {
-    this._call = call;
-  }
-
-  get _precission(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
-}
-
-export class SetPrecissionCall__Outputs {
-  _call: SetPrecissionCall;
-
-  constructor(call: SetPrecissionCall) {
-    this._call = call;
-  }
-}
-
-export class SetStepsCall extends ethereum.Call {
-  get inputs(): SetStepsCall__Inputs {
-    return new SetStepsCall__Inputs(this);
-  }
-
-  get outputs(): SetStepsCall__Outputs {
-    return new SetStepsCall__Outputs(this);
-  }
-}
-
-export class SetStepsCall__Inputs {
-  _call: SetStepsCall;
-
-  constructor(call: SetStepsCall) {
-    this._call = call;
-  }
-
-  get _steps(): i32 {
-    return this._call.inputValues[0].value.toI32();
-  }
-}
-
-export class SetStepsCall__Outputs {
-  _call: SetStepsCall;
-
-  constructor(call: SetStepsCall) {
-    this._call = call;
-  }
-}
-
-export class SetSuperfluidDepositCall extends ethereum.Call {
-  get inputs(): SetSuperfluidDepositCall__Inputs {
-    return new SetSuperfluidDepositCall__Inputs(this);
-  }
-
-  get outputs(): SetSuperfluidDepositCall__Outputs {
-    return new SetSuperfluidDepositCall__Outputs(this);
-  }
-}
-
-export class SetSuperfluidDepositCall__Inputs {
-  _call: SetSuperfluidDepositCall;
-
-  constructor(call: SetSuperfluidDepositCall) {
-    this._call = call;
-  }
-
-  get _superfluidDeposit(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
-}
-
-export class SetSuperfluidDepositCall__Outputs {
-  _call: SetSuperfluidDepositCall;
-
-  constructor(call: SetSuperfluidDepositCall) {
-    this._call = call;
-  }
-}
-
-export class SfCreateFlowCall extends ethereum.Call {
-  get inputs(): SfCreateFlowCall__Inputs {
-    return new SfCreateFlowCall__Inputs(this);
-  }
-
-  get outputs(): SfCreateFlowCall__Outputs {
-    return new SfCreateFlowCall__Outputs(this);
-  }
-}
-
-export class SfCreateFlowCall__Inputs {
-  _call: SfCreateFlowCall;
-
-  constructor(call: SfCreateFlowCall) {
-    this._call = call;
-  }
-
-  get receiver(): Address {
+  get _poolInternal(): Address {
     return this._call.inputValues[0].value.toAddress();
   }
-
-  get newOutFlow(): BigInt {
-    return this._call.inputValues[1].value.toBigInt();
-  }
 }
 
-export class SfCreateFlowCall__Outputs {
-  _call: SfCreateFlowCall;
+export class SetInternalContractCall__Outputs {
+  _call: SetInternalContractCall;
 
-  constructor(call: SfCreateFlowCall) {
+  constructor(call: SetInternalContractCall) {
     this._call = call;
   }
 }
 
-export class SfDeleteFlowCall extends ethereum.Call {
-  get inputs(): SfDeleteFlowCall__Inputs {
-    return new SfDeleteFlowCall__Inputs(this);
+export class TaskCloseCall extends ethereum.Call {
+  get inputs(): TaskCloseCall__Inputs {
+    return new TaskCloseCall__Inputs(this);
   }
 
-  get outputs(): SfDeleteFlowCall__Outputs {
-    return new SfDeleteFlowCall__Outputs(this);
+  get outputs(): TaskCloseCall__Outputs {
+    return new TaskCloseCall__Outputs(this);
   }
 }
 
-export class SfDeleteFlowCall__Inputs {
-  _call: SfDeleteFlowCall;
+export class TaskCloseCall__Inputs {
+  _call: TaskCloseCall;
 
-  constructor(call: SfDeleteFlowCall) {
+  constructor(call: TaskCloseCall) {
     this._call = call;
   }
 
-  get sender(): Address {
+  get _supplier(): Address {
     return this._call.inputValues[0].value.toAddress();
   }
-
-  get receiver(): Address {
-    return this._call.inputValues[1].value.toAddress();
-  }
 }
 
-export class SfDeleteFlowCall__Outputs {
-  _call: SfDeleteFlowCall;
+export class TaskCloseCall__Outputs {
+  _call: TaskCloseCall;
 
-  constructor(call: SfDeleteFlowCall) {
-    this._call = call;
-  }
-}
-
-export class SfDeleteFlowWithCtxCall extends ethereum.Call {
-  get inputs(): SfDeleteFlowWithCtxCall__Inputs {
-    return new SfDeleteFlowWithCtxCall__Inputs(this);
-  }
-
-  get outputs(): SfDeleteFlowWithCtxCall__Outputs {
-    return new SfDeleteFlowWithCtxCall__Outputs(this);
-  }
-}
-
-export class SfDeleteFlowWithCtxCall__Inputs {
-  _call: SfDeleteFlowWithCtxCall;
-
-  constructor(call: SfDeleteFlowWithCtxCall) {
-    this._call = call;
-  }
-
-  get _ctx(): Bytes {
-    return this._call.inputValues[0].value.toBytes();
-  }
-
-  get sender(): Address {
-    return this._call.inputValues[1].value.toAddress();
-  }
-
-  get receiver(): Address {
-    return this._call.inputValues[2].value.toAddress();
-  }
-}
-
-export class SfDeleteFlowWithCtxCall__Outputs {
-  _call: SfDeleteFlowWithCtxCall;
-
-  constructor(call: SfDeleteFlowWithCtxCall) {
-    this._call = call;
-  }
-
-  get newCtx(): Bytes {
-    return this._call.outputValues[0].value.toBytes();
-  }
-}
-
-export class SfUpdateFlowCall extends ethereum.Call {
-  get inputs(): SfUpdateFlowCall__Inputs {
-    return new SfUpdateFlowCall__Inputs(this);
-  }
-
-  get outputs(): SfUpdateFlowCall__Outputs {
-    return new SfUpdateFlowCall__Outputs(this);
-  }
-}
-
-export class SfUpdateFlowCall__Inputs {
-  _call: SfUpdateFlowCall;
-
-  constructor(call: SfUpdateFlowCall) {
-    this._call = call;
-  }
-
-  get receiver(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get newOutFlow(): BigInt {
-    return this._call.inputValues[1].value.toBigInt();
-  }
-}
-
-export class SfUpdateFlowCall__Outputs {
-  _call: SfUpdateFlowCall;
-
-  constructor(call: SfUpdateFlowCall) {
+  constructor(call: TaskCloseCall) {
     this._call = call;
   }
 }
@@ -2603,7 +2288,7 @@ export class TokensReceivedCall__Inputs {
     this._call = call;
   }
 
-  get operator(): Address {
+  get value0(): Address {
     return this._call.inputValues[0].value.toAddress();
   }
 
@@ -2611,7 +2296,7 @@ export class TokensReceivedCall__Inputs {
     return this._call.inputValues[1].value.toAddress();
   }
 
-  get to(): Address {
+  get value2(): Address {
     return this._call.inputValues[2].value.toAddress();
   }
 
@@ -2619,11 +2304,11 @@ export class TokensReceivedCall__Inputs {
     return this._call.inputValues[3].value.toBigInt();
   }
 
-  get userData(): Bytes {
+  get value4(): Bytes {
     return this._call.inputValues[4].value.toBytes();
   }
 
-  get operatorData(): Bytes {
+  get value5(): Bytes {
     return this._call.inputValues[5].value.toBytes();
   }
 }
@@ -2674,40 +2359,6 @@ export class TransferCall__Outputs {
   }
 }
 
-export class Transfer1Call extends ethereum.Call {
-  get inputs(): Transfer1Call__Inputs {
-    return new Transfer1Call__Inputs(this);
-  }
-
-  get outputs(): Transfer1Call__Outputs {
-    return new Transfer1Call__Outputs(this);
-  }
-}
-
-export class Transfer1Call__Inputs {
-  _call: Transfer1Call;
-
-  constructor(call: Transfer1Call) {
-    this._call = call;
-  }
-
-  get _amount(): BigInt {
-    return this._call.inputValues[0].value.toBigInt();
-  }
-
-  get _paymentToken(): Address {
-    return this._call.inputValues[1].value.toAddress();
-  }
-}
-
-export class Transfer1Call__Outputs {
-  _call: Transfer1Call;
-
-  constructor(call: Transfer1Call) {
-    this._call = call;
-  }
-}
-
 export class TransferFromCall extends ethereum.Call {
   get inputs(): TransferFromCall__Inputs {
     return new TransferFromCall__Inputs(this);
@@ -2750,40 +2401,6 @@ export class TransferFromCall__Outputs {
   }
 }
 
-export class TransferSuperTokenCall extends ethereum.Call {
-  get inputs(): TransferSuperTokenCall__Inputs {
-    return new TransferSuperTokenCall__Inputs(this);
-  }
-
-  get outputs(): TransferSuperTokenCall__Outputs {
-    return new TransferSuperTokenCall__Outputs(this);
-  }
-}
-
-export class TransferSuperTokenCall__Inputs {
-  _call: TransferSuperTokenCall;
-
-  constructor(call: TransferSuperTokenCall) {
-    this._call = call;
-  }
-
-  get receiver(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get amount(): BigInt {
-    return this._call.inputValues[1].value.toBigInt();
-  }
-}
-
-export class TransferSuperTokenCall__Outputs {
-  _call: TransferSuperTokenCall;
-
-  constructor(call: TransferSuperTokenCall) {
-    this._call = call;
-  }
-}
-
 export class UpdateCodeCall extends ethereum.Call {
   get inputs(): UpdateCodeCall__Inputs {
     return new UpdateCodeCall__Inputs(this);
@@ -2811,5 +2428,35 @@ export class UpdateCodeCall__Outputs {
 
   constructor(call: UpdateCodeCall) {
     this._call = call;
+  }
+}
+
+export class WithdrawCall extends ethereum.Call {
+  get inputs(): WithdrawCall__Inputs {
+    return new WithdrawCall__Inputs(this);
+  }
+
+  get outputs(): WithdrawCall__Outputs {
+    return new WithdrawCall__Outputs(this);
+  }
+}
+
+export class WithdrawCall__Inputs {
+  _call: WithdrawCall;
+
+  constructor(call: WithdrawCall) {
+    this._call = call;
+  }
+}
+
+export class WithdrawCall__Outputs {
+  _call: WithdrawCall;
+
+  constructor(call: WithdrawCall) {
+    this._call = call;
+  }
+
+  get value0(): boolean {
+    return this._call.outputValues[0].value.toBoolean();
   }
 }

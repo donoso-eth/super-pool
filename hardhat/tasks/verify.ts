@@ -36,27 +36,22 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   //let result = await host.getResolverBySuperToken(network_params.superToken);
 
 
-  // deployContract = 'superPoolFactory';
-  // toDeployContract = contract_config[deployContract];
-  // const poolFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
-
-  // await hre.run('verify:verify', {
-  //   address: poolFactory.address,
-  //   constructorArguments: [],
-  // });
+  deployContract = 'superPoolFactory';
+  toDeployContract = contract_config[deployContract];
+  const poolFactory = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
 
 
-  // deployContract = 'poolV1';
-  // toDeployContract = contract_config[deployContract];
-  // const poolImpl = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
+  deployContract = 'poolV1';
+  toDeployContract = contract_config[deployContract];
+  const poolImpl = JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
-  // await hre.run('verify:verify', {
-  //   address: "0x44F24256636EA1dFf729B6466a0821917B125cf9",
-  //   constructorArguments: [],
-  // });
+  await hre.run('verify:verify', {
+    address: "0x86e3CB4afE10E705A58B00f054Ff4f609c3e3523",
+    constructorArguments: [],
+  });
 
-  // throw new Error("");
+  throw new Error("");
   
   
   // deployContract = 'poolStrategyV1';
@@ -75,18 +70,18 @@ task('verify-contract', 'verify').setAction(async ({}, hre) => {
   const poolInternal= JSON.parse(readFileSync(`${contract_path}/${toDeployContract.jsonName}_metadata.json`, 'utf-8'));
 
   await hre.run('verify:verify', {
-    address:'0x077148a0D9595BD3fc1d156F049CE1df11c2188a', //poolInternal.address,
+    address:'0x0bb7a58FB9073F2A98b44e51f684fb5c70B36E6d', //poolInternal.address,
     constructorArguments: [],
   });
 
 
   await hre.run('verify:verify', {
-    address: '0xDE77f4f04CBF2CEC335337879dFBf03d6C950416',
+    address: '0xD15295eCf9204D7f9B63723D640065621832A451',
     constructorArguments: [],
   });
 
   await hre.run('verify:verify', {
-    address: '0xb5AC45Ecd797B211e77434E579926f4bf726045c',
+    address: '0x86e3CB4afE10E705A58B00f054Ff4f609c3e3523',
     constructorArguments: [],
   });
 

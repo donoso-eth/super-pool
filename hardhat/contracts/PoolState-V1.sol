@@ -25,8 +25,8 @@ contract PoolStateV1 {
 
   uint256 public _totalSupply;
 
-  string public _name;
-  string public _symbol;
+  string _name;
+  string  _symbol;
 
   // #region pool state
 

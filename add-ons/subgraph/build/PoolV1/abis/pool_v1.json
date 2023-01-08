@@ -83,32 +83,6 @@
   },
   {
     "inputs": [],
-    "name": "BALANCE_TRIGGER_TIME",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "DEPOSIT_TRIGGER_AMOUNT",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "ETH",
     "outputs": [
       {
@@ -121,8 +95,19 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "MIN_OUTFLOW_ALLOWED",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "_allowances",
     "outputs": [
       {
         "internalType": "uint256",
@@ -134,8 +119,14 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "POOL_BUFFER",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "_balances",
     "outputs": [
       {
         "internalType": "uint256",
@@ -147,12 +138,141 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "PRECISSION",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "yieldPeriod",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "nrSuppliers",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deposit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "depositFromInFlowRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "depositFromOutFlowRate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "int96",
+            "name": "inFlowRate",
+            "type": "int96"
+          },
+          {
+            "internalType": "int96",
+            "name": "outFlowRate",
+            "type": "int96"
+          },
+          {
+            "internalType": "uint256",
+            "name": "outFlowBuffer",
+            "type": "uint256"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "yieldTokenIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldInFlowRateIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldOutFlowRateIndex",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldAccrued",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "yieldSnapshot",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "totalYield",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "protocolYield",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct DataTypes.Yield",
+            "name": "yieldObject",
+            "type": "tuple"
+          }
+        ],
+        "internalType": "struct DataTypes.Pool",
+        "name": "lastPool",
+        "type": "tuple"
+      }
+    ],
+    "name": "_calculateIndexes",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "periodYieldTokenIndex",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "periodYieldInFlowRateIndex",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "periodYieldOutFlowRateIndex",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_supplier",
+        "type": "address"
+      }
+    ],
+    "name": "_calculateYieldSupplier",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "yieldSupplier",
         "type": "uint256"
       }
     ],
@@ -161,33 +281,7 @@
   },
   {
     "inputs": [],
-    "name": "PROTOCOL_FEE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "STEPS",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "SUPERFLUID_DEPOSIT",
+    "name": "_totalSupply",
     "outputs": [
       {
         "internalType": "uint256",
@@ -398,6 +492,26 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "balanceTreasury",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "balanceTreasuryTask",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "contract ISuperToken",
@@ -516,12 +630,17 @@
   },
   {
     "inputs": [],
-    "name": "cfa",
+    "name": "checkerLastExecution",
     "outputs": [
       {
-        "internalType": "contract IConstantFlowAgreementV1",
-        "name": "",
-        "type": "address"
+        "internalType": "bool",
+        "name": "canExec",
+        "type": "bool"
+      },
+      {
+        "internalType": "bytes",
+        "name": "execPayload",
+        "type": "bytes"
       }
     ],
     "stateMutability": "view",
@@ -544,7 +663,7 @@
         "type": "uint8"
       }
     ],
-    "stateMutability": "view",
+    "stateMutability": "pure",
     "type": "function"
   },
   {
@@ -572,6 +691,42 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "sender",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "receiver",
+        "type": "address[]"
+      }
+    ],
+    "name": "emergencyCloseStream",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "suppliers",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "balances",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "emergencyUpdateBalanceSuppplier",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "gelato",
     "outputs": [
@@ -592,32 +747,6 @@
         "internalType": "address",
         "name": "codeAddress",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getDepositTriggerAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getDepositTriggerTime",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -715,27 +844,10 @@
             "internalType": "struct DataTypes.Yield",
             "name": "yieldObject",
             "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "span",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "apy",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct DataTypes.APY",
-            "name": "apy",
-            "type": "tuple"
           }
         ],
-        "internalType": "struct DataTypes.PoolV1",
-        "name": "",
+        "internalType": "struct DataTypes.Pool",
+        "name": "pool",
         "type": "tuple"
       }
     ],
@@ -853,93 +965,11 @@
             "internalType": "struct DataTypes.Yield",
             "name": "yieldObject",
             "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "span",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "apy",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct DataTypes.APY",
-            "name": "apy",
-            "type": "tuple"
           }
         ],
-        "internalType": "struct DataTypes.PoolV1",
-        "name": "",
+        "internalType": "struct DataTypes.Pool",
+        "name": "pool",
         "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getPoolBuffer",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getPrecission",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getProtocolFee",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getSteps",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getSuperfluidDeposit",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -969,27 +999,12 @@
           },
           {
             "internalType": "uint256",
-            "name": "cumulatedYield",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
             "name": "deposit",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
             "name": "timestamp",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "createdTimestamp",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "eventId",
             "type": "uint256"
           },
           {
@@ -1023,27 +1038,10 @@
             "internalType": "struct DataTypes.OutStream",
             "name": "outStream",
             "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "span",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "apy",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct DataTypes.APY",
-            "name": "apy",
-            "type": "tuple"
           }
         ],
         "internalType": "struct DataTypes.Supplier",
-        "name": "",
+        "name": "supplier",
         "type": "tuple"
       }
     ],
@@ -1061,19 +1059,6 @@
       }
     ],
     "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "host",
-    "outputs": [
-      {
-        "internalType": "contract ISuperfluid",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1135,7 +1120,7 @@
             "type": "address"
           },
           {
-            "internalType": "contract IPoolInternalV1",
+            "internalType": "address",
             "name": "poolInternal",
             "type": "address"
           },
@@ -1166,50 +1151,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "internalPushToAAVE",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "supplier",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "stepAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "internalWithDrawStep",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "lastExecution",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "name",
     "outputs": [
@@ -1237,7 +1178,7 @@
   },
   {
     "inputs": [],
-    "name": "owner",
+    "name": "poolInternal",
     "outputs": [
       {
         "internalType": "address",
@@ -1250,7 +1191,7 @@
   },
   {
     "inputs": [],
-    "name": "poolFactory",
+    "name": "poolStrategy",
     "outputs": [
       {
         "internalType": "address",
@@ -1272,6 +1213,25 @@
       }
     ],
     "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "i",
+        "type": "uint8"
+      }
+    ],
+    "name": "readStorageSlot",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "result",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1310,77 +1270,12 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
+        "internalType": "bool",
+        "name": "_emergency",
+        "type": "bool"
       }
     ],
-    "name": "setDepositTriggerAmount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_time",
-        "type": "uint256"
-      }
-    ],
-    "name": "setDepositTriggerTime",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_poolBuffer",
-        "type": "uint256"
-      }
-    ],
-    "name": "setPoolBuffer",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_precission",
-        "type": "uint256"
-      }
-    ],
-    "name": "setPrecission",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint8",
-        "name": "_steps",
-        "type": "uint8"
-      }
-    ],
-    "name": "setSteps",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_superfluidDeposit",
-        "type": "uint256"
-      }
-    ],
-    "name": "setSuperfluidDeposit",
+    "name": "setEmergency",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1389,81 +1284,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "receiver",
-        "type": "address"
-      },
-      {
-        "internalType": "int96",
-        "name": "newOutFlow",
-        "type": "int96"
-      }
-    ],
-    "name": "sfCreateFlow",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "receiver",
+        "name": "_poolInternal",
         "type": "address"
       }
     ],
-    "name": "sfDeleteFlow",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "_ctx",
-        "type": "bytes"
-      },
-      {
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "receiver",
-        "type": "address"
-      }
-    ],
-    "name": "sfDeleteFlowWithCtx",
-    "outputs": [
-      {
-        "internalType": "bytes",
-        "name": "newCtx",
-        "type": "bytes"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "receiver",
-        "type": "address"
-      },
-      {
-        "internalType": "int96",
-        "name": "newOutFlow",
-        "type": "int96"
-      }
-    ],
-    "name": "sfUpdateFlow",
+    "name": "setInternalContract",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1485,7 +1310,20 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "operator",
+        "name": "_supplier",
+        "type": "address"
+      }
+    ],
+    "name": "taskClose",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
         "type": "address"
       },
       {
@@ -1495,7 +1333,7 @@
       },
       {
         "internalType": "address",
-        "name": "to",
+        "name": "",
         "type": "address"
       },
       {
@@ -1505,12 +1343,12 @@
       },
       {
         "internalType": "bytes",
-        "name": "userData",
+        "name": "",
         "type": "bytes"
       },
       {
         "internalType": "bytes",
-        "name": "operatorData",
+        "name": "",
         "type": "bytes"
       }
     ],
@@ -1525,7 +1363,31 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_totalSupply",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_supplier",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentYieldSnapshot",
+        "type": "uint256"
+      }
+    ],
+    "name": "totalYieldEarnedSupplier",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "yieldSupplier",
         "type": "uint256"
       }
     ],
@@ -1553,24 +1415,6 @@
         "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_paymentToken",
-        "type": "address"
-      }
-    ],
-    "name": "transfer",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1600,24 +1444,6 @@
         "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "receiver",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "transferSuperToken",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1742,27 +1568,10 @@
             "internalType": "struct DataTypes.Yield",
             "name": "yieldObject",
             "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "span",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "apy",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct DataTypes.APY",
-            "name": "apy",
-            "type": "tuple"
           }
         ],
         "indexed": false,
-        "internalType": "struct DataTypes.PoolV1",
+        "internalType": "struct DataTypes.Pool",
         "name": "pool",
         "type": "tuple"
       }
@@ -1818,27 +1627,12 @@
           },
           {
             "internalType": "uint256",
-            "name": "cumulatedYield",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
             "name": "deposit",
             "type": "uint256"
           },
           {
             "internalType": "uint256",
             "name": "timestamp",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "createdTimestamp",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "eventId",
             "type": "uint256"
           },
           {
@@ -1871,23 +1665,6 @@
             ],
             "internalType": "struct DataTypes.OutStream",
             "name": "outStream",
-            "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "span",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "apy",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct DataTypes.APY",
-            "name": "apy",
             "type": "tuple"
           }
         ],
