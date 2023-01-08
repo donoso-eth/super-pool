@@ -16,7 +16,7 @@ import { join } from 'path';
 import { applyUserEvent, faucet, updatePool } from './helpers/logic-V1';
 import { ICONTRACTS_TEST, IPOOL_RESULT, ITREASURY_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V1';
 
-import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
+
 import { gelatoBalance, getGelatoCloStream, getGelatoCloStreamId } from './helpers/gelato-V1';
 
 import { BigNumber } from '@ethersproject/bignumber';
@@ -101,7 +101,7 @@ let ONE_HOUR = 3600;
 const processDir = process.cwd();
 let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.json'), 'utf-8')) as INETWORK_CONFIG;
 
-let network_params = networks_config['goerli'];
+let network_params = networks_config['polygon'];
 
 removeSync(join(processDir,'expected','treasury'));
 ensureDirSync(join(processDir,'expected','treasury'));
@@ -157,7 +157,7 @@ describe('V1 TEST TREASURY', function () {
 
     superTokenContract = await ISuperToken__factory.connect(network_params.superToken, deployer);
     superTokenERC777 = await IERC777__factory.connect(network_params.superToken, deployer);
-    tokenContract = new hre.ethers.Contract(network_params.token, abi_erc20mint, deployer) as ERC20;
+    tokenContract =   await IERC20__factory.connect(network_params.token, deployer) as ERC20;
 
     let superInputStruct: CreatePoolInputStruct = {
       superToken: network_params.superToken,
@@ -176,7 +176,7 @@ describe('V1 TEST TREASURY', function () {
     // await poolInternal.initialize(settings.address);
     // console.log('Pool Internal ---> initialized');
 
-    await poolStrategy.initialize( network_params.superToken, network_params.token, poolProxyAddress, aavePool, aToken, network_params.aaveToken);
+    await poolStrategy.initialize( network_params.superToken, network_params.token, poolProxyAddress, network_params.aavePool, network_params.aToken);
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolV1__factory.connect(superPoolAddress, deployer);

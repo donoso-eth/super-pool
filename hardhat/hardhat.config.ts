@@ -11,11 +11,12 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import * as glob from 'glob';
 import { resolve } from 'path';
 
+dotenv.config();
+
 const INFURA_ID = 'YOUR KEY'; //process.env["INFURA_ID"]
 const MORALIS_ID = 'YOUR KEY'; //process.env["MORALIS_ID"]
-const ALCHEMY_ID_MUMBAI = 'YOUR KEY'; //process.env["ALCHEMY_ID_MUMBAI"]
+const ALCHEMY_ID_POLYGON = process.env["ALCHEMY_ID_POLYGON"]
 
-dotenv.config();
 
 //// import task files when types have already been created
 if (existsSync('./typechain-types')) {
@@ -49,8 +50,8 @@ const config: HardhatUserConfig = {
     hardhat: {
       allowUnlimitedContractSize: true,
       forking: {
-        url: `https://goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e`,
-        blockNumber: 7850256
+        url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ID_POLYGON}`, //
+    
         },  
         chainId: 1337
     },
@@ -85,7 +86,7 @@ const config: HardhatUserConfig = {
           : [],
     },
     polygon: {
-      url: 'https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXx/polygon/mainnet', // <---- YOUR MORALIS ID! (not limited to infura)
+      url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ID_POLYGON}`, //
       //https://polygon-rpc.com
       gasPrice: 1000000000,
           accounts:

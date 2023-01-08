@@ -77,7 +77,11 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     /// Create Proxy Contracts
 
     UUPSProxy poolProxy = new UUPSProxy();
+
+      console.log(82,tokenName);
     poolProxy.initializeProxy(poolImpl);
+
+      console.log(80,tokenName);
 
     // UUPSProxy poolInternalProxy = new UUPSProxy();
     // poolInternalProxy.initializeProxy(poolInternalImpl);
@@ -100,10 +104,14 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     });
 
     IPoolV1(address(poolProxy)).initialize(poolInit);
-
+     console.log(107,tokenName);
     uint256 configWord = SuperAppDefinitions.APP_LEVEL_FINAL | SuperAppDefinitions.BEFORE_AGREEMENT_CREATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP | SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP;
+    
+    console.log(address(host));
+    
     host.registerAppByFactory(ISuperApp(address(poolProxy)), configWord);
 
+       console.log(114,tokenName);
     //Initializer PoolInternal
 
     DataTypes.PoolInfo memory poolInfo = DataTypes.PoolInfo({id: pools.current(), idPerSupertoken: poolNrBysuperToken, superToken: poolInput.superToken, strategy: poolInput.poolStrategy, pool: address(poolProxy), poolInternal: poolInternalImpl});

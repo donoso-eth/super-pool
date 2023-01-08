@@ -18,7 +18,7 @@ import { join } from 'path';
 import { applyUserEvent, faucet, updatePool } from './helpers/logic-V1';
 import { ICONTRACTS_TEST, IPOOL_RESULT, IUSERS_TEST, IUSERTEST, SupplierEvent } from './helpers/models-V1';
 
-import { abi_erc20mint } from '../helpers/abis/ERC20Mint';
+
 import {  getGelatoCloStreamId} from './helpers/gelato-V1';
 
 import { BigNumber } from '@ethersproject/bignumber';
@@ -30,6 +30,8 @@ import { PoolInternalV1__factory } from '../typechain-types/factories/PoolIntern
 import { PoolStrategyV1__factory } from '../typechain-types/factories/PoolStrategyV1__factory';
 import { PoolV1__factory } from '../typechain-types/factories/PoolV1__factory';
 import { SuperPoolFactory__factory } from '../typechain-types/factories/SuperPoolFactory__factory';
+
+import * as dotenv from 'dotenv';
 
 let superPoolFactory: SuperPoolFactory;
 let poolFactory: PoolV1;
@@ -46,8 +48,7 @@ let superTokenContract: ISuperToken;
 let superTokenERC777: IERC777;
 let contractsTest: ICONTRACTS_TEST;
 
-let aavePool = '0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6';
-let aToken = '0x1Ee669290939f8a8864497Af3BC83728715265FF';
+
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 let deployer: SignerWithAddress;
@@ -94,23 +95,28 @@ let resolverHash;
 
 let taskId;
 
+dotenv.config();
+
+const INFURA_ID = 'YOUR KEY'; //process.env["INFURA_ID"]
+const MORALIS_ID = 'YOUR KEY'; //process.env["MORALIS_ID"]
+const ALCHEMY_ID_POLYGON = process.env["ALCHEMY_ID_POLYGON"]
+
 let ONE_MONTH = 24 * 3600 * 30;
 const processDir = process.cwd();
 let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.json'), 'utf-8')) as INETWORK_CONFIG;
 
-let network_params = networks_config['goerli'];
+let network_params = networks_config['polygon'];
 removeSync(join(processDir,'expected','accounting'));
 ensureDirSync(join(processDir,'expected','accounting'));
 
-describe('V1 TEST ACCOUNTING', function () {
+describe.only('V1 TEST ACCOUNTING', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
       params: [
         {
           forking: {
-            jsonRpcUrl: `https://goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e`,
-            blockNumber: 7850256,
+            jsonRpcUrl:  `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ID_POLYGON}`, //
           },
         },
       ],
@@ -153,7 +159,7 @@ describe('V1 TEST ACCOUNTING', function () {
 
     superTokenContract = await ISuperToken__factory.connect(network_params.superToken, deployer);
     superTokenERC777 = await IERC777__factory.connect(network_params.superToken, deployer);
-    tokenContract = new hre.ethers.Contract(network_params.token, abi_erc20mint, deployer) as ERC20;
+    tokenContract =   await IERC20__factory.connect(network_params.token, deployer) as ERC20;
 
     let superInputStruct: CreatePoolInputStruct = {
       superToken: network_params.superToken,
@@ -172,7 +178,7 @@ describe('V1 TEST ACCOUNTING', function () {
     // await poolInternal.initialize(settings.address);
     // console.log('Pool Internal ---> initialized');
 
-    await poolStrategy.initialize( network_params.superToken, network_params.token, poolProxyAddress, aavePool, aToken, network_params.aaveToken);
+    await poolStrategy.initialize( network_params.superToken, network_params.token, poolProxyAddress, network_params.aavePool, network_params.aToken);
     console.log('Pool Strategy ---> initialized');
 
     superPool = PoolV1__factory.connect(superPoolAddress, deployer);

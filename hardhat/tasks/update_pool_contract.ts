@@ -21,7 +21,7 @@ const contract_config = JSON.parse(
 
 let networks_config = JSON.parse(readFileSync(join(processDir, 'networks.config.json'), 'utf-8')) as INETWORK_CONFIG;
 
-let network_params = networks_config['goerli'];
+let network_params = networks_config['polygon'];
 
 
 task('update_pool_contract', 'update_pool_contract.ts').setAction(async ({}, hre) => {

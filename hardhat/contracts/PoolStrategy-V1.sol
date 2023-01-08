@@ -18,7 +18,6 @@ import { LibDataTypes } from "./gelato/LibDataTypes.sol";
 import { DataTypes } from "./libraries/DataTypes.sol";
 import { Events } from "./libraries/Events.sol";
 import { UUPSProxiable } from "./upgradability/UUPSProxiable.sol";
-import { ERC20Mintable } from "./interfaces/ERC20Mintable.sol";
 
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
@@ -39,36 +38,34 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   address owner;
 
   ISuperToken superToken;
+  IERC20 token; // SUPERFLUID Faketoken
+
   IPoolV1 pool;
   /// Pool
   IPool aavePool; //// aave Pool to deposit
   IERC20 aToken; //// aToken received
 
-  ///// IN PRODUCTION WE WILL ONLY REQUIRE the token a ERC20
-  ///// NOW WE NEED TO SWAP BETWEEN SUPERFLUID and AAVe FAKE TOKEN
-  ERC20Mintable token; // SUPERFLUID Faketoken
-  ERC20Mintable aaveToken; // AAVE Fake token
+
+
 
   uint256 MAX_INT;
 
   constructor() { }
 
-  function initialize(ISuperToken _superToken, ERC20Mintable _token, IPoolV1 _pool, IPool _aavePool, IERC20 _aToken, ERC20Mintable _aaveToken) external initializer {
+  function initialize(ISuperToken _superToken, IERC20 _token, IPoolV1 _pool, IPool _aavePool, IERC20 _aToken) external initializer {
     owner = msg.sender;
     superToken = _superToken;
     token = _token;
     pool = _pool;
     aavePool = _aavePool;
     aToken = _aToken;
-    aaveToken = _aaveToken;
     MAX_INT = 2 ** 256 - 1;
 
-    aaveToken.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
   }
 
   function balanceOf() public view returns (uint256 balance) {
-    balance = aToken.balanceOf(address(this)) * (10 ** 12);
+    balance = aToken.balanceOf(address(this));
   }
 
   // #region  ============= ============= ONLY POOL FUNCTIONS  ============= ============= //
@@ -86,7 +83,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
    // #region =========== ================ EMERGENCY =========== ================ //
 
   function withdrawEmergency() external onlyOwner {
-        uint balance = aToken.balanceOf(address(this)) * (10 ** 12);
+        uint balance = aToken.balanceOf(address(this));
         _withdraw(balance, address(pool));
 
   }
@@ -105,23 +102,17 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     superToken.downgrade(amountToDeposit);
 
     // COMMENT
-    aaveToken.mint(amountToDeposit / (10 ** 12));
+   
 
-    if (amountToDeposit / (10 ** 12) > 0) {
-      aavePool.supply(address(aaveToken), amountToDeposit / (10 ** 12), address(this), 0);
+    if (amountToDeposit > 0) {
+      aavePool.supply(address(token), amountToDeposit, address(this), 0);
     }
   }
 
   ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR
   function _withdraw(uint256 amount, address _supplier) internal {
-    if (amount.div(10 ** 12) > 0) {
-      aavePool.withdraw(address(aaveToken), amount.div(10 ** 12), address(this));
-
-      uint256 balanceToken = token.balanceOf(address(this));
-
-      if (balanceToken < amount) {
-        token.mint(address(this), amount - balanceToken);
-      }
+    if (amount > 0) {
+      aavePool.withdraw(address(token), amount, address(this));
 
       superToken.upgrade(amount);
 
