@@ -5,7 +5,7 @@ import { expect } from 'chai';
 import { BaseProvider, TransactionReceipt } from '@ethersproject/providers';
 import { ERC20, ERC20__factory, IERC777, IERC777__factory, Events__factory, IOps, IOps__factory, ISuperfluidToken, ISuperfluidToken__factory, ISuperToken, ISuperToken__factory, IERC20, IERC20__factory } from '../typechain-types';
 
-import { constants, utils } from 'ethers';
+import { constants, Contract, utils } from 'ethers';
 import { addUser, fromBnToNumber, getPool, getTimestamp, increaseBlockTime, matchEvent, printPoolResult, printUser, testPeriod, testTreasury } from './helpers/utils-V1';
 import { Framework, IWeb3FlowInfo, SFError } from '@superfluid-finance/sdk-core';
 
@@ -30,6 +30,12 @@ import { PoolInternalV1__factory } from '../typechain-types/factories/PoolIntern
 import { PoolStrategyV1__factory } from '../typechain-types/factories/PoolStrategyV1__factory';
 import { PoolV1__factory } from '../typechain-types/factories/PoolV1__factory';
 import { SuperPoolFactory__factory } from '../typechain-types/factories/SuperPoolFactory__factory';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+const INFURA_ID = 'YOUR KEY'; //process.env["INFURA_ID"]
+const MORALIS_ID = 'YOUR KEY'; //process.env["MORALIS_ID"]
+const ALCHEMY_ID_POLYGON = process.env["ALCHEMY_ID_POLYGON"]
 
 let superPoolFactory: SuperPoolFactory;
 let poolFactory: PoolV1;
@@ -46,8 +52,7 @@ let superTokenContract: ISuperToken;
 let superTokenERC777: IERC777;
 let contractsTest: ICONTRACTS_TEST;
 
-let aavePool = '0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6';
-let aToken = '0x1Ee669290939f8a8864497Af3BC83728715265FF';
+
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 let deployer: SignerWithAddress;
@@ -55,6 +60,7 @@ let user1: SignerWithAddress;
 let user2: SignerWithAddress;
 let user3: SignerWithAddress;
 let user4: SignerWithAddress;
+let whale:any;
 
 let executor: any;
 let provider: BaseProvider;
@@ -111,8 +117,7 @@ describe('V1 TEST STREAM UPDATES', function () {
       params: [
         {
           forking: {
-            jsonRpcUrl: `https://goerli.infura.io/v3/1e43f3d31eea4244bf25ed4c13bfde0e`,
-            blockNumber: 7850256,
+            jsonRpcUrl:  `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ID_POLYGON}`, //
           },
         },
       ],
@@ -146,6 +151,32 @@ describe('V1 TEST STREAM UPDATES', function () {
     superPoolFactory = await new SuperPoolFactory__factory(deployer).deploy();
 
     await superPoolFactory.initialize(factoryInit);
+    let supefluidOwner = "0x1EB3FAA360bF1f093F5A18d21f21f13D769d044A";
+    //supefluidOwner  = "0x5eb449B88Ff8f03cD0C736A72ac70B76258E4B10"
+
+    let governanceAddress = "0x3AD3f7A0965Ce6f9358AD5CCE86Bc2b05F1EE087"
+
+    await hre.network.provider.request({
+      method: 'hardhat_impersonateAccount',
+      params: [supefluidOwner],
+    });
+
+    let superfluidExecutor = await hre.ethers.provider.getSigner(supefluidOwner);
+
+
+    let abiAuthApp:any[] = ["function authorizeAppFactory(address,address) external",
+     "function isAuthorizedAppFactory(address,address) external view returns (bool)"
+ ];
+
+    let governanceContract = new Contract(governanceAddress,abiAuthApp,superfluidExecutor)
+   
+  let result = await governanceContract.isAuthorizedAppFactory(network_params.host,superPoolFactory.address);
+  console.log(174,result);
+
+    await governanceContract.authorizeAppFactory(network_params.host,superPoolFactory.address);
+    
+    result = await governanceContract.isAuthorizedAppFactory(network_params.host,superPoolFactory.address);
+  console.log(179,result);
 
     console.log('Super Pool Factory---> deployed');
 
@@ -184,6 +215,16 @@ describe('V1 TEST STREAM UPDATES', function () {
 
     await deployer.sendTransaction({ to: superPoolAddress, value: initialPoolEth });
 
+    let superTokenWhale = "0x2dbd50a4ef9b172698596217b7db0163d3607b41"
+    superTokenWhale = "0xf31227006e2a9490ac5868ba818f21ac21c66a82";
+    await hre.network.provider.request({
+      method: 'hardhat_impersonateAccount',
+      params: [superTokenWhale],
+    });
+
+   whale= await hre.ethers.provider.getSigner(superTokenWhale);
+   let walle_deployer = await superTokenERC777.balanceOf(superTokenWhale);
+   console.log('whale balance: ',ethers.utils.formatEther(walle_deployer))
 
 
     superTokenContract.approve(superPoolAddress, hre.ethers.constants.MaxUint256);
@@ -193,7 +234,7 @@ describe('V1 TEST STREAM UPDATES', function () {
     /// let balance
     let balance_deployer = await superTokenERC777.balanceOf(deployer.address);
 
-    await faucet(deployer, tokenContract, superTokenContract);
+    await faucet(deployer, tokenContract, superTokenContract,whale);
 
     balance_deployer = await superTokenERC777.balanceOf(deployer.address);
 
@@ -202,13 +243,13 @@ describe('V1 TEST STREAM UPDATES', function () {
 
     // await superTokenContract.transfer(superPoolAddress, initialBalance);
 
-    await faucet(deployer, tokenContract, superTokenContract);
+    await faucet(deployer, tokenContract, superTokenContract,whale);
 
-    await faucet(user1, tokenContract, superTokenContract);
+    await faucet(user1, tokenContract, superTokenContract,whale);
 
-    await faucet(user2, tokenContract, superTokenContract);
+    await faucet(user2, tokenContract, superTokenContract,whale);
 
-    await faucet(user3, tokenContract, superTokenContract);
+    await faucet(user3, tokenContract, superTokenContract,whale);
 
     let balance = await tokenContract.balanceOf(superPoolAddress);
 

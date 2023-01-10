@@ -60,7 +60,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
     aavePool = _aavePool;
     aToken = _aToken;
     MAX_INT = 2 ** 256 - 1;
-
+    token.approve(address(aavePool), MAX_INT);
     token.approve(address(superToken), MAX_INT);
   }
 

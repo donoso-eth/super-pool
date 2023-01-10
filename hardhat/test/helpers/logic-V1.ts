@@ -435,7 +435,7 @@ export const updateNonActiveUsers = async (users: IUSERS_TEST, pool: IPOOL_RESUL
   return users;
 };
 
-export const faucet = async (user: SignerWithAddress, tokenContract: ERC20, superTOkenContract: ISuperToken, whale?:SignerWithAddress) => {
+export const faucet = async (user: SignerWithAddress, tokenContract: ERC20, superTOkenContract: ISuperToken, whale:SignerWithAddress) => {
   let amount = 10000 * 10 ** 18;
 
 

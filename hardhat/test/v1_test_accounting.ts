@@ -111,7 +111,7 @@ let network_params = networks_config['polygon'];
 removeSync(join(processDir,'expected','accounting'));
 ensureDirSync(join(processDir,'expected','accounting'));
 
-describe.only('V1 TEST ACCOUNTING', function () {
+describe('V1 TEST ACCOUNTING', function () {
   beforeEach(async () => {
     await hre.network.provider.request({
       method: 'hardhat_reset',
@@ -163,14 +163,14 @@ describe.only('V1 TEST ACCOUNTING', function () {
       params: [supefluidOwner],
     });
 
-    executor = await hre.ethers.provider.getSigner(supefluidOwner);
+    let superfluidExecutor = await hre.ethers.provider.getSigner(supefluidOwner);
 
 
     let abiAuthApp:any[] = ["function authorizeAppFactory(address,address) external",
      "function isAuthorizedAppFactory(address,address) external view returns (bool)"
  ];
 
-    let governanceContract = new Contract(governanceAddress,abiAuthApp,executor)
+    let governanceContract = new Contract(governanceAddress,abiAuthApp,superfluidExecutor)
    
   let result = await governanceContract.isAuthorizedAppFactory(network_params.host,superPoolFactory.address);
   console.log(174,result);
@@ -228,7 +228,7 @@ describe.only('V1 TEST ACCOUNTING', function () {
 
    whale= await hre.ethers.provider.getSigner(superTokenWhale);
    let walle_deployer = await superTokenERC777.balanceOf(superTokenWhale);
-   console.log(231,ethers.utils.formatEther(walle_deployer))
+   console.log('whale balance: ',ethers.utils.formatEther(walle_deployer))
 
     superTokenContract.approve(superPoolAddress, hre.ethers.constants.MaxUint256);
 
