@@ -101,12 +101,15 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
     superToken.downgrade(amountToDeposit);
 
+    console.log(token.balanceOf(address(this)));
+
     // COMMENT
-   
+    console.log(105,amountToDeposit);
 
     if (amountToDeposit > 0) {
       aavePool.supply(address(token), amountToDeposit, address(this), 0);
     }
+      console.log(105,amountToDeposit);
   }
 
   ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR

@@ -435,10 +435,14 @@ export const updateNonActiveUsers = async (users: IUSERS_TEST, pool: IPOOL_RESUL
   return users;
 };
 
-export const faucet = async (user: SignerWithAddress, tokenContract: ERC20, superTOkenContract: ISuperToken) => {
-  let amount = 10000 * 10 ** 6;
+export const faucet = async (user: SignerWithAddress, tokenContract: ERC20, superTOkenContract: ISuperToken, whale?:SignerWithAddress) => {
+  let amount = 10000 * 10 ** 18;
+
 
   let amountSuper = utils.parseEther('1000');
+
+   await superTOkenContract.connect(whale!).transfer(user.address,amountSuper);
+
   // await waitForTx((tokenContract as Contract).connect(user)['mint(address,uint256)'](user.address, amountSuper));
 
   // await waitForTx((tokenContract as Contract).connect(user).approve(superTOkenContract?.address, constants.MaxUint256));
