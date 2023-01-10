@@ -366,28 +366,30 @@ contract PoolInternalV1 is PoolStateV1 {
     //DataTypes.Pool storage currentPool = poolByTimestamp[lastPoolTimestamp];
 
     uint256 currentThreshold = currentPool.outFlowBuffer;
+    console.log(369);
 
     int96 netFlow = currentPool.inFlowRate - currentPool.outFlowRate;
     if (netFlow < 0) {
       currentThreshold = currentThreshold + ((BALANCE_TRIGGER_TIME)) * uint96(-netFlow);
     }
-
+   console.log(375);
     if (uint256(balance) > currentThreshold) {
       uint256 toDeposit = uint256(balance) - currentThreshold;
-
+       console.log(378);
       IPoolStrategyV1(poolStrategy).pushToStrategy(toDeposit);
       currentPool.yieldObject.yieldSnapshot += toDeposit;
     } else if (currentThreshold > uint256(balance)) {
       uint256 amountToWithdraw = currentThreshold - uint256(balance);
-
+  console.log(383);
       uint256 balanceAave = IPoolStrategyV1(poolStrategy).balanceOf();
-
+       console.log(385);
       if (amountToWithdraw > balanceAave) {
         amountToWithdraw = balanceAave;
       }
-
+      console.log(389);
+      console.log(390,amountToWithdraw);
       IPoolStrategyV1(poolStrategy).withdraw(amountToWithdraw, address(this));
-
+        console.log(391);
       currentPool.yieldObject.yieldSnapshot -= amountToWithdraw;
     }
     return currentPool;

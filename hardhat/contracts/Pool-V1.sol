@@ -512,7 +512,7 @@ contract PoolV1 is
 
     // #region ============ ===============  BALANCE RREASURY =========== ==============
 
-    function balanceTreasury() external onlyOps onlyNotEmergency {
+    function balanceTreasury() external {
         require(
             block.timestamp >= lastExecution + BALANCE_TRIGGER_TIME,
             "NOT_YET_READY"
