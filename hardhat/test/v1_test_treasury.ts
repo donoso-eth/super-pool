@@ -508,28 +508,14 @@ describe.only('V1 TEST TREASURY', function () {
     await setNextBlockTimestamp(hre, +timestamp);
 
 
-
-    await superPool.balanceTreasury()
-
-
     await hre.network.provider.request({
       method: 'hardhat_impersonateAccount',
       params: [poolStrategy.address],
     });
 
-  let val = utils.parseEther("0.1")
-   let strategy = await hre.ethers.provider.getSigner(poolStrategy.address);
-   await deployer.sendTransaction({ to: poolStrategy.address, value: val });
-    let bal = await superTokenContract.connect(strategy).balanceOf(poolStrategy.address);
-    console.log(522,bal.toString());
-   // await superTokenContract.connect(strategy).transfer(superPool.address,bal)
+ 
+    await gelatoBalance(superPool, ops, executor);
 
-    //await gelatoBalance(superPool, ops, executor);
-
-
-
-      throw new Error("check");
-      
 
     treasury.superToken = pool.outFlowBuffer.add(firstDay);
     treasury.yieldSnapshot = treasury.yieldSnapshot.sub(firstDay).add(initialWidthraw.sub(loanStream.deposit));

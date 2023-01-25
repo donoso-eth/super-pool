@@ -126,8 +126,8 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
         console.log(123,address(pool));
         console.log(123,address(superToken));
         console.log(124,superToken.balanceOf(address(this)));
-        superToken.transfer(_supplier, amount);
-      //IERC20(address(superToken)).transfer(_supplier, amount);
+       // superToken.transfer(_supplier, amount);
+       IERC20(address(superToken)).transfer(_supplier, amount);
        console.log(126);
     }
   }

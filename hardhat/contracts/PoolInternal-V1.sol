@@ -145,7 +145,7 @@ contract PoolInternalV1 is PoolStateV1 {
     return supplier;
   }
 
-  function _getSupplierBalance(address _supplier) internal view returns (uint256 realtimeBalance) {
+  function _getSupplierBalance(address _supplier) public view returns (uint256 realtimeBalance) {
     DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
 
     uint256 yieldSupplier = totalYieldEarnedSupplier(_supplier, IPoolStrategyV1(poolStrategy).balanceOf());

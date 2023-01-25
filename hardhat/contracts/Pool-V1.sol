@@ -22,7 +22,7 @@ import {OpsReady} from "./gelato/OpsReady.sol";
 import {IOps} from "./gelato/IOps.sol";
 import {LibDataTypes} from "./gelato/LibDataTypes.sol";
 
-import {IPoolV1} from "./interfaces/IPool-V1.sol";
+import {IPoolV1,IDelegatedFoo} from "./interfaces/IPool-V1.sol";
 import {IPoolInternalV1} from "./interfaces/IPoolInternal-V1.sol";
 import {IPoolStrategyV1} from "./interfaces/IPoolStrategy-V1.sol";
 import {PoolStateV1} from "./PoolState-V1.sol";
@@ -208,6 +208,10 @@ contract PoolV1 is
         require(msg.sender == address(superToken), "INVALID_TOKEN");
         require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
+        console.log('XxXXXXXXXXXX---RECEIVED TOKENS');
+        console.log(from);
+        console.log(poolStrategy);
+        if (from!= poolStrategy) {
         callInternal(
             abi.encodeWithSignature(
                 "_tokensReceived(address,uint256)",
@@ -225,6 +229,7 @@ contract PoolV1 is
             block.timestamp,
             from
         );
+    }
     }
 
     /**
@@ -668,193 +673,20 @@ contract PoolV1 is
         return result;
     }
 
-    /**
-     * @notice Calculate the yield earned by the suplier
-     * @param _supplier supplier's address
-     * @return yieldSupplier uint256 yield erarnd
-     *
-     * @dev  it calculates the yield between the last pool update and the last supplier interaction
-     *       it uses two indexes (per deosit and flow), the yield is (timespan)(diff index's)
-     */
-    function _calculateYieldSupplier(address _supplier)
-        public
-        view
-        returns (uint256 yieldSupplier)
-    {
-        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
-
-        DataTypes.Pool memory lastPool = poolByTimestamp[lastPoolTimestamp];
-        DataTypes.Pool memory supplierPool = poolByTimestamp[
-            supplier.timestamp
-        ];
-
-        ///// Yield from deposit
-
-        uint256 yieldFromDeposit = (supplier.deposit *
-            (lastPool.yieldObject.yieldTokenIndex -
-                supplierPool.yieldObject.yieldTokenIndex)).div(PRECISSION);
-        uint256 yieldFromFlow = 0;
-        uint256 yieldFromOutFlow = 0;
-
-        yieldSupplier = yieldFromDeposit;
-        if (supplier.inStream > 0) {
-            ///// Yield from flow
-            yieldFromFlow =
-                uint96(supplier.inStream) *
-                (lastPool.yieldObject.yieldInFlowRateIndex -
-                    supplierPool.yieldObject.yieldInFlowRateIndex);
-        }
-
-        if (supplier.outStream.flow > 0) {
-            ///// Yield from flow
-            yieldFromOutFlow =
-                uint96(supplier.outStream.flow) *
-                (lastPool.yieldObject.yieldOutFlowRateIndex -
-                    supplierPool.yieldObject.yieldOutFlowRateIndex);
-        }
-
-        yieldSupplier = yieldSupplier + yieldFromFlow - yieldFromOutFlow;
+    function _getSupplierBalance(address _supplier) external  returns(uint256 realtimeBalance) {
+       
+        //console.log('YUPPY YUPPY YUPPY');
+        (bool success, bytes memory res) = poolInternal.delegatecall(abi.encodeWithSignature("_getSupplierBalance(address)",_supplier));
+        require(success, "Failed delegatecall");
+        return abi.decode(res, (uint256));
     }
 
-    function _calculateIndexes(
-        uint256 yieldPeriod,
-        DataTypes.Pool memory lastPool
-    )
-        public
-        view
-        returns (
-            uint256 periodYieldTokenIndex,
-            uint256 periodYieldInFlowRateIndex,
-            uint256 periodYieldOutFlowRateIndex
-        )
-    {
-        // bytes memory data = callInternal(abi.encodeWithSignature("_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256),(uint256,uint256)))", yieldPeriod, lastPool));
-        // (periodYieldTokenIndex,periodYieldInFlowRateIndex,periodYieldOutFlowRateIndex) = abi.decode(data,(uint256,uint256,uint256));
-
-        uint256 periodSpan = block.timestamp - lastPool.timestamp;
-
-        uint256 dollarSecondsDeposit = lastPool.deposit * periodSpan;
-        uint256 dollarSecondsInFlow = ((uint96(lastPool.inFlowRate) *
-            (periodSpan**2)) * PRECISSION) /
-            2 +
-            lastPool.depositFromInFlowRate *
-            periodSpan;
-        uint256 dollarSecondsOutFlow = ((uint96(lastPool.outFlowRate) *
-            (periodSpan**2)) * PRECISSION) /
-            2 +
-            lastPool.depositFromOutFlowRate *
-            periodSpan;
-        uint256 totalAreaPeriod = dollarSecondsDeposit +
-            dollarSecondsInFlow -
-            dollarSecondsOutFlow;
-
-        /// we ultiply by PRECISSION
-
-        if (totalAreaPeriod != 0 && yieldPeriod != 0) {
-            uint256 inFlowContribution = (dollarSecondsInFlow * PRECISSION);
-            uint256 outFlowContribution = (dollarSecondsOutFlow * PRECISSION);
-            uint256 depositContribution = (dollarSecondsDeposit *
-                PRECISSION *
-                PRECISSION);
-            if (lastPool.deposit != 0) {
-                periodYieldTokenIndex = (
-                    (depositContribution * yieldPeriod).div(
-                        (lastPool.deposit) * totalAreaPeriod
-                    )
-                );
-            }
-            if (lastPool.inFlowRate != 0) {
-                periodYieldInFlowRateIndex = (
-                    (inFlowContribution * yieldPeriod).div(
-                        uint96(lastPool.inFlowRate) * totalAreaPeriod
-                    )
-                );
-            }
-            if (lastPool.outFlowRate != 0) {
-                periodYieldOutFlowRateIndex = (
-                    (outFlowContribution * yieldPeriod).div(
-                        uint96(lastPool.outFlowRate) * totalAreaPeriod
-                    )
-                );
-            }
-        }
+  // #region ============ ===============  ERC20 implementation ============= ============= //
+  function balanceOf(address _supplier) public view override (IPoolV1, IERC20) returns (uint256 balance) {
+    return IDelegatedFoo(address(this))._getSupplierBalance(_supplier);
     }
 
-    function totalYieldEarnedSupplier(
-        address _supplier,
-        uint256 currentYieldSnapshot
-    ) public view returns (uint256 yieldSupplier) {
-        uint256 yieldTilllastPool = _calculateYieldSupplier(_supplier);
-        DataTypes.Pool memory lastPool = poolByTimestamp[lastPoolTimestamp];
 
-        uint256 yieldAccruedSincelastPool = 0;
-        if (currentYieldSnapshot > lastPool.yieldObject.yieldSnapshot) {
-            yieldAccruedSincelastPool =
-                currentYieldSnapshot -
-                lastPool.yieldObject.yieldSnapshot;
-        }
-
-        (
-            uint256 yieldTokenIndex,
-            uint256 yieldInFlowRateIndex,
-            uint256 yieldOutFlowRateIndex
-        ) = _calculateIndexes(yieldAccruedSincelastPool, lastPool);
-
-        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
-
-        uint256 yieldDeposit = yieldTokenIndex *
-            supplier.deposit.div(PRECISSION);
-        uint256 yieldInFlow = uint96(supplier.inStream) * yieldInFlowRateIndex;
-        uint256 yieldOutFlow = uint96(supplier.outStream.flow) *
-            yieldOutFlowRateIndex;
-
-        yieldSupplier =
-            yieldTilllastPool +
-            yieldDeposit +
-            yieldInFlow -
-            yieldOutFlow;
-    }
-
-    // #region ============ ===============  ERC20 implementation ============= ============= //
-    function balanceOf(address _supplier)
-        public
-        view
-        override(IPoolV1, IERC20)
-        returns (uint256 balance)
-    {
-        balance = _getSupplierBalance(_supplier).div(PRECISSION);
-    }
-
-    function _getSupplierBalance(address _supplier)
-        internal
-        view
-        returns (uint256 realtimeBalance)
-    {
-        DataTypes.Supplier memory supplier = suppliersByAddress[_supplier];
-
-        uint256 yieldSupplier = totalYieldEarnedSupplier(
-            _supplier,
-            IPoolStrategyV1(poolStrategy).balanceOf()
-        );
-
-        int96 netFlow = supplier.inStream - supplier.outStream.flow;
-
-        if (netFlow >= 0) {
-            realtimeBalance =
-                yieldSupplier +
-                (supplier.deposit) +
-                uint96(netFlow) *
-                (block.timestamp - supplier.timestamp) *
-                PRECISSION;
-        } else {
-            realtimeBalance =
-                yieldSupplier +
-                (supplier.deposit) -
-                uint96(supplier.outStream.flow) *
-                (block.timestamp - supplier.timestamp) *
-                PRECISSION;
-        }
-    }
 
     function _transfer(
         address from,
