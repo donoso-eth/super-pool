@@ -6,71 +6,71 @@ export function handlePoolUpdate(event: PoolUpdate): void {
   let id = event.params.pool.id.toString();
   let poolEvent = event.params.pool;
 
-  // let pool= Pool.load(id);
-  // if (pool == null) { 
-  //   pool  = new Pool(id);
-  //   pool.timestamp = poolEvent.timestamp;
-  //   pool.deposit = poolEvent.deposit;
-  //   pool.depositFromInflowRate = poolEvent.depositFromInFlowRate;
-  //   pool.depositFromOutflowRate = poolEvent.depositFromOutFlowRate;
+  let pool= Pool.load(id);
+  if (pool == null) { 
+    pool  = new Pool(id);
+    pool.timestamp = poolEvent.timestamp;
+    pool.deposit = poolEvent.deposit;
+    pool.depositFromInflowRate = poolEvent.depositFromInFlowRate;
+    pool.depositFromOutflowRate = poolEvent.depositFromOutFlowRate;
 
-  //   pool.inFlowRate= poolEvent.inFlowRate;
-  //   pool.outFlowRate = poolEvent.outFlowRate;
-  //   pool.outFlowBuffer = poolEvent.outFlowBuffer;
-  //   pool.yieldTokenIndex = poolEvent.yieldObject.yieldTokenIndex;
-  //   pool.yieldInFlowRateIndex = poolEvent.yieldObject.yieldInFlowRateIndex;
-  //   pool.yieldOutFlowRateIndex = poolEvent.yieldObject.yieldOutFlowRateIndex;
+    pool.inFlowRate= poolEvent.inFlowRate;
+    pool.outFlowRate = poolEvent.outFlowRate;
+    pool.outFlowBuffer = poolEvent.outFlowBuffer;
+    pool.yieldTokenIndex = poolEvent.yieldObject.yieldTokenIndex;
+    pool.yieldInFlowRateIndex = poolEvent.yieldObject.yieldInFlowRateIndex;
+    pool.yieldOutFlowRateIndex = poolEvent.yieldObject.yieldOutFlowRateIndex;
 
-  //   pool.yieldAccrued = poolEvent.yieldObject.yieldAccrued;
-  //   pool.yieldSnapshot = poolEvent.yieldObject.yieldSnapshot;
-  //   pool.totalYield = poolEvent.yieldObject.totalYield;
-  //   pool.protocolYield = poolEvent.yieldObject.protocolYield;
-  //   pool.nrSuppliers = poolEvent.nrSuppliers;
+    pool.yieldAccrued = poolEvent.yieldObject.yieldAccrued;
+    pool.yieldSnapshot = poolEvent.yieldObject.yieldSnapshot;
+    pool.totalYield = poolEvent.yieldObject.totalYield;
+    pool.protocolYield = poolEvent.yieldObject.protocolYield;
+    pool.nrSuppliers = poolEvent.nrSuppliers;
 
-  //   pool.save();
-  // }
+    pool.save();
+  }
 
 }
 
 export function handleSupplierUpdate(event: SupplierUpdate): void {
 
-  // let id = event.params.supplier.id.toString();
-  // let supplier = Supplier.load(id);
-  // if (supplier == null) {
-  //   supplier = new Supplier(id);
-  //   supplier.supplier = event.params.supplier.supplier.toHexString();
-  //   supplier.cumulatedYield = BigInt.fromI32(0);
-  // }
-  // supplier.deposit = event.params.supplier.deposit;
-  // supplier.timestamp  = event.params.supplier.timestamp;
-  // supplier.inFlow = event.params.supplier.inStream;
+  let id = event.params.supplier.id.toString();
+  let supplier = Supplier.load(id);
+  if (supplier == null) {
+    supplier = new Supplier(id);
+    supplier.supplier = event.params.supplier.supplier.toHexString();
+    supplier.cumulatedYield = BigInt.fromI32(0);
+  }
+  supplier.deposit = event.params.supplier.deposit;
+  supplier.timestamp  = event.params.supplier.timestamp;
+  supplier.inFlow = event.params.supplier.inStream;
  
-  // let outStream  = event.params.supplier.outStream;
-  // supplier.outFlow = outStream.flow;
+  let outStream  = event.params.supplier.outStream;
+  supplier.outFlow = outStream.flow;
 
-  // supplier.outStepTime = outStream.streamDuration;
-  // supplier.outInitTime = outStream.streamInit;
-  // supplier.outCancelWithdrawId = outStream.cancelWithdrawId.toHexString();
+  supplier.outStepTime = outStream.streamDuration;
+  supplier.outInitTime = outStream.streamInit;
+  supplier.outCancelWithdrawId = outStream.cancelWithdrawId.toHexString();
 
 
 
-  // supplier.save()
+  supplier.save()
   
 }
 
 export function handleSupplierEvent(event:SupplierEvent): void {
 
-  // let id = event.params.timestmap.toString().concat(event.params.supplier.toHexString());
-  // let supplierEvent = Event.load(id);
+  let id = event.params.timestmap.toString().concat(event.params.supplier.toHexString());
+  let supplierEvent = Event.load(id);
 
-  // if (supplierEvent == null) {
-  //   supplierEvent = new Event(id);
-  //   supplierEvent.timestamp = event.params.timestmap;
-  //   supplierEvent.payload = event.params.payload;
-  //   supplierEvent.supplier = event.params.supplier.toHexString();
-  //   supplierEvent.event = BigInt.fromI32(event.params.supplierEvent);
-  //   supplierEvent.save();
-  // }
+  if (supplierEvent == null) {
+    supplierEvent = new Event(id);
+    supplierEvent.timestamp = event.params.timestmap;
+    supplierEvent.payload = event.params.payload;
+    supplierEvent.supplier = event.params.supplier.toHexString();
+    supplierEvent.event = BigInt.fromI32(event.params.supplierEvent);
+    supplierEvent.save();
+  }
 
 
 }

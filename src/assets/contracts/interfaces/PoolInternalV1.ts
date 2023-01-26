@@ -91,12 +91,15 @@ export interface PoolInternalV1Interface extends utils.Interface {
     "_balances(address)": FunctionFragment;
     "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))": FunctionFragment;
     "_calculateYieldSupplier(address)": FunctionFragment;
-    "_closeAccount()": FunctionFragment;
+    "_closeAccount(address)": FunctionFragment;
     "_createBalanceTreasuryTask()": FunctionFragment;
+    "_getSupplierBalance(address)": FunctionFragment;
+    "_name()": FunctionFragment;
     "_poolUpdate()": FunctionFragment;
     "_redeemDeposit(address,uint256)": FunctionFragment;
     "_redeemFlow(address,int96)": FunctionFragment;
     "_redeemFlowStop(address)": FunctionFragment;
+    "_symbol()": FunctionFragment;
     "_tokensReceived(address,uint256)": FunctionFragment;
     "_totalSupply()": FunctionFragment;
     "_updateSupplierFlow(address,int96,int96,bytes)": FunctionFragment;
@@ -109,7 +112,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     "poolInternal()": FunctionFragment;
     "poolStrategy()": FunctionFragment;
     "totalYieldEarnedSupplier(address,uint256)": FunctionFragment;
-    "transferSTokens(address,address,uint256)": FunctionFragment;
+    "transferSPTokens(address,address,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "ETH", values?: undefined): string;
@@ -136,12 +139,17 @@ export interface PoolInternalV1Interface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "_closeAccount",
-    values?: undefined
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "_createBalanceTreasuryTask",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "_getSupplierBalance",
+    values: [string]
+  ): string;
+  encodeFunctionData(functionFragment: "_name", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_poolUpdate",
     values?: undefined
@@ -158,6 +166,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "_redeemFlowStop",
     values: [string]
   ): string;
+  encodeFunctionData(functionFragment: "_symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_tokensReceived",
     values: [string, BigNumberish]
@@ -201,7 +210,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "transferSTokens",
+    functionFragment: "transferSPTokens",
     values: [string, string, BigNumberish]
   ): string;
 
@@ -236,6 +245,11 @@ export interface PoolInternalV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "_getSupplierBalance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "_name", data: BytesLike): Result;
+  decodeFunctionResult(
     functionFragment: "_poolUpdate",
     data: BytesLike
   ): Result;
@@ -251,6 +265,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     functionFragment: "_redeemFlowStop",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "_symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_tokensReceived",
     data: BytesLike
@@ -288,7 +303,7 @@ export interface PoolInternalV1Interface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "transferSTokens",
+    functionFragment: "transferSPTokens",
     data: BytesLike
   ): Result;
 
@@ -359,12 +374,20 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<[BigNumber] & { yieldSupplier: BigNumber }>;
 
     _closeAccount(
+      _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     _createBalanceTreasuryTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    _getSupplierBalance(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { realtimeBalance: BigNumber }>;
+
+    _name(overrides?: CallOverrides): Promise<[string]>;
 
     _poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -386,6 +409,8 @@ export interface PoolInternalV1 extends BaseContract {
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    _symbol(overrides?: CallOverrides): Promise<[string]>;
 
     _tokensReceived(
       _supplier: string,
@@ -431,7 +456,7 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { yieldSupplier: BigNumber }>;
 
-    transferSTokens(
+    transferSPTokens(
       _sender: string,
       _receiver: string,
       amount: BigNumberish,
@@ -476,12 +501,20 @@ export interface PoolInternalV1 extends BaseContract {
   ): Promise<BigNumber>;
 
   _closeAccount(
+    _supplier: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   _createBalanceTreasuryTask(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  _getSupplierBalance(
+    _supplier: string,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  _name(overrides?: CallOverrides): Promise<string>;
 
   _poolUpdate(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -503,6 +536,8 @@ export interface PoolInternalV1 extends BaseContract {
     _supplier: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  _symbol(overrides?: CallOverrides): Promise<string>;
 
   _tokensReceived(
     _supplier: string,
@@ -548,7 +583,7 @@ export interface PoolInternalV1 extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  transferSTokens(
+  transferSPTokens(
     _sender: string,
     _receiver: string,
     amount: BigNumberish,
@@ -590,9 +625,16 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    _closeAccount(overrides?: CallOverrides): Promise<void>;
+    _closeAccount(_supplier: string, overrides?: CallOverrides): Promise<void>;
 
     _createBalanceTreasuryTask(overrides?: CallOverrides): Promise<string>;
+
+    _getSupplierBalance(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    _name(overrides?: CallOverrides): Promise<string>;
 
     _poolUpdate(overrides?: CallOverrides): Promise<void>;
 
@@ -612,6 +654,8 @@ export interface PoolInternalV1 extends BaseContract {
       _supplier: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    _symbol(overrides?: CallOverrides): Promise<string>;
 
     _tokensReceived(
       _supplier: string,
@@ -654,7 +698,7 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    transferSTokens(
+    transferSPTokens(
       _sender: string,
       _receiver: string,
       amount: BigNumberish,
@@ -696,12 +740,20 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<BigNumber>;
 
     _closeAccount(
+      _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     _createBalanceTreasuryTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    _getSupplierBalance(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    _name(overrides?: CallOverrides): Promise<BigNumber>;
 
     _poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -723,6 +775,8 @@ export interface PoolInternalV1 extends BaseContract {
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    _symbol(overrides?: CallOverrides): Promise<BigNumber>;
 
     _tokensReceived(
       _supplier: string,
@@ -768,7 +822,7 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    transferSTokens(
+    transferSPTokens(
       _sender: string,
       _receiver: string,
       amount: BigNumberish,
@@ -811,12 +865,20 @@ export interface PoolInternalV1 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     _closeAccount(
+      _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     _createBalanceTreasuryTask(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    _getSupplierBalance(
+      _supplier: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    _name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _poolUpdate(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -838,6 +900,8 @@ export interface PoolInternalV1 extends BaseContract {
       _supplier: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    _symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _tokensReceived(
       _supplier: string,
@@ -885,7 +949,7 @@ export interface PoolInternalV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    transferSTokens(
+    transferSPTokens(
       _sender: string,
       _receiver: string,
       amount: BigNumberish,

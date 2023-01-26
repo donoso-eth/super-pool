@@ -288,100 +288,6 @@ export class SupplierUpdateSupplierOutStreamStruct extends ethereum.Tuple {
   }
 }
 
-export class PoolV1___calculateIndexesResult {
-  value0: BigInt;
-  value1: BigInt;
-  value2: BigInt;
-
-  constructor(value0: BigInt, value1: BigInt, value2: BigInt) {
-    this.value0 = value0;
-    this.value1 = value1;
-    this.value2 = value2;
-  }
-
-  toMap(): TypedMap<string, ethereum.Value> {
-    let map = new TypedMap<string, ethereum.Value>();
-    map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
-    map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
-    map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
-    return map;
-  }
-}
-
-export class PoolV1___calculateIndexesInputLastPoolStruct extends ethereum.Tuple {
-  get id(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get timestamp(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get nrSuppliers(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get deposit(): BigInt {
-    return this[3].toBigInt();
-  }
-
-  get depositFromInFlowRate(): BigInt {
-    return this[4].toBigInt();
-  }
-
-  get depositFromOutFlowRate(): BigInt {
-    return this[5].toBigInt();
-  }
-
-  get inFlowRate(): BigInt {
-    return this[6].toBigInt();
-  }
-
-  get outFlowRate(): BigInt {
-    return this[7].toBigInt();
-  }
-
-  get outFlowBuffer(): BigInt {
-    return this[8].toBigInt();
-  }
-
-  get yieldObject(): PoolV1___calculateIndexesInputLastPoolYieldObjectStruct {
-    return changetype<PoolV1___calculateIndexesInputLastPoolYieldObjectStruct>(
-      this[9].toTuple()
-    );
-  }
-}
-
-export class PoolV1___calculateIndexesInputLastPoolYieldObjectStruct extends ethereum.Tuple {
-  get yieldTokenIndex(): BigInt {
-    return this[0].toBigInt();
-  }
-
-  get yieldInFlowRateIndex(): BigInt {
-    return this[1].toBigInt();
-  }
-
-  get yieldOutFlowRateIndex(): BigInt {
-    return this[2].toBigInt();
-  }
-
-  get yieldAccrued(): BigInt {
-    return this[3].toBigInt();
-  }
-
-  get yieldSnapshot(): BigInt {
-    return this[4].toBigInt();
-  }
-
-  get totalYield(): BigInt {
-    return this[5].toBigInt();
-  }
-
-  get protocolYield(): BigInt {
-    return this[6].toBigInt();
-  }
-}
-
 export class PoolV1__checkerLastExecutionResult {
   value0: boolean;
   value1: Bytes;
@@ -658,65 +564,20 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  _calculateIndexes(
-    yieldPeriod: BigInt,
-    lastPool: PoolV1___calculateIndexesInputLastPoolStruct
-  ): PoolV1___calculateIndexesResult {
+  _getSupplierBalance(_supplier: Address): BigInt {
     let result = super.call(
-      "_calculateIndexes",
-      "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256))):(uint256,uint256,uint256)",
-      [
-        ethereum.Value.fromUnsignedBigInt(yieldPeriod),
-        ethereum.Value.fromTuple(lastPool)
-      ]
-    );
-
-    return new PoolV1___calculateIndexesResult(
-      result[0].toBigInt(),
-      result[1].toBigInt(),
-      result[2].toBigInt()
-    );
-  }
-
-  try__calculateIndexes(
-    yieldPeriod: BigInt,
-    lastPool: PoolV1___calculateIndexesInputLastPoolStruct
-  ): ethereum.CallResult<PoolV1___calculateIndexesResult> {
-    let result = super.tryCall(
-      "_calculateIndexes",
-      "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256))):(uint256,uint256,uint256)",
-      [
-        ethereum.Value.fromUnsignedBigInt(yieldPeriod),
-        ethereum.Value.fromTuple(lastPool)
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(
-      new PoolV1___calculateIndexesResult(
-        value[0].toBigInt(),
-        value[1].toBigInt(),
-        value[2].toBigInt()
-      )
-    );
-  }
-
-  _calculateYieldSupplier(_supplier: Address): BigInt {
-    let result = super.call(
-      "_calculateYieldSupplier",
-      "_calculateYieldSupplier(address):(uint256)",
+      "_getSupplierBalance",
+      "_getSupplierBalance(address):(uint256)",
       [ethereum.Value.fromAddress(_supplier)]
     );
 
     return result[0].toBigInt();
   }
 
-  try__calculateYieldSupplier(_supplier: Address): ethereum.CallResult<BigInt> {
+  try__getSupplierBalance(_supplier: Address): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
-      "_calculateYieldSupplier",
-      "_calculateYieldSupplier(address):(uint256)",
+      "_getSupplierBalance",
+      "_getSupplierBalance(address):(uint256)",
       [ethereum.Value.fromAddress(_supplier)]
     );
     if (result.reverted) {
@@ -724,6 +585,36 @@ export class PoolV1 extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  __name(): string {
+    let result = super.call("_name", "_name():(string)", []);
+
+    return result[0].toString();
+  }
+
+  try__name(): ethereum.CallResult<string> {
+    let result = super.tryCall("_name", "_name():(string)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toString());
+  }
+
+  _symbol(): string {
+    let result = super.call("_symbol", "_symbol():(string)", []);
+
+    return result[0].toString();
+  }
+
+  try__symbol(): ethereum.CallResult<string> {
+    let result = super.tryCall("_symbol", "_symbol():(string)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toString());
   }
 
   _totalSupply(): BigInt {
@@ -1518,41 +1409,6 @@ export class PoolV1 extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  totalYieldEarnedSupplier(
-    _supplier: Address,
-    currentYieldSnapshot: BigInt
-  ): BigInt {
-    let result = super.call(
-      "totalYieldEarnedSupplier",
-      "totalYieldEarnedSupplier(address,uint256):(uint256)",
-      [
-        ethereum.Value.fromAddress(_supplier),
-        ethereum.Value.fromUnsignedBigInt(currentYieldSnapshot)
-      ]
-    );
-
-    return result[0].toBigInt();
-  }
-
-  try_totalYieldEarnedSupplier(
-    _supplier: Address,
-    currentYieldSnapshot: BigInt
-  ): ethereum.CallResult<BigInt> {
-    let result = super.tryCall(
-      "totalYieldEarnedSupplier",
-      "totalYieldEarnedSupplier(address,uint256):(uint256)",
-      [
-        ethereum.Value.fromAddress(_supplier),
-        ethereum.Value.fromUnsignedBigInt(currentYieldSnapshot)
-      ]
-    );
-    if (result.reverted) {
-      return new ethereum.CallResult();
-    }
-    let value = result.value;
-    return ethereum.CallResult.fromValue(value[0].toBigInt());
-  }
-
   transfer(to: Address, amount: BigInt): boolean {
     let result = super.call("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(to),
@@ -1622,6 +1478,40 @@ export class PoolV1 extends ethereum.SmartContract {
     }
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+}
+
+export class _getSupplierBalanceCall extends ethereum.Call {
+  get inputs(): _getSupplierBalanceCall__Inputs {
+    return new _getSupplierBalanceCall__Inputs(this);
+  }
+
+  get outputs(): _getSupplierBalanceCall__Outputs {
+    return new _getSupplierBalanceCall__Outputs(this);
+  }
+}
+
+export class _getSupplierBalanceCall__Inputs {
+  _call: _getSupplierBalanceCall;
+
+  constructor(call: _getSupplierBalanceCall) {
+    this._call = call;
+  }
+
+  get _supplier(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+}
+
+export class _getSupplierBalanceCall__Outputs {
+  _call: _getSupplierBalanceCall;
+
+  constructor(call: _getSupplierBalanceCall) {
+    this._call = call;
+  }
+
+  get realtimeBalance(): BigInt {
+    return this._call.outputValues[0].value.toBigInt();
   }
 }
 

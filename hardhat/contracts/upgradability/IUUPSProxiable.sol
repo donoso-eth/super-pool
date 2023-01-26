@@ -10,7 +10,7 @@ interface IUUPSProxiable {
    */
   function getCodeAddress() external view returns (address codeAddress);
 
-  function updateCode(address newAddress) external ;
+  function updateCode(address newAddress) external;
 
   /**
    * @dev Proxiable UUID marker function, this would help to avoid wrong logic

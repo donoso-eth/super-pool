@@ -14,7 +14,7 @@ interface IPoolInternalV1 {
 
   function _redeemDeposit(address _supplier, uint256 redeemAmount) external;
 
-  function _redeemFlow(int96 _outFlowRate, address _supplier) external;
+  function _redeemFlowX(int96 _outFlowRate, address _supplier) external;
 
   function _redeemFlowStop(address _supplier) external;
 

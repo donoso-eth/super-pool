@@ -82,8 +82,6 @@ contract SuperPoolFactory is Initializable, UUPSProxiable {
     // UUPSProxy poolInternalProxy = new UUPSProxy();
     // poolInternalProxy.initializeProxy(poolInternalImpl);
 
-
-
     /////// Initializer Pool
     DataTypes.PoolInitializer memory poolInit;
     poolInit = DataTypes.PoolInitializer({

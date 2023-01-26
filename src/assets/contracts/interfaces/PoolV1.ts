@@ -168,8 +168,9 @@ export interface PoolV1Interface extends utils.Interface {
     "ETH()": FunctionFragment;
     "_allowances(address,address)": FunctionFragment;
     "_balances(address)": FunctionFragment;
-    "_calculateIndexes(uint256,(uint256,uint256,uint256,uint256,uint256,uint256,int96,int96,uint256,(uint256,uint256,uint256,uint256,uint256,uint256,uint256)))": FunctionFragment;
-    "_calculateYieldSupplier(address)": FunctionFragment;
+    "_getSupplierBalance(address)": FunctionFragment;
+    "_name()": FunctionFragment;
+    "_symbol()": FunctionFragment;
     "_totalSupply()": FunctionFragment;
     "afterAgreementCreated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
     "afterAgreementTerminated(address,address,bytes32,bytes,bytes,bytes)": FunctionFragment;
@@ -212,7 +213,6 @@ export interface PoolV1Interface extends utils.Interface {
     "taskClose(address)": FunctionFragment;
     "tokensReceived(address,address,address,uint256,bytes,bytes)": FunctionFragment;
     "totalSupply()": FunctionFragment;
-    "totalYieldEarnedSupplier(address,uint256)": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
     "updateCode(address)": FunctionFragment;
@@ -226,13 +226,11 @@ export interface PoolV1Interface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "_balances", values: [string]): string;
   encodeFunctionData(
-    functionFragment: "_calculateIndexes",
-    values: [BigNumberish, PoolStruct]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_calculateYieldSupplier",
+    functionFragment: "_getSupplierBalance",
     values: [string]
   ): string;
+  encodeFunctionData(functionFragment: "_name", values?: undefined): string;
+  encodeFunctionData(functionFragment: "_symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_totalSupply",
     values?: undefined
@@ -378,10 +376,6 @@ export interface PoolV1Interface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "totalYieldEarnedSupplier",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "transfer",
     values: [string, BigNumberish]
   ): string;
@@ -399,13 +393,11 @@ export interface PoolV1Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "_balances", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "_calculateIndexes",
+    functionFragment: "_getSupplierBalance",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "_calculateYieldSupplier",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "_name", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "_symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_totalSupply",
     data: BytesLike
@@ -535,10 +527,6 @@ export interface PoolV1Interface extends utils.Interface {
     functionFragment: "totalSupply",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "totalYieldEarnedSupplier",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "transfer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferFrom",
@@ -622,22 +610,14 @@ export interface PoolV1 extends BaseContract {
 
     _balances(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    _calculateIndexes(
-      yieldPeriod: BigNumberish,
-      lastPool: PoolStruct,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber] & {
-        periodYieldTokenIndex: BigNumber;
-        periodYieldInFlowRateIndex: BigNumber;
-        periodYieldOutFlowRateIndex: BigNumber;
-      }
-    >;
-
-    _calculateYieldSupplier(
+    _getSupplierBalance(
       _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { yieldSupplier: BigNumber }>;
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    _name(overrides?: CallOverrides): Promise<[string]>;
+
+    _symbol(overrides?: CallOverrides): Promise<[string]>;
 
     _totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -844,12 +824,6 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { _totalSupply: BigNumber }>;
 
-    totalYieldEarnedSupplier(
-      _supplier: string,
-      currentYieldSnapshot: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { yieldSupplier: BigNumber }>;
-
     transfer(
       to: string,
       amount: BigNumberish,
@@ -883,22 +857,14 @@ export interface PoolV1 extends BaseContract {
 
   _balances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-  _calculateIndexes(
-    yieldPeriod: BigNumberish,
-    lastPool: PoolStruct,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber, BigNumber] & {
-      periodYieldTokenIndex: BigNumber;
-      periodYieldInFlowRateIndex: BigNumber;
-      periodYieldOutFlowRateIndex: BigNumber;
-    }
-  >;
-
-  _calculateYieldSupplier(
+  _getSupplierBalance(
     _supplier: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  _name(overrides?: CallOverrides): Promise<string>;
+
+  _symbol(overrides?: CallOverrides): Promise<string>;
 
   _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1093,12 +1059,6 @@ export interface PoolV1 extends BaseContract {
 
   totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
-  totalYieldEarnedSupplier(
-    _supplier: string,
-    currentYieldSnapshot: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   transfer(
     to: string,
     amount: BigNumberish,
@@ -1132,22 +1092,14 @@ export interface PoolV1 extends BaseContract {
 
     _balances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    _calculateIndexes(
-      yieldPeriod: BigNumberish,
-      lastPool: PoolStruct,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber] & {
-        periodYieldTokenIndex: BigNumber;
-        periodYieldInFlowRateIndex: BigNumber;
-        periodYieldOutFlowRateIndex: BigNumber;
-      }
-    >;
-
-    _calculateYieldSupplier(
+    _getSupplierBalance(
       _supplier: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    _name(overrides?: CallOverrides): Promise<string>;
+
+    _symbol(overrides?: CallOverrides): Promise<string>;
 
     _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1333,12 +1285,6 @@ export interface PoolV1 extends BaseContract {
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
-    totalYieldEarnedSupplier(
-      _supplier: string,
-      currentYieldSnapshot: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     transfer(
       to: string,
       amount: BigNumberish,
@@ -1401,16 +1347,14 @@ export interface PoolV1 extends BaseContract {
 
     _balances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    _calculateIndexes(
-      yieldPeriod: BigNumberish,
-      lastPool: PoolStruct,
-      overrides?: CallOverrides
+    _getSupplierBalance(
+      _supplier: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    _calculateYieldSupplier(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    _name(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _symbol(overrides?: CallOverrides): Promise<BigNumber>;
 
     _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1606,12 +1550,6 @@ export interface PoolV1 extends BaseContract {
 
     totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
-    totalYieldEarnedSupplier(
-      _supplier: string,
-      currentYieldSnapshot: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     transfer(
       to: string,
       amount: BigNumberish,
@@ -1649,16 +1587,14 @@ export interface PoolV1 extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    _calculateIndexes(
-      yieldPeriod: BigNumberish,
-      lastPool: PoolStruct,
-      overrides?: CallOverrides
+    _getSupplierBalance(
+      _supplier: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    _calculateYieldSupplier(
-      _supplier: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    _name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1860,12 +1796,6 @@ export interface PoolV1 extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    totalYieldEarnedSupplier(
-      _supplier: string,
-      currentYieldSnapshot: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     transfer(
       to: string,

@@ -82,24 +82,19 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
   // #endregion  ============= ============= ONLY POOL FUNCTIONS  ============= ============= //
 
-
-   // #region =========== ================ EMERGENCY =========== ================ //
+  // #region =========== ================ EMERGENCY =========== ================ //
 
   function withdrawEmergency() external onlyOwner {
-        uint balance = aToken.balanceOf(address(this)) * (10 ** 12);
-        _withdraw(balance, address(pool));
-
+    uint256 balance = aToken.balanceOf(address(this)) * (10 ** 12);
+    _withdraw(balance, address(pool));
   }
 
-   // #endregion  =========== ================ EMERGENCY =========== ================ //
-
+  // #endregion  =========== ================ EMERGENCY =========== ================ //
 
   // #region  ============= ============= INTERNAL FUNCTIONS  ============= ============= //
 
   ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR aNR THE MINTING
   function _deposit(uint256 amountToDeposit) internal {
-
-
     superToken.transferFrom(address(pool), address(this), uint256(amountToDeposit));
 
     superToken.downgrade(amountToDeposit);

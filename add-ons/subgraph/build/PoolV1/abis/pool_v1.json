@@ -140,140 +140,43 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "yieldPeriod",
-        "type": "uint256"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "id",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "timestamp",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "nrSuppliers",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "deposit",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "depositFromInFlowRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "depositFromOutFlowRate",
-            "type": "uint256"
-          },
-          {
-            "internalType": "int96",
-            "name": "inFlowRate",
-            "type": "int96"
-          },
-          {
-            "internalType": "int96",
-            "name": "outFlowRate",
-            "type": "int96"
-          },
-          {
-            "internalType": "uint256",
-            "name": "outFlowBuffer",
-            "type": "uint256"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "yieldTokenIndex",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "yieldInFlowRateIndex",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "yieldOutFlowRateIndex",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "yieldAccrued",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "yieldSnapshot",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "totalYield",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "protocolYield",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct DataTypes.Yield",
-            "name": "yieldObject",
-            "type": "tuple"
-          }
-        ],
-        "internalType": "struct DataTypes.Pool",
-        "name": "lastPool",
-        "type": "tuple"
+        "internalType": "address",
+        "name": "_supplier",
+        "type": "address"
       }
     ],
-    "name": "_calculateIndexes",
+    "name": "_getSupplierBalance",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "periodYieldTokenIndex",
+        "name": "realtimeBalance",
         "type": "uint256"
-      },
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "_name",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "periodYieldInFlowRateIndex",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "periodYieldOutFlowRateIndex",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_supplier",
-        "type": "address"
-      }
-    ],
-    "name": "_calculateYieldSupplier",
+    "inputs": [],
+    "name": "_symbol",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "yieldSupplier",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -1364,30 +1267,6 @@
       {
         "internalType": "uint256",
         "name": "_totalSupply",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_supplier",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "currentYieldSnapshot",
-        "type": "uint256"
-      }
-    ],
-    "name": "totalYieldEarnedSupplier",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "yieldSupplier",
         "type": "uint256"
       }
     ],

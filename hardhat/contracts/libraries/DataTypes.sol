@@ -76,7 +76,6 @@ library DataTypes {
     OutStream outStream;
   }
 
-
   struct Yield {
     uint256 yieldTokenIndex;
     uint256 yieldInFlowRateIndex;
