@@ -77,7 +77,7 @@ printToJson(expected, 'treasury',folder)
     }
   }
 
-  console.log('\x1b[32m%s\x1b[0m',  '    $', `\x1b[30m#Yield Pending: ${(aaveBalance.sub(expected.yieldSnapshot.div(10**12))).toString()}`);
+  console.log('\x1b[32m%s\x1b[0m',  '    $', `\x1b[30m#Yield Pending: ${(aaveBalance.sub(expected.yieldSnapshot)).toString()}`);
 
 
 }
@@ -94,7 +94,7 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
   expected.aaveBalance = aaveBalance;
   expected.poolBalance = poolBalance.availableBalance;
 
-  let poolTotalBalance  = (poolBalance.availableBalance.div(10**12)).add(aaveBalance);
+  let poolTotalBalance  = (poolBalance.availableBalance).add(aaveBalance);
 
   console.log('\x1b[31m%s\x1b[0m', '     =====   POOL     =============================');
   let result: IPOOL = await getPool(contracts.superPool);
@@ -121,11 +121,11 @@ export const testPeriod = async (t0: BigNumber, tx: number, expected: IPOOL_RESU
 
   if (poolTotalBalance != undefined) {
     try {
-      expect((+poolTotalBalance - +expected.poolTotalBalance.div(10**12))/+poolTotalBalance ).to.lt(0.000001);
+      expect((+poolTotalBalance - +expected.poolTotalBalance)/+poolTotalBalance ).to.lt(0.000001);
       console.log('\x1b[32m%s\x1b[0m', '    ✔', `\x1b[30m#Pool Assets Balance: ${poolTotalBalance.toString()}`);
     } catch (error) {
-      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${poolTotalBalance.toString()}, expected:${expected.poolTotalBalance.div(10**12)!.toString()}`);
-      console.log(+poolTotalBalance.toString() - +expected.poolTotalBalance.div(10**12)!.toString() )
+      console.log('\x1b[31m%s\x1b[0m', '    x #Pool Balance:', `\x1b[30m ${poolTotalBalance.toString()}, expected:${expected.poolTotalBalance!.toString()}`);
+      console.log(+poolTotalBalance.toString() - +expected.poolTotalBalance!.toString() )
     }
   }
   

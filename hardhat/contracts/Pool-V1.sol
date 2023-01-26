@@ -208,9 +208,6 @@ contract PoolV1 is
         require(msg.sender == address(superToken), "INVALID_TOKEN");
         require(amount > 0, "AMOUNT_TO_BE_POSITIVE");
 
-        console.log('XxXXXXXXXXXX---RECEIVED TOKENS');
-        console.log(from);
-        console.log(poolStrategy);
         if (from!= poolStrategy) {
         callInternal(
             abi.encodeWithSignature(
@@ -675,7 +672,7 @@ contract PoolV1 is
 
     function _getSupplierBalance(address _supplier) external  returns(uint256 realtimeBalance) {
        
-        //console.log('YUPPY YUPPY YUPPY');
+
         (bool success, bytes memory res) = poolInternal.delegatecall(abi.encodeWithSignature("_getSupplierBalance(address)",_supplier));
         require(success, "Failed delegatecall");
         return abi.decode(res, (uint256));
@@ -683,7 +680,7 @@ contract PoolV1 is
 
   // #region ============ ===============  ERC20 implementation ============= ============= //
   function balanceOf(address _supplier) public view override (IPoolV1, IERC20) returns (uint256 balance) {
-    return IDelegatedFoo(address(this))._getSupplierBalance(_supplier);
+    return IDelegatedFoo(address(this))._getSupplierBalance(_supplier).div(PRECISSION);
     }
 
 

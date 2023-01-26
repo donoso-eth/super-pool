@@ -71,7 +71,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
   // #region  ============= ============= ONLY POOL FUNCTIONS  ============= ============= //
   function withdraw(uint256 amount, address _supplier) external onlyPool {
     _withdraw(amount, _supplier);
-    console.log(74);
+
   }
 
   function pushToStrategy(uint256 amountToDeposit) external onlyPool {
@@ -94,7 +94,7 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
   // #region  ============= ============= INTERNAL FUNCTIONS  ============= ============= //
 
-  ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR aNR THE MINTING
+ 
   function _deposit(uint256 amountToDeposit) internal {
 
 
@@ -102,33 +102,25 @@ contract PoolStrategyV1 is Initializable, UUPSProxiable, IPoolStrategyV1 {
 
     superToken.downgrade(amountToDeposit);
 
-    console.log(token.balanceOf(address(this)));
 
-    // COMMENT
-    console.log(105,amountToDeposit);
+
 
     if (amountToDeposit > 0) {
       aavePool.supply(address(token), amountToDeposit, address(this), 0);
     }
-      console.log(105,amountToDeposit);
+
   }
 
-  ////////////// IN PRODUCTIONM REMOVE the 10**12 FACTOR
+
   function _withdraw(uint256 amount, address _supplier) internal {
     if (amount > 0) {
-      console.log(118);
+
       aavePool.withdraw(address(token), amount, address(this));
-        console.log(120);
-      console.log(124,superToken.balanceOf(address(this)));
+
       superToken.upgrade(amount);
-      console.log(121, amount);
-        console.log(122,_supplier);
-        console.log(123,address(pool));
-        console.log(123,address(superToken));
-        console.log(124,superToken.balanceOf(address(this)));
        // superToken.transfer(_supplier, amount);
        IERC20(address(superToken)).transfer(_supplier, amount);
-       console.log(126);
+
     }
   }
 

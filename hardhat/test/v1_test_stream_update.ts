@@ -117,7 +117,8 @@ describe('V1 TEST STREAM UPDATES', function () {
       params: [
         {
           forking: {
-            jsonRpcUrl:  `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ID_POLYGON}`, //
+            jsonRpcUrl:  `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_ID_POLYGON}`, 
+            blockNumber: 38517183
           },
         },
       ],
@@ -312,7 +313,7 @@ describe('V1 TEST STREAM UPDATES', function () {
       timestamp: t1,
       poolTotalBalance: amount,
       poolBalance: BigNumber.from(0),
-      aaveBalance: amount.div(10 ** 12),
+      aaveBalance: amount,
       protocolYield: BigNumber.from(0),
       deposit: amount.mul(PRECISSION),
       depositFromInFlowRate: BigNumber.from(0),
@@ -400,7 +401,7 @@ describe('V1 TEST STREAM UPDATES', function () {
       yieldAccrued
         .mul(100)
         .div(97)
-        .div(10 ** 12)
+     
     );
 
     let payload = abiCoder.encode(['int96'], [flowRate]);
@@ -463,13 +464,13 @@ describe('V1 TEST STREAM UPDATES', function () {
           .sub(initialWidthraw)
           .add(outFlowBuffer)
           .sub(firstDay)
-          .div(10 ** 12)
+          
       )
       .add(
         yieldAccrued
           .mul(100)
           .div(97)
-          .div(10 ** 12)
+          
       );
 
     pool.yieldSnapshot = pool.yieldSnapshot.add(flowRate.mul(ONE_MONTH)).sub(initialWidthraw).sub(outFlowBuffer);
@@ -519,11 +520,11 @@ describe('V1 TEST STREAM UPDATES', function () {
 
     pool.poolBalance = pool.poolBalance.sub(initialWidthraw).sub(outFlowBuffer).add(loanStream.deposit);
 
-    pool.aaveBalance = pool.aaveBalance.add(initialWidthraw.add(outFlowBuffer).div(10 ** 12)).add(
+    pool.aaveBalance = pool.aaveBalance.add(initialWidthraw.add(outFlowBuffer)).add(
       yieldAccrued
         .mul(100)
         .div(97)
-        .div(10 ** 12)
+        
     );
 
     result = await applyUserEvent(SupplierEvent.GELATO_CLOSE_STREAM, user1.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
@@ -600,7 +601,7 @@ describe('V1 TEST STREAM UPDATES', function () {
         yieldAccrued
           .mul(100)
           .div(97)
-          .div(10 ** 12)
+          
       )
       .add(flowRate.mul(ONE_MONTH));
 
@@ -658,16 +659,16 @@ describe('V1 TEST STREAM UPDATES', function () {
         yieldAccrued
           .mul(100)
           .div(97)
-          .div(10 ** 12)
+          
       )
       .add(
         flowRate60
           .add(flowRate)
           .mul(ONE_MONTH)
-          .div(10 ** 12)
+          
       )
       .sub(initialWidthraw)
-      .sub(outFlowBuffer.div(10 ** 12));
+      .sub(outFlowBuffer);
 
     result = await applyUserEvent(SupplierEvent.OUT_STREAM_START, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
@@ -725,10 +726,10 @@ describe('V1 TEST STREAM UPDATES', function () {
     //     yieldAccrued
     //       .mul(100)
     //       .div(97)
-    //       .div(10 ** 12)
+    //       
     //   )
     //   .sub(initialWidthraw)
-    //   .sub(outFlowBuffer.div(10 ** 12));
+    //   .sub(outFlowBuffer);
 
     result = await applyUserEvent(SupplierEvent.DEPOSIT, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
@@ -779,10 +780,10 @@ describe('V1 TEST STREAM UPDATES', function () {
     //     yieldAccrued
     //       .mul(100)
     //       .div(97)
-    //       .div(10 ** 12)
+    //       
     //   )
     //   .sub(initialWidthraw)
-    //   .sub(outFlowBuffer.div(10 ** 12));
+    //   .sub(outFlowBuffer);
 
     result = await applyUserEvent(SupplierEvent.WITHDRAW, user2.address, payload, lastUsersPool, pool, lastPool, pools, PRECISSION, sf, network_params.superToken, deployer, superPoolAddress);
     pools[+timestamp] = result[1];
